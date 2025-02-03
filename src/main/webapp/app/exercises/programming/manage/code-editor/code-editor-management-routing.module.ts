@@ -6,18 +6,18 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
-    {
-        path: 'test',
-        loadComponent: () =>
-            import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
-                (m) => m.CodeEditorInstructorAndEditorContainerComponent,
-            ),
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.editor.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    // {
+    //     path: 'test',
+    //     loadComponent: () =>
+    //         import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
+    //             (m) => m.CodeEditorInstructorAndEditorContainerComponent,
+    //         ),
+    //     data: {
+    //         authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+    //         pageTitle: 'artemisApp.editor.home.title',
+    //     },
+    //     canActivate: [UserRouteAccessService],
+    // },
     {
         path: 'ide/test',
         loadComponent: () =>
@@ -38,20 +38,20 @@ const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // {
+    //     path: ':participationId',
+    //     loadComponent: () =>
+    //         import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
+    //             (m) => m.CodeEditorInstructorAndEditorContainerComponent,
+    //         ),
+    //     data: {
+    //         authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+    //         pageTitle: 'artemisApp.editor.home.title',
+    //     },
+    //     canActivate: [UserRouteAccessService],
+    // },
     {
-        path: ':participationId',
-        loadComponent: () =>
-            import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
-                (m) => m.CodeEditorInstructorAndEditorContainerComponent,
-            ),
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.editor.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'auxiliary/:repositoryId',
+        path: ':repositoryType/:repositoryId',
         loadComponent: () =>
             import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,

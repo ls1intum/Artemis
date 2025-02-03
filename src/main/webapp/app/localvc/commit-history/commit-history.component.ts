@@ -30,7 +30,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     participationId: number;
     exerciseId: number;
     repositoryType: string;
-    repositoryId?: number;
+    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     paramSub: Subscription;
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
@@ -51,14 +51,13 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.participationId = Number(params['participationId']);
             this.exerciseId = Number(params['exerciseId']);
-            this.repositoryType = params['repositoryType'];
+            this.repositoryType = params['repositoryType'] ?? 'USER';
             this.repositoryId = Number(params['repositoryId']);
-            if (this.repositoryType) {
-                this.loadDifferentParticipation();
-            } else {
+            if (this.repositoryId && this.repositoryType === 'USER') {
                 this.loadStudentParticipation();
+            } else {
+                this.loadDifferentParticipation();
             }
         });
     }
@@ -108,7 +107,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     private loadStudentParticipation() {
         this.participationSub = this.programmingExerciseParticipationService
-            .getStudentParticipationWithAllResults(this.participationId)
+            .getStudentParticipationWithAllResults(this.repositoryId!)
             .pipe(
                 tap((participation) => {
                     this.participation = participation;
@@ -130,7 +129,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleCommits() {
-        if (!this.repositoryType) {
+        if (this.repositoryType === 'USER') {
             this.handleParticipationCommits();
         } else if (this.repositoryType === 'AUXILIARY') {
             this.handleAuxiliaryRepositoryCommits();

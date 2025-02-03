@@ -11,7 +11,11 @@
                         [smallButtons]="true"
                         [participations]="[participation]"
                         [repositoryUri]="participation?.userIndependentRepositoryUri ?? ''"
-                        [routerLinkForRepositoryView]="[routerLink, 'exercises', exercise.id!, 'repository', participation.id!]"
+                        [routerLinkForRepositoryView]="
+                            isInCourseManagement
+                                ? ['..', 'programming-exercises', exercise.id!, 'repository', 'USER', participation.id!]
+                                : [routerLink, 'exercises', exercise.id!, 'repository', participation.id!]
+                        "
                     />
                     <br />
                     <span>

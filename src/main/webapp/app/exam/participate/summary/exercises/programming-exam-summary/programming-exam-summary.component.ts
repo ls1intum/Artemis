@@ -67,12 +67,13 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     routerLink: string;
     localVCEnabled = false;
+    isInCourseManagement = false;
 
     ngOnInit() {
         this.routerLink = this.router.url;
         this.result = this.participation.results?.[0];
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
-
+        this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
