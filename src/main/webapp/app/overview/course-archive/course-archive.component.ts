@@ -11,12 +11,13 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
-    imports: [ArtemisSharedModule, CourseCardHeaderComponent, SearchFilterComponent],
+    imports: [ArtemisSharedModule, CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private archiveCourseSubscription: Subscription;
