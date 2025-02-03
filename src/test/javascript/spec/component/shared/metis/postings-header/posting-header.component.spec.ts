@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MetisModule } from 'app/shared/metis/metis.module';
 import { DebugElement, Injector, input, runInInjectionContext } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -8,7 +7,6 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,6 +23,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingHeaderComponent', () => {
     let component: PostingHeaderComponent;
@@ -34,12 +34,16 @@ describe('PostingHeaderComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: AccountService, useClass: MockAccountService }],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             declarations: [
                 PostingHeaderComponent,
                 FaIconComponent,
-                MockComponent(PostCreateEditModalComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(PostingMarkdownEditorComponent),
