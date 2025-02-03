@@ -12,6 +12,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { CommitsInfoComponent } from '../../exercises/programming/shared/commits-info/commits-info.component';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -29,7 +30,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     participationId: number;
     exerciseId: number;
-    repositoryType: string;
+    repositoryType: RepositoryType;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     paramSub: Subscription;
     commits: CommitInfo[];
