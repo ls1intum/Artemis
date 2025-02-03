@@ -11,7 +11,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 
 /**
  * An abstract component used to import course competencies. Its concrete implementations are
@@ -19,7 +18,6 @@ import { CompetencySearchComponent } from 'app/course/competencies/import/compet
  */
 @Component({
     template: '',
-    imports: [CompetencySearchComponent],
 })
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
