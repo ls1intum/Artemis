@@ -1,7 +1,7 @@
 .settings-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
     height: 100%;
     width: 100%;
     padding: 20px;
@@ -27,16 +27,22 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
-            align-items: center;
             gap: 5px;
         }
     }
 }
 .settings-container {
-    align-items: center;
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 400px;
     background-color: var(--iris-chat-widget-background);
+}
+
+.button-toolbar {
+    display: flex;
+    justify-content: end;
+    gap: 10px;
 }
 
 .settings-header {

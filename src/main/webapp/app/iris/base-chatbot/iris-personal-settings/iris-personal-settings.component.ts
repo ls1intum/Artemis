@@ -1,19 +1,18 @@
-import { Component, ModelSignal, OnInit, inject, model, output } from '@angular/core';
+import { Component, DestroyRef, OnInit, WritableSignal, inject, output, signal } from '@angular/core';
 import { IrisProactiveEventDisableDuration } from 'app/entities/iris/iris-disable-proactive-events-dto.model';
 import { IrisPersonalSettings } from 'app/entities/iris/settings/iris-personal-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 /**
  * Component for the personal settings of Iris.
@@ -23,11 +22,9 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
     templateUrl: './iris-personal-settings.component.html',
     styleUrls: ['./iris-personal-settings.component.scss'],
     imports: [
-        TranslateDirective,
         FormsModule,
+        ReactiveFormsModule,
         FormDateTimePickerComponent,
-        ButtonComponent,
-        ArtemisDatePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
         NgbTooltip,
@@ -37,12 +34,13 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
         NgbDropdownButtonItem,
         NgbDropdownItem,
         CommonModule,
-        KeysPipe,
+        ArtemisDatePipe,
     ],
 })
 export class IrisPersonalSettingsComponent implements OnInit {
     private accountService = inject(AccountService);
-    public settingsResult = output<IrisPersonalSettings>();
+    public settingsResult = output<IrisPersonalSettings | undefined>();
+    private destroyRef = inject(DestroyRef);
 
     protected currentDate: dayjs.Dayjs;
     protected proactiveDisableOptions: string[];
@@ -53,44 +51,103 @@ export class IrisPersonalSettingsComponent implements OnInit {
         FOREVER: 'forever',
         CUSTOM: 'custom',
     };
+    protected customSelected: WritableSignal<boolean> = signal<boolean>(false);
+    protected selectedDurationOption = signal<string | null>(null);
+    protected disabledUntilDate = signal<dayjs.Dayjs | null>(null);
+    protected savedEndTime: dayjs.Dayjs | null | undefined;
 
-    public personalChatSettings: ModelSignal<IrisPersonalSettings> = model<IrisPersonalSettings>({
-        proactivitySettings: {
-            duration: null,
-            endTime: null,
-        },
-    });
+    public personalChatSettings: FormGroup;
 
     protected readonly faXmark = faXmark;
     constructor() {}
 
     public ngOnInit(): void {
         this.currentDate = dayjs();
-        this.updatePersonalSettings('proactivitySettings.endTime', this.accountService.userIdentity?.irisProactiveEventsDisabled);
-        this.proactiveDisableOptions = Object.keys(IrisProactiveEventDisableDuration).filter((key) => isNaN(Number(key)));
-    }
-
-    /**
-     * Update the personal chat settings.
-     * @param path The path to the setting.
-     * @param value The new value of the setting.
-     */
-    updatePersonalSettings(path: string, value: any) {
-        const keys = path.split('.');
-        this.personalChatSettings.update((settings) => {
-            let current = { ...settings };
-            for (let i = 0; i < keys.length - 1; i++) {
-                current = { ...current, [keys[i]]: { ...(current as any)[keys[i]] } };
-            }
-            (current as any)[keys[keys.length - 1]] = value;
-            return { ...settings, ...current };
+        this.savedEndTime = this.accountService.userIdentity?.irisProactiveEventsDisabled;
+        this.personalChatSettings = new FormGroup({
+            proactivitySettings: new FormGroup({
+                duration: new FormControl<string | null>(null),
+                endTime: new FormControl<dayjs.Dayjs | null>(this.savedEndTime ?? null),
+            }),
         });
+        this.proactiveDisableOptions = Object.keys(IrisProactiveEventDisableDuration).filter((key) => isNaN(Number(key)));
+        this.initFormControlListeners();
     }
 
     /**
-     * Closes the settings window.
+     * Initializes the form control listener for the form controls.
+     */
+    public initFormControlListeners(): void {
+        this.personalChatSettings
+            .get('proactivitySettings.duration')
+            ?.valueChanges.pipe(
+                takeUntilDestroyed(this.destroyRef),
+                tap((value) => {
+                    this.selectedDurationOption.set(IrisProactiveEventDisableDuration[value]);
+                    this.customSelected.set(value === IrisProactiveEventDisableDuration.CUSTOM);
+                    this.setDisabledUntilDate(value);
+                }),
+            )
+            .subscribe();
+        this.personalChatSettings
+            .get('proactivitySettings.endTime')
+            ?.valueChanges.pipe(
+                takeUntilDestroyed(this.destroyRef),
+                tap((date) => this.disabledUntilDate.set(date)),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Sets the proactive disable option.
+     * @param option The option to set.
+     */
+    public setProactiveDisableOption(option: string | undefined | null): void {
+        const duration = option ? IrisProactiveEventDisableDuration[option as keyof typeof IrisProactiveEventDisableDuration] : null;
+        this.personalChatSettings.get('proactivitySettings.duration')?.setValue(duration);
+    }
+
+    /**
+     * Closes the settings window without saving.
      */
     public close(): void {
-        this.settingsResult.emit(this.personalChatSettings());
+        this.settingsResult.emit(undefined);
+    }
+
+    /**
+     * Saves the settings.
+     */
+    public save(): void {
+        const settings = this.personalChatSettings.value;
+        this.settingsResult.emit(settings);
+    }
+
+    /**
+     * Resets the settings to the default values.
+     */
+    public reset(): void {
+        this.personalChatSettings.reset();
+    }
+
+    /**
+     * Sets the disabled until date based on the duration.
+     * @param duration
+     * @private
+     */
+    private setDisabledUntilDate(duration: IrisProactiveEventDisableDuration): void {
+        switch (duration) {
+            case IrisProactiveEventDisableDuration.ONE_HOUR:
+                this.disabledUntilDate.set(dayjs().add(1, 'hour'));
+                break;
+            case IrisProactiveEventDisableDuration.ONE_DAY:
+                this.disabledUntilDate.set(dayjs().add(1, 'day'));
+                break;
+            case IrisProactiveEventDisableDuration.THIRTY_MINUTES:
+                this.disabledUntilDate.set(dayjs().add(30, 'minute'));
+                break;
+            case IrisProactiveEventDisableDuration.FOREVER:
+                this.disabledUntilDate.set(null);
+                break;
+        }
     }
 }

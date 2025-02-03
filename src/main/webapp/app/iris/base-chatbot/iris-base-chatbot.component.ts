@@ -43,6 +43,7 @@ import { IrisPersonalSettingsComponent } from 'app/iris/base-chatbot/iris-person
 import { IrisPersonalSettings } from 'app/entities/iris/settings/iris-personal-settings.model';
 import { IrisProactiveEventDisableDuration } from 'app/entities/iris/iris-disable-proactive-events-dto.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -481,7 +482,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     private personalSettingsValid(settings: IrisPersonalSettings): boolean {
         if (settings.proactivitySettings.duration === IrisProactiveEventDisableDuration.CUSTOM) {
-            return settings.proactivitySettings.endTime !== null && settings.proactivitySettings.endTime.isValid();
+            return settings.proactivitySettings.endTime !== null && dayjs(settings.proactivitySettings.endTime as unknown as dayjs.Dayjs).isValid();
         }
         return settings.proactivitySettings.duration !== null;
     }
@@ -522,7 +523,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const irisPersonalSettingsPortal = new ComponentPortal(IrisPersonalSettingsComponent);
         const irisPersonalSettingsComponentRef = this.personalSettingsMenuOverlayRef.attach(irisPersonalSettingsPortal);
         this.personalSettingsSubscription = irisPersonalSettingsComponentRef.instance.settingsResult.subscribe((settings) => {
-            this.updatePersonalSettings(settings);
+            if (settings) {
+                this.updatePersonalSettings(settings);
+            }
+
             this.closeIrisPersonalSettings();
         });
         this.personalSettingsMenuOverlayRef

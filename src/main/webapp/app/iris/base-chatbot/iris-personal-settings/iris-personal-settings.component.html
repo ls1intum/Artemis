@@ -7,37 +7,69 @@
             </button>
         </div>
     </div>
-    <div class="settings-content">
-        <div class="settings-content-section">
-            <h5>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.title' | artemisTranslate }}</h5>
-        </div>
-        <div class="settings-content-item">
-            <div class="settings-content-item-label">
-                <span>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.title' | artemisTranslate }}</span>
+    <div class="settings-content" [formGroup]="personalChatSettings">
+        <div>
+            <div class="settings-content-section">
+                <h5>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.title' | artemisTranslate }}</h5>
             </div>
-            <div class="settings-content-item-input">
-                <div ngbDropdown class="d-block flex-grow-1">
-                    <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>Until</button>
-                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                        @for (option of proactiveDisableOptions; track option) {
-                            <button ngbDropdownItem>
-                                {{
-                                    'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.options.' + durationTranslationsMap[option]
-                                        | artemisTranslate
-                                }}
-                            </button>
-                        }
-                    </div>
+            <div class="settings-content-item" formGroupName="proactivitySettings">
+                <div class="settings-content-item-label">
+                    <span>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.title' | artemisTranslate }}</span>
                 </div>
-                <jhi-date-time-picker
-                    [ngModel]="personalChatSettings().proactivitySettings.endTime"
-                    (ngModelChange)="updatePersonalSettings('proactivitySettings.endTime', $event)"
-                    [shouldDisplayTimeZoneWarning]="false"
-                    [min]="currentDate"
-                    name="disableProactivityDate"
-                    id="disableProactivityDate"
-                />
+                <div class="settings-content-item-input">
+                    <div ngbDropdown class="d-block w-50">
+                        <button
+                            class="btn btn-outline-primary w-100"
+                            id="dropdownBasic1"
+                            ngbDropdownToggle
+                            [class.selected]="null === selectedDurationOption()"
+                            (click)="setProactiveDisableOption(null)"
+                        >
+                            @if (null === selectedDurationOption()) {
+                                {{ 'Until' }}
+                            } @else {
+                                {{
+                                    'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.options.' +
+                                        durationTranslationsMap[selectedDurationOption() || ''] | artemisTranslate
+                                }}
+                            }
+                        </button>
+                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                            @for (option of proactiveDisableOptions; track option) {
+                                <button ngbDropdownItem (click)="setProactiveDisableOption(option)" [class.selected]="option === selectedDurationOption()">
+                                    {{
+                                        'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.options.' + durationTranslationsMap[option]
+                                            | artemisTranslate
+                                    }}
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    @if (customSelected()) {
+                        <jhi-date-time-picker
+                            [hideLabelName]="true"
+                            labelName="End time"
+                            formControlName="endTime"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [requiredField]="true"
+                            [min]="currentDate"
+                            name="disableProactivityDate"
+                            id="disableProactivityDate"
+                        />
+                    }
+                </div>
+                @if (disabledUntilDate()) {
+                    <span class="d-block w-100 mt-4">{{ 'Proactive events will be disabled until' }} {{ disabledUntilDate() | artemisDate }}</span>
+                } @else if (selectedDurationOption() === 'FOREVER') {
+                    <span class="d-block w-100 mt-4">{{ 'Proactive events will be disabled forever' }}</span>
+                } @else if (savedEndTime) {
+                    <span class="d-block w-100 mt-4">{{ 'Proactive events are currently disabled until' }} {{ savedEndTime | artemisDate }}</span>
+                }
             </div>
+        </div>
+        <div class="button-toolbar">
+            <button class="btn btn-outline-secondary" (click)="reset()">Reset</button>
+            <button class="btn btn-primary" (click)="save()" [disabled]="!this.personalChatSettings.valid">Save</button>
         </div>
     </div>
 </section>
