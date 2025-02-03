@@ -173,10 +173,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             .subscribe((pinnedPosts) => {
                 this.pinnedPosts = pinnedPosts;
                 this.pinnedCount.emit(pinnedPosts.length);
+                this.cdr.detectChanges();
             });
 
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
-
         this.cdr.detectChanges();
     }
 
