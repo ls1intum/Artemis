@@ -91,7 +91,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     onCreateLectureUnit(type: LectureUnitType) {
         this.isEditingLectureUnit = false;
-
+        this.onCloseLectureUnitForms();
         switch (type) {
             case LectureUnitType.TEXT:
                 this.isTextUnitFormOpen.set(true);
