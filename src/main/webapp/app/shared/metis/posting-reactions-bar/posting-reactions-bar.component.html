@@ -1,0 +1,172 @@
+<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
+    @if (getPostingType() === 'post') {
+        @if (hoverBar() && sortedAnswerPosts()?.length === 0) {
+            <div>
+                <button class="reaction-button clickable reply-btn" (click)="isCommunicationPage() ? openThread.emit() : openAnswerView()">
+                    <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                    <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
+                </button>
+            </div>
+        }
+        @if (!isCommunicationPage() && sortedAnswerPosts()?.length) {
+            @if (showAnswers()) {
+                <div>
+                    <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers()" (click)="closeAnswerView()">
+                        <jhi-emoji [emoji]="closeCrossId" />
+                        <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
+                    </button>
+                </div>
+            } @else {
+                <div>
+                    <button class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
+                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                        <span class="emoji-count">{{
+                            sortedAnswerPosts()?.length === 1
+                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
+                        }}</span>
+                    </button>
+                </div>
+            }
+        } @else if (!isThreadSidebar() && !showAnswers() && sortedAnswerPosts()?.length) {
+            <div>
+                <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
+                    <fa-icon [icon]="faArrowRight" />
+                    <span class="emoji-count px-2">{{
+                        sortedAnswerPosts()?.length === 1
+                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
+                    }}</span>
+                </button>
+            </div>
+        }
+    }
+
+    @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
+        @if (isEmojiCount()) {
+            <div>
+                <button
+                    [disabled]="isReadOnlyMode()"
+                    class="reaction-button clickable"
+                    [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
+                    (click)="updateReaction(reactionMetaData.key)"
+                    [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
+                >
+                    <div class="emoji-container">
+                        <jhi-emoji [emoji]="reactionMetaData.key" />
+                        <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">
+                            {{ reactionMetaData.value.count }}
+                        </span>
+                    </div>
+                </button>
+            </div>
+        }
+    }
+
+    <div [hidden]="isReadOnlyMode()">
+        <!-- Emoji picker -->
+        @if ((isAnyReactionCountAboveZero() && isEmojiCount()) || !isEmojiCount()) {
+            <ng-container>
+                <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector = !showReactionSelector" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+                    <fa-icon
+                        [icon]="getPostingType() === 'post' ? faSmile : faSmile"
+                        [class.open-selector]="showReactionSelector"
+                        [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+                    />
+                </button>
+
+                <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayHasBackdrop]="true"
+                    [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+                    [cdkConnectedOverlayOrigin]="trigger"
+                    [cdkConnectedOverlayOpen]="showReactionSelector"
+                    (backdropClick)="toggleEmojiSelect()"
+                >
+                    <jhi-emoji-picker
+                        [emojisToShowFilter]="emojisToShowFilter"
+                        (emojiSelect)="selectReaction($event)"
+                        [categoriesIcons]="categoriesIcons"
+                        [recent]="selectedCourseEmojis"
+                    />
+                </ng-template>
+            </ng-container>
+        }
+
+        <!-- Edit button -->
+        @if (!isEmojiCount() && mayEdit) {
+            <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
+                <fa-icon [icon]="faPencilAlt" />
+            </button>
+        }
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
+        <!-- Delete button -->
+        @if (!isEmojiCount() && mayDelete) {
+            <button class="reaction-button clickable fs-small">
+                <jhi-confirm-icon
+                    iconSize="sm"
+                    (confirmEvent)="deletePosting()"
+                    [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
+                />
+            </button>
+        }
+
+        <!-- Resolve post button -->
+        @if (getPostingType() === 'answerPost' && !isEmojiCount()) {
+            @if (!isAnswerOfAnnouncement && (isAtLeastTutorInCourse || isAuthorOfOriginalPost)) {
+                <button
+                    class="reaction-button clickable px-2 fs-small resolve"
+                    id="toggleElement"
+                    [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''"
+                    (click)="toggleResolvesPost()"
+                >
+                    @if (getResolvesPost()) {
+                        <fa-icon
+                            class="resolved"
+                            [icon]="faCheck"
+                            [ngbTooltip]="
+                                isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                                    ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                                    : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                            "
+                        />
+                    } @else {
+                        @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
+                        }
+                    }
+                </button>
+            }
+        }
+
+        <!-- Pin button -->
+        @if (getPostingType() === 'post' && !isEmojiCount() && (displayPriority === DisplayPriority.PINNED || canPin)) {
+            <button
+                class="reaction-button pin clickable fs-small"
+                [class.reaction-button--not-hoverable]="!canPin"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && canPin"
+                [disabled]="!canPin || isReadOnlyMode()"
+                (click)="canPin && togglePin()"
+            >
+                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" />
+            </button>
+        }
+
+        <!-- Save button -->
+        @if (!isEmojiCount()) {
+            <button
+                class="reaction-button clickable px-2 fs-small bookmark"
+                (click)="bookmarkPosting()"
+                [ngbTooltip]="(getSaved() ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
+            >
+                <fa-icon [icon]="getSaved() ? faBookmark : faBookmark" />
+            </button>
+        }
+    </div>
+
+    <!-- New message badge -->
+    @if (getPostingType() === 'post' && isEmojiCount() && getShowNewMessageIcon()) {
+        <div jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></div>
+    }
+</div>

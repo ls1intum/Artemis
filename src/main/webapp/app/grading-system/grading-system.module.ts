@@ -6,7 +6,6 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { gradingSystemState } from 'app/grading-system/grading-system.route';
 import { RouterModule } from '@angular/router';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
-import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { GradingSystemPresentationsComponent } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
@@ -14,7 +13,6 @@ import { GradingSystemPresentationsComponent } from 'app/grading-system/grading-
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(gradingSystemState),
-        ArtemisModePickerModule,
         ArtemisSharedComponentModule,
         GradingSystemComponent,
         DetailedGradingSystemComponent,
