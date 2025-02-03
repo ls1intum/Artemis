@@ -352,7 +352,7 @@ describe('FeedbackAnalysisComponent', () => {
                 occurrence: [0, 10],
                 errorCategories: ['Student Error'],
             };
-
+            component.previousRequestFilters.set(previousFilters);
             component.previousRequestGroupFeedback.set(false);
 
             component.updateCache(component.previousResponseData()!, component.previousRequestState()!, component.previousRequestFilters()!);
