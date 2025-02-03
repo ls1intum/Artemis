@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment-resolve.service';
 
-export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
+export const NEW_ASSESSMENT_PATH = 'new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
         path: NEW_ASSESSMENT_PATH,
@@ -19,7 +19,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessment',
+        path: ':submissionId/assessment',
         loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -32,7 +32,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessments/:resultId',
+        path: ':submissionId/assessments/:resultId',
         loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

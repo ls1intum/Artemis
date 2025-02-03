@@ -26,7 +26,7 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'text-exercises/:exerciseId',
+        path: 'text-exercises/:exerciseId/submissions',
         loadChildren: () => import('app/exercises/text/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
     },
     {
@@ -100,6 +100,6 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
-        loadChildren: () => import('../example-text-submission//example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
+        loadChildren: () => import('../example-text-submission/example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
     },
 ];
