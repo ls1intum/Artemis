@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -238,7 +241,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textExercise = textExerciseRepository.save(textExercise);
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         await().untilAsserted(
-                () -> assertThat(asyncExceptionLogAppender.list).extracting(event -> event.getThrowableProxy().getClassName()).contains(IllegalArgumentException.class.getName()));
+                () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
 
         asyncExceptionLogAppender.list.clear();
 
@@ -246,6 +249,15 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         programmingExerciseRepository.save(programmingExercise);
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         await().untilAsserted(
-                () -> assertThat(asyncExceptionLogAppender.list).extracting(event -> event.getThrowableProxy().getClassName()).contains(IllegalArgumentException.class.getName()));
+                () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
+    }
+
+    @Nullable
+    private static String getExceptionName(ILoggingEvent event) {
+        IThrowableProxy throwableProxy = event.getThrowableProxy();
+        if (throwableProxy == null) {
+            return null;
+        }
+        return throwableProxy.getClassName();
     }
 }
