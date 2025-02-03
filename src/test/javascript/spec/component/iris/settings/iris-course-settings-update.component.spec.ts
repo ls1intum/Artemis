@@ -95,5 +95,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent!.irisSettings.irisCourseChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisFaqIngestionSettings).toBeTruthy();
     });
 });

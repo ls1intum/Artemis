@@ -47,6 +47,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
                 LEFT JOIN FETCH irisSettings.irisLectureChatSettings
+                LEFT JOIN FETCH irisSettings.irisFaqIngestionSettings
             WHERE irisSettings.course.id = :courseId
             """)
     Optional<IrisCourseSettings> findCourseSettings(@Param("courseId") long courseId);
