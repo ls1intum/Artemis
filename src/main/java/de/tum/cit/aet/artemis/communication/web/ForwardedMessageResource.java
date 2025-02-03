@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -38,9 +38,6 @@ public class ForwardedMessageResource {
     private static final Logger log = LoggerFactory.getLogger(ForwardedMessageResource.class);
 
     private static final String ENTITY_NAME = "forwardedMessage";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ForwardedMessageRepository forwardedMessageRepository;
 
@@ -57,6 +54,7 @@ public class ForwardedMessageResource {
      * @throws BadRequestAlertException if the forwarded message already has an ID.
      */
     @PostMapping("forwarded-messages")
+    @EnforceAtLeastStudent
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
         if (forwardedMessage.getId() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
@@ -76,6 +74,7 @@ public class ForwardedMessageResource {
      * @throws BadRequestAlertException if the type parameter is invalid or unsupported.
      */
     @GetMapping("forwarded-messages")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> ids, @RequestParam String type) {
 
         log.debug("GET getForwardedMessages invoked with ids {} and type {}", ids, type);
