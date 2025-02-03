@@ -79,8 +79,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/iris-settings',
-        loadChildren: () =>
-            import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),
+        loadChildren: () => import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
     },
     {
         path: 'text-exercises/:exerciseId/exercise-statistics',

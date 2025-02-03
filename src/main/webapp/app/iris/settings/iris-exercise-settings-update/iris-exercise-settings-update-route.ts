@@ -1,13 +1,11 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { IrisModule } from 'app/iris/iris.module';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { IrisGuard } from 'app/iris/iris-guard.service';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component').then((m) => m.IrisExerciseSettingsUpdateComponent),
@@ -19,9 +17,3 @@ const routes: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes), IrisModule],
-    exports: [RouterModule],
-})
-export class IrisExerciseSettingsUpdateRoutingModule {}
