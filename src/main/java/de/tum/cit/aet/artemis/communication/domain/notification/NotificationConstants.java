@@ -129,6 +129,8 @@ public class NotificationConstants {
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent";
 
+    public static final String PLAGIARISM_CASE_REPLY_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseReply";
+
     public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationStudent";
 
     public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeregistrationStudent";
@@ -217,6 +219,8 @@ public class NotificationConstants {
     public static final String NEW_CPC_PLAGIARISM_CASE_STUDENT_TEXT = "artemisApp.singleUserNotification.text.newPlagiarismCaseStudentSignificantSimilarity";
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseVerdictStudent";
+
+    public static final String PLAGIARISM_CASE_REPLY_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseReply";
 
     public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupRegistrationStudent";
 

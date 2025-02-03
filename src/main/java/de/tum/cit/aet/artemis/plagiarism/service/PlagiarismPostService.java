@@ -90,6 +90,11 @@ public class PlagiarismPostService extends PostingService {
         return savedPost;
     }
 
+    public void informInstructorAboutPostReply(long postId) {
+        Post post = postRepository.findPostByIdElseThrow(postId);
+        plagiarismCaseService.informInstructorAboutPostReply(post);
+    }
+
     /**
      * Persists the continuous plagiarism control plagiarism case post,
      * and sends a notification to affected user groups

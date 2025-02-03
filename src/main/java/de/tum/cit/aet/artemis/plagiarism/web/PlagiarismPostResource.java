@@ -74,6 +74,17 @@ public class PlagiarismPostResource {
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
     }
 
+    @GetMapping("posts/{postId}/informInstructor")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Post> informInstructorAboutPostReply(@PathVariable Long postId) {
+        log.debug("GET informInstructorAboutPostReply invoked for post {}", postId);
+        long start = System.nanoTime();
+
+        plagiarismPostService.informInstructorAboutPostReply(postId);
+        log.info("informInstructorAboutPostReply took {}", TimeLogUtil.formatDurationFrom(start));
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     /**
      * PUT /courses/{courseId}/posts/{postId} : Update an existing post with given id
      *

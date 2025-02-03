@@ -132,6 +132,7 @@ export class PlagiarismCasesService {
             observe: 'response',
         });
     }
+
     public getNumberOfPlagiarismCasesForExercise(exercise: Exercise): Observable<number> {
         let courseId: number;
         if (exercise.exerciseGroup) {
@@ -141,5 +142,9 @@ export class PlagiarismCasesService {
         }
         const exerciseId = exercise!.id;
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
+    }
+
+    public informInstructorAboutPostReply(postId: number): Observable<void> {
+        return this.http.get<void>(`api/posts/${postId}/informInstructor`);
     }
 }
