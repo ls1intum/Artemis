@@ -6,6 +6,15 @@ import { NewStudentParticipationResolver, StudentParticipationResolver } from 'a
 export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
+        path: '',
+        loadComponent: () => import('app/exercises/text/manage/text-exercise/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: NEW_ASSESSMENT_PATH,
         loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {

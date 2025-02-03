@@ -8,63 +8,60 @@
         [showCreationCard]="false"
         [showCompetencies]="false"
     />
-    @if (!isAnyUnitFormOpen()) {
-        <div class="form-group w-100 d-flex justify-content-start">
-            <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
-        </div>
-    } @else {
-        <div class="form-group">
-            @if (!isEditingLectureUnit) {
-                <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
-            } @else {
-                <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
-            }
-            @if (isTextUnitFormOpen()) {
-                <jhi-text-unit-form
-                    [isEditMode]="isEditingLectureUnit"
-                    [hasCancelButton]="true"
-                    (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createEditTextUnit($event)"
-                    [formData]="textUnitFormData"
-                />
-            }
-            @if (isVideoUnitFormOpen()) {
-                <jhi-video-unit-form
-                    [isEditMode]="isEditingLectureUnit"
-                    [hasCancelButton]="true"
-                    (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createEditVideoUnit($event)"
-                    [formData]="videoUnitFormData"
-                />
-            }
-            @if (isOnlineUnitFormOpen()) {
-                <jhi-online-unit-form
-                    [isEditMode]="isEditingLectureUnit"
-                    [hasCancelButton]="true"
-                    (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createEditOnlineUnit($event)"
-                    [formData]="onlineUnitFormData"
-                />
-            }
-            @if (isAttachmentUnitFormOpen()) {
-                <jhi-attachment-unit-form
-                    [isEditMode]="isEditingLectureUnit"
-                    [hasCancelButton]="true"
-                    (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createEditAttachmentUnit($event)"
-                    [formData]="attachmentUnitFormData"
-                />
-            }
-            @if (isExerciseUnitFormOpen()) {
-                <jhi-create-exercise-unit
-                    [shouldNavigateOnSubmit]="false"
-                    (onExerciseUnitCreated)="onExerciseUnitCreated()"
-                    [lectureId]="lecture.id"
-                    [courseId]="lecture.course?.id"
-                    [hasCancelButton]="true"
-                    (onCancel)="onCloseLectureUnitForms()"
-                />
-            }
-        </div>
-    }
+    <div class="form-group w-100 d-flex justify-content-start">
+        <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
+    </div>
+    <div class="form-group">
+        @if (isEditingLectureUnit) {
+            <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
+        } @else if (isAnyUnitFormOpen()) {
+            <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
+        }
+        @if (isTextUnitFormOpen()) {
+            <jhi-text-unit-form
+                [isEditMode]="isEditingLectureUnit"
+                [hasCancelButton]="true"
+                (onCancel)="onCloseLectureUnitForms()"
+                (formSubmitted)="createEditTextUnit($event)"
+                [formData]="textUnitFormData"
+            />
+        }
+        @if (isVideoUnitFormOpen()) {
+            <jhi-video-unit-form
+                [isEditMode]="isEditingLectureUnit"
+                [hasCancelButton]="true"
+                (onCancel)="onCloseLectureUnitForms()"
+                (formSubmitted)="createEditVideoUnit($event)"
+                [formData]="videoUnitFormData"
+            />
+        }
+        @if (isOnlineUnitFormOpen()) {
+            <jhi-online-unit-form
+                [isEditMode]="isEditingLectureUnit"
+                [hasCancelButton]="true"
+                (onCancel)="onCloseLectureUnitForms()"
+                (formSubmitted)="createEditOnlineUnit($event)"
+                [formData]="onlineUnitFormData"
+            />
+        }
+        @if (isAttachmentUnitFormOpen()) {
+            <jhi-attachment-unit-form
+                [isEditMode]="isEditingLectureUnit"
+                [hasCancelButton]="true"
+                (onCancel)="onCloseLectureUnitForms()"
+                (formSubmitted)="createEditAttachmentUnit($event)"
+                [formData]="attachmentUnitFormData"
+            />
+        }
+        @if (isExerciseUnitFormOpen()) {
+            <jhi-create-exercise-unit
+                [shouldNavigateOnSubmit]="false"
+                (onExerciseUnitCreated)="onExerciseUnitCreated()"
+                [lectureId]="lecture.id"
+                [courseId]="lecture.course?.id"
+                [hasCancelButton]="true"
+                (onCancel)="onCloseLectureUnitForms()"
+            />
+        }
+    </div>
 </div>
