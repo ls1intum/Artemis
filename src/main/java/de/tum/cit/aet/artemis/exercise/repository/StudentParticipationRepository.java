@@ -218,21 +218,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT DISTINCT sp
-            FROM StudentParticipation sp
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE sp.exercise.id = :exerciseId
-                AND sp.student.id = :studentId
-                AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id) FROM sp.submissions s2))
-                AND (r.id IS NULL OR r.id = (SELECT MAX(re2.id) FROM s.results re2))
-            """)
-    Set<StudentParticipation> findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("studentId") long studentId);
-
     /**
      * Get all participations for an exercise with each manual and latest results (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.

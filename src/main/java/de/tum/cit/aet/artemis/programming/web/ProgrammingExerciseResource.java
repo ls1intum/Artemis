@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -56,11 +55,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
-import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -81,7 +77,6 @@ import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProjectKeyProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -550,33 +545,6 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         return ResponseEntity.ok(programmingExercise);
-    }
-
-    /**
-     * GET /programming-exercises/project-key/:projectKey : Queries a programming exercise by its project key.
-     *
-     * @param projectKey the project key of the programming exercise
-     *
-     * @return the ProgrammingExercise with this project key in an ResponseEntity or 404 Not Found if no exercise exists. It includes the students participation, submissions,
-     *         results and feedbacks.
-     */
-    @GetMapping("programming-exercises/project-key/{projectKey}")
-    @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getProgrammingExerciseByProjectKey(@PathVariable String projectKey) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
-                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
-
-        if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this exercise");
-        }
-
-        var participations = studentParticipationRepository.findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId());
-        exercise.setStudentParticipations(participations);
-
-        return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
 
     /**
