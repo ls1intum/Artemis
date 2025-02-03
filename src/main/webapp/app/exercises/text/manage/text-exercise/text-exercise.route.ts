@@ -18,15 +18,6 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId',
-        loadComponent: () => import('./text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'text-exercises/:exerciseId/submissions',
         loadChildren: () => import('app/exercises/text/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
     },
     {
