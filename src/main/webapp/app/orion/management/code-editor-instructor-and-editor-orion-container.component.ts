@@ -42,7 +42,6 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     private orionBuildAndTestService = inject(OrionBuildAndTestService);
 
     orionState: OrionState;
-    REPOSITORY = RepositoryType;
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
@@ -84,4 +83,6 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         this.orionConnectorService.isBuilding(true);
         this.orionConnectorService.buildAndTestLocally();
     }
+
+    protected readonly RepositoryType = RepositoryType;
 }
