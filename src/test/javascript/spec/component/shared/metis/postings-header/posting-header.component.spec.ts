@@ -7,7 +7,6 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -45,7 +44,6 @@ describe('PostingHeaderComponent', () => {
             declarations: [
                 PostingHeaderComponent,
                 FaIconComponent,
-                MockComponent(PostCreateEditModalComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(PostingMarkdownEditorComponent),
