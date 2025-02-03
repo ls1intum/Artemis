@@ -72,11 +72,11 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
@@ -507,9 +507,9 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/build-config")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<ProgrammingExerciseBuildConfig> getBuildConfig(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseBuildConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
         log.debug("REST request to get build config of ProgrammingExercise : {}", exerciseId);
-        var buildConfig = programmingExerciseBuildConfigRepository.findByExerciseIdElseThrow(exerciseId);
+        var buildConfig = new ProgrammingExerciseBuildConfigDTO(programmingExerciseBuildConfigRepository.getTheiaImageByProgrammingExerciseId(exerciseId));
 
         return ResponseEntity.ok().body(buildConfig);
     }
