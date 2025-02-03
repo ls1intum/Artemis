@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CodeButtonComponent, States } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/code-button/code-button.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -35,7 +35,7 @@ describe('CodeButtonComponent', () => {
     const user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
     const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
 
-    let localStorageState: States = States.SSH;
+    let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
     let router: MockRouter;
 
     const info: ProfileInfo = {
@@ -52,7 +52,7 @@ describe('CodeButtonComponent', () => {
         contact: '',
         externalUserManagementName: '',
         externalUserManagementURL: '',
-        authenticationMechanisms: ['ssh', 'token', 'password'],
+        repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
         features: [],
         inProduction: false,
         inDevelopment: true,
@@ -130,7 +130,7 @@ describe('CodeButtonComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-        localStorageState = States.SSH;
+        localStorageState = RepositoryAuthenticationMethod.SSH;
     });
 
     it('should initialize', async () => {
@@ -206,7 +206,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = info.versionControlUrl!;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = States.Password;
+        localStorageState = RepositoryAuthenticationMethod.Password;
         component.isTeamParticipation = true;
         fixture.detectChanges();
 
@@ -222,7 +222,7 @@ describe('CodeButtonComponent', () => {
     it('should insert the correct token in the repository uri', async () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = States.Token;
+        localStorageState = RepositoryAuthenticationMethod.Token;
 
         await component.ngOnInit();
         fixture.detectChanges();
@@ -255,7 +255,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
 
         component.isTeamParticipation = false;
-        component.currentState = States.Token;
+        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
         fixture.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
