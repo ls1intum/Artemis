@@ -19,7 +19,7 @@
 @if (exercise) {
     <div class="h-100">
         <div class="d-flex align-items-center justify-content-end mb-1">
-            @if (!!selectedParticipation && selectedRepository !== REPOSITORY.TEST) {
+            @if (!!selectedParticipation && selectedRepository !== REPOSITORY.TESTS) {
                 <jhi-updating-result
                     [exercise]="exercise"
                     [participation]="selectedParticipation!"
@@ -61,16 +61,16 @@
                         [disabled]="!exercise"
                         (click)="selectTestRepository()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === REPOSITORY.TESTS ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
                 </div>
             </div>
-            @if (selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedRepository !== REPOSITORY.TESTS) {
                 <jhi-programming-exercise-student-trigger-build-button class="me-3" [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
             }
             <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()" />
-            @if (selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedRepository !== REPOSITORY.TESTS) {
                 <jhi-ide-button
                     class="ms-1"
                     [buttonLoading]="orionState.building"

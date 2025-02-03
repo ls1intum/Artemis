@@ -66,7 +66,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { RepositoryType } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
@@ -250,7 +250,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(comp.exercise).toEqual(exercise);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEMPLATE);
+        expect(comp.selectedRepository).toBe(comp.repositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState).toBe(comp.LOADING_STATE.CLEAR);
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
@@ -314,7 +314,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(comp.selectedParticipation).toEqual(exercise.templateParticipation);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEST);
+        expect(comp.selectedRepository).toBe(comp.repositoryType.TESTS);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
 
@@ -328,7 +328,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.SOLUTION);
+        expect(comp.selectedRepository).toBe(comp.repositoryType.SOLUTION);
         expect(comp.selectedParticipation).toEqual(exercise.solutionParticipation);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
@@ -361,7 +361,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.ASSIGNMENT);
+        expect(comp.selectedRepository).toBe(comp.repositoryType.ASSIGNMENT);
         expect(comp.selectedParticipation).toEqual(exercise.studentParticipations[0]);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component

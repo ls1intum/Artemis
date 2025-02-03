@@ -45,7 +45,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         },
     ];
 
-    const route = { params: of({ participationId: '5' }) } as any as ActivatedRoute;
+    const route = { params: of({ repositoryId: '5' }) } as any as ActivatedRoute;
 
     function setupTestBed() {
         fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);

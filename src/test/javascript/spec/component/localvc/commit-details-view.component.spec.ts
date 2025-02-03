@@ -137,7 +137,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle commits for student participation', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, repositoryType: 'USER', commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -155,7 +155,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle commits for template participation', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -173,7 +173,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle new report for commit with template', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -190,7 +190,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle new report for template commit', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit1', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit1', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -211,7 +211,7 @@ describe('CommitDetailsViewComponent', () => {
     it('should handle new report for commits', () => {
         setupComponent();
         //different commit hash than usual
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit3', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit3', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -228,7 +228,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle error when retrieving commit info', () => {
         setupComponent(true);
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -245,7 +245,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should fetch repository files', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(mockRepositoryFiles));
 
         // Trigger ngOnInit
@@ -266,7 +266,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle error when fetching left repository files', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
@@ -294,7 +294,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle error when fetching right repository files', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Define a variable to track the number of calls to the method
         let callCount = 0;

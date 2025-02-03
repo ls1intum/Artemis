@@ -41,7 +41,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
 
     it('should download the repos', () => {
         component.exerciseId = 1;
-        const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS', 'AUXILIARY'];
+        const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TEST', 'AUXILIARY'];
         repoTypes.forEach((repoType) => {
             const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
             component.repositoryType = repoType;

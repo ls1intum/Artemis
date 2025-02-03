@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -52,6 +52,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
 import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -104,6 +105,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     // @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     // @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
+    protected readonly RepositoryType = RepositoryType;
 
     // Icons
     faSort = faSort;
@@ -251,7 +253,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId
      * @param repositoryType
      */
-    downloadRepository(programmingExerciseId: number | undefined, repositoryType: ProgrammingExerciseInstructorRepositoryType) {
+    downloadRepository(programmingExerciseId: number | undefined, repositoryType: RepositoryType) {
         if (programmingExerciseId) {
             // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
             this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {

@@ -5,6 +5,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ProgrammingAuxiliaryRepositoryButtonsDetail } from 'app/detail-overview-list/detail.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-auxiliary-repository-buttons-detail',
@@ -15,4 +16,5 @@ export class ProgrammingAuxiliaryRepositoryButtonsDetailComponent {
     @Input() detail: ProgrammingAuxiliaryRepositoryButtonsDetail;
 
     readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly RepositoryType = RepositoryType;
 }

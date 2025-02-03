@@ -9,7 +9,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedUtilConnector, OrionState, OrionVCSConnector } from 'app/shared/orion/orion';
 import { AlertService } from 'app/core/util/alert.service';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { RepositoryType } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 

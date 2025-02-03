@@ -156,7 +156,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
@@ -195,7 +195,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.AUXILIARY_REPOSITORY, mockAuxiliaryRepository]);
@@ -204,7 +204,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 
@@ -341,7 +340,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 });

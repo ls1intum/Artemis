@@ -2,7 +2,6 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
@@ -13,6 +12,7 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Course } from 'app/entities/course.model';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -100,7 +100,7 @@ export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     data: {
         exerciseId?: number;
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        type: ProgrammingExerciseInstructorRepositoryType;
+        type: RepositoryType;
     };
 }
 
