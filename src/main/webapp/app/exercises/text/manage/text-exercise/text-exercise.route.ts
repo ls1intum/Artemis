@@ -86,7 +86,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/tutor-effort-statistics',
-        loadChildren: () => import('../tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
+        loadChildren: () => import('../tutor-effort/tutor-effort-statistics.route').then((m) => m.tutorEffortStatisticsRoute),
     },
     {
         path: 'text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',

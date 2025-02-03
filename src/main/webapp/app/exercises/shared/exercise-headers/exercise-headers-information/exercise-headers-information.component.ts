@@ -10,7 +10,6 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
@@ -18,11 +17,12 @@ import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    imports: [SubmissionResultStatusModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule, ExerciseCategoriesComponent],
+    imports: [InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule, ExerciseCategoriesComponent, SubmissionResultStatusComponent],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]

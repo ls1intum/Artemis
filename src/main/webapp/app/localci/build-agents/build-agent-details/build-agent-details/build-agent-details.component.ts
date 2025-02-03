@@ -11,14 +11,14 @@ import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    imports: [ArtemisSharedModule, NgxDatatableModule, SubmissionResultStatusModule, DataTableComponent],
+    imports: [ArtemisSharedModule, NgxDatatableModule, DataTableComponent, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);

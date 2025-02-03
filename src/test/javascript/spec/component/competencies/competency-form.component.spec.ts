@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -14,7 +14,6 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
@@ -30,6 +29,7 @@ describe('CompetencyFormComponent', () => {
             declarations: [],
             providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
         })
+            // TODO
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
                 add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },

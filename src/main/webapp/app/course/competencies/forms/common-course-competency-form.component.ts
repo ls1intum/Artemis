@@ -10,9 +10,9 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -24,9 +24,9 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
         NgbDropdownModule,
         ReactiveFormsModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
         FormDateTimePickerComponent,
         TaxonomySelectComponent,
+        MarkdownEditorMonacoComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
@@ -93,6 +93,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
     }
+
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.
