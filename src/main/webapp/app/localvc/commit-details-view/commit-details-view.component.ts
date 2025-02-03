@@ -10,6 +10,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { GitDiffReportComponent } from 'app/exercises/programming/git-diff-report/git-diff-report.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -33,7 +34,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    repositoryType: string;
+    repositoryType: RepositoryType;
 
     repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
@@ -73,7 +74,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private retrieveAndHandleCommits() {
         let commitInfoSubscription;
-        if (this.repositoryType !== 'USER') {
+        if (this.repositoryType !== RepositoryType.USER) {
             commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
         } else if (this.repositoryId) {
             commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId);

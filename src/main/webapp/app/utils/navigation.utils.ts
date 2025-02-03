@@ -3,6 +3,7 @@ import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
@@ -157,7 +158,7 @@ export const getExerciseDashboardLink = (courseId: number, exerciseId: number, e
 export const getLocalRepositoryLink = (
     courseId: number,
     exerciseId: number,
-    repositoryType: string,
+    repositoryType: RepositoryType,
     participationId: number,
     exerciseGroupId: number = 0,
     examId = 0,
