@@ -46,6 +46,7 @@ export class MetisService implements OnDestroy {
     private jhiWebsocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
+    private savedPostService: SavedPostService = inject(SavedPostService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
@@ -59,9 +60,7 @@ export class MetisService implements OnDestroy {
     private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
-
     private courseWideTopicSubscription: Subscription;
-    private savedPostService: SavedPostService = inject(SavedPostService);
 
     course: Course;
 

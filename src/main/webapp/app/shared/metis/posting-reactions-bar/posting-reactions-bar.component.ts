@@ -87,32 +87,40 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
-    private conversationService: ConversationService = inject(ConversationService);
-    private modalService: NgbModal = inject(NgbModal);
-    private metisConversationService: MetisConversationService = inject(MetisConversationService);
+    readonly onBookmarkClicked = output<void>();
+    readonly DisplayPriority = DisplayPriority;
+    readonly faBookmark = faBookmark;
+    readonly faSmile = faSmile;
+    readonly faCheck = faCheck;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faArrowRight = faArrowRight;
+    readonly faTrash = faTrashAlt;
+    readonly faShare = faShare;
 
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
-
-    posting = input<T>();
-    isThreadSidebar = input<boolean>();
-    isEmojiCount = input<boolean>(false);
-    isReadOnlyMode = input<boolean>(false);
-
-    openPostingCreateEditModal = output<void>();
-    closePostingCreateEditModal = output<void>();
-    reactionsUpdated = output<Reaction[]>();
-    isModalOpen = output<void>();
-
     showReactionSelector = false;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
     isAtLeastInstructorInCourse: boolean;
+    mayEdit: boolean;
+    mayDelete: boolean;
+    pinTooltip: string;
+    displayPriority: DisplayPriority;
+    canPin = false;
+    channels: ChannelDTO[] = [];
+    users: UserPublicInfoDTO[] = [];
+    posting = input<T>();
+    isThreadSidebar = input<boolean>();
+    isEmojiCount = input<boolean>(false);
+    isReadOnlyMode = input<boolean>(false);
+    openPostingCreateEditModal = output<void>();
+    closePostingCreateEditModal = output<void>();
+    reactionsUpdated = output<Reaction[]>();
+    isModalOpen = output<void>();
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
@@ -122,35 +130,20 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     lastReadDate = input<dayjs.Dayjs>();
     previewMode = input<boolean>();
     hoverBar = input<boolean>(true);
-
     showAnswersChange = output<boolean>();
     isLastAnswer = input<boolean>(false);
     postingUpdated = output<void>();
-    mayEdit: boolean;
-    mayDelete: boolean;
-    pinTooltip: string;
-    displayPriority: DisplayPriority;
-    canPin = false;
-    readonly DisplayPriority = DisplayPriority;
-    channels: ChannelDTO[] = [];
-    users: UserPublicInfoDTO[] = [];
-
-    isDeleteEvent = output<boolean>();
-    readonly onBookmarkClicked = output<void>();
     openThread = output<void>();
     originalPostDetails = input<Posting>();
     course = input<Course>();
-
-    // Icons
-    readonly faBookmark = faBookmark;
-    readonly faSmile = faSmile;
-    readonly faCheck = faCheck;
-    readonly faPencilAlt = faPencilAlt;
-    readonly faArrowRight = faArrowRight;
-    readonly faTrash = faTrashAlt;
-    readonly faShare = faShare;
-
+    isDeleteEvent = output<boolean>();
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');
+
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
+    private conversationService: ConversationService = inject(ConversationService);
+    private modalService: NgbModal = inject(NgbModal);
+    private metisConversationService: MetisConversationService = inject(MetisConversationService);
 
     /**
      * on initialization: updates the current posting and its reactions,
@@ -466,10 +459,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
      * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
      */
     forwardMessage(): void {
+        const isAnswer = this.getPostingType() === 'answerPost';
         if (!this.posting()!.content || this.posting()!.content === '') {
-            this.openForwardMessageView(this.originalPostDetails()!, false);
+            this.openForwardMessageView(this.originalPostDetails()!, isAnswer);
         } else {
-            this.openForwardMessageView(this.posting()!, false);
+            this.openForwardMessageView(this.posting()!, isAnswer);
         }
     }
 
