@@ -232,4 +232,11 @@ export class MonacoTextEditorAdapter implements TextEditor {
         const modifier = MonacoTextEditorAdapter.MODIFIER_MAP.get(keybinding.getModifier()) ?? 0;
         return keyCode | modifier;
     }
+
+    getFullText(): string {
+        const firstPosition = new TextEditorPosition(1, 1);
+        const lastPosition = this.getEndPosition();
+        const range = new TextEditorRange(firstPosition, lastPosition);
+        return this.getTextAtRange(range);
+    }
 }
