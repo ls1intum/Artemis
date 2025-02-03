@@ -5,7 +5,7 @@
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
             <div class="post-is-saved-message-content">
-                <fa-icon [icon]="faBookmark"></fa-icon>
+                <fa-icon [icon]="faBookmark" />
                 <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
             </div>
         </div>
@@ -88,13 +88,13 @@
                             (onUndoDeleteEvent)="onDeleteEvent(false)"
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
-                        ></jhi-posting-content>
+                        />
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <!-- Post reactions (that appear when post is hovered) -->
-                                <jhi-post-reactions-bar
+                                <jhi-posting-reactions-bar
                                     [lastReadDate]="lastReadDate"
-                                    [readOnlyMode]="readOnlyMode"
+                                    [isReadOnlyMode]="readOnlyMode"
                                     [previewMode]="previewMode"
                                     [posting]="posting"
                                     [(showAnswers)]="showAnswers"
@@ -126,9 +126,9 @@
         <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode, 'is-saved': posting.isSaved && isConsecutive() }">
             <!-- Post reactions -->
             @if (!previewMode) {
-                <jhi-post-reactions-bar
+                <jhi-posting-reactions-bar
                     [lastReadDate]="lastReadDate"
-                    [readOnlyMode]="readOnlyMode"
+                    [isReadOnlyMode]="readOnlyMode"
                     [previewMode]="previewMode"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
@@ -165,38 +165,40 @@
 />
 
 <!-- Right-Click Dropdown -->
-<div *ngIf="showDropdown" [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
-    <button class="dropdown-item d-flex" (click)="addReaction($event)">
-        <fa-icon [icon]="faSmile" class="item-icon"></fa-icon>
-        <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
-    </button>
-    @if (canPin) {
-        <button class="dropdown-item d-flex" (click)="togglePin()">
-            <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
-            <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
+@if (showDropdown) {
+    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
+        <button class="dropdown-item d-flex" (click)="addReaction($event)">
+            <fa-icon [icon]="faSmile" class="item-icon" />
+            <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
-    }
-    @if (mayEdit) {
-        <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
-            <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
-            <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
+        @if (canPin) {
+            <button class="dropdown-item d-flex" (click)="togglePin()">
+                <fa-icon [icon]="faThumbtack" class="item-icon" />
+                <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
+            </button>
+        }
+        @if (mayEdit) {
+            <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
+                <fa-icon [icon]="faPencilAlt" class="item-icon" />
+                <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
+            </button>
+        }
+        @if (mayDelete) {
+            <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
+                <fa-icon [icon]="faTrash" class="item-icon" />
+                <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
+            </button>
+        }
+        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent?.openAnswerView()">
+            <fa-icon [icon]="faComments" class="item-icon" />
+            <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
         </button>
-    }
-    @if (mayDelete) {
-        <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
-            <fa-icon [icon]="faTrash" class="item-icon"></fa-icon>
-            <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
+        <button class="dropdown-item d-flex" (click)="toggleSavePost()">
+            <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
+            <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
         </button>
-    }
-    <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent?.openAnswerView()">
-        <fa-icon [icon]="faComments" class="item-icon"></fa-icon>
-        <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
-    </button>
-    <button class="dropdown-item d-flex" (click)="toggleSavePost()">
-        <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon"></fa-icon>
-        <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
-    </button>
-</div>
+    </div>
+}
 
 <div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
 
@@ -208,5 +210,7 @@
     [cdkConnectedOverlayOpen]="showReactionSelector"
     (backdropClick)="toggleEmojiSelect()"
 >
-    <jhi-emoji-picker *ngIf="!readOnlyMode" (emojiSelect)="selectReaction($event)"></jhi-emoji-picker>
+    @if (!readOnlyMode) {
+        <jhi-emoji-picker (emojiSelect)="selectReaction($event)" />
+    }
 </ng-template>

@@ -245,7 +245,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
         String dummyContainerId = "1234567890";
 
-        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
+        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withEntrypoint().withCmd(String... cmd).exec()
         CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
         CreateContainerResponse createContainerResponse = new CreateContainerResponse();
         createContainerResponse.setId(dummyContainerId);
@@ -254,6 +254,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
         doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyList());
         doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withEntrypoint();
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();
 
@@ -506,11 +507,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }
@@ -553,6 +549,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // not needed for localVCS/CI
     }
 
     @Override
@@ -613,5 +614,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockUserExists(String username) throws Exception {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        // not relevant for local VC and local CI
     }
 }

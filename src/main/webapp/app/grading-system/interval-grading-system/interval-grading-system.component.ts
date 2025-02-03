@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +18,6 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
     styleUrls: ['./interval-grading-system.component.scss'],
     imports: [
         TranslateDirective,
-        ArtemisModePickerModule,
         ArtemisSharedComponentModule,
         FormsModule,
         FaIconComponent,
@@ -27,6 +25,7 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
         ArtemisTranslatePipe,
         SafeHtmlPipe,
         GradeStepBoundsPipe,
+        ModePickerComponent,
     ],
 })
 export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {

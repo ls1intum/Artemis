@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,7 +18,10 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { TranslateService } from '@ngx-translate/core';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -36,6 +39,8 @@ export class FaqComponent implements OnInit, OnDestroy {
     courseId: number;
     hasCategories = false;
     isAtLeastInstructor = false;
+    faqIngestionEnabled = false;
+    irisEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -43,8 +48,8 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     activeFilters = new Set<string>();
     searchInput = new BehaviorSubject<string>('');
-    predicate: string;
-    ascending: boolean;
+    predicate = 'id';
+    ascending = true;
 
     // Icons
     protected readonly faEdit = faEdit;
@@ -55,13 +60,17 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faSort = faSort;
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
+    protected readonly faFileExport = faFileExport;
 
     private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
-    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
+    private profileInfoSubscription: Subscription;
 
     constructor() {
         this.predicate = 'id';
@@ -82,12 +91,21 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
+        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+            if (this.irisEnabled) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+                });
+            }
+        });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
         this.routeDataSubscription?.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
     }
 
     deleteFaq(courseId: number, faqId: number) {
@@ -181,5 +199,16 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     acceptProposedFaq(courseId: number, faq: Faq) {
         this.updateFaqState(courseId, faq, FaqState.ACCEPTED, 'artemisApp.faq.accepted');
+    }
+
+    ingestFaqsInPyris() {
+        if (this.faqs.first()) {
+            this.faqService.ingestFaqsInPyris(this.courseId).subscribe({
+                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
+                error: () => {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');
+                },
+            });
+        }
     }
 }

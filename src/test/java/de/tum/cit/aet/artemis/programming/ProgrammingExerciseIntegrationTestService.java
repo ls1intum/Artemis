@@ -2088,6 +2088,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), templateBuildPlanName);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), solutionBuildPlanName);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);

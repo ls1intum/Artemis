@@ -17,19 +17,48 @@ const routes: Routes = [
     },
     {
         path: 'admin',
-        loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
+        data: {
+            authorities: [Authority.ADMIN],
+        },
+        canActivate: [UserRouteAccessService],
+        loadChildren: () => import('./admin/admin.routes'),
     },
     {
         path: 'privacy',
-        loadChildren: () => import('./core/legal/privacy.module').then((m) => m.ArtemisPrivacyModule),
+        loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
+        data: {
+            pageTitle: 'artemisApp.legal.privacyStatement.title',
+        },
+    },
+    {
+        path: 'privacy/data-exports',
+        loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.dataExport.title',
+        },
+    },
+    {
+        path: 'privacy/data-exports/:id',
+        loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.dataExport.title',
+        },
     },
     {
         path: 'imprint',
-        loadChildren: () => import('./core/legal/imprint.module').then((m) => m.ArtemisImprintModule),
+        loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
+        data: {
+            pageTitle: 'artemisApp.legal.imprint.title',
+        },
     },
     {
         path: 'about',
-        loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
+        loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
+        data: {
+            pageTitle: 'overview.aboutUs',
+        },
     },
     // ===== TEAM ====
     {
@@ -154,7 +183,7 @@ const routes: Routes = [
     // ===== EXAM =====
     {
         path: 'course-management/:courseId/exams',
-        loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+        loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoute),
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',
