@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureTranscriptionIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
@@ -133,7 +134,7 @@ public class PyrisJobService {
      */
     public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token, courseId, lectureId, 0);
+        var job = new LectureTranscriptionIngestionWebhookJob(token, courseId, lectureId);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
