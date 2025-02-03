@@ -28,6 +28,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { input, runInInjectionContext, SimpleChanges } from '@angular/core';
+import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -67,6 +69,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(ConversationService),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
                 ],
             }).compileComponents();
         }));

@@ -83,6 +83,7 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
             const currentCount = changes['pinnedMessageCount'].currentValue;
             if (this.showPinnedMessages && currentCount === 0) {
                 this.showPinnedMessages = false;
+                this.cdr.detectChanges();
             }
         }
     }

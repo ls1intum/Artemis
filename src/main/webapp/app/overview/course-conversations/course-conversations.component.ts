@@ -214,6 +214,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (this.pinnedCount == 0 && this.showOnlyPinned) {
             this.showOnlyPinned = false;
         }
+        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {
