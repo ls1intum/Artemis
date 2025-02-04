@@ -1,4 +1,4 @@
-import 'package:artemis_assignment/sort_strategy.dart';
+import 'sort_strategy.dart';
 
 class BubbleSort implements SortStrategy {
   /// Sorts dates with BubbleSort.

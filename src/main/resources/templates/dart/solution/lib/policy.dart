@@ -1,6 +1,6 @@
-import 'package:artemis_assignment/bubble_sort.dart';
-import 'package:artemis_assignment/context.dart';
-import 'package:artemis_assignment/merge_sort.dart';
+import 'bubble_sort.dart';
+import 'context.dart';
+import 'merge_sort.dart';
 
 class Policy {
   static const int mergeSortThreshold = 10;
