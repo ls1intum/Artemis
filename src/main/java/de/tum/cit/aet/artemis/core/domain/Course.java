@@ -115,7 +115,7 @@ public class Course extends DomainObject {
     private String semester;
 
     @Column(name = "test_course", nullable = false)
-    @JsonView({ QuizView.Before.class })
+    @JsonView(QuizView.Before.class)
     private boolean testCourse = false;
 
     @Enumerated(EnumType.STRING)
