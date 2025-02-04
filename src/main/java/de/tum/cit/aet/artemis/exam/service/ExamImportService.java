@@ -39,17 +39,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
+import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 @Profile(PROFILE_CORE)
 @Service
 public class ExamImportService {
 
-    private final TextExerciseImportService textExerciseImportService;
-
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextExerciseImportApi> textExerciseImportApi;
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
@@ -81,15 +78,14 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
-    public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
-            ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
-            ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
-            CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
+    public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, ModelingExerciseImportService modelingExerciseImportService,
+            ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository,
+            QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise, CourseRepository courseRepository,
+            ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
             FileUploadExerciseImportService fileUploadExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
-        this.textExerciseImportService = textExerciseImportService;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.examRepository = examRepository;
@@ -288,7 +284,7 @@ public class ExamImportService {
         for (Exercise exerciseToCopy : exerciseGroupToCopy.getExercises()) {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
-            Optional<Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
+            Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
                     final Optional<ModelingExercise> optionalOriginalModellingExercise = modelingExerciseRepository
                             .findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(exerciseToCopy.getId());
@@ -300,11 +296,10 @@ public class ExamImportService {
                 }
 
                 case TEXT -> {
-                    final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsById(exerciseToCopy.getId());
-                    if (optionalOriginalTextExercise.isEmpty()) {
+                    if (textExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield Optional.of(textExerciseImportService.importTextExercise(optionalOriginalTextExercise.get(), (TextExercise) exerciseToCopy));
+                    yield textExerciseImportApi.get().importTextExercise(exerciseToCopy.getId(), (TextExercise) exerciseToCopy);
                 }
 
                 case PROGRAMMING -> {

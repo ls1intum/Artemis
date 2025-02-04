@@ -51,4 +51,8 @@ public class TextApi extends AbstractTextApi {
     public void cancelScheduledOperations(long exerciseId) {
         textExerciseService.cancelScheduledOperations(exerciseId);
     }
+
+    public void save(TextExercise exercise) {
+        textExerciseRepository.save(exercise);
+    }
 }
