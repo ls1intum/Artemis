@@ -169,6 +169,11 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'quiz-exercises/:exerciseId',
+                loadChildren: () => import('app/exercises/quiz/manage/statistics/quiz-statistic.route').then((m) => m.quizStatisticRoute),
+            },
+
+            {
                 path: CourseOverviewRoutePath.COMPETENCIES,
                 data: {
                     authorities: [Authority.USER],
