@@ -13,7 +13,6 @@ import { ArtemisSharedCommonModule } from '../shared-common.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
-import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
@@ -26,7 +25,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         ArtemisSharedCommonModule,
         SubmissionResultStatusModule,
         SidebarCardDirective,
-        ArtemisExamSharedModule,
         SearchFilterComponent,
         ProfilePictureComponent,
         SidebarAccordionComponent,
