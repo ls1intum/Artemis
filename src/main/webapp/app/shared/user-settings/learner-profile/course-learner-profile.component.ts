@@ -76,7 +76,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateAimForGradeOrBonus(value: number) {
-        if (!this.courseLearnerProfiles) {
+        if (!this.courseLearnerProfiles || this.aimForGradeOrBonusState() != EditStateTransition.TrySave) {
             return;
         }
         const clp = this.courseLearnerProfiles[this.activeCourse];
@@ -91,7 +91,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateTimeInvestment(value: number) {
-        if (!this.courseLearnerProfiles) {
+        if (!this.courseLearnerProfiles || this.timeInvestmentState() != EditStateTransition.TrySave) {
             return;
         }
         const clp = this.courseLearnerProfiles[this.activeCourse];
@@ -106,7 +106,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateRepetitionIntensity(value: number) {
-        if (!this.courseLearnerProfiles) {
+        if (!this.courseLearnerProfiles || this.repetitionIntensityState() != EditStateTransition.TrySave) {
             return;
         }
         const clp = this.courseLearnerProfiles[this.activeCourse];
