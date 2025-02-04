@@ -306,7 +306,9 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
-        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
+        if (competencyApi.isPresent()) {
+            competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
+        }
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
