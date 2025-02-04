@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 
 @Profile(PROFILE_CORE)
+@Controller
 public class FileUploadImportApi extends AbstractFileModuleApi {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
