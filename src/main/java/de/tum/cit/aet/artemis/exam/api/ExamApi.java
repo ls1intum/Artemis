@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -30,7 +31,7 @@ public class ExamApi extends AbstractExamApi {
 
     private final ExamRepository examRepository;
 
-    public ExamApi(ExamService examService, ExamRepository examRepository) {
+    public ExamApi(@Lazy ExamService examService, ExamRepository examRepository) {
         this.examService = examService;
         this.examRepository = examRepository;
     }
