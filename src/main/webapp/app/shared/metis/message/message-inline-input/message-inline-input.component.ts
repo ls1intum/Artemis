@@ -109,6 +109,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         }
     }
 
+    /**
+     * Checks if Iris is enabled for the related channel content
+     * @private
+     */
     private checkForIrisEnabled(): void {
         if (this.course()?.id) {
             this.metisConversationService.activeConversation$.subscribe((conversation) => {
@@ -139,6 +143,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         } else if (channelDTO.subType == ChannelSubType.GENERAL) {
             this.irisSettingsService.getCombinedCourseSettings(referenceId).subscribe((irisSettings) => {
                 this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+            });
+        } else if (channelDTO.subType == ChannelSubType.LECTURE) {
+            this.irisSettingsService.getCombinedCourseSettings(referenceId).subscribe((irisSettings) => {
+                this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
             });
         } else {
             this.setIrisStatus(false, '');
