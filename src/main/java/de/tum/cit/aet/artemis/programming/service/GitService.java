@@ -102,6 +102,7 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.git.binary-file-extensions}")
     private List<String> binaryFileExtensions;
+
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
