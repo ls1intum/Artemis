@@ -32,10 +32,9 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -43,7 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -70,8 +69,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "modelingSubmission";
 
-    private final ResultRepository resultRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -83,25 +80,21 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final PlagiarismService plagiarismService;
 
-    private final ResultService resultService;
-
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ResultService resultService, ResultRepository resultRepository) {
+            GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.plagiarismService = plagiarismService;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -147,11 +140,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(exercise, modelingSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions)
+            modelingSubmission = (ModelingSubmission) api.preventMultipleSubmissions(exercise, modelingSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
