@@ -25,6 +25,17 @@
                     (click)="isModalOpen.emit()"
                 ></button>
             }
+            @if (irisEnabled) {
+                <button
+                    jhi-redirect-to-iris-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="isLoading || !formGroup.valid"
+                    class="btn btn-sm btn-outline-secondary"
+                    id="redirect-iris"
+                    type="button"
+                    (click)="redirectToIris()"
+                ></button>
+            }
             <button
                 jhi-posting-button
                 [buttonLoading]="isLoading"

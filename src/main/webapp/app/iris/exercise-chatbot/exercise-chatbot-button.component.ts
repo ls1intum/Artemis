@@ -81,6 +81,12 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             this.chatService.switchTo(this.mode, exerciseId);
         });
 
+        this.route.queryParams.subscribe((params: any) => {
+            if (params.irisQuestion) {
+                this.openChatWithPrefill(params.irisQuestion);
+            }
+        });
+
         // Subscribes to check for new messages
         this.numNewMessagesSubscription = this.chatService.numNewMessages.subscribe((num) => {
             this.hasNewMessages = num > 0;
@@ -153,6 +159,25 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
+        });
+        this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
+    }
+
+    /**
+     * Opens the chat with a message prefilled in the text field ready to sent
+     * @param message message that is prefilled in the text field
+     * @private
+     */
+    private openChatWithPrefill(message: string) {
+        this.chatOpen = true;
+        this.newIrisMessage = undefined;
+        this.isOverflowing = false;
+        this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
+            hasBackdrop: false,
+            scrollStrategy: this.overlay.scrollStrategies.noop(),
+            position: { bottom: '0px', right: '0px' },
+            disableClose: true,
+            data: { irisQuestion: message },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }

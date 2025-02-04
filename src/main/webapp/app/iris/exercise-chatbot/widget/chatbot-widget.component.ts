@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -17,6 +17,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private dialog = inject(MatDialog);
+    data = inject<{ irisQuestion: string }>(MAT_DIALOG_DATA);
 
     // User preferences
     initialWidth = 400;
