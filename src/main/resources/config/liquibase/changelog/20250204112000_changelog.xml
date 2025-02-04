@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250204112000" author="ole-ve">
+        <dropForeignKeyConstraint
+                baseTableName="course_learner_profile"
+                constraintName="FK_course_learner_profile_course"/>
+        <addForeignKeyConstraint
+                baseTableName="course_learner_profile"
+                baseColumnNames="course_id"
+                constraintName="FK_course_learner_profile_course"
+                referencedTableName="course"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint
+                baseTableName="competency_relation"
+                constraintName="FK_tail_competency_id"/>
+        <addForeignKeyConstraint
+                baseTableName="competency_relation"
+                baseColumnNames="tail_competency_id"
+                constraintName="FK_tail_competency_id"
+                referencedTableName="competency"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint
+                baseTableName="competency_relation"
+                constraintName="FK_head_competency_id"/>
+        <addForeignKeyConstraint
+                baseTableName="competency_relation"
+                baseColumnNames="head_competency_id"
+                constraintName="FK_head_competency_id"
+                referencedTableName="competency"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
