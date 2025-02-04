@@ -729,26 +729,21 @@ Feedback Analysis
 
 After verifying the exercise configuration, Artemis provides an advanced **Feedback Analysis** feature to help instructors and tutors **identify common mistakes** among students and improve grading efficiency.
 
-Accessing Feedback Analysis
----------------------------
+**Accessing Feedback Analysis**
 
 - Navigate to the **Exercise Management** page.
-- Open a programming exercise and select the **Feedback Analysis** tab.
+- Open a programming exercise and navigate to the grading section. Click on the **Feedback Analysis** tab.
+
 - A structured table provides an **overview of feedback occurrences**, categorized by **test cases, tasks, and error types**.
 
     .. figure:: programming/feedback-analysis-overview.png
           :align: center
 
-          *Feedback Analysis Overview* _(Placeholder)_
+          *Feedback Analysis Overview*
 
-Key Features
-------------
+**Key Features**
 
-1. **Aggregated Feedback Overview**
-   - **Groups similar feedback** messages together to highlight frequently occurring errors.
-   - Displays **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
-
-2. **Filtering and Sorting**
+1. **Filtering and Sorting**
    - **Filter feedback** by:
      - **Tasks**
      - **Test Cases**
@@ -761,28 +756,30 @@ Key Features
 
           *Filtering Options for Feedback Analysis* _(Placeholder)_
 
-3. **Detailed Feedback Inspection**
-   - Click on any feedback entry to view **detailed student submissions** and identify patterns.
-   - Open a **modal window** to inspect associated test cases and results.
-
-    .. figure:: programming/feedback-analysis-detail.png
-          :align: center
-
-          *Detailed Feedback View* _(Placeholder)_
-
-4. **Affected Students Overview**
+2. **Affected Students Overview**
    - View a **list of students** affected by specific feedback messages.
-   - Identify students struggling with similar mistakes and **offer targeted help**.
-   - Open **individual repositories** for further review.
+   - Open **individual repositories** for further review and correction of low-quality feedback.
 
     .. figure:: programming/feedback-analysis-affected-students.png
           :align: center
 
           *Affected Students View* _(Placeholder)_
 
+3. **Aggregated Feedback Overview**
+   - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+   - Displays **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+
+4. **Detailed Feedback Inspection**
+   - Click on any feedback entry to view **detailed feedback inspection**.
+   - Open a **modal window** to inspect for example feedback detailtexts which were too long and therefore had to be cut off in the table entry.
+
+    .. figure:: programming/feedback-analysis-detail.png
+          :align: center
+
+          *Detailed Feedback View* _(Placeholder)_
+
 5. **Communication & Collaboration**
    - Create **discussion channels** directly from the feedback analysis view.
-   - Automatically **send feedback reports** to affected students or tutors.
    - Enable **collaborative discussions** among tutors to streamline grading.
 
     .. figure:: programming/feedback-analysis-channel.png
@@ -790,10 +787,7 @@ Key Features
 
           *Creating a Feedback Discussion Channel* _(Placeholder)_
 
-Screencast: Using Feedback Analysis
------------------------------------
-
-To get a better understanding of the feature, you can watch the following screencast:
+- To get a better understanding of the feature, you can watch the following screencast:
 
 .. raw:: html
 
@@ -801,7 +795,3 @@ To get a better understanding of the feature, you can watch the following screen
         Watch this video on TUM-Live.
     </iframe>
 
-Conclusion
-----------
-
-The **Feedback Analysis** feature helps instructors quickly detect common mistakes, streamline grading, and enhance student learning by providing targeted feedback. The integration of filtering, sorting, and communication tools makes it an essential tool for managing large-scale programming exercises efficiently.
