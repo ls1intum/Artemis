@@ -20,7 +20,6 @@ import { Source } from 'app/entities/competency/standardized-competency.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
@@ -41,7 +40,6 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
                 CourseImportStandardizedPrerequisitesComponent,
                 ArtemisSharedCommonModule,
                 ArtemisSharedComponentModule,
-                ArtemisMarkdownModule,
                 StandardizedCompetencyFilterComponent,
                 StandardizedCompetencyDetailComponent,
                 KnowledgeAreaTreeComponent,

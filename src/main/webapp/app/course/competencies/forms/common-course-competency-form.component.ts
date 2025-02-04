@@ -6,7 +6,6 @@ import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAU
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
@@ -20,7 +19,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
     styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
         ArtemisSharedModule,
-        ArtemisMarkdownModule,
         NgbDropdownModule,
         ReactiveFormsModule,
         ArtemisSharedComponentModule,

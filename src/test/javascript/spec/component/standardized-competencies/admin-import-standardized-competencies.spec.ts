@@ -19,7 +19,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
 import { ArtemisSharedComponentModule } from '../../../../../main/webapp/app/shared/components/shared-component.module';
 import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
-import { ArtemisMarkdownModule } from '../../../../../main/webapp/app/shared/markdown.module';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -36,7 +35,6 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 MockComponent(StandardizedCompetencyDetailComponent),
                 MockModule(ArtemisSharedModule),
                 MockModule(ArtemisSharedComponentModule),
-                MockModule(ArtemisMarkdownModule),
                 MockModule(FontAwesomeModule),
                 MockComponent(StandardizedCompetencyDetailComponent),
                 MockComponent(KnowledgeAreaTreeComponent),
