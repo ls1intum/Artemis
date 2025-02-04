@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissio
 
 @Profile(PROFILE_CORE)
 @Controller
-public class FileSubmissionExportApi {
+public class FileSubmissionExportApi extends AbstractFileModuleApi {
 
     private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
 
