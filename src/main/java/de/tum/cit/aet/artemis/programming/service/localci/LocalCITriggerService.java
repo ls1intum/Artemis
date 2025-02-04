@@ -228,7 +228,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        // Save the build job before adding it to the queue in case it got quickly processed. Update statement would then fail.
+        // Save the build job before adding it to the queue to ensure it exists in the database.
+        // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
+        // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
         queue.add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),

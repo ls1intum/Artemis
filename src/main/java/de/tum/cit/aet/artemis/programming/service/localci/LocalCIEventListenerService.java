@@ -4,12 +4,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +30,17 @@ import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
+/**
+ * Central listener service for handling LocalCI events.
+ * This service listens for changes in build jobs and build agents, ensuring that job states are updated correctly
+ * and notifications are sent to users. It registers event listeners for build job queues and processing jobs,
+ * handling transitions such as a job starting or finishing.
+ * The service also periodically checks for lost or stuck jobs, marking them as missing if necessary.
+ * This helps recover from issues like CI agent crashes, network disruptions, or application restarts
+ * that might cause inconsistencies in job tracking. WebSocket updates are triggered to provide real-time
+ * feedback to users.
+ * New event listeners should be added here to ensure consistent handling of CI-related events.
+ */
 @Service
 @Profile("localci & scheduling")
 public class LocalCIEventListenerService {
@@ -58,7 +69,7 @@ public class LocalCIEventListenerService {
     /**
      * Add listeners for build job, build agent changes.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
         IMap<Long, BuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -69,8 +80,21 @@ public class LocalCIEventListenerService {
     }
 
     /**
-     * Check the status of pending build jobs. If a build job is missing from the queue, not being built or not finished, update the status to missing.
-     * Default interval is 5 minutes. Default delay is 1 minute.
+     * Periodically checks the status of pending build jobs and updates their status if they are missing.
+     * <p>
+     * This scheduled task ensures that build jobs which are stuck in the QUEUED or BUILDING state for too long
+     * are detected and marked as MISSING if their status cannot be verified. This helps prevent indefinite
+     * waiting states due to external failures or inconsistencies in the CI system.
+     * </p>
+     * <p>
+     * This mechanism is necessary because build jobs are managed externally, and various failure scenarios
+     * can lead to jobs being lost without Artemis being notified:
+     * </p>
+     * <ul>
+     * <li>Application crashes or restarts while build job was queued</li>
+     * <li>network issues leading to Hazelcast data loss</li>
+     * <li>Build agent crashes or is disconnected</li>
+     * </ul>
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
@@ -78,17 +102,20 @@ public class LocalCIEventListenerService {
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
         ZonedDateTime now = ZonedDateTime.now();
         final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
+
+        var queuedJobs = sharedQueueManagementService.getQueuedJobs();
+        var processingJobs = sharedQueueManagementService.getProcessingJobIds();
+
         for (BuildJob buildJob : pendingBuildJobs) {
             if (buildJob.getBuildSubmissionDate().isAfter(now.minusMinutes(buildJobExpirationInMinutes))) {
                 log.debug("Build job with id {} is too recent to check", buildJob.getBuildJobId());
                 continue;
             }
-
-            if (buildJob.getBuildStatus() == BuildStatus.QUEUED && checkIfBuildJobIsStillQueued(buildJob.getBuildJobId())) {
+            if (buildJob.getBuildStatus() == BuildStatus.QUEUED && checkIfBuildJobIsStillQueued(queuedJobs, buildJob.getBuildJobId())) {
                 log.debug("Build job with id {} is still queued", buildJob.getBuildJobId());
                 continue;
             }
-            if (checkIfBuildJobIsStillBuilding(buildJob.getBuildJobId())) {
+            if (checkIfBuildJobIsStillBuilding(processingJobs, buildJob.getBuildJobId())) {
                 log.debug("Build job with id {} is still building", buildJob.getBuildJobId());
                 continue;
             }
@@ -102,12 +129,12 @@ public class LocalCIEventListenerService {
         }
     }
 
-    private boolean checkIfBuildJobIsStillBuilding(String buildJobId) {
-        return sharedQueueManagementService.getProcessingJobIds().contains(buildJobId);
+    private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {
+        return processingJobIds.contains(buildJobId);
     }
 
-    private boolean checkIfBuildJobIsStillQueued(String buildJobId) {
-        return sharedQueueManagementService.getQueuedJobs().stream().anyMatch(job -> job.id().equals(buildJobId));
+    private boolean checkIfBuildJobIsStillQueued(List<BuildJobQueueItem> queuedJobs, String buildJobId) {
+        return queuedJobs.stream().anyMatch(job -> job.id().equals(buildJobId));
     }
 
     private boolean checkIfBuildJobHasFinished(String buildJobId) {
