@@ -1,0 +1,90 @@
+# Sorting with the Strategy Pattern
+
+In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
+
+### Part 1: Sorting
+
+First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
+
+**You have the following tasks:**
+
+1. [task][Implement Bubble Sort](test.behavior.BubbleSort_sorts_correctly)
+   Implement the method `performSort(List<DateTime>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
+
+2. [task][Implement Merge Sort](test.behavior.MergeSort_sorts_correctly)
+   Implement the method `performSort(List<DateTime>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+
+### Part 2: Strategy Pattern
+
+We want the application to apply different algorithms for sorting a `List` of `DateTime` objects.
+Use the strategy pattern to select the right sorting algorithm at runtime.
+
+**You have the following tasks:**
+
+1. [task][SortStrategy Interface](test.structural.SortStrategy_class,test.structural.SortStrategy_methods,test.structural.BubbleSort_implements_SortStrategy,test.structural.MergeSort_implements_SortStrategy)
+   Define the `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
+
+2. [task][Context Class](test.structural.Context_accessors,test.structural.Context_methods)
+   Implement the `Context` class following the class diagram below
+
+3. [task][Context Policy](test.structural.Policy_constructor,test.structural.Policy_accessors,test.structural.Policy_methods)
+   Implement the `Policy` class following the class diagram below with a simple configuration mechanism:
+
+    1. [task][Select MergeSort](test.behavior.use_MergeSort_for_big_list)
+       Select `MergeSort` when the List has more than 10 dates.
+
+    2. [task][Select BubbleSort](test.behavior.use_BubbleSort_for_small_list)
+       Select `BubbleSort` when the List has less or equal 10 dates.
+
+4. Complete the `client.dart` program which demonstrates switching between two strategies at runtime. Start it by running `dart run :client`.
+
+@startuml
+
+class Client {
+}
+
+class Policy {
+<color:testsColor(test.structural.Policy_constructor)>Policy(Context)<<constructor>></color>
+<color:testsColor(test.structural.Policy_methods)>configure()</color>
+}
+
+class Context {
+<color:testsColor(test.structural.Context_accessors)>dates: List<DateTime></color>
+<color:testsColor(test.structural.Context_methods)>sort()</color>
+}
+
+interface SortStrategy ##testsColor(test.structural.SortStrategy_class) {
+<color:testsColor(test.structural.SortStrategy_methods)>performSort(List<DateTime>)</color>
+}
+
+class BubbleSort {
+<color:testsColor(test.behavior.BubbleSort_sorts_correctly)>performSort(List<DateTime>)</color>
+}
+
+class MergeSort {
+<color:testsColor(test.behavior.MergeSort_sorts_correctly)>performSort(List<DateTime>)</color>
+}
+
+MergeSort -up-|> SortStrategy #testsColor(test.structural.MergeSort_implements_SortStrategy)
+BubbleSort -up-|> SortStrategy #testsColor(test.structural.BubbleSort_implements_SortStrategy)
+Policy -right-> Context #testsColor(test.structural.Policy_accessors): context
+Context -right-> SortStrategy #testsColor(test.structural.Context_accessors): sortAlgorithm
+Client .down.> Policy
+Client .down.> Context
+
+hide empty fields
+hide empty methods
+
+@enduml
+
+
+### Part 3: Optional Challenges
+
+(These are not tested)
+
+1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
+
+2. Make the method `performSort(List<DateTime>)` generic, so that other objects can also be sorted by the same method.
+   **Hint:** Have a look at Dart Generics and the interface `Comparable`.
+
+3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.
