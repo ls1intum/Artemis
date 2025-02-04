@@ -89,13 +89,13 @@ VCS access tokens
 ^^^^^^^^^^^^^^^^^^^
 
 The tokens for student repositories are automatically created, and provided to the student via the code button dialog.
-
-.. warning:: Never share your access tokens or commit them to version control. Treat tokens like passwords. If a token is compromised, revoke it immediately and create a new one.
+For every student's exercise, Artemis automatically generates an access token, only associated with the repository of this particular exercise.
 
 Instructors can create HTTP access tokens for repository access in Artemis.
 They are created in the account settings and are used in place of passwords for Git over HTTPS.
-For every student's exercise, Artemis automatically generates an access token, only associated with the repository of this particular exercise.
 You can use these to authenticate to the Artemis Local Version Control.
+
+.. warning:: Never share your access tokens or commit them to version control. Treat tokens like passwords. If a token is compromised, revoke it immediately and create a new one.
 
 .. _token-authentication:
 
@@ -112,6 +112,7 @@ Token Creation as Instructor
 |                                                                        |
 |   Adding a new VCS access token                                        |
 +------------------------------------------------------------------------+
+
 
 
 Using SSH keys to secure Git operations
