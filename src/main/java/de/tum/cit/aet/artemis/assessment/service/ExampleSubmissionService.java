@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -52,7 +51,7 @@ public class ExampleSubmissionService {
 
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
             Optional<TextSubmissionImportApi> textSubmissionImportApi, ModelingExerciseImportService modelingExerciseImportService,
-            TextSubmissionRepository textSubmissionRepository, GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
+            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
