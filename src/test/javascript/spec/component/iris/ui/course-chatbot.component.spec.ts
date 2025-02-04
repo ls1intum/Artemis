@@ -4,6 +4,8 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { SimpleChange } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 describe('CourseChatbotComponent', () => {
     let component: CourseChatbotComponent;
@@ -13,7 +15,7 @@ describe('CourseChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [CourseChatbotComponent, MockComponent(IrisBaseChatbotComponent)],
-            providers: [MockProvider(IrisChatService)],
+            providers: [MockProvider(IrisChatService), MockProvider(ActivatedRoute)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseChatbotComponent);
@@ -32,5 +34,16 @@ describe('CourseChatbotComponent', () => {
         component.ngOnChanges({ courseId: new SimpleChange(null, component.courseId, true) });
 
         expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, component.courseId);
+    });
+
+    it('should set irisQuestion onInit when provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.irisQuestion).toBe(mockQueryParams.irisQuestion);
     });
 });

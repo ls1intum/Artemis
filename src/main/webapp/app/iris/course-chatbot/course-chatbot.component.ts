@@ -18,7 +18,7 @@ export class CourseChatbotComponent implements OnChanges, OnInit {
     @Input() courseId?: number;
 
     ngOnInit() {
-        this.route.queryParams.subscribe((params: any) => {
+        this.route.queryParams?.subscribe((params: any) => {
             if (params.irisQuestion) {
                 this.irisQuestion = params.irisQuestion;
             }

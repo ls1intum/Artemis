@@ -35,9 +35,11 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ComponentRef } from '@angular/core';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
+    let componentRef: ComponentRef<IrisBaseChatbotComponent>;
     let chatService: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
@@ -99,6 +101,7 @@ describe('IrisBaseChatbotComponent', () => {
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
                 component = fixture.componentInstance;
+                componentRef = fixture.componentRef;
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
@@ -612,5 +615,14 @@ describe('IrisBaseChatbotComponent', () => {
             const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
         });
+    });
+
+    it('should insert a question into textArea if a insertedQuestion is provided', () => {
+        const expectedQuestion: string = 'How do I resolve this error';
+        componentRef.setInput('insertedQuestion', expectedQuestion);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe(expectedQuestion);
     });
 });

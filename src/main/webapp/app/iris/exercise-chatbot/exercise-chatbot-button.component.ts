@@ -60,7 +60,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     isOverflowing = false;
     hasNewMessages = false;
     newIrisMessage: string | undefined;
-    private irisQuestion: string | undefined;
+    irisQuestion: string | undefined;
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -86,7 +86,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             this.chatService.switchTo(this.mode, id);
         });
 
-        this.route.queryParams.subscribe((params: any) => {
+        this.route.queryParams?.subscribe((params: any) => {
             if (params.irisQuestion) {
                 this.irisQuestion = params.irisQuestion;
                 this.openChat();

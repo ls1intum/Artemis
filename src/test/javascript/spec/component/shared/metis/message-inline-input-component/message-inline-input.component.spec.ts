@@ -14,6 +14,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -33,6 +35,7 @@ describe('MessageInlineInputComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
