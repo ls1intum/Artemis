@@ -187,7 +187,7 @@ const routes: Routes = [
     },
     {
         path: 'lti',
-        loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
+        loadChildren: () => import('./lti/lti.route').then((m) => m.ltiLaunchRoutes),
     },
     {
         path: 'about-iris',
