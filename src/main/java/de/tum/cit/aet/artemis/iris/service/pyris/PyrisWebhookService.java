@@ -120,7 +120,7 @@ public class PyrisWebhookService {
     private String executeTranscriptionAdditionWebhook(List<PyrisTranscriptionIngestionWebhookDTO> toUpdateTranscriptions, Course course, Lecture lecture) {
         String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscriptions, lecture.getTitle(), settingsDTO,
+        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscriptions, lecture.getId(), settingsDTO,
                 List.of());
         pyrisConnectorService.executeTranscriptionAdditionWebhook("fullIngestion", executionDTO);
         return jobToken;
