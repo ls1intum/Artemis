@@ -33,7 +33,7 @@ packages:
   ${packageName}:
     dependency: "direct main"
     description:
-      path: "../assignment"
+      path: "../${studentParentWorkingDirectoryName}"
       relative: true
     source: path
     version: "1.0.0"
