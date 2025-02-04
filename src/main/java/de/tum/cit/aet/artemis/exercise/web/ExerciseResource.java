@@ -43,8 +43,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
@@ -87,7 +87,7 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -106,7 +106,7 @@ public class ExerciseResource {
     private final PlagiarismCaseService plagiarismCaseService;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
-            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsService> irisSettingsService,
@@ -119,7 +119,7 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
@@ -147,13 +147,14 @@ public class ExerciseResource {
         // Exam exercise
         if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
+            var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
             if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
                 // instructors editors and admins should always be able to see exam exercises
                 // continue
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+                ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exam);
                 if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     throw new AccessForbiddenException();

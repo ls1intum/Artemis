@@ -25,12 +25,13 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -50,7 +51,7 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     // TODO: we should move this into some kind of EnrollmentService
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
@@ -58,10 +59,10 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, Optional<ExamDateApi> examDateApi, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.teamRepository = teamRepository;
     }
 
@@ -818,7 +819,8 @@ public class AuthorizationCheckService {
             return true;
         }
         Exam exam = exercise.getExam();
-        if (!examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
+        var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+        if (!api.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
             // students can always see their results during the exam.
             return true;
         }

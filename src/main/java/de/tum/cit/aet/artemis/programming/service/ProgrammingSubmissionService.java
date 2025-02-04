@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -111,12 +111,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
             FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
-        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

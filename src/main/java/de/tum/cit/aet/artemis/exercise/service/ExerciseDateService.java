@@ -10,8 +10,9 @@ import jakarta.annotation.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -23,13 +24,13 @@ public class ExerciseDateService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExerciseDateService(ParticipationRepository participationRepository, ExamDateService examDateService, StudentExamRepository studentExamRepository) {
+    public ExerciseDateService(ParticipationRepository participationRepository, Optional<ExamDateApi> examDateApi, StudentExamRepository studentExamRepository) {
         this.participationRepository = participationRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.studentExamRepository = studentExamRepository;
     }
 
@@ -77,11 +78,12 @@ public class ExerciseDateService {
     public boolean isAfterDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
+            var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
             if (participation instanceof StudentParticipation studentParticipation) {
-                return examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
+                return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
             }
             else {
-                return examDateService.isExamWithGracePeriodOver(exercise.getExam());
+                return api.isExamWithGracePeriodOver(exercise.getExam());
             }
         }
         else {
