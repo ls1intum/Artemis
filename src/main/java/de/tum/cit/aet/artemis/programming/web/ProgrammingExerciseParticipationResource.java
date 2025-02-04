@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
@@ -90,7 +90,7 @@ public class ProgrammingExerciseParticipationResource {
 
     private final RepositoryService repositoryService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
@@ -104,7 +104,7 @@ public class ProgrammingExerciseParticipationResource {
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
@@ -116,7 +116,7 @@ public class ProgrammingExerciseParticipationResource {
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
@@ -527,12 +527,13 @@ public class ProgrammingExerciseParticipationResource {
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getProgrammingExercise().isExamExercise()) {
-            var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+            var examApi = this.examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+            var studentExamApi = this.studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
             User student = participation.getStudent()
                     .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
-            var studentExam = studentExamRepository.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
+            var studentExam = studentExamApi.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
-            return !api.shouldStudentSeeResult(studentExam, participation);
+            return !examApi.shouldStudentSeeResult(studentExam, participation);
         }
         return false;
     }

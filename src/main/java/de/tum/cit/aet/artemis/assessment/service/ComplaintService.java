@@ -27,10 +27,11 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -55,16 +56,16 @@ public class ComplaintService {
 
     private final UserRepository userRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamApi> examApi;
 
     private final TeamRepository teamRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ExamRepository examRepository, UserRepository userRepository, TeamRepository teamRepository) {
+            Optional<ExamApi> examApi, UserRepository userRepository, TeamRepository teamRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.examRepository = examRepository;
+        this.examApi = examApi;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
     }
@@ -99,7 +100,8 @@ public class ComplaintService {
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
-            final Exam exam = examRepository.findByIdElseThrow(examId.get());
+            var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+            final Exam exam = api.findByIdElseThrow(examId.get());
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {

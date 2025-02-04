@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -25,9 +24,9 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -41,7 +40,7 @@ public class DataExportExamCreationService {
 
     private static final String EXAM_DIRECTORY_PREFIX = "exam_";
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final DataExportExerciseCreationService dataExportExerciseCreationService;
 
@@ -49,9 +48,9 @@ public class DataExportExamCreationService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public DataExportExamCreationService(StudentExamRepository studentExamRepository, DataExportExerciseCreationService dataExportExerciseCreationService,
-            Optional<ExamApi> examApi, GradingScaleRepository gradingScaleRepository) {
-        this.studentExamRepository = studentExamRepository;
+    public DataExportExamCreationService(Optional<StudentExamApi> studentExamApi, DataExportExerciseCreationService dataExportExerciseCreationService, Optional<ExamApi> examApi,
+            GradingScaleRepository gradingScaleRepository) {
+        this.studentExamApi = studentExamApi;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.examApi = examApi;
         this.gradingScaleRepository = gradingScaleRepository;
@@ -65,9 +64,12 @@ public class DataExportExamCreationService {
      * @throws IOException if an error occurs while accessing the file system
      */
     public void createExportForExams(long userId, Path workingDirectory) throws IOException {
-        Map<Course, List<StudentExam>> studentExamsPerCourse = studentExamRepository
-                .findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
-                .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
+        if (studentExamApi.isEmpty()) {
+            return;
+        }
+
+        var api = studentExamApi.get();
+        Map<Course, List<StudentExam>> studentExamsPerCourse = api.findStudentExamsByCourseForUserId(userId);
 
         for (var entry : studentExamsPerCourse.entrySet()) {
             for (var studentExam : entry.getValue()) {

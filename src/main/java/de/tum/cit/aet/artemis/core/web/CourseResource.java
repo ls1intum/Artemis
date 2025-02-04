@@ -108,7 +108,8 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -184,7 +185,7 @@ public class CourseResource {
 
     private final LearningPathApi learningPathApi;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamApi> examApi;
 
     private final ComplaintService complaintService;
 
@@ -196,7 +197,7 @@ public class CourseResource {
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi, ConductAgreementService conductAgreementService,
-            Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<AthenaModuleService> athenaModuleService, Optional<ExamApi> examApi, ComplaintService complaintService, TeamRepository teamRepository,
             LearnerProfileApi learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
@@ -217,7 +218,7 @@ public class CourseResource {
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
-        this.examRepository = examRepository;
+        this.examApi = examApi;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
@@ -660,8 +661,14 @@ public class CourseResource {
         // the course
         var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
         // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
-        var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
-                ZonedDateTime.now().plusHours(1));
+        Set<Exam> activeExams;
+        if (examApi.isPresent()) {
+            activeExams = examApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                    ZonedDateTime.now().plusHours(1));
+        }
+        else {
+            activeExams = Set.of();
+        }
 
         log.debug("gradingScaleRepository.findAllByCourseIds done");
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
