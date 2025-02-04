@@ -119,7 +119,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                 const activeConversationAsChannel = getAsChannelDTO(conversation);
                 if (activeConversationAsChannel) {
                     const referenceId = activeConversationAsChannel?.subTypeReferenceId;
-                    if (referenceId && activeConversationAsChannel.subType) {
+                    if (activeConversationAsChannel.subType) {
                         this.checkIrisSettings(activeConversationAsChannel, referenceId);
                     } else {
                         this.setIrisStatus(false, '');
@@ -135,16 +135,19 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * @param referenceId exercise or lecture number
      * @private
      */
-    private checkIrisSettings(channelDTO: ChannelDTO, referenceId: number): void {
-        if (channelDTO.subType == ChannelSubType.EXERCISE) {
+    private checkIrisSettings(channelDTO: ChannelDTO, referenceId?: number): void {
+        if (channelDTO.subType == ChannelSubType.EXERCISE && referenceId) {
             this.irisSettingsService.getCombinedExerciseSettings(referenceId).subscribe((irisSettings) => {
                 this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
             });
         } else if (channelDTO.subType == ChannelSubType.GENERAL) {
-            this.irisSettingsService.getCombinedCourseSettings(referenceId).subscribe((irisSettings) => {
-                this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-            });
-        } else if (channelDTO.subType == ChannelSubType.LECTURE) {
+            const course = this.course();
+            if (course && course.id) {
+                this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((irisSettings) => {
+                    this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                });
+            }
+        } else if (channelDTO.subType == ChannelSubType.LECTURE && referenceId) {
             this.irisSettingsService.getCombinedCourseSettings(referenceId).subscribe((irisSettings) => {
                 this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
             });

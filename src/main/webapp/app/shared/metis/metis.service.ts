@@ -477,6 +477,14 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * returns the router link required for navigating to the dashboard
+     * @return {string} router link of the dashboard
+     */
+    getLinkForGeneral(): string {
+        return `/courses/${this.getCourse().id}/dashboard`;
+    }
+
+    /**
      * returns the router link required for navigating to the channel subtype reference
      *
      * @param {ChannelDTO} channel
@@ -485,6 +493,9 @@ export class MetisService implements OnDestroy {
     getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
         const referenceId = channel?.subTypeReferenceId?.toString();
         if (!referenceId) {
+            if (channel?.subType === ChannelSubType.GENERAL) {
+                return this.getLinkForGeneral();
+            }
             return undefined;
         }
 
