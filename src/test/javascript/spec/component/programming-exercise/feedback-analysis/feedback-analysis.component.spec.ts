@@ -167,6 +167,38 @@ describe('FeedbackAnalysisComponent', () => {
             expect(modalInstance.exerciseId).toBe(component.exerciseId);
             expect(modalInstance.maxCount).toBe(component.maxCount);
         });
+
+        it('should open filter modal and pass correct form values and properties when grouped feedback is active', async () => {
+            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: {
+                    filterApplied: { subscribe: jest.fn() },
+                },
+            } as any);
+            jest.spyOn(localStorageService, 'retrieve')
+                .mockReturnValueOnce(['task1'])
+                .mockReturnValueOnce(['testCase1'])
+                .mockReturnValueOnce([component.minCount(), 5])
+                .mockReturnValueOnce(['Student Error']);
+
+            component.maxCount.set(5);
+            component.selectedFiltersCount.set(1);
+            component.groupFeedback.set(true);
+            await component.openFilterModal();
+
+            expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
+            const modalInstance = modalSpy.mock.results[0].value.componentInstance;
+            expect(modalInstance.filters).toEqual({
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [component.minCount(), 5],
+                errorCategories: ['Student Error'],
+            });
+            expect(modalInstance.taskArray).toBe(component.taskNames);
+            expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
+            expect(modalInstance.exerciseId).toBe(component.exerciseId);
+            expect(modalInstance.maxCount).toBe(component.maxCount);
+        });
     });
 
     describe('applyFilters', () => {
@@ -194,12 +226,12 @@ describe('FeedbackAnalysisComponent', () => {
             const filters = {
                 tasks: ['task1', 'task2'],
                 testCases: ['testCase1'],
-                occurrence: [component.minCount(), component.maxCount()],
+                occurrence: [component.minCount(), component.maxCount() - 1],
                 errorCategories: ['AST Error'],
             };
             const count = component.countAppliedFilters(filters);
 
-            expect(count).toBe(4);
+            expect(count).toBe(5);
         });
 
         it('should return 0 if no filters are applied', () => {
