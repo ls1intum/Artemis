@@ -1,8 +1,8 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { DestroyRef, Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
 import { IrisExerciseChatSession } from 'app/entities/iris/iris-exercise-chat-session.model';
 import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
@@ -14,6 +14,8 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisDisableProactiveEventsDTO } from 'app/entities/iris/iris-disable-proactive-events-dto.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
@@ -32,6 +34,7 @@ export class IrisChatService implements OnDestroy {
     status = inject(IrisStatusService);
     private userService = inject(UserService);
     private accountService = inject(AccountService);
+    private destroyRef = inject(DestroyRef);
 
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
@@ -43,6 +46,8 @@ export class IrisChatService implements OnDestroy {
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
+    proactiveEventsDisabledUntil: Date | null = null;
+    proactiveEventsDisabledUntilSubscription: Subscription;
 
     private sessionCreationIdentifier?: string;
 
@@ -50,10 +55,12 @@ export class IrisChatService implements OnDestroy {
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.proactiveEventsDisabledUntilSubscription = this.status.proactiveEventsDisabledUntil.subscribe((date) => (this.proactiveEventsDisabledUntil = date));
     }
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
+        this.proactiveEventsDisabledUntilSubscription.unsubscribe();
     }
 
     protected start() {
@@ -159,6 +166,32 @@ export class IrisChatService implements OnDestroy {
         });
     }
 
+    /**
+     * Disables proactive events for the user.
+     * @param dto The DTO containing the information about the duration of the disablement.
+     */
+    public disableProactiveEvents(dto: IrisDisableProactiveEventsDTO): void {
+        this.userService
+            .disableProactiveEvents(dto)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                map((response) => {
+                    if (!response.body) {
+                        throw new Error(IrisErrorMessageKey.DISABLE_PROACTIVE_EVENTS_FAILED);
+                    }
+                    return response.body;
+                }),
+                tap((response) => {
+                    this.status.proactiveEventsDisabledUntil.next(new Date(response.disabledUntil!));
+                }),
+                catchError(() => {
+                    this.error.next(IrisErrorMessageKey.DISABLE_PROACTIVE_EVENTS_FAILED);
+                    return EMPTY;
+                }),
+            )
+            .subscribe();
+    }
+
     private replaceMessage(message: IrisMessage): boolean {
         const messages = [...this.messages.getValue()];
         const index = messages.findIndex((m) => m.id === message.id);
@@ -186,7 +219,7 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * Parses the latest suggestions string and updates the suggestions subject.
-     * @param s: The latest suggestions string
+     * @param s The JSON string containing the suggestions.
      * @private
      */
     private parseLatestSuggestions(s?: string) {
@@ -281,7 +314,7 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    switchTo(mode: ChatServiceMode, id?: number): void {
+    public switchTo(mode: ChatServiceMode, id?: number): void {
         const newIdentifier = mode && id ? mode + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;

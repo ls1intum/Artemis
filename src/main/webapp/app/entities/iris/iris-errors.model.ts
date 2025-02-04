@@ -17,6 +17,7 @@ export enum IrisErrorMessageKey {
     TECHNICAL_ERROR_RESPONSE = 'artemisApp.exerciseChatbot.errors.technicalError',
     IRIS_NOT_AVAILABLE = 'artemisApp.exerciseChatbot.errors.irisNotAvailable',
     RATE_LIMIT_EXCEEDED = 'artemisApp.exerciseChatbot.errors.rateLimitExceeded',
+    DISABLE_PROACTIVE_EVENTS_FAILED = 'artemisApp.exerciseChatbot.errors.disableProactiveEventsFailed',
 }
 
 export interface IrisErrorType {
@@ -44,6 +45,7 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE, fatal: true },
     { key: IrisErrorMessageKey.IRIS_NOT_AVAILABLE, fatal: true },
     { key: IrisErrorMessageKey.RATE_LIMIT_EXCEEDED, fatal: true },
+    { key: IrisErrorMessageKey.DISABLE_PROACTIVE_EVENTS_FAILED, fatal: false },
 ];
 
 export const errorMessages: Readonly<{ [key in IrisErrorMessageKey]: IrisErrorType }> = Object.freeze(

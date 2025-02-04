@@ -24,6 +24,9 @@
             </div>
         }
         <div class="toolbox">
+            <button class="header-icon" #personalSettingsButton (click)="togglePersonalSettingsMenu()">
+                <fa-icon [icon]="faGear" />
+            </button>
             @if (this.messages.length >= 1) {
                 <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
                     <fa-icon [icon]="faTrash" />

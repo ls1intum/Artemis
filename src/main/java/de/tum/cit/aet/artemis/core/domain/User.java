@@ -218,6 +218,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
 
+    @Nullable
+    @Column(name = "iris_proactive_events_disabled")
+    private Instant irisProactiveEventsDisabled = null;
+
     public User() {
     }
 
@@ -543,6 +547,24 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public boolean hasAcceptedIris() {
         return irisAccepted != null;
+    }
+
+    @Nullable
+    public Instant getIrisProactiveEventsDisabledTimestamp() {
+        return irisProactiveEventsDisabled;
+    }
+
+    public void setIrisProactiveEventsDisabledTimestamp(@Nullable Instant irisProactiveEventsDisabled) {
+        this.irisProactiveEventsDisabled = irisProactiveEventsDisabled;
+    }
+
+    /**
+     * Checks if the user has disabled Iris proactive events.
+     *
+     * @return true if the timestamp is set and in the future
+     */
+    public boolean hasDisabledIrisProactiveEvents() {
+        return irisProactiveEventsDisabled != null && irisProactiveEventsDisabled.isAfter(Instant.now());
     }
 
     /**
