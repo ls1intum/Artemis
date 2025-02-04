@@ -157,8 +157,8 @@
                 "dataExportCreated": "Dein Datenexport wurde erstellt und kann nun heruntergeladen werden.",
                 "dataExportFailed": "Dein Datenexport konnte nicht erstellt werden. Bitte versuche es später erneut.",
                 "sshKeyAdded": "Du hast erfolgreich einen SSH-Schlüssel hinzugefügt",
-                "sshKeyExpiresSoon": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0}}\" läuft am {{ placeholderValues.1 }} ab.",
-                "sshKeyHasExpired": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0}}\" ist am {{ placeholderValues.1 }} abgelaufen.",
+                "sshKeyExpiresSoon": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" läuft am {{ placeholderValues.1 }} ab.",
+                "sshKeyHasExpired": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" ist am {{ placeholderValues.1 }} abgelaufen.",
                 "vcsAccessTokenAdded": "Du hast erfolgreich ein persönliches Zugriffstoken hinzugefügt.",
                 "vcsAccessTokenExpired": "Dein persönliches Zugriffstoken ist abgelaufen."
             }

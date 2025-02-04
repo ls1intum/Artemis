@@ -157,8 +157,8 @@
                 "dataExportCreated": "Your data export has been created and can be downloaded.",
                 "dataExportFailed": "Your data export could not be created. Please try again later.",
                 "sshKeyAdded": "You have successfully added a new SSH key",
-                "sshKeyExpiresSoon": "Your SSH key with the label \"{{ placeholderValues.0}}\" will expire on {{ placeholderValues.1 }}.",
-                "sshKeyHasExpired": "Your SSH key with the label \"{{ placeholderValues.0}}\" has expired on {{ placeholderValues.1 }}.",
+                "sshKeyExpiresSoon": "Your SSH key with the label \"{{ placeholderValues.0 }}\" will expire on {{ placeholderValues.1 }}.",
+                "sshKeyHasExpired": "Your SSH key with the label \"{{ placeholderValues.0 }}\" has expired on {{ placeholderValues.1 }}.",
                 "vcsAccessTokenAdded": "You have successfully added a new VCS access token",
                 "vcsAccessTokenExpired": "Your personal version control access token has expired."
             }
