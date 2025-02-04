@@ -19,21 +19,21 @@ void main() {
     orderedDates = [date3, date2, date4, date1];
   });
 
-  test('BubbleSort sorts correctly', () {
+  test('BubbleSort_sorts_correctly', () {
     var bubbleSort = BubbleSort();
     bubbleSort.performSort(dates);
     expect(dates, equals(orderedDates),
         reason: "BubbleSort does not sort correctly");
   });
 
-  test('MergeSort sorts correctly', () {
+  test('MergeSort_sorts_correctly', () {
     final mergeSort = MergeSort();
     mergeSort.performSort(dates);
     expect(dates, equals(orderedDates),
         reason: "MergeSort does not sort correctly");
   });
 
-  test('use MergeSort for big list', () {
+  test('use_MergeSort_for_big_list', () {
     final bigList = List.filled(11, DateTime(2000));
 
     final chosenStrategy = configurePolicyAndContext(bigList);
@@ -43,7 +43,7 @@ void main() {
             "The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates");
   });
 
-  test('use BubbleSort for small list', () {
+  test('use_BubbleSort_for_small_list', () {
     final smallList = List.filled(3, DateTime(2000));
 
     final chosenStrategy = configurePolicyAndContext(smallList);

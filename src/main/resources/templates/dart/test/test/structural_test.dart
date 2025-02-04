@@ -7,28 +7,28 @@ import 'package:test/test.dart';
 import 'dart:mirrors';
 
 void main() {
-  test('MergeSort implements SortStrategy', () {
+  test('MergeSort_implements_SortStrategy', () {
     final mergeSort = reflectClass(MergeSort);
     final sortStrategy = reflectClass(SortStrategy);
 
     expect(mergeSort.superinterfaces, contains(sortStrategy));
   });
 
-  test('BubbleSort implements SortStrategy', () {
+  test('BubbleSort_implements_SortStrategy', () {
     final bubbleSort = reflectClass(BubbleSort);
     final sortStrategy = reflectClass(SortStrategy);
 
     expect(bubbleSort.superinterfaces, contains(sortStrategy));
   });
 
-  test('SortStrategy class', () {
+  test('SortStrategy_class', () {
     final sortStrategy = reflectClass(SortStrategy);
 
     expect(sortStrategy.isAbstract, isTrue,
         reason: 'SortStrategy is not abstract');
   });
 
-  test('SortStrategy methods', () {
+  test('SortStrategy_methods', () {
     final sortStrategy = reflectClass(SortStrategy);
 
     var performSort = sortStrategy.declarations[#performSort];
@@ -44,7 +44,7 @@ void main() {
         reason: 'performSort should be abstract');
   });
 
-  test('Context accessors', () {
+  test('Context_accessors', () {
     final context = reflectClass(Context);
 
     final datesGetter = context.instanceMembers[#dates];
@@ -75,7 +75,7 @@ void main() {
         reason: "The 'sortAlgorithm' setter of Context has the wrong type");
   });
 
-  test('Context methods', () {
+  test('Context_methods', () {
     final context = reflectClass(Context);
 
     var sort = context.instanceMembers[#sort];
@@ -84,7 +84,7 @@ void main() {
         reason: "The 'sort' method of Context should have no parameters");
   });
 
-  test('Policy accessors', () {
+  test('Policy_accessors', () {
     final policy = reflectClass(Policy);
 
     final contextGetter = policy.instanceMembers[#context];
@@ -94,7 +94,7 @@ void main() {
         reason: "The 'context' getter of Policy has the wrong type");
   });
 
-  test('Policy constructor', () {
+  test('Policy_constructor', () {
     final policy = reflectClass(Policy);
 
     var constructor = policy.declarations[#Policy] as MethodMirror;
@@ -105,7 +105,7 @@ void main() {
         reason: 'The constructor\'s parameter has the wrong type');
   });
 
-  test('Policy methods', () {
+  test('Policy_methods', () {
     final policy = reflectClass(Policy);
 
     var context = policy.instanceMembers[#configure];
