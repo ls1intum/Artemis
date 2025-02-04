@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.gitlab;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS;
+import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS;
 
 import java.net.URL;
 import java.util.List;
@@ -54,6 +54,6 @@ public class GitlabInfoContributor implements InfoContributor {
                 builder.withDetail(Constants.INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
             }
         }
-        builder.withDetail(INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
+        builder.withDetail(INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
     }
 }
