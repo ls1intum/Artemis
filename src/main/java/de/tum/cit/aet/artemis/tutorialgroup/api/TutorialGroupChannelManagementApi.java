@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationS
 
 @Profile(PROFILE_CORE)
 @Controller
-public class TutorialGroupChannelManagementApi {
+public class TutorialGroupChannelManagementApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
