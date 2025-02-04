@@ -2,7 +2,6 @@ import { DoubleSliderComponent } from 'app/shared/editable-slider/double-slider.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { EditStateTransition } from 'app/shared/editable-slider/edit-process.component';
-import { By } from '@angular/platform-browser';
 
 describe('DoubleSliderComponent', () => {
     let component: DoubleSliderComponent;

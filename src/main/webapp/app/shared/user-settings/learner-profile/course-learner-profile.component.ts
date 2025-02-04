@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
+    styleUrls: [',/course-learner-profile.component.scss'],
     standalone: true,
     imports: [EditableSliderComponent, TranslateDirective],
 })
