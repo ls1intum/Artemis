@@ -721,3 +721,87 @@ Verify the exercise configuration
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
     :width: 160
+
+.. _feedback_analysis:
+
+Feedback Analysis
+^^^^^^^^^^^^^^^^^
+
+After verifying the exercise configuration, Artemis provides an advanced **Feedback Analysis** feature to help instructors and tutors **identify common mistakes** among students and improve grading efficiency.
+
+Accessing Feedback Analysis
+---------------------------
+
+- Navigate to the **Exercise Management** page.
+- Open a programming exercise and select the **Feedback Analysis** tab.
+- A structured table provides an **overview of feedback occurrences**, categorized by **test cases, tasks, and error types**.
+
+    .. figure:: programming/feedback-analysis-overview.png
+          :align: center
+
+          *Feedback Analysis Overview* _(Placeholder)_
+
+Key Features
+------------
+
+1. **Aggregated Feedback Overview**
+   - **Groups similar feedback** messages together to highlight frequently occurring errors.
+   - Displays **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+
+2. **Filtering and Sorting**
+   - **Filter feedback** by:
+     - **Tasks**
+     - **Test Cases**
+     - **Error Categories** (e.g., Student Errors, System Errors)
+     - **Occurrence Frequency**
+   - **Sort feedback** based on occurrence count or relevance.
+
+    .. figure:: programming/feedback-analysis-filters.png
+          :align: center
+
+          *Filtering Options for Feedback Analysis* _(Placeholder)_
+
+3. **Detailed Feedback Inspection**
+   - Click on any feedback entry to view **detailed student submissions** and identify patterns.
+   - Open a **modal window** to inspect associated test cases and results.
+
+    .. figure:: programming/feedback-analysis-detail.png
+          :align: center
+
+          *Detailed Feedback View* _(Placeholder)_
+
+4. **Affected Students Overview**
+   - View a **list of students** affected by specific feedback messages.
+   - Identify students struggling with similar mistakes and **offer targeted help**.
+   - Open **individual repositories** for further review.
+
+    .. figure:: programming/feedback-analysis-affected-students.png
+          :align: center
+
+          *Affected Students View* _(Placeholder)_
+
+5. **Communication & Collaboration**
+   - Create **discussion channels** directly from the feedback analysis view.
+   - Automatically **send feedback reports** to affected students or tutors.
+   - Enable **collaborative discussions** among tutors to streamline grading.
+
+    .. figure:: programming/feedback-analysis-channel.png
+          :align: center
+
+          *Creating a Feedback Discussion Channel* _(Placeholder)_
+
+Screencast: Using Feedback Analysis
+-----------------------------------
+
+To get a better understanding of the feature, you can watch the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/XXXXX?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Conclusion
+----------
+
+The **Feedback Analysis** feature helps instructors quickly detect common mistakes, streamline grading, and enhance student learning by providing targeted feedback. The integration of filtering, sorting, and communication tools makes it an essential tool for managing large-scale programming exercises efficiently.
