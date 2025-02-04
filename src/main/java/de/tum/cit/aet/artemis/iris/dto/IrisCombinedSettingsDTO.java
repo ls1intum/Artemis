@@ -10,6 +10,7 @@ public record IrisCombinedSettingsDTO(
         IrisCombinedCourseChatSubSettingsDTO irisCourseChatSettings,
         IrisCombinedLectureIngestionSubSettingsDTO irisLectureIngestionSettings,
         IrisCombinedCompetencyGenerationSubSettingsDTO irisCompetencyGenerationSettings,
+        IrisCombinedLectureChatSubSettingsDTO irisLectureChatSettings,
         IrisCombinedFaqIngestionSubSettingsDTO irisFaqIngestionSettings
 ) {}
 // @formatter:on
