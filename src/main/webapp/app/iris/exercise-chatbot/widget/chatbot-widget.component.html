@@ -5,6 +5,7 @@
             [fullSize]="fullSize"
             [showCloseButton]="true"
             [insertedQuestion]="data?.irisQuestion"
+            [isChatGptWrapper]="dialogData?.isChatGptWrapper || false"
             (fullSizeToggle)="toggleFullSize()"
             (closeClicked)="closeChat()"
         />

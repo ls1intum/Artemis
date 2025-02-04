@@ -147,6 +147,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
 
@@ -172,6 +173,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
+                setTimeout(() => this.messageTextarea?.nativeElement?.focus(), 10);
             }
             this.messages = _.cloneDeep(messages).reverse();
             this.messages.forEach((message) => {

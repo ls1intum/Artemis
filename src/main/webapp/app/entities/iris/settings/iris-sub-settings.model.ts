@@ -5,7 +5,9 @@ export enum IrisSubSettingsType {
     TEXT_EXERCISE_CHAT = 'text-exercise-chat',
     COURSE_CHAT = 'course-chat',
     LECTURE_INGESTION = 'lecture-ingestion',
+    LECTURE = 'lecture-chat',
     COMPETENCY_GENERATION = 'competency-generation',
+    FAQ_INGESTION = 'faq-ingestion',
 }
 
 export enum IrisEventType {
@@ -35,6 +37,12 @@ export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     rateLimitTimeframeHours?: number;
 }
 
+export class IrisLectureChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.LECTURE;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
+}
+
 export class IrisCourseChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.COURSE_CHAT;
     rateLimit?: number;
@@ -44,6 +52,11 @@ export class IrisCourseChatSubSettings extends IrisSubSettings {
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
     autoIngestOnLectureAttachmentUpload: boolean;
+}
+
+export class IrisFaqIngestionSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.FAQ_INGESTION;
+    autoIngestOnFaqCreation: boolean;
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {

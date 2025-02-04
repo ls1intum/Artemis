@@ -49,7 +49,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(5);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(7);
     });
 
     it('Can deactivate correctly', () => {

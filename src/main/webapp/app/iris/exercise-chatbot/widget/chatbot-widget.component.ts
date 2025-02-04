@@ -19,6 +19,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private dialog = inject(MatDialog);
     data = inject<{ irisQuestion: string }>(MAT_DIALOG_DATA);
 
+    dialogData = inject<{ isChatGptWrapper: boolean }>(MAT_DIALOG_DATA);
+
     // User preferences
     initialWidth = 400;
     initialHeight = 600;
