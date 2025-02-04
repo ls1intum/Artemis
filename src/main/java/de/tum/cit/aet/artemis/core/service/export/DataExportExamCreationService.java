@@ -23,10 +23,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -44,15 +45,15 @@ public class DataExportExamCreationService {
 
     private final DataExportExerciseCreationService dataExportExerciseCreationService;
 
-    private final ExamService examService;
+    private final Optional<ExamApi> examApi;
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public DataExportExamCreationService(StudentExamRepository studentExamRepository, DataExportExerciseCreationService dataExportExerciseCreationService, ExamService examService,
-            GradingScaleRepository gradingScaleRepository) {
+    public DataExportExamCreationService(StudentExamRepository studentExamRepository, DataExportExerciseCreationService dataExportExerciseCreationService,
+            Optional<ExamApi> examApi, GradingScaleRepository gradingScaleRepository) {
         this.studentExamRepository = studentExamRepository;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
-        this.examService = examService;
+        this.examApi = examApi;
         this.gradingScaleRepository = gradingScaleRepository;
     }
 
@@ -118,7 +119,8 @@ public class DataExportExamCreationService {
      * @param examWorkingDir the directory in which the results should be stored
      */
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
+        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var studentExamGrade = api.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
         var gradingScale = gradingScaleRepository.findByExamId(studentExam.getExam().getId());
         List<String> headers = new ArrayList<>();
