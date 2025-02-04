@@ -30,6 +30,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -363,7 +364,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
-        Files.write(tempFile, dummyContent);
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
         tempFile.toFile().deleteOnExit();
 
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
@@ -395,7 +396,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(contentDisposition).doesNotContain("–");
             assertThat(contentDisposition).contains("filename=");
         }
-
     }
 
 }
