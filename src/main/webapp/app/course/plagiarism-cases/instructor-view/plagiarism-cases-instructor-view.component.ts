@@ -51,6 +51,17 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
 
+    constructor() {
+        // effect needs to be in constructor context, due to the possibility of ngOnInit being called from a non-injection
+        //context
+        effect(() => {
+            const exerciseId = Number(this.route.snapshot.queryParamMap?.get('exerciseId'));
+            if (exerciseId) {
+                this.scrollToExerciseAfterViewInit(exerciseId);
+            }
+        });
+    }
+
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
@@ -63,14 +74,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
                 this.plagiarismCases = res.body!;
                 this.groupedPlagiarismCases = this.getGroupedPlagiarismCasesByExercise(this.plagiarismCases);
             },
-        });
-        // effect needs to be in constructor context, due to the possibility of ngOnInit being called from a non-injection
-        //context
-        effect(() => {
-            const exerciseId = Number(this.route.snapshot.queryParamMap?.get('exerciseId'));
-            if (exerciseId) {
-                this.scrollToExerciseAfterViewInit(exerciseId);
-            }
         });
     }
 
