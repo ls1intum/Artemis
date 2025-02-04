@@ -1,9 +1,9 @@
 import 'dart:mirrors';
 
-import 'package:artemis_assignment/bubble_sort.dart';
-import 'package:artemis_assignment/merge_sort.dart';
-import 'package:artemis_assignment/context.dart';
-import 'package:artemis_assignment/policy.dart';
+import 'package:${packageName}/bubble_sort.dart';
+import 'package:${packageName}/merge_sort.dart';
+import 'package:${packageName}/context.dart';
+import 'package:${packageName}/policy.dart';
 import 'package:test/test.dart';
 
 void main() {

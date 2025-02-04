@@ -30,7 +30,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.0"
-  artemis_assignment:
+  ${packageName}:
     dependency: "direct main"
     description:
       path: "../assignment"

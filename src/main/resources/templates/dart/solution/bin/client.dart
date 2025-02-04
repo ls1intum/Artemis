@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:artemis_assignment/context.dart';
-import 'package:artemis_assignment/policy.dart';
+import 'package:${packageName}/context.dart';
+import 'package:${packageName}/policy.dart';
 
 const iterations = 10;
 const datesLengthMin = 5;

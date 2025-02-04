@@ -1,8 +1,8 @@
-import 'package:artemis_assignment/bubble_sort.dart';
-import 'package:artemis_assignment/merge_sort.dart';
-import 'package:artemis_assignment/context.dart';
-import 'package:artemis_assignment/policy.dart';
-import 'package:artemis_assignment/sort_strategy.dart';
+import 'package:${packageName}/bubble_sort.dart';
+import 'package:${packageName}/merge_sort.dart';
+import 'package:${packageName}/context.dart';
+import 'package:${packageName}/policy.dart';
+import 'package:${packageName}/sort_strategy.dart';
 import 'package:test/test.dart';
 import 'dart:mirrors';
 

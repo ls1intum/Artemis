@@ -23,6 +23,7 @@ import {
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
     MAX_PENALTY_PATTERN,
+    PACKAGE_NAME_PATTERN_FOR_DART,
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
@@ -100,6 +101,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
+    private readonly packageNameRegexForDart = RegExp(PACKAGE_NAME_PATTERN_FOR_DART);
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
@@ -850,6 +852,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             case ProgrammingLanguage.GO:
                 this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_GO;
                 break;
+            case ProgrammingLanguage.DART:
+                this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_DART;
+                break;
         }
     }
 
@@ -1100,6 +1105,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 break;
             case ProgrammingLanguage.GO:
                 regex = this.packageNameRegexForGo;
+                break;
+            case ProgrammingLanguage.DART:
+                regex = this.packageNameRegexForDart;
                 break;
             default:
                 return;

@@ -56,7 +56,7 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false));
         programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, false, false, true, false, false, List.of(), false));
-        programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, false, false, false, false, List.of(), false));
+        programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, false, false, true, false, List.of(), false));
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), false));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false));
         programmingLanguageFeatures.put(JAVA,
