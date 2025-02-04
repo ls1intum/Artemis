@@ -59,6 +59,6 @@ public class UserTokenExpiryNotificationService {
      * @param notifyFunction a function to handle user notification
      */
     private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Function<User, Void> notifyFunction) {
-        userRepository.findByvcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction::apply);
+        userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction::apply);
     }
 }
