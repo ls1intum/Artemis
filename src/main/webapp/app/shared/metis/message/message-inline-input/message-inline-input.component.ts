@@ -114,50 +114,48 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * @private
      */
     private checkForIrisEnabled(): void {
-        if (this.course()?.id) {
-            this.metisConversationService.activeConversation$.subscribe((conversation) => {
-                const activeConversationAsChannel = getAsChannelDTO(conversation);
-                if (activeConversationAsChannel) {
-                    const referenceId = activeConversationAsChannel?.subTypeReferenceId;
-                    if (activeConversationAsChannel.subType) {
-                        this.checkIrisSettings(activeConversationAsChannel, referenceId);
-                    } else {
-                        this.setIrisStatus(false, '');
-                    }
-                }
-            });
-        }
+        this.metisConversationService.activeConversation$.subscribe((conversation) => {
+            this.checkIrisSettings(getAsChannelDTO(conversation), this.course()?.id);
+        });
     }
 
     /**
      * Helper method to check if iris is activated in the settings
      * @param channelDTO channel to be checked for
-     * @param referenceId exercise or lecture number
+     * @param courseId
      * @private
      */
-    private checkIrisSettings(channelDTO: ChannelDTO, referenceId?: number): void {
-        if (channelDTO.subType == ChannelSubType.EXERCISE && referenceId) {
-            this.irisSettingsService.getCombinedExerciseSettings(referenceId).subscribe((irisSettings) => {
-                this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-            });
-        } else if (channelDTO.subType == ChannelSubType.GENERAL) {
-            const course = this.course();
-            if (course && course.id) {
-                this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((irisSettings) => {
-                    this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-                });
-            }
-        } else if (channelDTO.subType == ChannelSubType.LECTURE && referenceId) {
-            this.irisSettingsService.getCombinedCourseSettings(referenceId).subscribe((irisSettings) => {
-                this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-            });
-        } else {
-            this.setIrisStatus(false, '');
+    private checkIrisSettings(channelDTO?: ChannelDTO, courseId?: number): void {
+        switch (channelDTO?.subType) {
+            case ChannelSubType.GENERAL:
+                if (courseId) {
+                    this.irisSettingsService.getCombinedCourseSettings(courseId).subscribe((irisSettings) => {
+                        this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                    });
+                }
+                break;
+            case ChannelSubType.LECTURE:
+                if (channelDTO.subTypeReferenceId) {
+                    this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
+                        this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                    });
+                }
+                break;
+            case ChannelSubType.EXERCISE:
+                if (channelDTO.subTypeReferenceId) {
+                    this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
+                        this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                    });
+                }
+                break;
+            default:
+                this.setIrisStatus(false, '');
+                break;
         }
     }
 
     /**
-     * Helper method to simplify multiple similar changes
+     * Helper method to set the Iris status
      * @param enabled isIrisButton enabled
      * @param link link to the correct iris instance for the question
      * @private

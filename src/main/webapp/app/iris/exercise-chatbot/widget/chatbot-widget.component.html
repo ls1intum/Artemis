@@ -4,7 +4,7 @@
         <jhi-iris-base-chatbot
             [fullSize]="fullSize"
             [showCloseButton]="true"
-            [insertedQuestion]="data?.irisQuestion"
+            [insertedQuestion]="dialogData?.irisQuestion"
             [isChatGptWrapper]="dialogData?.isChatGptWrapper || false"
             (fullSizeToggle)="toggleFullSize()"
             (closeClicked)="closeChat()"

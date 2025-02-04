@@ -60,6 +60,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     isOverflowing = false;
     hasNewMessages = false;
     newIrisMessage: string | undefined;
+    private irisQuestion: string | undefined;
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -87,7 +88,8 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
         this.route.queryParams.subscribe((params: any) => {
             if (params.irisQuestion) {
-                this.openChatWithPrefill(params.irisQuestion);
+                this.irisQuestion = params.irisQuestion;
+                this.openChat();
             }
         });
 
@@ -163,26 +165,10 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
-            data: { isChatGptWrapper: this.isChatGptWrapper },
-        });
-        this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
-    }
-
-    /**
-     * Opens the chat with a message prefilled in the text field ready to sent
-     * @param message message that is prefilled in the text field
-     * @private
-     */
-    private openChatWithPrefill(message: string) {
-        this.chatOpen = true;
-        this.newIrisMessage = undefined;
-        this.isOverflowing = false;
-        this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
-            hasBackdrop: false,
-            scrollStrategy: this.overlay.scrollStrategies.noop(),
-            position: { bottom: '0px', right: '0px' },
-            disableClose: true,
-            data: { irisQuestion: message },
+            data: {
+                isChatGptWrapper: this.isChatGptWrapper,
+                irisQuestion: this.irisQuestion,
+            },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }
