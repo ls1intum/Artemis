@@ -70,7 +70,7 @@ Clone over HTTPS with access token:
 
 .. code-block:: bash
 
-   git clone https://username:vcpat-ndbI5a2QhvEIOQYmtd8rdqAEjsJsKAAOqLQk6NukXRC9@artemis.cit.tum.de/course/documentation-tests.git
+   git clone https://username:<your-access-token>@artemis.cit.tum.de/course/documentation-tests.git
 
 
 Clone over SSH:
