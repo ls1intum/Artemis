@@ -83,6 +83,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
@@ -93,11 +94,11 @@ import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -151,7 +152,7 @@ public class CourseService {
 
     private final CourseExamExportService courseExamExportService;
 
-    private final ExamDeletionService examDeletionService;
+    private final Optional<ExamDeletionApi> examDeletionApi;
 
     private final ExamRepository examRepository;
 
@@ -223,7 +224,7 @@ public class CourseService {
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
-            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
+            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi,
             CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService, ExamRepository examRepository,
             CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
             StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
@@ -246,7 +247,7 @@ public class CourseService {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
-        this.examDeletionService = examDeletionService;
+        this.examDeletionApi = examDeletionApi;
         this.competencyProgressApi = competencyProgressApi;
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
@@ -561,10 +562,11 @@ public class CourseService {
     }
 
     private void deleteExamsOfCourse(Course course) {
+        var api = examDeletionApi.orElseThrow(() -> new ApiNotPresentException(ExamDeletionApi.class, PROFILE_CORE));
         // delete the Exams
         List<Exam> exams = examRepository.findByCourseId(course.getId());
         for (Exam exam : exams) {
-            examDeletionService.delete(exam.getId());
+            api.delete(exam.getId());
         }
     }
 
