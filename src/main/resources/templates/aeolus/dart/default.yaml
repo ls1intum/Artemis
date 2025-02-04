@@ -10,7 +10,7 @@ actions:
   - name: test
     script: |-
       cd "${testWorkingDirectory}"
-      dart test --reporter=json | tojunit --output=report.xml
+      dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml
     results:
       - name: Minitest Test Results
         path: "${testWorkingDirectory}/report.xml"
