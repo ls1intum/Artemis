@@ -1,3 +1,5 @@
+import 'dart:mirrors';
+
 import 'package:artemis_assignment/bubble_sort.dart';
 import 'package:artemis_assignment/merge_sort.dart';
 import 'package:artemis_assignment/context.dart';
@@ -9,12 +11,12 @@ void main() {
   late List<DateTime> orderedDates;
 
   setUp(() {
-    var date1 = DateTime(2000);
-    var date2 = DateTime(2001);
-    var date3 = DateTime(2002);
-    var date4 = DateTime(2003);
-    dates = [date2, date3, date1, date4];
-    orderedDates = [date1, date2, date3, date4];
+    var date1 = DateTime(2018, 11, 8);
+    var date2 = DateTime(2017, 4, 15);
+    var date3 = DateTime(2016, 2, 15);
+    var date4 = DateTime(2017, 9, 15);
+    dates = [date1, date2, date3, date4];
+    orderedDates = [date3, date2, date4, date1];
   });
 
   test('BubbleSort sorts correctly', () {
@@ -31,15 +33,10 @@ void main() {
         reason: "MergeSort does not sort correctly");
   });
 
-  test('use MergeSort for small list', () {
-    final smallList = List.filled(11, DateTime(2000));
+  test('use MergeSort for big list', () {
+    final bigList = List.filled(11, DateTime(2000));
 
-    final context = Context()..dates = smallList;
-    final policy = Policy(context);
-
-    policy.configure();
-
-    final chosenStrategy = context.sortAlgorithm;
+    final chosenStrategy = configurePolicyAndContext(bigList);
 
     expect(chosenStrategy, isA<MergeSort>(),
         reason:
@@ -49,15 +46,22 @@ void main() {
   test('use BubbleSort for small list', () {
     final smallList = List.filled(3, DateTime(2000));
 
-    final context = Context()..dates = smallList;
-    final policy = Policy(context);
-
-    policy.configure();
-
-    final chosenStrategy = context.sortAlgorithm;
+    final chosenStrategy = configurePolicyAndContext(smallList);
 
     expect(chosenStrategy, isA<BubbleSort>(),
         reason:
             "The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates");
   });
+}
+
+Object configurePolicyAndContext(List<DateTime> dates) {
+  final contextClass = reflectClass(Context);
+  final context = contextClass.newInstance(Symbol.empty, []);
+  context.setField(#dates, dates);
+
+  final policyClass = reflectClass(Policy);
+  final policy = policyClass.newInstance(Symbol.empty, [context.reflectee]);
+  policy.invoke(#configure, []);
+
+  return context.getField(#sortAlgorithm).reflectee;
 }
