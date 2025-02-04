@@ -51,9 +51,9 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
-        LectureTranscriptionSegment segment1 = new LectureTranscriptionSegment(0.0, 12.0, "Welcome to today's lecture", null, 1);
-        LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", null, 1);
-        LectureTranscription transcription = new LectureTranscription(this.lecture1, "en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }));
+        LectureTranscriptionSegment segment1 = new LectureTranscriptionSegment(0.0, 12.0, "Welcome to today's lecture", 1);
+        LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
+        LectureTranscription transcription = new LectureTranscription(this.lecture1, "en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), null);
 
         lecturetranscriptionRepository.save(transcription);
     }

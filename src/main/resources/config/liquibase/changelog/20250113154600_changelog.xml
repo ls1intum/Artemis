@@ -16,6 +16,8 @@
                     type="BIGINT"/>
             <column name="language"
                     type="VARCHAR(2)"/>
+            <column name="lecture_unit_id"
+                    type="BIGINT"/>
         </createTable>
         <createTable tableName="lecture_transcription_segments">
             <column autoIncrement="true"
@@ -35,8 +37,6 @@
             </column>
             <column name="text"
                     type="TEXT"/>
-            <column name="lecture_unit_id"
-                    type="BIGINT"/>
             <column name="slide_number"
                     type="INT"/>
             <column name="transcription_id"
@@ -48,8 +48,8 @@
                                  referencedColumnNames="id"
                                  referencedTableName="lecture"/>
         <addForeignKeyConstraint baseColumnNames="lecture_unit_id"
-                                 baseTableName="lecture_transcription_segments"
-                                 constraintName="FK_LECTURE_TRANSCRIPTION_SEGMENTS_ON_LECTURE_UNIT"
+                                 baseTableName="lecture_transcription"
+                                 constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT"
                                  referencedColumnNames="id"
                                  referencedTableName="lecture_unit"/>
         <addForeignKeyConstraint baseColumnNames="transcription_id"

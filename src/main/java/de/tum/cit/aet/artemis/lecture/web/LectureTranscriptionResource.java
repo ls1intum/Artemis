@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -31,7 +29,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionSegmentDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -67,25 +64,22 @@ public class LectureTranscriptionResource {
      *
      * @param courseId         The id of the course
      * @param lectureId        The id of the lecture
+     * @param lectureUnitId    The id of the lecture unit
      * @param transcriptionDTO The transcription object to create
      * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/transcriptions")
+    @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/lectureUnit/{lectureUnitId}/transcriptions")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
-            @PathVariable Long lectureId) throws URISyntaxException {
+            @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
         Lecture lecture = lectureRepository.findById(transcriptionDTO.lectureId()).orElseThrow(() -> new EntityNotFoundException("no lecture found for this id"));
-
-        Set<Long> lectureUnitIds = transcriptionDTO.segments().stream().map(LectureTranscriptionSegmentDTO::lectureUnitId).collect(Collectors.toSet());
-        Set<LectureUnit> lectureUnits = lectureUnitRepository.findAllByIdIn(lectureUnitIds);
-
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         List<LectureTranscriptionSegment> segments = transcriptionDTO.segments().stream().map(segment -> {
-            LectureUnit lectureUnit = lectureUnits.stream().filter(lu -> lu.getId().equals(segment.lectureUnitId())).findFirst().orElseThrow();
-            return new LectureTranscriptionSegment(segment.startTime(), segment.endTime(), segment.text(), lectureUnit, segment.slideNumber());
+            return new LectureTranscriptionSegment(segment.startTime(), segment.endTime(), segment.text(), segment.slideNumber());
         }).toList();
 
-        LectureTranscription lectureTranscription = new LectureTranscription(lecture, transcriptionDTO.language(), segments);
+        LectureTranscription lectureTranscription = new LectureTranscription(lecture, transcriptionDTO.language(), segments, lectureUnit);
         lectureTranscription.setId(null);
 
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);

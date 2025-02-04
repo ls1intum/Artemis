@@ -85,7 +85,7 @@ public class PyrisWebhookService {
      * @param lecture        The lecture of the transcriptions
      * @return jobToken if the job was created else null
      */
-    public String addTranscriptionsToPyrisDB(Set<LectureTranscription> transcriptions, Course course, Lecture lecture) {
+    public String addTranscriptionsToPyrisDB(Set<LectureTranscription> transcriptions, Course course, Lecture lecture, LectureUnit lectureUnit) {
         if (transcriptions == null || transcriptions.isEmpty()) {
             throw new IllegalArgumentException("Transcriptions cannot be empty");
         }
@@ -108,7 +108,7 @@ public class PyrisWebhookService {
                         course.getDescription()))
                 .toList();
 
-        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTOs, course, lecture);
+        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTOs, course, lecture, lectureUnit);
     }
 
     /**
@@ -117,10 +117,11 @@ public class PyrisWebhookService {
      * @param toUpdateTranscriptions The transcription that are going to be Updated
      * @return jobToken if the job was created
      */
-    private String executeTranscriptionAdditionWebhook(List<PyrisTranscriptionIngestionWebhookDTO> toUpdateTranscriptions, Course course, Lecture lecture) {
-        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId());
+    private String executeTranscriptionAdditionWebhook(List<PyrisTranscriptionIngestionWebhookDTO> toUpdateTranscriptions, Course course, Lecture lecture,
+            LectureUnit lectureUnit) {
+        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId(), lectureUnit.getId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscriptions, lecture.getId(), settingsDTO,
+        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscriptions, lectureUnit.getId(), settingsDTO,
                 List.of());
         pyrisConnectorService.executeTranscriptionAdditionWebhook("fullIngestion", executionDTO);
         return jobToken;

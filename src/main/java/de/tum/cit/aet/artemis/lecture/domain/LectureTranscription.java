@@ -38,13 +38,20 @@ public class LectureTranscription extends DomainObject {
     @JoinColumn(name = "transcription_id")
     private List<LectureTranscriptionSegment> segments = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "lecture_unit_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnore
+    private LectureUnit lectureUnit;
+
     public LectureTranscription() {
     }
 
-    public LectureTranscription(Lecture lecture, String language, List<LectureTranscriptionSegment> segments) {
+    public LectureTranscription(Lecture lecture, String language, List<LectureTranscriptionSegment> segments, LectureUnit lectureUnit) {
         this.lecture = lecture;
         this.language = language;
         this.segments = segments;
+        this.lectureUnit = lectureUnit;
     }
 
     public Lecture getLecture() {
@@ -69,6 +76,14 @@ public class LectureTranscription extends DomainObject {
 
     public void setSegments(List<LectureTranscriptionSegment> segments) {
         this.segments = segments;
+    }
+
+    public LectureUnit getLectureUnit() {
+        return lectureUnit;
+    }
+
+    public void setLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnit = lectureUnit;
     }
 
     @Override

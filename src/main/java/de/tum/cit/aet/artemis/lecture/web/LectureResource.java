@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -78,6 +79,8 @@ public class LectureResource {
 
     private final LectureRepository lectureRepository;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     private final LectureService lectureService;
 
     private final LectureImportService lectureImportService;
@@ -94,10 +97,12 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyApi competencyApi, LectureTranscriptionRepository lectureTranscriptionRepository) {
+    public LectureResource(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, LectureService lectureService,
+            LectureImportService lectureImportService, CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ExerciseService exerciseService, ChannelService channelService, ChannelRepository channelRepository, CompetencyApi competencyApi,
+            LectureTranscriptionRepository lectureTranscriptionRepository) {
         this.lectureRepository = lectureRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.courseRepository = courseRepository;
@@ -302,19 +307,25 @@ public class LectureResource {
      * POST /lectures/{lectureId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
-     * @param courseId  The id of the course of the lecture
-     * @param lectureId If this id is present then only ingest this one lecture of the respective course
+     * @param courseId      The id of the course of the lecture
+     * @param lectureId     The id of the lecture of the transcription
+     * @param lectureUnitId The id of the lectureUnit that should be ingested
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @Profile(PROFILE_IRIS)
-    @PutMapping("courses/{courseId}/lectures/{lectureId}/ingest-transcription")
+    @PutMapping("courses/{courseId}/lectures/{lectureId}/lectureUnit/{lectureUnitId}/ingest-transcription")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
         Course course = lecture.getCourse();
+        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!course.getId().equals(courseId)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
                     .body(null);
+        }
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
         Set<LectureTranscription> transcriptions = lectureTranscriptionRepository.findAllWithTranscriptionSegmentsByLectureId(lectureId);
         if (transcriptions.isEmpty()) {
@@ -322,7 +333,7 @@ public class LectureResource {
                     .body(null);
         }
         Set<LectureTranscription> transcriptionsToIngest = new HashSet<>(transcriptions);
-        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest, course, lecture);
+        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest, course, lecture, lectureUnit);
         return ResponseEntity.ok().build();
     }
 

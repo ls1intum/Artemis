@@ -18,29 +18,33 @@ export class LectureTranscriptionIngestionComponent {
 
     ingestCourseIdInput = '';
     ingestLectureIdInput = '';
+    ingestLectureUnitIdInput = '';
 
     createCourseIdInput = '';
     createLectureIdInput = '';
+    createLectureUnitIdInput = '';
 
     transcriptionInput = '';
 
     faCheck = faCheck;
 
     ingestTranscription(): void {
-        this.lectureTranscriptionService.ingestTranscription(Number(this.ingestCourseIdInput), Number(this.ingestLectureIdInput)).subscribe((successful) => {
-            if (successful) {
-                this.alertService.success('Ingested transcription');
-            } else {
-                this.alertService.error('Unknown error while ingesting transcription');
-            }
-            this.ingestCourseIdInput = '';
-            this.ingestLectureIdInput = '';
-        });
+        this.lectureTranscriptionService
+            .ingestTranscription(Number(this.ingestCourseIdInput), Number(this.ingestLectureIdInput), Number(this.ingestLectureUnitIdInput))
+            .subscribe((successful) => {
+                if (successful) {
+                    this.alertService.success('Ingested transcription');
+                } else {
+                    this.alertService.error('Unknown error while ingesting transcription');
+                }
+                this.ingestCourseIdInput = '';
+                this.ingestLectureIdInput = '';
+            });
     }
 
     createTranscription(): void {
         this.lectureTranscriptionService
-            .createTranscription(Number(this.createCourseIdInput), Number(this.createLectureIdInput), JSON.parse(this.transcriptionInput))
+            .createTranscription(Number(this.createCourseIdInput), Number(this.createLectureIdInput), Number(this.createLectureUnitIdInput), JSON.parse(this.transcriptionInput))
             .subscribe((successful) => {
                 if (successful) {
                     this.alertService.success('Created transcription');

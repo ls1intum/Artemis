@@ -132,9 +132,9 @@ public class PyrisJobService {
      * @param lectureId the ID of the lecture associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId) {
+    public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId);
+        var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);

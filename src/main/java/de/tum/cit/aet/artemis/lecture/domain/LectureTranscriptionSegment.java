@@ -2,17 +2,13 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
@@ -32,23 +28,16 @@ public class LectureTranscriptionSegment extends DomainObject {
     @Lob
     private String text;
 
-    @ManyToOne
-    @JoinColumn(name = "lecture_unit_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnore
-    private LectureUnit lectureUnit;
-
     @Column(name = "slide_number")
     private int slideNumber;
 
     public LectureTranscriptionSegment() {
     }
 
-    public LectureTranscriptionSegment(Double startTime, Double endTime, String text, LectureUnit lectureUnit, int slideNumber) {
+    public LectureTranscriptionSegment(Double startTime, Double endTime, String text, int slideNumber) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.text = text;
-        this.lectureUnit = lectureUnit;
         this.slideNumber = slideNumber;
     }
 
@@ -74,14 +63,6 @@ public class LectureTranscriptionSegment extends DomainObject {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public LectureUnit getLectureUnit() {
-        return lectureUnit;
-    }
-
-    public void setLectureUnit(LectureUnit lectureUnit) {
-        this.lectureUnit = lectureUnit;
     }
 
     public int getSlideNumber() {
