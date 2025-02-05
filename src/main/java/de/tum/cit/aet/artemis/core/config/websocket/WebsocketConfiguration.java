@@ -11,15 +11,12 @@ import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocke
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -50,7 +47,6 @@ import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -183,6 +179,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
                 .setInterceptors(httpSessionHandshakeInterceptor());
+
+        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").setHandshakeHandler(handshakeHandler).addInterceptors(httpSessionHandshakeInterceptor());
     }
 
     @Override
@@ -209,26 +207,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                        if (JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null) {
-                            return true;
-                        }
-
-                        // extract query parameter "token"
-                        Map<String, String> queryParams = Arrays.stream(servletRequest.getURI().getQuery().split("&")).map(s -> {
-                            String[] keyValue = s.split("=");
-                            if (keyValue.length != 2) {
-                                throw new IllegalArgumentException("Invalid query parameter");
-                            }
-                            return new AbstractMap.SimpleEntry<String, String>(keyValue[0], keyValue[1]);
-                        }).collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
-                        String jwtToken = queryParams.get("token");
-                        if (!JWTFilter.isJwtValid(tokenProvider, jwtToken, null)) {
-                            return false;
-                        }
-
-                        var auth = tokenProvider.getAuthentication(jwtToken);
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                        return true;
+                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
                     }
                     catch (IllegalArgumentException e) {
                         response.setStatusCode(HttpStatusCode.valueOf(400));
