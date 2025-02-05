@@ -5,7 +5,6 @@ import { assessmentDashboardRoute } from './assessment-dashboard.route';
 import { AssessmentDashboardComponent } from './assessment-dashboard.component';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -20,7 +19,6 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisResultModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTutorLeaderboardModule,
-        ArtemisTutorParticipationGraphModule,
         ArtemisExerciseAssessmentDashboardModule,
         ArtemisSharedComponentModule,
         PieChartModule,
