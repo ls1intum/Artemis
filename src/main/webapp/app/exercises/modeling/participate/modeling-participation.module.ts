@@ -9,7 +9,6 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
-import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
@@ -24,7 +23,6 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ModelingAssessmentModule,
-        ArtemisFullscreenModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         RequestFeedbackButtonComponent,

@@ -48,7 +48,6 @@ import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 
-import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
 
@@ -77,7 +76,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
-        ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
         ArtemisCompetenciesModule,
         ArtemisExerciseScoresModule,
