@@ -168,10 +168,6 @@ const routes: Routes = [
                     showRefreshButton: true,
                 },
             },
-            {
-                path: 'quiz-exercises/:exerciseId',
-                loadChildren: () => import('app/exercises/quiz/manage/statistics/quiz-statistic.route').then((m) => m.quizStatisticRoute),
-            },
 
             {
                 path: CourseOverviewRoutePath.COMPETENCIES,

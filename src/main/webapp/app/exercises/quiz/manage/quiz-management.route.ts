@@ -78,13 +78,4 @@ export const quizManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: 'quiz-exercises/:exerciseId/statistics',
-        loadChildren: () => import('./statistics/quiz-statistic.route').then((m) => m.quizStatisticRoute),
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
