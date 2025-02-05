@@ -425,4 +425,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 WHERE e.id = :examId
             """)
     Integer findLongestWorkingTimeForExam(@Param("examId") Long examId);
+
+    /**
+     * Gets the StudentExam with the given student exam id
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam for the given student exam id
+     */
+
+    @Query("""
+                SELECT se
+                FROM StudentExam se
+                     LEFT JOIN FETCH se.exercises ex
+                     LEFT JOIN TREAT(ex AS ProgrammingExercise) progEx
+                     LEFT JOIN FETCH progEx.submissionPolicy sp
+                WHERE se.id = :studentExamId
+            """)
+    Optional<StudentExam> findByIdWithExercisesAndSubmissionPolicy(@Param("studentExamId") Long studentExamId);
+
 }

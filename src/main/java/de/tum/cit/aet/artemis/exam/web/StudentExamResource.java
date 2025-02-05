@@ -251,7 +251,7 @@ public class StudentExamResource {
         if (workingTime <= 0) {
             throw new BadRequestException();
         }
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSubmissionPolicy(studentExamId).orElseThrow();
         var originalWorkingTime = studentExam.getWorkingTime();
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
@@ -267,7 +267,7 @@ public class StudentExamResource {
                 examService.scheduleModelingExercises(exam);
             }
             boolean wasEndedOriginally = now.isAfter(exam.getEndDate());
-            if (!studentExam.isEnded() && wasEndedOriginally) {
+            if (wasEndedOriginally) {
                 studentExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).forEach(exercise -> {
                     var programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(),
                             studentExam.getUser().getLogin());
