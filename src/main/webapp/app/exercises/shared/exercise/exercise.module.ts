@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-lifecycle-buttons.component';
 
 @NgModule({
@@ -13,7 +12,6 @@ import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         FormsModule,
-        ArtemisChartsModule,
         ExerciseDetailStatisticsComponent,
         ExerciseStatisticsComponent,
         QuizExerciseLifecycleButtonsComponent,
