@@ -243,7 +243,7 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS = "authenticationMechanisms";
+    public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
