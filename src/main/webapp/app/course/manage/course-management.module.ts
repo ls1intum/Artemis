@@ -17,7 +17,6 @@ import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-mana
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
-import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
@@ -86,7 +85,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
-        ArtemisDashboardsModule,
         ArtemisParticipationModule,
         ComplaintsForTutorComponent,
         ArtemisListOfComplaintsModule,
