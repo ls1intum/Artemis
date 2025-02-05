@@ -94,6 +94,12 @@ describe('FeedbackFilterModalComponent', () => {
         expect(component.filters.errorCategories).toEqual(['Student Error']);
     });
 
+    it('should update filters when checkboxes change for occurrence', () => {
+        const event = { target: { checked: true, value: '1' } } as unknown as Event;
+        component.onCheckboxChange(event, 'occurrence');
+        expect(component.filters.occurrence).toEqual([0, 1, 1]);
+    });
+
     it('should remove the value from filters when checkbox is unchecked for tasks', () => {
         component.filters.tasks = ['test-task', 'task-2'];
         const event = { target: { checked: false, value: 'test-task' } } as unknown as Event;
