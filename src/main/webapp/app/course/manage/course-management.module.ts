@@ -23,7 +23,6 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
@@ -43,7 +42,6 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
-import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
 
@@ -88,7 +86,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
-        ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
         ArtemisMarkdownModule,
@@ -96,7 +93,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         LineChartModule,
         PieChartModule,
         ArtemisPlagiarismModule,
-        ArtemisChartsModule,
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,

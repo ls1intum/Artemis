@@ -1,7 +1,6 @@
 import { RouterModule } from '@angular/router';
 import { tutorialGroupManagementRoutes } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTutorialGroupsSharedModule } from '../shared/tutorial-groups-shared.module';
@@ -42,7 +41,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
     imports: [
         RouterModule.forChild(tutorialGroupManagementRoutes),
         ArtemisSharedModule,
-        ArtemisDataTableModule,
         NgxDatatableModule,
         ArtemisMarkdownModule,
         OwlDateTimeModule,

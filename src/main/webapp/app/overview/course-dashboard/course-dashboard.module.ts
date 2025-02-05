@@ -10,7 +10,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
@@ -39,7 +38,6 @@ const routes: Routes = [
         NgbModule,
         ArtemisSharedModule,
         FontAwesomeModule,
-        ArtemisDataTableModule,
         NgxDatatableModule,
         ArtemisSharedComponentModule,
         LineChartModule,

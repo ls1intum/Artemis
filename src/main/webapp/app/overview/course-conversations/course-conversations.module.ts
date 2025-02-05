@@ -4,7 +4,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { ChannelsOverviewDialogComponent } from './dialogs/channels-overview-dialog/channels-overview-dialog.component';
@@ -50,7 +49,6 @@ const routes: Routes = [
         ArtemisMarkdownModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisDataTableModule,
         ArtemisSidebarModule,
         InfiniteScrollDirective,
         ProfilePictureComponent,
