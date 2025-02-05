@@ -304,7 +304,7 @@ public class LectureResource {
     }
 
     /**
-     * POST /lectures/{lectureId}/ingest-transcription
+     * POST /lecture/{lectureId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param courseId      The id of the course of the lecture
@@ -313,7 +313,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @Profile(PROFILE_IRIS)
-    @PutMapping("courses/{courseId}/lectures/{lectureId}/lectureUnit/{lectureUnitId}/ingest-transcription")
+    @PutMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();

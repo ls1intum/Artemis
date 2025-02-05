@@ -17,8 +17,10 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
 
@@ -36,7 +38,12 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture1;
+
+    private LectureUnit lectureUnit;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -46,6 +53,9 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
+        this.lectureUnit = lectureUtilService.createTextUnit();
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit));
+
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -65,14 +75,16 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
+        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription",
+                Optional.empty(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lectures/" + 9999L + "/ingest-transcription", Optional.empty(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(),
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -82,7 +94,8 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + lecture1.getCourse().getId() + "/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription",
+                Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
 }

@@ -69,7 +69,7 @@ public class LectureTranscriptionResource {
      * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/lectureUnit/{lectureUnitId}/transcriptions")
+    @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
