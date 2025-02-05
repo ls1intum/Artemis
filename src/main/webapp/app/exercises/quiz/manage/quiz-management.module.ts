@@ -28,7 +28,6 @@ import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/mat
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
@@ -58,7 +57,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisQuizParticipationModule,
         ArtemisMarkdownModule,
         ArtemisSharedComponentModule,
-        ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         DetailModule,
         ArtemisExerciseModule,

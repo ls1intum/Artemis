@@ -11,18 +11,18 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    imports: [SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule],
+    imports: [SubmissionResultStatusModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule, ExerciseCategoriesComponent],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]

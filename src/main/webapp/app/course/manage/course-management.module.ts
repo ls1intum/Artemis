@@ -48,7 +48,6 @@ import { CourseGroupMembershipComponent } from './course-group-membership/course
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
 import { IrisModule } from 'app/iris/iris.module';
@@ -93,7 +92,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         LineChartModule,
         PieChartModule,
         ArtemisPlagiarismModule,
-        ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
         IrisModule,

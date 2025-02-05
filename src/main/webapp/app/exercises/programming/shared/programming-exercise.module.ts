@@ -8,7 +8,6 @@ import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programmi
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
-import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programming/manage/reset/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
@@ -25,7 +24,6 @@ import { CommitsInfoRowComponent } from 'app/exercises/programming/shared/commit
         ArtemisProgrammingExerciseGradingModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingAssessmentModule,
-        ExerciseCategoriesModule,
         SubmissionResultStatusModule,
         ProgrammingExerciseComponent,
         ProgrammingExerciseCreateButtonsComponent,
