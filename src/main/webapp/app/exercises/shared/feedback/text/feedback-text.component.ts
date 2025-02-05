@@ -33,7 +33,7 @@ export class FeedbackTextComponent implements OnInit {
         const resultId = this.feedback.feedbackReference.result!.id!;
         const feedbackId = this.feedback.feedbackReference.id!;
 
-        this.longFeedbackService.debounceFindWithReturn(resultId, feedbackId).subscribe((longFeedbackResponse) => {
+        this.longFeedbackService.find(resultId, feedbackId).subscribe((longFeedbackResponse) => {
             const longFeedback = longFeedbackResponse.body!;
             const textLength = longFeedback.length ?? 0;
 

@@ -26,7 +26,7 @@ describe('FeedbackTextComponent', () => {
                 comp = fixture.componentInstance;
 
                 const longFeedbackTextService = fixture.debugElement.injector.get(LongFeedbackTextService);
-                getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'debounceFindWithReturn');
+                getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
             });
     });
 
