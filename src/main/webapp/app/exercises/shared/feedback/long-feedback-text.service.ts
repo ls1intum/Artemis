@@ -36,8 +36,10 @@ export class LongFeedbackTextService implements OnDestroy {
     }
 
     debounceFindWithReturn(resultId: number, feedbackId: number): Observable<LongFeedbackResponse> {
-        return new Observable<LongFeedbackResponse>(() => {
+        return new Observable<LongFeedbackResponse>((observer) => {
             this.debounceFind(resultId, feedbackId);
+            observer.next();
+            observer.complete();
         });
     }
 }
