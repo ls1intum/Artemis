@@ -11,7 +11,6 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
@@ -32,7 +31,6 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisSharedComponentModule,
         ArtemisProgrammingAssessmentModule,
         ArtemisAssessmentSharedModule,
-        ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         PieChartModule,
         ExerciseAssessmentDashboardComponent,

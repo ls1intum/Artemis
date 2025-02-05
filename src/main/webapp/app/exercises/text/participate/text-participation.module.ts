@@ -9,7 +9,6 @@ import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
@@ -23,7 +22,6 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         IrisModule,
         RequestFeedbackButtonComponent,

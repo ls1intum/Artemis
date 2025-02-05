@@ -22,7 +22,6 @@ import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-gr
 import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { TutorialGroupSessionFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
@@ -42,7 +41,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         RouterModule.forChild(tutorialGroupManagementRoutes),
         ArtemisSharedModule,
         NgxDatatableModule,
-        ArtemisMarkdownModule,
         OwlDateTimeModule,
         ArtemisTutorialGroupsSharedModule,
         ArtemisSharedComponentModule,

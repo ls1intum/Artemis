@@ -15,7 +15,6 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -42,7 +41,6 @@ import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/fe
         FormDateTimePickerModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
-        ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ExampleSubmissionsModule,
         ArtemisSharedComponentModule,

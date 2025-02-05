@@ -11,7 +11,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { NgbAccordionModule, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
@@ -33,7 +32,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         RouterModule,
         FormDateTimePickerModule,
         NgbAccordionModule,
-        ArtemisMarkdownModule,
         IrisModule,
         ArtemisCourseExerciseRowModule,
         JudgementOfLearningRatingComponent,

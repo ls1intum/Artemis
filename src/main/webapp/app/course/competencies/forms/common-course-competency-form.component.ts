@@ -7,7 +7,6 @@ import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -23,7 +22,6 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
     imports: [
         ArtemisSharedModule,
         FormDateTimePickerModule,
-        ArtemisMarkdownModule,
         NgbDropdownModule,
         ArtemisFormsModule,
         ReactiveFormsModule,

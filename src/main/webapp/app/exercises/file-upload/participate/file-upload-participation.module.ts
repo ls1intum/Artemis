@@ -6,7 +6,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
     imports: [
@@ -16,7 +15,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisComplaintsModule,
         ArtemisFileUploadParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisMarkdownModule,
         FileUploadSubmissionComponent,
     ],
     exports: [FileUploadSubmissionComponent],

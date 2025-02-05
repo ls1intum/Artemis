@@ -14,7 +14,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
@@ -54,7 +53,6 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         FontAwesomeModule,
         RouterModule.forChild(routes),
         ArtemisModelingEditorModule,
-        ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFeedbackModule,
