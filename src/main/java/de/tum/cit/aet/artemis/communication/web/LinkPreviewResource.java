@@ -4,12 +4,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
+import org.apache.hc.core5.net.InetAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,21 +64,24 @@ public class LinkPreviewResource {
      * </ul>
      * </ul>
      *
-     * @param url The publicly accessible URL to generate a preview for.
+     * @param url The publicly accessible URL (potentially encoded) to generate a preview for.
      * @return A {@link LinkPreviewDTO} containing metadata extracted from the URL.
      * @throws BadRequestAlertException If the URL is invalid or deemed unsafe.
      */
     @GetMapping("link-preview")
     @EnforceAtLeastStudent
-    @Cacheable(value = "linkPreview", key = "#url", unless = "#result == null")
-    public LinkPreviewDTO getLinkPreview(@RequestParam String url) {
-        log.debug("REST request to get link preview for URL: {}", url);
+    public ResponseEntity<LinkPreviewDTO> getLinkPreview(@RequestParam String url) {
+        String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8);
+        log.debug("REST request to get link preview for URL: {}", decodedUrl);
 
-        if (!isValidUrl(url)) {
-            throw new BadRequestAlertException("Invalid or potentially unsafe URL", "url", "invalid");
+        if (!isValidUrl(decodedUrl)) {
+            log.warn("Invalid or potentially unsafe URL {}", decodedUrl);
+            return ResponseEntity.badRequest().build();
         }
 
-        return linkPreviewService.getLinkPreview(url);
+        var linkPreview = linkPreviewService.getLinkPreview(decodedUrl);
+
+        return ResponseEntity.ok(linkPreview);
     }
 
     /**
@@ -97,7 +103,7 @@ public class LinkPreviewResource {
             String host = parsedUrl.getHost();
 
             // Reject if the host is an IP address (IPv4 or IPv6)
-            if (isIpAddress(host)) {
+            if (InetAddressUtils.isIPv4(host) || InetAddressUtils.isIPv6(host)) {
                 return false;
             }
 
@@ -112,15 +118,5 @@ public class LinkPreviewResource {
         catch (MalformedURLException e) {
             return false;
         }
-    }
-
-    /**
-     * Checks if the given host is an IPv4 or IPv6 address.
-     *
-     * @param host The hostname or IP to check.
-     * @return {@code true} if it's an IP address, {@code false} otherwise.
-     */
-    private boolean isIpAddress(String host) {
-        return Pattern.matches("^(\\d{1,3}\\.){3}\\d{1,3}$|^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+$", host);
     }
 }
