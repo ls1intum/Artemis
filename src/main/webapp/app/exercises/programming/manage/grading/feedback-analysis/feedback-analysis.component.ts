@@ -124,7 +124,7 @@ export class FeedbackAnalysisComponent {
         };
 
         // cache related check if we should loading new data is necessary
-        const previousResponseData = this.previousResponseData();
+        const previousResponseData: FeedbackAnalysisResponse | undefined = this.previousResponseData();
         if (
             JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
             JSON.stringify(this.previousRequestState()) === JSON.stringify(state) &&
