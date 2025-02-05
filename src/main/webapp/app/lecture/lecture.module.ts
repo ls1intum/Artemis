@@ -13,7 +13,6 @@ import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lec
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
@@ -33,7 +32,6 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
         ArtemisCompetenciesModule,
-        TitleChannelNameModule,
         DetailModule,
         CompetencyFormComponent,
         ArtemisFormsModule,

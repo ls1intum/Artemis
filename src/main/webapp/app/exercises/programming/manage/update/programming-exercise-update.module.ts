@@ -33,7 +33,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 
 @NgModule({
@@ -61,7 +60,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         ProgrammingExerciseEditCheckoutDirectoriesComponent,
         ProgrammingExerciseDifficultyComponent,
         SwitchEditModeButtonComponent,
-        TitleChannelNameModule,
         CustomNotIncludedInValidatorDirective,
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseInformationComponent,
