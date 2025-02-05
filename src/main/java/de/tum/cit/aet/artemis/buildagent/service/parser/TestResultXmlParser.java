@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.buildagent.service;
+package de.tum.cit.aet.artemis.buildagent.service.parser;
 
 import java.io.IOException;
 import java.util.Collections;
