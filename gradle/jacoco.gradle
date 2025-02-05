@@ -43,7 +43,7 @@ ext {
         ],
         "iris"        : [
             "INSTRUCTION": 0.74,
-            "CLASS": 25
+            "CLASS": 26
         ],
         "lecture"      : [
             "INSTRUCTION": 0.86,
