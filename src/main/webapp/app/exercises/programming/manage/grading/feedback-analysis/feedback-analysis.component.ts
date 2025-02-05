@@ -124,13 +124,14 @@ export class FeedbackAnalysisComponent {
         };
 
         // cache related check if we should loading new data is necessary
+        const previousResponseData = this.previousResponseData();
         if (
             JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
             JSON.stringify(this.previousRequestState()) === JSON.stringify(state) &&
             this.previousRequestGroupFeedback() === this.groupFeedback() &&
-            this.previousResponseData()
+            previousResponseData
         ) {
-            this.updateCache(this.previousResponseData()!, state, filters);
+            this.updateCache(previousResponseData, state, filters);
             return;
         }
 
