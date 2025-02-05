@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
@@ -13,7 +13,6 @@ import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exerc
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisProgrammingExerciseActionsModule,
         ArtemisSharedComponentModule,
         BarChartModule,

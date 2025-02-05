@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
@@ -19,7 +19,7 @@ import { NoDataComponent } from 'app/shared/no-data-component';
 @NgModule({
     imports: [
         RouterModule,
-        ArtemisSharedModule,
+
         ArtemisSharedComponentModule,
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseStatusModule,

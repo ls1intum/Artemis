@@ -5,7 +5,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
@@ -13,7 +13,7 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-create-competency',
     templateUrl: './create-competency.component.html',
-    imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
+    imports: [CompetencyFormComponent, ArtemisSharedComponentModule],
 })
 export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
     private competencyService = inject(CompetencyService);

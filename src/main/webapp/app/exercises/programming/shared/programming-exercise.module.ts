@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { RouterModule } from '@angular/router';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 
@@ -18,7 +18,6 @@ import { CommitsInfoRowComponent } from 'app/exercises/programming/shared/commit
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule,
         ArtemisProgrammingExerciseStatusModule,
         ArtemisProgrammingExerciseGradingModule,

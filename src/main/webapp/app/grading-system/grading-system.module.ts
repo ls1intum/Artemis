@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { DetailedGradingSystemComponent } from 'app/grading-system/detailed-grading-system/detailed-grading-system.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
@@ -11,7 +11,6 @@ import { GradingSystemPresentationsComponent } from 'app/grading-system/grading-
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(gradingSystemState),
         ArtemisSharedComponentModule,
         GradingSystemComponent,

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
@@ -22,7 +22,6 @@ import { ImportCompetenciesTableComponent } from 'app/course/competencies/import
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         FormsModule,
         ReactiveFormsModule,
         NgxGraphModule,

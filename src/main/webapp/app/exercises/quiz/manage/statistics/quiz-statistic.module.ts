@@ -7,7 +7,7 @@ import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { QuizStatisticsFooterComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 import { quizStatisticRoute } from 'app/exercises/quiz/manage/statistics/quiz-statistic.route';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { BarChartModule } from '@swimlane/ngx-charts';
 
@@ -15,7 +15,6 @@ const ENTITY_STATES = [...quizStatisticRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisQuizQuestionTypesModule,
         BarChartModule,

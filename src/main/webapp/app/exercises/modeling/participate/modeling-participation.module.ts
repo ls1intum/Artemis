@@ -1,6 +1,6 @@
 import { ModelingSubmissionComponent } from './modeling-submission.component';
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -14,7 +14,6 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisResultModule,
         ArtemisModelingEditorModule,
         ArtemisComplaintsModule,

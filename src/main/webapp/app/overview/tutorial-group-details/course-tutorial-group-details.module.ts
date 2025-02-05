@@ -5,7 +5,6 @@ import { ArtemisTutorialGroupsSharedModule } from 'app/course/tutorial-groups/sh
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseTutorialGroupDetailComponent } from 'app/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const routes: Routes = [
     {
@@ -21,6 +20,6 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisTutorialGroupsSharedModule, RouterModule.forChild(routes), ArtemisSharedModule, CourseTutorialGroupDetailComponent],
+    imports: [ArtemisTutorialGroupsSharedModule, RouterModule.forChild(routes), CourseTutorialGroupDetailComponent],
 })
 export class CourseTutorialGroupDetailsModule {}

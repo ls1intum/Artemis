@@ -5,9 +5,13 @@ import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/git-diff-report/git-diff-file-panel.component';
 import { captureException } from '@sentry/angular';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 interface DiffInformation {
     path: string;
@@ -21,7 +25,7 @@ interface DiffInformation {
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
+    imports: [GitDiffLineStatComponent, ArtemisSharedComponentModule, GitDiffFilePanelComponent, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, NgbTooltipModule],
 })
 export class GitDiffReportComponent {
     protected readonly faSpinner = faSpinner;

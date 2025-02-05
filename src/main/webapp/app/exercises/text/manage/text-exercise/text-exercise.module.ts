@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
@@ -31,7 +30,6 @@ const ENTITY_STATES = [...textExerciseRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         FormDateTimePickerModule,
         ArtemisDifficultyPickerModule,

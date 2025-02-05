@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
@@ -22,7 +22,6 @@ const ENTITY_STATES = [...lectureRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisLectureUnitManagementModule,
         FormDateTimePickerModule,

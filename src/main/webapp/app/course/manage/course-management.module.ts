@@ -5,7 +5,7 @@ import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-up
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { MatChipsModule } from '@angular/material/chips';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
@@ -58,7 +58,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(courseManagementState),
         FormDateTimePickerModule,
         ReactiveFormsModule,

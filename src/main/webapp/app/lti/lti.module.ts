@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
@@ -17,7 +16,7 @@ const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
 @NgModule({
     imports: [
         RouterModule.forChild(LTI_LAUNCH_ROUTES),
-        ArtemisSharedModule,
+
         FormsModule,
         ArtemisSharedComponentModule,
         Lti13ExerciseLaunchComponent,

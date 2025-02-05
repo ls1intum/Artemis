@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -9,7 +9,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisExerciseButtonsModule,
         ArtemisHeaderExercisePageWithDetailsModule,

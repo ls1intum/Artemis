@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
@@ -18,7 +17,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, ArtemisSharedModule, NgbModule, FontAwesomeModule],
+    imports: [TranslateModule, NgbModule, FontAwesomeModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitchComponent implements OnInit {

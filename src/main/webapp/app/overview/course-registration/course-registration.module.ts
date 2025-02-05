@@ -4,7 +4,7 @@ import { CourseRegistrationComponent } from 'app/overview/course-registration/co
 
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseRegistrationButtonModule } from 'app/overview/course-registration/course-registration-button/course-registration-button.module';
@@ -24,7 +24,6 @@ const routes: Routes = [
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisSharedComponentModule,
         RouterModule.forChild(routes),
         ArtemisCompetenciesModule,

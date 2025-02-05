@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -11,7 +11,6 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         DragDropModule,
         DragItemComponent,
         DragAndDropQuestionComponent,

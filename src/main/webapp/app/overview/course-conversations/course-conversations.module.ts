@@ -1,5 +1,5 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -44,7 +44,7 @@ const routes: Routes = [
 @NgModule({
     imports: [
         RouterModule.forChild(routes),
-        ArtemisSharedModule,
+
         ArtemisSharedComponentModule,
         InfiniteScrollDirective,
         ProfilePictureComponent,

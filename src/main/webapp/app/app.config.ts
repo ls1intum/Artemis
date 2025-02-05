@@ -28,7 +28,7 @@ import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
@@ -42,7 +42,7 @@ export const appConfig: ApplicationConfig = {
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
             ArtemisSharedComponentModule,
-            ArtemisSharedModule,
+
             BrowserAnimationsModule,
             BrowserModule,
             GuidedTourModule,

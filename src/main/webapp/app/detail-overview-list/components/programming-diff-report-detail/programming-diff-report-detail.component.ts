@@ -6,14 +6,15 @@ import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/git-diff-report/git-diff-report-modal.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffLineStatComponent],
+    imports: [ArtemisSharedComponentModule, GitDiffLineStatComponent, ArtemisTranslatePipe, NgbTooltipModule],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;

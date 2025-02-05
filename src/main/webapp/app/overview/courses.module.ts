@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 
 import { CourseCardComponent } from 'app/overview/course-card.component';
@@ -20,7 +20,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     imports: [
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
-        ArtemisSharedModule,
+
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisComplaintsModule,

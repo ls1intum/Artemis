@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarAlt, faCircleXmark, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export class CourseCompetencyImportSettings {
     importRelations = false;
@@ -17,7 +19,17 @@ export class CourseCompetencyImportSettings {
 
 @Component({
     selector: 'jhi-import-course-competencies-settings',
-    imports: [FormDateTimePickerModule, FormsModule, CommonModule, FontAwesomeModule, OwlDateTimeModule, OwlNativeDateTimeModule, ArtemisSharedModule],
+    imports: [
+        FormDateTimePickerModule,
+        FormsModule,
+        CommonModule,
+        FontAwesomeModule,
+        OwlDateTimeModule,
+        OwlNativeDateTimeModule,
+        ArtemisTranslatePipe,
+        NgbTooltipModule,
+        TranslateDirective,
+    ],
     templateUrl: './import-course-competencies-settings.component.html',
     styleUrl: './import-course-competencies-settings.component.scss',
 })

@@ -2,7 +2,7 @@ import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/ori
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -43,7 +43,7 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
     imports: [
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
-        ArtemisSharedModule,
+
         ArtemisSharedComponentModule,
         ArtemisResultModule,
         ArtemisHeaderExercisePageWithDetailsModule,

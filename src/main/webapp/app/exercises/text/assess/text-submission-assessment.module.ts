@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { textSubmissionAssessmentRoutes } from './text-submission-assessment.route';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
 import { TextblockAssessmentCardComponent } from './textblock-assessment-card/textblock-assessment-card.component';
@@ -26,7 +26,7 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
     imports: [
         CommonModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArtemisSharedModule,
+
         ArtemisResultModule,
         ComplaintsForTutorComponent,
         ArtemisSharedComponentModule,

@@ -4,7 +4,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisQuizStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
 import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
 import { quizManagementRoute } from 'app/exercises/quiz/manage/quiz-management.route';
@@ -42,7 +42,6 @@ const ENTITY_STATES = [...quizManagementRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         DragDropModule,
         FormDateTimePickerModule,

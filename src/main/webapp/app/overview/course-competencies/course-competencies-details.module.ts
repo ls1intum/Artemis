@@ -1,5 +1,5 @@
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { NgModule } from '@angular/core';
@@ -27,7 +27,7 @@ const routes: Routes = [
 @NgModule({
     imports: [
         RouterModule.forChild(routes),
-        ArtemisSharedModule,
+
         ArtemisSharedComponentModule,
         ArtemisLectureUnitsModule,
         ArtemisCompetenciesModule,

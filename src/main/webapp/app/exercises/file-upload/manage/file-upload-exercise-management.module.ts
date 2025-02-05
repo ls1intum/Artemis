@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
@@ -22,7 +22,6 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisDifficultyPickerModule,
         ArtemisPresentationScoreModule,

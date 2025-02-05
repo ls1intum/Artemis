@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { textEditorRoute } from 'app/exercises/text/participate/text-editor.route';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -16,7 +16,6 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         RouterModule.forChild(textEditorRoute),
         ArtemisResultModule,
         ArtemisComplaintsModule,

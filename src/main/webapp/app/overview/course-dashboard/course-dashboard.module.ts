@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseDashboardComponent } from 'app/overview/course-dashboard/course-dashboard.component';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -36,7 +35,7 @@ const routes: Routes = [
         CommonModule,
         RouterModule.forChild(routes),
         NgbModule,
-        ArtemisSharedModule,
+
         FontAwesomeModule,
         NgxDatatableModule,
         ArtemisSharedComponentModule,

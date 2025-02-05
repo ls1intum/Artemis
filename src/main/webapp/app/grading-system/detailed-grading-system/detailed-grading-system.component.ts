@@ -5,14 +5,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-detailed-grading-system',
     templateUrl: './detailed-grading-system.component.html',
     styleUrls: ['./detailed-grading-system.component.scss'],
-    imports: [TranslateDirective, ArtemisSharedComponentModule, FormsModule, FaIconComponent, ArtemisSharedModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ArtemisSharedComponentModule, FormsModule, FaIconComponent, ArtemisTranslatePipe, DeleteButtonDirective],
 })
 export class DetailedGradingSystemComponent extends BaseGradingSystemComponent {
     /**

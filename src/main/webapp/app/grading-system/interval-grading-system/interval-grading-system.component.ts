@@ -7,10 +7,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-interval-grading-system',
@@ -21,11 +22,12 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
         ArtemisSharedComponentModule,
         FormsModule,
         FaIconComponent,
-        ArtemisSharedModule,
+
         ArtemisTranslatePipe,
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         ModePickerComponent,
+        DeleteButtonDirective,
     ],
 })
 export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {

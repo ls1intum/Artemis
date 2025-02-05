@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisFileUploadAssessmentRoutingModule } from './file-upload-assessment.route';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -11,7 +11,6 @@ import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/asses
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
         ArtemisFileUploadAssessmentRoutingModule,

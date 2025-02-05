@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { assessmentDashboardRoute } from './assessment-dashboard.route';
 import { AssessmentDashboardComponent } from './assessment-dashboard.component';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
@@ -15,7 +15,6 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisResultModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTutorLeaderboardModule,

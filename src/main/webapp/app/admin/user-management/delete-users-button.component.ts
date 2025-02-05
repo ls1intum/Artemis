@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, WritableSignal, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ButtonType } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,7 +18,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 @Component({
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedComponentModule],
 })
 export class DeleteUsersButtonComponent {
     private adminUserService = inject(AdminUserService);

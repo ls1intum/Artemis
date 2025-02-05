@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -21,7 +21,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisSharedComponentModule,
         FormDateTimePickerModule,
         FormsModule,

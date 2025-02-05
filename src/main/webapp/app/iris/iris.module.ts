@@ -3,7 +3,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { RouterModule } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { IrisSettingsUpdateComponent } from './settings/iris-settings-update/iris-settings-update.component';
@@ -27,7 +27,7 @@ import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
         MatDialogModule,
         FormsModule,
         FontAwesomeModule,
-        ArtemisSharedModule,
+
         ArtemisSharedComponentModule,
         RouterModule,
         IrisLogoComponent,

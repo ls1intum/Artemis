@@ -7,7 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
@@ -23,7 +23,7 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
 @NgModule({
     imports: [
         RouterModule.forChild(teamRoute),
-        ArtemisSharedModule,
+
         NgxDatatableModule,
         ArtemisSharedComponentModule,
         ArtemisResultModule,

@@ -14,12 +14,13 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -29,7 +30,7 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
         ReactiveFormsModule,
         TranslateDirective,
         ArtemisSharedComponentModule,
-        ArtemisSharedModule,
+
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
@@ -41,6 +42,7 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
+        ItemCountComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
     ],
 })

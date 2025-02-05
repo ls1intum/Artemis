@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -25,7 +24,6 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ClipboardModule,
         ButtonComponent,
         HelpIconComponent,

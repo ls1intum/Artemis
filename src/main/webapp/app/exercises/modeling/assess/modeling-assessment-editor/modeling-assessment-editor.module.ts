@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -11,7 +11,6 @@ import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/asses
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
         ArtemisResultModule,
         AssessmentInstructionsModule,
         ArtemisAssessmentSharedModule,
