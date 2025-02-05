@@ -15,7 +15,6 @@ import { ConversationHeaderComponent } from './layout/conversation-header/conver
 import { ChannelIconComponent } from './other/channel-icon/channel-icon.component';
 import { ConversationAddUsersDialogComponent } from './dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { ConversationAddUsersFormComponent } from './dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
-import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
 import { ConversationMembersComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ConversationDetailDialogComponent } from './dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationInfoComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
@@ -54,7 +53,6 @@ const routes: Routes = [
         ArtemisDataTableModule,
         ArtemisSidebarModule,
         InfiniteScrollDirective,
-        CourseUsersSelectorModule,
         ProfilePictureComponent,
         CourseConversationsComponent,
         CourseConversationsCodeOfConductComponent,
