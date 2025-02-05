@@ -5,7 +5,6 @@ import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standard
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -29,7 +28,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             providers: [
-                NgbCollapseMocksModule,
+                ,
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
