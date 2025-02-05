@@ -754,7 +754,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     .. figure:: programming/feedback-analysis-filters.png
           :align: center
 
-          *Filtering Options for Feedback Analysis* _(Placeholder)_
+          *Filtering Options for Feedback Analysis*
 
 2. **Affected Students Overview**
    - View a **list of students** affected by specific feedback messages.
@@ -763,7 +763,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     .. figure:: programming/feedback-analysis-affected-students.png
           :align: center
 
-          *Affected Students View* _(Placeholder)_
+          *Affected Students View*
 
 3. **Aggregated Feedback Overview**
    - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
@@ -776,7 +776,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     .. figure:: programming/feedback-analysis-detail.png
           :align: center
 
-          *Detailed Feedback View* _(Placeholder)_
+          *Detailed Feedback View*
 
 5. **Communication & Collaboration**
    - Create **discussion channels** directly from the feedback analysis view.
