@@ -179,6 +179,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
                 .setInterceptors(httpSessionHandshakeInterceptor());
+
+        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").setHandshakeHandler(handshakeHandler).addInterceptors(httpSessionHandshakeInterceptor());
+
     }
 
     @Override
