@@ -738,6 +738,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
     .. figure:: programming/feedback-analysis-overview.png
           :align: center
+          :scale: 50%
 
           *Feedback Analysis Overview*
 
@@ -753,6 +754,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
     .. figure:: programming/feedback-analysis-filters.png
           :align: center
+          :scale: 50%
 
           *Filtering Options for Feedback Analysis*
 
@@ -762,6 +764,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
     .. figure:: programming/feedback-analysis-affected-students.png
           :align: center
+          :scale: 50%
 
           *Affected Students View*
 
@@ -775,6 +778,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
     .. figure:: programming/feedback-analysis-detail.png
           :align: center
+          :scale: 50%
 
           *Detailed Feedback View*
 
@@ -784,6 +788,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
     .. figure:: programming/feedback-analysis-channel.png
           :align: center
+          :scale: 50%
 
           *Creating a Feedback Discussion Channel*
 
