@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.wee
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.service.TimeService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -12,6 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * @param hasNewExercises   indicates if there are new exercises in the summary
  * @param exerciseSummaries a set of summaries for each exercise included in the weekly summary
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WeeklySummaryMailContentDTO(boolean hasNewExercises, Set<WeeklyExerciseSummaryDTO> exerciseSummaries) {
 
     /**

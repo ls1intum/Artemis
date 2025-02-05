@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.weekly_summary_mail;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.service.TimeService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -14,6 +16,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * @param maxPoints   the maximum points that can be earned for the exercise
  * @param bonusPoints the bonus points that can be earned for the exercise
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WeeklyExerciseSummaryDTO(String title, String type, String difficulty, String releaseDate, String dueDate, double maxPoints, double bonusPoints) {
 
     /**
