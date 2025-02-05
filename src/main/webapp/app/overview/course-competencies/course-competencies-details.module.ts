@@ -1,7 +1,6 @@
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { NgModule } from '@angular/core';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
@@ -30,7 +29,6 @@ const routes: Routes = [
         RouterModule.forChild(routes),
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisSharedPipesModule,
         ArtemisLectureUnitsModule,
         ArtemisCompetenciesModule,
         JudgementOfLearningRatingComponent,

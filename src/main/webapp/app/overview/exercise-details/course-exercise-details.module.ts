@@ -7,7 +7,6 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -46,7 +45,6 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisComplaintsModule,

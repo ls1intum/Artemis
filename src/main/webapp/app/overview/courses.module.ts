@@ -10,7 +10,6 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
@@ -22,7 +21,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
-        ArtemisSharedPipesModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisComplaintsModule,
