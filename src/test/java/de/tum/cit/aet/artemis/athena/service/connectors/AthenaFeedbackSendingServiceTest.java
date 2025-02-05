@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
@@ -120,8 +119,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textBlock.computeId();
         textBlock = textBlockRepository.save(textBlock);
 
-        var textResult = new Result();
-        textResult = resultRepository.save(textResult);
+        var textResult = participationUtilService.addResultToParticipation(textParticipation, textSubmission);
+
         textFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         textFeedback.setText("Title");
         textFeedback.setDetailText("Description");
@@ -138,8 +137,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         programmingSubmission.setParticipation(programmingParticipation);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-        var programmingResult = new Result();
-        programmingResult = resultRepository.save(programmingResult);
+        var programmingResult = participationUtilService.addResultToParticipation(programmingParticipation, programmingSubmission);
+
         programmingFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference("test");
         programmingFeedback.setText("Title");
         programmingFeedback.setDetailText("Description");
