@@ -194,6 +194,7 @@ public class LectureService {
      * @param transcriptions set of transcriptions to be ingested
      * @param course         The course containing the transcription
      * @param lecture        The lecture containing the transcription
+     * @param lectureUnit    The lecture unit containing the transcription
      */
     public void ingestTranscriptionInPyris(Set<LectureTranscription> transcriptions, Course course, Lecture lecture, LectureUnit lectureUnit) {
         pyrisWebhookService.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcriptions, course, lecture, lectureUnit));

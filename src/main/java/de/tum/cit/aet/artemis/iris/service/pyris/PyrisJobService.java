@@ -128,8 +128,9 @@ public class PyrisJobService {
     /**
      * Adds a new transcription ingestion webhook job to the job map with a timeout.
      *
-     * @param courseId  the ID of the course associated with the webhook job
-     * @param lectureId the ID of the lecture associated with the webhook job
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture Unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
     public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
