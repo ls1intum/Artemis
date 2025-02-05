@@ -14,12 +14,15 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
+import { EditProcessComponent, EditStateTransition } from 'app/shared/editable-slider/edit-process.component';
+import { By } from '@angular/platform-browser';
 
 describe('CourseLearnerProfileComponent', () => {
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
     let selector: HTMLSelectElement;
     let httpTesting: HttpTestingController;
+    let editProcessComponents: EditProcessComponent[];
 
     let courseManagerService: CourseManagementService;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -85,6 +88,7 @@ describe('CourseLearnerProfileComponent', () => {
         fixture = TestBed.createComponent(CourseLearnerProfileComponent);
         component = fixture.componentInstance;
         selector = fixture.nativeElement.getElementsByTagName('select')[0];
+        editProcessComponents = fixture.debugElement.queryAll(By.directive(EditProcessComponent)).map<EditProcessComponent>((dbel) => dbel.componentInstance);
 
         jest.spyOn(courseManagerService, 'findAllForDropdown').mockReturnValue(
             of(
@@ -160,39 +164,53 @@ describe('CourseLearnerProfileComponent', () => {
         expect(component.courseLearnerProfiles[course]).toEqual(profiles[course]);
     }
 
-    it('should update aimForGradeOrBonus on successful request', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateAimForGradeOrBonus.bind(component), 'aimForGradeOrBonus');
-        validateUpdate(course, newProfile);
-    });
+    describe('Making put requests', () => {
+        beforeEach(() => {
+            editProcessComponents.forEach((epc) => {
+                epc.editStateTransition.set(EditStateTransition.TrySave);
+            });
+        });
 
-    it('should not update aimForGradeOrBonus on error', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateAimForGradeOrBonus.bind(component), 'aimForGradeOrBonus');
-        validateError(course, newProfile);
-    });
+        afterEach(() => {
+            editProcessComponents.forEach((epc) => {
+                epc.editStateTransition.set(EditStateTransition.Abort);
+            });
+        });
 
-    it('should update timeInvestment on successful request', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateTimeInvestment.bind(component), 'timeInvestment');
-        validateUpdate(course, newProfile);
-    });
+        it('should update aimForGradeOrBonus on successful request', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateAimForGradeOrBonus.bind(component), 'aimForGradeOrBonus');
+            validateUpdate(course, newProfile);
+        });
 
-    it('should not update timeInvestment on error', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateTimeInvestment.bind(component), 'timeInvestment');
-        validateError(course, newProfile);
-    });
+        it('should not update aimForGradeOrBonus on error', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateAimForGradeOrBonus.bind(component), 'aimForGradeOrBonus');
+            validateError(course, newProfile);
+        });
 
-    it('should update repetitionIntensity on successful request', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateRepetitionIntensity.bind(component), 'repetitionIntensity');
-        validateUpdate(course, newProfile);
-    });
+        it('should update timeInvestment on successful request', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateTimeInvestment.bind(component), 'timeInvestment');
+            validateUpdate(course, newProfile);
+        });
 
-    it('should not update repetitionIntensity on error', () => {
-        let course = 1;
-        let newProfile = setupUpdateTest(course, component.updateRepetitionIntensity.bind(component), 'repetitionIntensity');
-        validateError(course, newProfile);
+        it('should not update timeInvestment on error', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateTimeInvestment.bind(component), 'timeInvestment');
+            validateError(course, newProfile);
+        });
+
+        it('should update repetitionIntensity on successful request', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateRepetitionIntensity.bind(component), 'repetitionIntensity');
+            validateUpdate(course, newProfile);
+        });
+
+        it('should not update repetitionIntensity on error', () => {
+            let course = 1;
+            let newProfile = setupUpdateTest(course, component.updateRepetitionIntensity.bind(component), 'repetitionIntensity');
+            validateError(course, newProfile);
+        });
     });
 });
