@@ -4,7 +4,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ArtemisModelingExerciseRoutingModule } from 'app/exercises/modeling/manage/modeling-exercise.route';
@@ -29,7 +28,6 @@ import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/fe
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisMarkdownEditorModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisDifficultyPickerModule,
         ArtemisPresentationScoreModule,

@@ -4,7 +4,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
@@ -26,7 +25,6 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
         ArtemisSharedModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisDifficultyPickerModule,
-        ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         ArtemisAssessmentSharedModule,
         ArtemisFileUploadExerciseManagementRoutingModule,

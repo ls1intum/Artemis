@@ -6,7 +6,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { textExerciseRoute } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
@@ -37,7 +36,6 @@ const ENTITY_STATES = [...textExerciseRoute];
         FormDateTimePickerModule,
         ArtemisDifficultyPickerModule,
         ArtemisIncludedInOverallScorePickerModule,
-        ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,

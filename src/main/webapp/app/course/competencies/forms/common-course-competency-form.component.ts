@@ -11,9 +11,9 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -27,7 +27,7 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
         ReactiveFormsModule,
         ArtemisCompetenciesModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
+        MarkdownEditorMonacoComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {

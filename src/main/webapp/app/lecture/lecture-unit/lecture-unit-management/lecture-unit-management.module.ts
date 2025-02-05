@@ -16,7 +16,6 @@ import { VideoUnitFormComponent } from './video-unit-form/video-unit-form.compon
 import { CreateTextUnitComponent } from './create-text-unit/create-text-unit.component';
 import { TextUnitFormComponent } from './text-unit-form/text-unit-form.component';
 import { EditTextUnitComponent } from './edit-text-unit/edit-text-unit.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
@@ -32,7 +31,6 @@ import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/on
 
 @NgModule({
     imports: [
-        ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ReactiveFormsModule,
         ArtemisSharedComponentModule,

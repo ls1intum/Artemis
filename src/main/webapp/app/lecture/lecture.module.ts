@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
@@ -28,7 +27,6 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisLectureUnitManagementModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
         ArtemisCompetenciesModule,
         DetailModule,
         CompetencyFormComponent,

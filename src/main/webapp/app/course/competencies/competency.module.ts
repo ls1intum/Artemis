@@ -19,7 +19,6 @@ import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judg
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [
@@ -36,7 +35,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisCourseExerciseRowModule,
         JudgementOfLearningRatingComponent,
         CompetencyManagementTableComponent,
-        ArtemisMarkdownEditorModule,
         CompetencyRingsComponent,
         CompetencySearchComponent,
         CompetencyRecommendationDetailComponent,

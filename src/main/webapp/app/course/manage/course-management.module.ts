@@ -55,7 +55,6 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @NgModule({
@@ -95,7 +94,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         IrisModule,
         DetailModule,
         SubmissionResultStatusModule,
-        ArtemisMarkdownEditorModule,
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
         CourseManagementComponent,

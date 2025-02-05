@@ -34,7 +34,6 @@ import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tu
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [
@@ -44,7 +43,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         OwlDateTimeModule,
         ArtemisTutorialGroupsSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
         CreateTutorialGroupComponent,

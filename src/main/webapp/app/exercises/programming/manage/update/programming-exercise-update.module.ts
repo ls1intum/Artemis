@@ -6,7 +6,6 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
@@ -44,7 +43,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         ArtemisDifficultyPickerModule,
         ArtemisPresentationScoreModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
-        ArtemisMarkdownEditorModule,
         StructuredGradingCriterionModule,
         ArtemisProgrammingExerciseLifecycleModule,
         NgxDatatableModule,
