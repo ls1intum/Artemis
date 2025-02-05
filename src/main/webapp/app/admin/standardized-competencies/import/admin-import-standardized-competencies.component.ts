@@ -19,12 +19,13 @@ import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -35,13 +36,15 @@ interface ImportCount {
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
-        ArtemisSharedModule,
         ArtemisSharedComponentModule,
         FontAwesomeModule,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         NgbCollapse,
         HtmlForMarkdownPipe,
+        ArtemisTranslatePipe,
+        NgbTooltipModule,
+        TranslateDirective,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
