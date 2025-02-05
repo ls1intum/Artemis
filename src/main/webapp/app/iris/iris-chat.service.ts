@@ -19,6 +19,7 @@ export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
     EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
+    LECTURE = 'lecture-chat',
 }
 
 /**
@@ -248,6 +249,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
+
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
