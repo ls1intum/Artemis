@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -29,7 +28,6 @@ import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grad
         // shared modules.
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisTableModule,
         // programming exercise sub modules.
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,

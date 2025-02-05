@@ -13,7 +13,6 @@ import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -52,7 +51,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         StructuredGradingCriterionModule,
         ArtemisProgrammingExerciseLifecycleModule,
         NgxDatatableModule,
-        ArtemisTableModule,
         SubmissionPolicyUpdateModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
