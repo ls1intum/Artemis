@@ -256,6 +256,84 @@ An demonstration of the automated generation of assessment suggestions for a bus
 
 To learn how automatic suggestions are generated and how exercises can be optimized for automatic evaluation, please refer to :ref:`Generation of Assessment Suggestions for Modeling Exercises<generation_of_assessment_suggestions_for_modeling_exercises>`.
 
+Automatic Student Feedback
+--------------------------
+
+.. admonition:: Why Automatic Student Feedback
+   :class: tip
+
+   In large courses, providing timely and personalized feedback on modeling exercises is challenging. Automated student feedback helps learners identify misconceptions early, iterate on their work, and refine diagram modeling skills—all without waiting for an instructor or tutor to be available.
+
+**Overview:**
+
+When a modeling exercise is configured to allow ``Allow automatic AI preliminary feedback requests``, preliminary AI feedback can be requested for modeling submissions. The feedback is generated through the :ref:`Athena Service <athena_service>`, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
+
+.. admonition:: Note
+   :class: note
+    
+    It is recommended that comprehensive **Grading Instructions** be provided in the form of **Structured Grading Instructions** and that a Sample Solution is included (although not mandatory). This ensures that the AI-generated feedback aligns with the intended grading criteria and offers targeted, meaningful hints.
+
+**How to Request Automatic Feedback:**
+
+1. **Requesting Feedback**
+
+   .. container::
+
+      - 1.1. Navigate to a **Modeling Exercise** with the **Automatic Student Feedback** feature enabled.
+      - 1.2. Create a diagram in the modeling editor and submit it.
+      - 1.3. Feedback may be requested either from the exercise overview page or directly within the modeling editor.
+
+    .. figure:: modeling/automatic-feedback-request-editor.png
+       :align: center
+       :alt: Screenshot showing the request feedback button in the exercise overview and modeling editor
+       :scale: 80%
+
+2. **Viewing Feedback**
+
+   .. container::
+
+      - 2.1. After a feedback request is made, the system processes the diagram and generates preliminary feedback.
+      - 2.2. An alert appears at the top of the page to indicate that the feedback is ready.
+
+      .. figure:: modeling/automatic-feedback-request-alert.png
+         :align: center
+         :alt: Screenshot showing the notification alert when AI feedback is ready
+
+      - 2.3. A preliminary score is displayed in the top-right corner of the screen.
+
+      .. figure:: modeling/automatic-feedback-request-score.png
+         :align: center
+         :alt: Screenshot showing the preliminary score in the modeling editor
+
+      - 2.4. Clicking on the score reveals detailed, inline feedback that highlights specific issues and provides suggestions directly within the diagram.
+
+      .. figure:: modeling/automatic-feedback-view-detailed.png
+         :align: center
+         :alt: Screenshot showing detailed AI feedback
+         :scale: 50%
+
+3. **Submission History**
+
+   .. container::
+
+      - Feedback can be requested multiple times before the submission due date. All feedback requests are recorded in the submission history.
+      - To review previous feedback, access the submission history section and click on an entry to display its detailed feedback.
+
+      .. figure:: modeling/automatic-feedback-history.png
+         :align: center
+         :alt: Screenshot showing the submission history section in the modeling editor
+         :scale: 50%
+
+**Demo:**
+
+A demonstration of the automated generation of student feedback for a class diagram can be found in the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/55922?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the automated assessment of modeling exercises on TUM-Live.
+    </iframe>
+
 .. |edit| image:: modeling/edit.png
     :scale: 75
 .. |course-management| image:: general/course-management.png
