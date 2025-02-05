@@ -767,7 +767,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
 3. **Aggregated Feedback Overview**
    - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
-   - Displays **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+   - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
 
 4. **Detailed Feedback Inspection**
    - Click on any feedback entry to view **detailed feedback inspection**.
@@ -785,7 +785,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     .. figure:: programming/feedback-analysis-channel.png
           :align: center
 
-          *Creating a Feedback Discussion Channel* _(Placeholder)_
+          *Creating a Feedback Discussion Channel*
 
 - To get a better understanding of the feature, you can watch the following screencast:
 
