@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -204,14 +205,21 @@ public class LtiDeepLinkingService {
             String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
             return createSingleUnitContentItem(launchUrl);
         }
-        else
-            return null;
+        return null;
     }
 
     private Map<String, Object> setIrisContentItem(String courseId) {
-        // TODO Iris optional
-        String launchUrl = String.format(artemisServerUrl + "/courses/%s/dashboard", courseId);
-        return createSingleUnitContentItem(launchUrl);
+        Optional<Course> courseOpt = courseRepository.findById(Long.parseLong(courseId));
+        if (courseOpt.isPresent()) {
+            if (courseOpt.get().getStudentCourseAnalyticsDashboardEnabled()) {
+                String launchUrl = String.format(artemisServerUrl + "/courses/%s/dashboard", courseId);
+                return createSingleUnitContentItem(launchUrl);
+            }
+            else {
+                return null;
+            }
+        }
+        return null;
     }
 
     private Map<String, Object> createExerciseContentItem(Exercise exercise, String url) {
