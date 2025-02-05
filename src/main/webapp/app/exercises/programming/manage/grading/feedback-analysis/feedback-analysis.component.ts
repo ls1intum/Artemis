@@ -123,7 +123,7 @@ export class FeedbackAnalysisComponent {
             errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
         };
 
-        // cache related check if we should loading new data is necessary
+        // cache related check if loading new data is necessary
         const previousResponseData: FeedbackAnalysisResponse | undefined = this.previousResponseData();
         if (
             JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
