@@ -14,7 +14,6 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
@@ -43,7 +42,6 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
         AssessmentInstructionsModule,
-        OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
         SubmissionResultStatusModule,
         ArtemisCodeEditorModule,

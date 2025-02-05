@@ -5,7 +5,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
@@ -17,7 +16,6 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ArtemisSharedPipesModule,
         ArtemisExerciseButtonsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        OrionModule,
         GradingKeyOverviewModule,
         SubmissionResultStatusModule,
         ExerciseCategoriesModule,

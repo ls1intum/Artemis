@@ -11,7 +11,6 @@ import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.co
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { courseManagementState } from 'app/course/manage/course-management.route';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
@@ -69,7 +68,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         RouterModule.forChild(courseManagementState),
         FormDateTimePickerModule,
         ReactiveFormsModule,
-        OrionModule,
         MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,

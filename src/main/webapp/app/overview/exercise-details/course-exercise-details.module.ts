@@ -3,7 +3,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -51,7 +50,6 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        OrionModule,
         ArtemisComplaintsModule,
         FontAwesomeModule,
         RouterModule.forChild(routes),

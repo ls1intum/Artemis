@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
@@ -27,7 +26,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ArtemisSharedPipesModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        OrionModule,
         ArtemisComplaintsModule,
         NgxChartsModule,
         PieChartModule,

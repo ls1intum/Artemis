@@ -7,7 +7,6 @@ import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -22,7 +21,6 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisProgrammingExerciseStatusModule,
         ArtemisResultModule,
         ArtemisProgrammingExerciseActionsModule,
-        OrionModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,

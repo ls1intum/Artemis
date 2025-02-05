@@ -14,7 +14,6 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -34,7 +33,6 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisProgrammingAssessmentModule,
         ArtemisAssessmentSharedModule,
         ArtemisMarkdownModule,
-        OrionModule,
         SubmissionResultStatusModule,
         PieChartModule,
         ExerciseAssessmentDashboardComponent,

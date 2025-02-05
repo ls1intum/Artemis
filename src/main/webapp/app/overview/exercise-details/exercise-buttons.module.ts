@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
 
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
@@ -13,7 +12,6 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisSharedPipesModule,
-        OrionModule,
         RequestFeedbackButtonComponent,
         ExerciseDetailsStudentActionsComponent,
         OrionExerciseDetailsStudentActionsComponent,
