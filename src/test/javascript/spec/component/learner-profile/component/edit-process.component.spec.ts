@@ -23,7 +23,7 @@ describe('EditProcessComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.editStateTransition()).toEqual(EditStateTransition.Abort);
+        expect(component.editStateTransition()).toEqual(editStateTransition);
         expect(component.disabled()).toBeFalsy();
     });
 
