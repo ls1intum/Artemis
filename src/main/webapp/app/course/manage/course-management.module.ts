@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { MatChipsModule } from '@angular/material/chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
@@ -90,7 +89,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
-        ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
         ArtemisParticipationModule,
         ComplaintsForTutorComponent,
