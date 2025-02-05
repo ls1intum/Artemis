@@ -28,7 +28,6 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             providers: [
-                ,
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
