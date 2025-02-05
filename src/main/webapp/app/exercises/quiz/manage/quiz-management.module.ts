@@ -13,7 +13,6 @@ import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.c
 import { QuizExerciseUpdateComponent } from 'app/exercises/quiz/manage/quiz-exercise-update.component';
 import { RouterModule } from '@angular/router';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
@@ -54,7 +53,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisMarkdownEditorModule,
         ArtemisQuizStatisticModule,
         ArtemisApollonDiagramsModule,
-        ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisQuizParticipationModule,

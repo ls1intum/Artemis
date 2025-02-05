@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
@@ -38,7 +37,6 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         FormDateTimePickerModule,
-        ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisMarkdownEditorModule,
