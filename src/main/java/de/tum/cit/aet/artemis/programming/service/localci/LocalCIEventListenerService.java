@@ -119,10 +119,6 @@ public class LocalCIEventListenerService {
                 log.debug("Build job with id {} is still building", buildJob.getBuildJobId());
                 continue;
             }
-            if (checkIfBuildJobHasFinished(buildJob.getBuildJobId())) {
-                log.debug("Build job with id {} has finished", buildJob.getBuildJobId());
-                continue;
-            }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
@@ -135,16 +131,6 @@ public class LocalCIEventListenerService {
 
     private boolean checkIfBuildJobIsStillQueued(List<BuildJobQueueItem> queuedJobs, String buildJobId) {
         return queuedJobs.stream().anyMatch(job -> job.id().equals(buildJobId));
-    }
-
-    private boolean checkIfBuildJobHasFinished(String buildJobId) {
-        var buildJobOpt = buildJobRepository.findByBuildJobId(buildJobId);
-        if (buildJobOpt.isEmpty()) {
-            log.error("Build job with id {} not found in database", buildJobId);
-            return false;
-        }
-        var buildJob = buildJobOpt.get();
-        return buildJob.getBuildStatus() != BuildStatus.QUEUED && buildJob.getBuildStatus() != BuildStatus.BUILDING;
     }
 
     private class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
