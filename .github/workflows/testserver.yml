@@ -88,10 +88,19 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          echo "-----BEGIN RSA PRIVATE KEY-----" > ~/.ssh/id_rsa
-          echo "$DEPLOYMENT_SSH_KEY" | sed -r 's/^-----BEGIN RSA PRIVATE KEY----- //;s/ -----END RSA PRIVATE KEY-----//' | tr " " "\n" >> ~/.ssh/id_rsa
-          echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/id_rsa
+          # Debug key format (safely)
+          echo "Checking key format..."
+          echo "$DEPLOYMENT_SSH_KEY" | grep -c "BEGIN RSA PRIVATE KEY" || echo "No BEGIN line found"
+          echo "$DEPLOYMENT_SSH_KEY" | grep -c "END RSA PRIVATE KEY" || echo "No END line found"
+    
+          # Write key with proper formatting
+          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # Verify key file format (safely)
+          echo "Key file structure:"
+          grep "BEGIN" ~/.ssh/id_rsa || echo "No BEGIN line in file"
+          grep "END" ~/.ssh/id_rsa || echo "No END line in file"
           
           # Create SSH config
           cat > ~/.ssh/config << EOF
@@ -101,14 +110,11 @@ jobs:
           EOF
           chmod 600 ~/.ssh/config
 
-          # Test connection
+          # Test SSH with debug output
           echo "Testing SSH connection..."
-          if ! ssh -i ~/.ssh/id_rsa $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "SSH test successful"'; then
-            echo "SSH connection failed"
-            echo "SSH key format:"
-            head -n 1 ~/.ssh/id_rsa
-            exit 1
-          fi
+          ssh -v -o StrictHostKeyChecking=no \
+              -i ~/.ssh/id_rsa \
+              $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "test"'
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
