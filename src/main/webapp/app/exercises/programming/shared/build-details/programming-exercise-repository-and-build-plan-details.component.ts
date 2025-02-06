@@ -6,7 +6,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { Subscription } from 'rxjs';
 import type { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -15,7 +14,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
     selector: 'jhi-programming-exercise-repository-and-build-plan-details',
     templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
-    imports: [ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent, HelpIconComponent],
+    imports: [ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent, HelpIconComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);

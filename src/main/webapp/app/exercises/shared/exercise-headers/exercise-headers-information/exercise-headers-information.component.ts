@@ -15,14 +15,17 @@ import { InformationBox, InformationBoxComponent } from 'app/shared/information-
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    imports: [SubmissionResultStatusModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule, ExerciseCategoriesComponent],
+    imports: [SubmissionResultStatusModule, InformationBoxComponent, DifficultyLevelComponent, ExerciseCategoriesComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, CommonModule],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]

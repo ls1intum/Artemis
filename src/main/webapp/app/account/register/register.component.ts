@@ -10,12 +10,12 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-register',
     templateUrl: './register.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
     private translateService = inject(TranslateService);

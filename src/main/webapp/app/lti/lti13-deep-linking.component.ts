@@ -11,21 +11,26 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateDirective } from '../shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
         TranslateDirective,
-
-        ArtemisSharedCommonModule,
         FaIconComponent,
         FormsModule,
         HelpIconComponent,
+        ArtemisTranslatePipe,
+        SortByDirective,
+        SortDirective,
+        ArtemisDatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
     ],
 })

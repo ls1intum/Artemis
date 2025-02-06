@@ -18,7 +18,6 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -49,7 +48,7 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule, ButtonComponent, DocumentationButtonComponent],
+    imports: [ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule, ButtonComponent, DocumentationButtonComponent],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);

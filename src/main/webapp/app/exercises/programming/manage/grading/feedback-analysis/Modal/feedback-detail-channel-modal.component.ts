@@ -4,13 +4,15 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
-    imports: [ArtemisSharedCommonModule, FormsModule, ReactiveFormsModule],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';

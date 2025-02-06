@@ -26,13 +26,17 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { FormsModule } from '@angular/forms';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -46,7 +50,6 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
         ExamAssessmentButtonsComponent,
         AssessmentDashboardInformationComponent,
         FormsModule,
-        ArtemisSharedCommonModule,
         NgbTooltip,
         ArtemisTranslatePipe,
         SecondCorrectionEnableButtonComponent,
@@ -54,6 +57,10 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
         TutorLeaderboardComponent,
         NotReleasedTagComponent,
         DocumentationButtonComponent,
+        ArtemisTimeAgoPipe,
+        ArtemisDatePipe,
+        SortDirective,
+        SortByDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
