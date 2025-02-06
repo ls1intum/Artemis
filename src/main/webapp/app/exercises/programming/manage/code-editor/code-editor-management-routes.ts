@@ -1,11 +1,9 @@
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-
-import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: 'test',
         loadComponent: () =>
@@ -63,9 +61,3 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisCodeEditorManagementRoutingModule {}

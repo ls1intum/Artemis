@@ -16,6 +16,7 @@ import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/for
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -25,7 +26,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
             declarations: [],
             providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
         })
