@@ -246,6 +246,37 @@ examples.forEach((activeConversation) => {
             expect(fakeModalRef.componentInstance.selectedTab).toEqual(ConversationDetailTabs.INFO);
         }));
 
+        it('should emit onUpdateSidebar when conversation detail dialog is closed', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                },
+                dismiss: jest.fn(),
+                result: Promise.resolve(),
+            } as any;
+
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            const onUpdateSidebarSpy = jest.spyOn(component.onUpdateSidebar, 'emit');
+
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+            tick();
+
+            expect(onUpdateSidebarSpy).toHaveBeenCalled();
+        }));
+
+        it('should emit collapseSearch when toggleSearchBar is called', () => {
+            const collapseSearchSpy = jest.spyOn(component.collapseSearch, 'emit');
+            component.toggleSearchBar();
+
+            expect(collapseSearchSpy).toHaveBeenCalled();
+        });
+
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
             expect(detailButton).toBeTruthy();
