@@ -130,8 +130,8 @@ jobs:
       - name: Phase 1 - Deploy to Primary Node
         run: |
           echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
-          SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
-          
+          SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"  
+
           # Remove old artemis.war
           echo "[INFO] Remove old artemis.war ..."
           $SSH rm /opt/artemis/artemis.war.old
@@ -159,10 +159,10 @@ jobs:
         run: |
           while true; do
             echo "Performing health check..."
-      
+          
             RESPONSE=$(curl -s -f $HEALTH_CHECK_URL || echo '{"status":"DOWN"}')
-            STATUS=$(echo $RESPONSE | jq -r '.status')
-      
+            STATUS=$(echo $RESPONSE | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+          
             if [ "$STATUS" = "UP" ]; then
               echo "Health check passed! Application is UP"
               exit 0
