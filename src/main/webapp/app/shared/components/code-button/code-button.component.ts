@@ -247,12 +247,12 @@ export class CodeButtonComponent implements OnInit {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      * @param alwaysHttpWithToken if true, the http url is always used, even if the ssh url is configured (used for Theia)
      */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysHttpWithToken = false): string {
-        if (this.useSsh && this.sshTemplateUrl && !alwaysHttpWithToken) {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
+        if (this.useSsh && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
-        const token = insertPlaceholder && !alwaysHttpWithToken ? '**********' : this.getUsedToken();
+        const token = insertPlaceholder ? '**********' : this.getUsedToken();
 
         const credentials = `://${this.user.login}${this.useToken ? `:${token}` : ''}@`;
 
@@ -473,14 +473,19 @@ export class CodeButtonComponent implements OnInit {
             artemisUrl += window.location.host;
         }
 
+        const prevAuthMech = this.selectedAuthenticationMechanism;
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
+
         const data = {
             appDef: this.exercise()?.buildConfig?.theiaImage ?? '',
-            gitUri: this.getHttpOrSshRepositoryUri(false, true),
+            gitUri: this.getHttpOrSshRepositoryUri(false),
             gitUser: this.user.name,
             gitMail: this.user.email,
             artemisToken: artemisToken,
             artemisUrl: artemisUrl,
         };
+
+        this.selectedAuthenticationMechanism = prevAuthMech;
 
         const newWindow = window.open('', '_blank');
         if (!newWindow) {
