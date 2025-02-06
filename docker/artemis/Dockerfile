@@ -126,8 +126,11 @@ VOLUME ["/opt/artemis/public/content"]
 
 EXPOSE 8080
 
+ENV JAVA_OPTS=""
+
 # use exec format (square brackets) as otherwise the shell fromat will not forward signals
 CMD [ "java", \
+"$JAVA_OPTS", \
 "-Djdk.tls.ephemeralDHKeySize=2048", \
 "-DLC_CTYPE=UTF-8", \
 "-Dfile.encoding=UTF-8", \
