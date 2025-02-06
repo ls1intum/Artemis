@@ -57,6 +57,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
     private athenaResultUpdateListener?: Subscription;
+    private acceptSubscription?: Subscription;
 
     protected readonly ExerciseType = ExerciseType;
 
@@ -74,6 +75,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
+        this.acceptSubscription?.unsubscribe();
     }
 
     private updateParticipation() {
@@ -99,7 +101,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     acceptExternalLLMUsage(modal: any) {
-        this.userService.acceptExternalLLMUsage().subscribe(() => {
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
             this.hasUserAcceptedExternalLLMUsage = true;
             this.accountService.setUserAcceptedExternalLLMUsage();
             modal.close();

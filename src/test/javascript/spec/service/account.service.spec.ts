@@ -639,8 +639,9 @@ describe('AccountService', () => {
             accountService.setUserAcceptedExternalLLMUsage();
 
             // Check if the date was set correctly
-            expect(accountService.userIdentity.externalLLMUsageAccepted).toBeDefined();
-            expect(accountService.userIdentity.externalLLMUsageAccepted.format('YYYY-MM-DD')).toBe('2024-02-06');
+            const acceptedDate = accountService.userIdentity.externalLLMUsageAccepted;
+            expect(acceptedDate).toBeDefined();
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
         });
 
         it('should not throw error when user identity is undefined', () => {
