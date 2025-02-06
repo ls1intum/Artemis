@@ -85,32 +85,27 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent_${{ github.run_id }}.sock  
           DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
-          echo "-----BEGIN RSA PRIVATE KEY-----" > id_rsa
-          echo "$DEPLOYMENT_SSH_KEY" | sed -r 's/^-----BEGIN RSA PRIVATE KEY----- //;s/ -----END RSA PRIVATE KEY-----//' | tr " " "\n" >> id_rsa
-          echo "-----END RSA PRIVATE KEY-----" >> id_rsa
-          chmod 600 id_rsa
+          mkdir -p ~/.ssh
+          echo "-----BEGIN RSA PRIVATE KEY-----" > ~/.ssh/id_rsa
+          echo "$DEPLOYMENT_SSH_KEY" | sed -r 's/^-----BEGIN RSA PRIVATE KEY----- //;s/ -----END RSA PRIVATE KEY-----//' | tr " " "\n" >> ~/.ssh/id_rsa
+          echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           
-          echo "Testing connectivity to primary node:"
-          ping -c 3 $DEPLOYMENT_HOSTS_PRIMARY
-          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
-          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
-
-          for node in $HOSTS_SPACE_SEPARATED
-          do
-            echo "Testing connectivity to secondary node: $node"  
-            ping -c 3 $node
-          done
+          # Create SSH config
+          cat > ~/.ssh/config << EOF
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+          EOF
+          chmod 600 ~/.ssh/config
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
-          # Convert newline-separated list to space-separated
           HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
           echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
           for node in $HOSTS_SPACE_SEPARATED
           do
-              # Build SSH-command
-              SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i id_rsa -l $DEPLOYMENT_USER $node"
-              # Stop Artemis-Service on node
+              SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
               echo "[INFO] Stop artemis.service on ${node} ..."
               $SSH sudo systemctl stop artemis
           done
@@ -126,7 +121,7 @@ jobs:
 
           # Copy new artemis.war to node
           echo "[INFO] Copy new artemis.war ..."
-          scp -o LogLevel=ERROR -i id_rsa artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
 
           # Stop Artemis-Service on node
           echo "[INFO] Stop artemis.service ..."
@@ -182,7 +177,7 @@ jobs:
 
             # Copy new artemis.war to node
             echo "[INFO] Copy new artemis.war ..."
-            scp -o LogLevel=ERROR -i id_rsa artifacts/*.war $DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new
+            scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa artifacts/*.war $DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new
 
             # Stop Artemis-Service on node
             echo "[INFO] Stop artemis.service ..."
