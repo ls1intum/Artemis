@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, Component, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 
 @Component({
     selector: 'jhi-learning-path-exercise',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CourseExerciseDetailsModule],
     templateUrl: './learning-path-exercise.component.html',
 })
 export class LearningPathExerciseComponent {

@@ -9,7 +9,6 @@ import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/
 
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
@@ -20,7 +19,6 @@ import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/s
         RouterModule.forChild(userSettingsState),
 
         ClipboardModule,
-        FormDateTimePickerModule,
         DocumentationLinkComponent,
         AccountInformationComponent,
         NotificationSettingsComponent,

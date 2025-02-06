@@ -21,19 +21,18 @@ import { AssessmentDashboardInformationComponent, AssessmentDashboardInformation
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
-import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -41,6 +40,7 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
     imports: [
+        ArtemisSharedComponentModule,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -49,12 +49,10 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
         FormsModule,
         ArtemisSharedCommonModule,
         NgbTooltip,
-        ArtemisExerciseAssessmentDashboardModule,
-        ArtemisTutorLeaderboardModule,
         ArtemisTranslatePipe,
+        SecondCorrectionEnableButtonComponent,
         TutorParticipationGraphComponent,
-        NotReleasedTagComponent,
-        DocumentationButtonComponent,
+        TutorLeaderboardComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

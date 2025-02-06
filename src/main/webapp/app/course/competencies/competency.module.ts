@@ -6,7 +6,6 @@ import { CompetencyCardComponent } from 'app/course/competencies/competency-card
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
@@ -27,7 +26,6 @@ import { ImportCompetenciesTableComponent } from 'app/course/competencies/import
         NgbModule,
 
         RouterModule,
-        FormDateTimePickerModule,
         NgbAccordionModule,
         IrisModule,
         ArtemisCourseExerciseRowModule,

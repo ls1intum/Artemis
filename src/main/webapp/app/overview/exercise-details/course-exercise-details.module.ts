@@ -16,7 +16,6 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
-import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
@@ -51,7 +50,6 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         RouterModule.forChild(routes),
         ArtemisModelingEditorModule,
         SubmissionResultStatusModule,
-        ArtemisProgrammingExerciseManagementModule,
         ArtemisFeedbackModule,
         ArtemisExerciseInfoModule,
         IrisModule,
