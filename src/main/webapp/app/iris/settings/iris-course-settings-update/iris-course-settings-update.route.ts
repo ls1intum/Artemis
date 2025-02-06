@@ -1,7 +1,5 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { IrisModule } from 'app/iris/iris.module';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -19,9 +17,4 @@ const routes: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes), IrisModule],
-    exports: [RouterModule],
-})
-export class IrisCourseSettingsUpdateRoutingModule {}
+export { routes };

@@ -59,7 +59,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke create embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-
         const mockClear = jest.fn();
         const mockCreateEmbeddedView = jest.fn();
 
@@ -76,7 +75,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke clear embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-
         const mockClear = jest.fn();
         const mockCreateEmbeddedView = jest.fn();
 
