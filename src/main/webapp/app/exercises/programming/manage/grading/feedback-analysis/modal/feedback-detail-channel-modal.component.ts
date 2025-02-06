@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
-import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
+import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation-modal.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
