@@ -39,6 +39,7 @@ export class LectureTranscriptionIngestionComponent {
                 }
                 this.ingestCourseIdInput = '';
                 this.ingestLectureIdInput = '';
+                this.ingestLectureUnitIdInput = '';
             });
     }
 
@@ -54,6 +55,7 @@ export class LectureTranscriptionIngestionComponent {
                 this.transcriptionInput = '';
                 this.createCourseIdInput = '';
                 this.createLectureIdInput = '';
+                this.createLectureUnitIdInput = '';
             });
     }
 }
