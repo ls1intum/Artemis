@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
@@ -20,7 +19,7 @@ describe('CleanupServiceComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, CleanupServiceComponent],
+            imports: [CleanupServiceComponent],
             providers: [{ provide: DataCleanupService, useValue: mockCleanupService }],
         }).compileComponents();
 

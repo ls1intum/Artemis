@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
@@ -106,7 +105,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, ArtemisTestModule, FormsModule],
+            imports: [CommonModule, FormsModule],
             declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
             providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
         })

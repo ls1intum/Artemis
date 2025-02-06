@@ -13,7 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';

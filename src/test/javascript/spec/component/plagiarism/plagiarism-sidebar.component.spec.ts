@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

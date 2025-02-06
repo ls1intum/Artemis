@@ -57,7 +57,6 @@ import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;

@@ -13,7 +13,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LectureService } from 'app/lecture/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';

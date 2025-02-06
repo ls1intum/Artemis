@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,

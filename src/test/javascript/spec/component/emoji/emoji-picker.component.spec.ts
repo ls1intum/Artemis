@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';

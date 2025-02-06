@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SpanType } from 'app/entities/statistics.model';
@@ -44,7 +43,7 @@ describe('ExerciseStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NoopAnimationsModule],
+            imports: [NoopAnimationsModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

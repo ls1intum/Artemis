@@ -25,7 +25,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodsManagementComponent>;

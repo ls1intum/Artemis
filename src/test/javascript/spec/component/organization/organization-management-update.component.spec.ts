@@ -4,7 +4,6 @@ import { of } from 'rxjs';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

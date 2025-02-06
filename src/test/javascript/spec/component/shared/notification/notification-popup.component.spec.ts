@@ -6,7 +6,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReplaySubject } from 'rxjs';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -52,7 +51,7 @@ describe('Notification Popup Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [NotificationPopupComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

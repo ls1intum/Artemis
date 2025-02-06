@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -15,14 +14,7 @@ describe('ExerciseImportTabsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgbNavModule,
-                MockComponent(ExerciseImportFromFileComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ExerciseImportComponent),
-                FormsModule,
-            ],
+            imports: [NgbNavModule, MockComponent(ExerciseImportFromFileComponent), MockComponent(HelpIconComponent), MockComponent(ExerciseImportComponent), FormsModule],
             declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
         })
             .compileComponents()

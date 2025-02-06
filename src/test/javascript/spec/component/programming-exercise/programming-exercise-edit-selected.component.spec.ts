@@ -5,7 +5,6 @@ import { of, throwError } from 'rxjs';
 
 import dayjs from 'dayjs/esm';
 
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

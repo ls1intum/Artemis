@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

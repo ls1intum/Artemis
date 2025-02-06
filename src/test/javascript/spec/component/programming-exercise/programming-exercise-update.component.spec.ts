@@ -7,7 +7,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
@@ -66,7 +65,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: NgbModal, useClass: MockNgbModalService },

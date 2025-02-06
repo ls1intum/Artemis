@@ -4,7 +4,6 @@ import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -45,7 +44,7 @@ describe('Edit LTI Configuration Component', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule)],
+            imports: [NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule)],
             declarations: [EditLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(LtiConfigurationService),

@@ -4,7 +4,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -71,7 +70,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]])],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

@@ -4,7 +4,6 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';

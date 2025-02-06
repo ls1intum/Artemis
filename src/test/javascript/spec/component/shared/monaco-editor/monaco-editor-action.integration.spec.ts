@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -29,7 +28,7 @@ describe('MonacoEditorActionIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
+            imports: [MonacoEditorComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(MonacoEditorComponent);

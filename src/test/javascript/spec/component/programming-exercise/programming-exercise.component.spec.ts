@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

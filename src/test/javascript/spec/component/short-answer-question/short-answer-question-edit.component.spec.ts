@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -51,7 +50,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), ArtemisMarkdownEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
+            imports: [MockModule(FormsModule), ArtemisMarkdownEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

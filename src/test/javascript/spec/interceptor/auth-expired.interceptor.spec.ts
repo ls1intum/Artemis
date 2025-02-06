@@ -6,7 +6,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
-import { ArtemisTestModule } from '../test.module';
 
 describe('AuthExpiredInterceptor', () => {
     let authInterceptor: AuthExpiredInterceptor;

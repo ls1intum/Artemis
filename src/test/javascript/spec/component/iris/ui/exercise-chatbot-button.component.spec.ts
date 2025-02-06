@@ -20,7 +20,6 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HtmlForMarkdownPipe } from '../../../../../../main/webapp/app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
@@ -70,7 +69,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeModule, NoopAnimationsModule, MockPipe(HtmlForMarkdownPipe)],
+            imports: [FontAwesomeModule, NoopAnimationsModule, MockPipe(HtmlForMarkdownPipe)],
             declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
             providers: [
                 provideHttpClient(),

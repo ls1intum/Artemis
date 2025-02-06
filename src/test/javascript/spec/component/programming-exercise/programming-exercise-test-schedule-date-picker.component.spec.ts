@@ -1,7 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
@@ -18,7 +17,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseTestScheduleDatePickerComponent);

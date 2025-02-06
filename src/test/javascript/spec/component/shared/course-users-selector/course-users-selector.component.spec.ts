@@ -13,7 +13,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ArtemisTestModule } from '../../../test.module';
 
 @Component({
     template: `
@@ -49,16 +48,7 @@ describe('CourseUsersSelectorComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                CommonModule,
-                FormsModule,
-                ReactiveFormsModule,
-                NgbTypeaheadModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                TranslateModule.forRoot(),
-            ],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, ArtemisSharedModule, ArtemisSharedComponentModule, TranslateModule.forRoot()],
             providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }],
         }).compileComponents();
         fixture = TestBed.createComponent(WrapperComponent);

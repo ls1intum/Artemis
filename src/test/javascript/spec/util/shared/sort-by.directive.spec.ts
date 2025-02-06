@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -36,7 +35,7 @@ describe('Directive: SortByDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TestSortByDirectiveComponent],
+            imports: [TestSortByDirectiveComponent],
         })
             .compileComponents()
             .then(() => {

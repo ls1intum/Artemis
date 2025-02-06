@@ -9,7 +9,6 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import 'jest-extended';
 
 describe('Lti13ExerciseLaunchComponent', () => {

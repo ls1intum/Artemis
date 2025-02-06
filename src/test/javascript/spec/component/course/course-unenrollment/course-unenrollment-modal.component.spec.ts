@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';

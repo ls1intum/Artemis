@@ -12,7 +12,6 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;

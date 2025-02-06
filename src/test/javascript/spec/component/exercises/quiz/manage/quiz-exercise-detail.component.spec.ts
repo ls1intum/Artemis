@@ -9,7 +9,6 @@ import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model'
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';

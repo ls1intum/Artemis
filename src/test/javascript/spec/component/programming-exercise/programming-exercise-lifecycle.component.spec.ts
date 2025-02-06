@@ -1,6 +1,5 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
@@ -25,7 +24,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 {
                     provide: ActivatedRoute,

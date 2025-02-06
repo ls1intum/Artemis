@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { Course } from 'app/entities/course.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';

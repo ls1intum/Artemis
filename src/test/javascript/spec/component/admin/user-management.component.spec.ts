@@ -14,7 +14,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpTestingController } from '@angular/common/http/testing';

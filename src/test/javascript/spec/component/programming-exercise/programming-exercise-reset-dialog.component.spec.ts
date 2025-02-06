@@ -3,7 +3,6 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';

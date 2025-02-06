@@ -17,7 +17,6 @@ import { SearchResult } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -32,7 +31,7 @@ describe('ExampleSubmissionImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbPagination)],
+            imports: [MockComponent(NgbPagination)],
             declarations: [
                 ExampleSubmissionImportComponent,
                 MockComponent(ButtonComponent),

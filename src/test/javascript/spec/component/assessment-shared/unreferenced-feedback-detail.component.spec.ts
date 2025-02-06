@@ -5,7 +5,6 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;

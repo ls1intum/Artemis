@@ -12,7 +12,6 @@ import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/t
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';

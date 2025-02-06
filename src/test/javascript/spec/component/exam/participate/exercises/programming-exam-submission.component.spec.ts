@@ -6,7 +6,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;

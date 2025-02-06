@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';

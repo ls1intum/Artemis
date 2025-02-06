@@ -9,7 +9,6 @@ import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
 describe('CourseGroupComponent', () => {

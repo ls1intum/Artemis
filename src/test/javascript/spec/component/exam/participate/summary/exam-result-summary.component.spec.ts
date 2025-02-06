@@ -34,7 +34,6 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/entities/course.model';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;

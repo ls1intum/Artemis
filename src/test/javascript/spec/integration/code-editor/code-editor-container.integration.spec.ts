@@ -4,7 +4,6 @@ import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import {

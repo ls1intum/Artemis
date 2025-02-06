@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFilePanelTitleComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
 

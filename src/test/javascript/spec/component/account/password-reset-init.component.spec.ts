@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
 import { PasswordResetInitService } from 'app/account/password-reset/init/password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -21,7 +20,7 @@ describe('PasswordResetInitComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule, PasswordResetInitComponent],
+            imports: [ArtemisFormsModule, PasswordResetInitComponent],
             providers: [
                 FormBuilder,
                 { provide: ProfileService, useClass: MockProfileService },

@@ -10,7 +10,6 @@ import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ArtemisTestModule } from '../../test.module';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';

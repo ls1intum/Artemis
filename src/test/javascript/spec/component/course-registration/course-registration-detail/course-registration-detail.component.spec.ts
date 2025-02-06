@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseRegistrationDetailComponent } from 'app/overview/course-registration/course-registration-detail/course-registration-detail.component';

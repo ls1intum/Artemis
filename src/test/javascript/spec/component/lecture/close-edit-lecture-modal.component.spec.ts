@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CloseEditLectureModalComponent } from '../../../../../main/webapp/app/lecture/close-edit-lecture-modal/close-edit-lecture-modal.component';
 
 describe('CloseEditLectureModalComponent', () => {
@@ -8,7 +7,7 @@ describe('CloseEditLectureModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, CloseEditLectureModalComponent],
+            imports: [CloseEditLectureModalComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CloseEditLectureModalComponent);

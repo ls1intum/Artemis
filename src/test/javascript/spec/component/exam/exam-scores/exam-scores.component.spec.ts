@@ -39,7 +39,6 @@ import {
 } from 'app/shared/export/export-constants';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { BonusStrategy } from 'app/entities/bonus.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -258,7 +257,7 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule],
+            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {

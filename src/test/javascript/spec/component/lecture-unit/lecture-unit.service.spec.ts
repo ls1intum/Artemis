@@ -12,7 +12,6 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureUnitService', () => {
     let service: LectureUnitService;

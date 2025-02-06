@@ -12,7 +12,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { TutorialGroupFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { LoadingIndicatorContainerComponent } from '../../../../../../../../main/webapp/app/shared/loading-indicator-container/loading-indicator-container.component';
 

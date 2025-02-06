@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     let component: ExamLiveAnnouncementCreateButtonComponent;

@@ -3,7 +3,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
 import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -18,7 +17,7 @@ describe('ImportAllCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+            imports: [ImportAllCompetenciesComponent, ArtemisFormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
             declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()

@@ -21,7 +21,6 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { AlertService } from 'app/core/util/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;

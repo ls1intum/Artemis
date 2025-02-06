@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('Fireworks', () => {
     let fixture: ComponentFixture<FireworksComponent>;

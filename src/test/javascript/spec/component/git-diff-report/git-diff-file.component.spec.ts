@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -17,7 +16,7 @@ describe('GitDiffFileComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
+            imports: [MonacoDiffEditorComponent],
             declarations: [],
             providers: [],
         }).compileComponents();

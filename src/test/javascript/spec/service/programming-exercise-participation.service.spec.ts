@@ -4,7 +4,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Submission } from 'app/entities/submission.model';
-import { ArtemisTestModule } from '../test.module';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';

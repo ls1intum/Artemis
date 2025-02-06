@@ -6,7 +6,6 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;

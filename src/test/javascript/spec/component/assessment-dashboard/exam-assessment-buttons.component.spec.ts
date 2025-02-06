@@ -18,7 +18,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExamAssessmentButtons', () => {

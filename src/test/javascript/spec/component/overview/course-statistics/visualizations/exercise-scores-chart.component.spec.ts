@@ -12,7 +12,6 @@ import { HttpResponse } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 class MockActivatedRoute {
@@ -39,7 +38,7 @@ describe('ExerciseScoresChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(BrowserAnimationsModule)],
             providers: [
                 provideRouter([]),
                 MockProvider(AlertService),

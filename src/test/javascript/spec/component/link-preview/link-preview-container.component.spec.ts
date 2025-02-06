@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { MockLinkPreviewService } from '../../helpers/mocks/service/mock-link-preview.service';

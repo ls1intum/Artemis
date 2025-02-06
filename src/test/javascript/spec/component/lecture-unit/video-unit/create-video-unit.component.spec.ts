@@ -11,7 +11,6 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('CreateVideoUnitComponent', () => {
@@ -20,7 +19,7 @@ describe('CreateVideoUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(VideoUnitService),
                 MockProvider(AlertService),

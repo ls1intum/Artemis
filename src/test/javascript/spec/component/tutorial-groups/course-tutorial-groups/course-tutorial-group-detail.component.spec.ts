@@ -11,7 +11,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseTutorialGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;

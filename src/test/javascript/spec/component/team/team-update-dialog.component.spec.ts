@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +25,7 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -4,7 +4,6 @@ import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
-import { ArtemisTestModule } from '../../test.module';
 
 @Component({
     selector: 'jhi-test-component',
@@ -22,7 +21,7 @@ describe('DataExportRequestButtonDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TestComponent],
+            imports: [TestComponent],
         })
             .compileComponents()
             .then(() => {

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -209,7 +208,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [ArtemisTestModule, RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent];
+    const imports = [RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent];
 
     const declarations = [
         MockComponent(TutorLeaderboardComponent),

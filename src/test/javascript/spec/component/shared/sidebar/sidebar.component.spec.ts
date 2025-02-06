@@ -3,7 +3,6 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
-import { ArtemisTestModule } from '../../../test.module';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -30,7 +29,6 @@ describe('SidebarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 MockModule(FormsModule),
                 MockModule(ReactiveFormsModule),
                 MockModule(RouterModule),

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FeedbackTextComponent } from 'app/exercises/shared/feedback/text/feedback-text.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';

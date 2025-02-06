@@ -5,7 +5,6 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../test.module';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';

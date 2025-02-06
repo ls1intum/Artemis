@@ -4,7 +4,6 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;

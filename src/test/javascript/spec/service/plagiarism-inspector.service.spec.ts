@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
-import { ArtemisTestModule } from '../test.module';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { Range } from 'app/shared/util/utils';

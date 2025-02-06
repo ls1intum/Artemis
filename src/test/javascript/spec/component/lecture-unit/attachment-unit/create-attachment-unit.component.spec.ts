@@ -13,7 +13,6 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import { ArtemisTestModule } from '../../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('CreateAttachmentUnitComponent', () => {
@@ -21,7 +20,7 @@ describe('CreateAttachmentUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentUnitService),
                 MockProvider(AlertService),

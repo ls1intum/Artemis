@@ -9,7 +9,6 @@ import { MetricsRequestComponent } from 'app/admin/metrics/blocks/metrics-reques
 import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 import { of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';

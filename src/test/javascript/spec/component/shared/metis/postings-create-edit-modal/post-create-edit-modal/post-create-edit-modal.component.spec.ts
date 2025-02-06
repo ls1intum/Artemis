@@ -12,7 +12,6 @@ import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-m
 import { PageType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -31,7 +30,7 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),

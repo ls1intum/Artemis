@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

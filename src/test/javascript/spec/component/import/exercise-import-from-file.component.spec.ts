@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -26,7 +25,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(HelpIconComponent), MockComponent(ButtonComponent)],
+            imports: [MockComponent(HelpIconComponent), MockComponent(ButtonComponent)],
             declarations: [ExerciseImportFromFileComponent, MockDirective(TranslateDirective)],
         }).compileComponents();
 

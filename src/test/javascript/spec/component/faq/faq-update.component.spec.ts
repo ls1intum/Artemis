@@ -8,7 +8,6 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
 import { Faq } from 'app/entities/faq.model';
@@ -40,7 +39,7 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
             declarations: [FaqUpdateComponent, MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

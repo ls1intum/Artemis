@@ -5,7 +5,6 @@ import { BuildAgentsService } from 'app/localci/build-agents/build-agents.servic
 import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../../test.module';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';

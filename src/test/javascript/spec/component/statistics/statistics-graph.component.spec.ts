@@ -1,6 +1,5 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';

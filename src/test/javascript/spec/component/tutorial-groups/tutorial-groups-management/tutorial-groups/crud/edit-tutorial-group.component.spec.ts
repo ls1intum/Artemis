@@ -11,7 +11,6 @@ import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { ArtemisTestModule } from '../../../../../test.module';
 import '@angular/localize/init';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisDatePipe } from '../../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
@@ -31,7 +30,7 @@ describe('EditTutorialGroupComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditTutorialGroupComponent, OwlNativeDateTimeModule],
+            imports: [EditTutorialGroupComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(ArtemisDatePipe),
                 MockProvider(AlertService),

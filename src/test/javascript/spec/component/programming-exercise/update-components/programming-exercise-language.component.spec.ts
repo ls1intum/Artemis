@@ -6,7 +6,6 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;

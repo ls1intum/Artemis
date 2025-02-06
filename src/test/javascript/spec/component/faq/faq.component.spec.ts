@@ -7,7 +7,6 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { FaqService } from 'app/faq/faq.service';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -68,7 +67,7 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

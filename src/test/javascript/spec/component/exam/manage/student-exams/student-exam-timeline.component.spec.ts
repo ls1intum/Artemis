@@ -10,7 +10,6 @@ import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
@@ -62,7 +61,7 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule],
+            imports: [ArtemisFormsModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),

@@ -28,7 +28,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
@@ -61,7 +60,7 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -581,7 +580,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),

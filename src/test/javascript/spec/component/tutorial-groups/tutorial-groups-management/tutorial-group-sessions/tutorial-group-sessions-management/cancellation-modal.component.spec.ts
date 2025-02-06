@@ -8,7 +8,6 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('CancellationModalComponent', () => {
     let fixture: ComponentFixture<CancellationModalComponent>;

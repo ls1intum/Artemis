@@ -7,7 +7,6 @@ import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -60,7 +59,7 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 NotificationSidebarComponent,
                 MockPipe(ArtemisTranslatePipe),

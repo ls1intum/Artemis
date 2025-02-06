@@ -1,5 +1,4 @@
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
-import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';

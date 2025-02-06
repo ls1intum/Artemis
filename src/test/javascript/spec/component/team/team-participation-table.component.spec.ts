@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { LocalStorageService } from 'ngx-webstorage';

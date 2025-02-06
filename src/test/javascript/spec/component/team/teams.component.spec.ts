@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
@@ -34,7 +33,7 @@ describe('TeamsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [NgxDatatableModule],
             declarations: [
                 TeamsComponent,
                 TranslatePipeMock,

@@ -19,7 +19,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 describe('FeedbackComponent', () => {

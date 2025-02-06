@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -57,7 +56,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FeedbackAnalysisComponent],
+            imports: [TranslateModule.forRoot(), FeedbackAnalysisComponent],
             providers: [
                 {
                     provide: TranslateService,

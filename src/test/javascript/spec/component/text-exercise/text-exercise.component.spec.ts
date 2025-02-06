@@ -5,7 +5,6 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

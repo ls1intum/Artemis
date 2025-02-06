@@ -16,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;

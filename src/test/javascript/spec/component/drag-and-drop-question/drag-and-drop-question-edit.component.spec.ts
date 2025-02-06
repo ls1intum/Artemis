@@ -11,7 +11,6 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';

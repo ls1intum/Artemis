@@ -5,7 +5,6 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { ArtemisTestModule } from '../../test.module';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 

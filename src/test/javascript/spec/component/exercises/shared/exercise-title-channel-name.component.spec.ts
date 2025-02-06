@@ -7,7 +7,6 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { SessionStorageService } from 'ngx-webstorage';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from '../../../../../../main/webapp/app/entities/exercise.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseTitleChannelNameComponent', () => {
     let component: ExerciseTitleChannelNameComponent;

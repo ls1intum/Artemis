@@ -11,7 +11,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;

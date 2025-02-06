@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../test.module';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { MockModule } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ describe('SearchFilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
             declarations: [SearchFilterComponent],
         }).compileComponents();
     });

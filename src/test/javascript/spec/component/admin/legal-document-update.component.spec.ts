@@ -5,7 +5,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
@@ -29,7 +28,7 @@ describe('LegalDocumentUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 LegalDocumentUpdateComponent,
                 MockComponent(UnsavedChangesWarningComponent),

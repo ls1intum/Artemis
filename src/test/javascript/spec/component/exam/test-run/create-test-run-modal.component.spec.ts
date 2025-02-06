@@ -8,7 +8,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;

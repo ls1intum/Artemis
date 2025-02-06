@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -47,7 +46,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseInstructorSubmissionStateComponent,
                 ProgrammingExerciseTriggerAllButtonComponent,

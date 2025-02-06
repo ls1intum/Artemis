@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
@@ -13,7 +12,7 @@ describe('KnowledgeAreaTreeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [KnowledgeAreaTreeComponent, ArtemisTestModule, ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule],
+            imports: [KnowledgeAreaTreeComponent, ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })

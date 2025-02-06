@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';

@@ -5,7 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('SuspiciousSessionsComponent', () => {
     let component: SuspiciousSessionsComponent;

@@ -28,7 +28,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();

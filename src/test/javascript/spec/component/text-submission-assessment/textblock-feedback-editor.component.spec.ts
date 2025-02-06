@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
@@ -29,7 +28,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
+            imports: [TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,

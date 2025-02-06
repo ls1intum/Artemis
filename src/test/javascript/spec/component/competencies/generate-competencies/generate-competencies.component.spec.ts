@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -39,7 +38,7 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+            imports: [GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
             declarations: [
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),

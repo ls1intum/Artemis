@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -73,7 +72,7 @@ describe('ModelingSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]])],
             declarations: [
                 ModelingSubmissionComponent,
                 MockComponent(ModelingEditorComponent),

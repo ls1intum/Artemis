@@ -2,7 +2,6 @@ import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';

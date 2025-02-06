@@ -1,6 +1,5 @@
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
@@ -30,7 +29,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [MockProvider(FileUploaderService), MockProvider(AlertService)],
-            imports: [FormsModule, NgbNavModule, ArtemisTestModule, ArtemisSharedModule, MockDirective(NgbTooltip), DragDropModule],
+            imports: [FormsModule, NgbNavModule, ArtemisSharedModule, MockDirective(NgbTooltip), DragDropModule],
             declarations: [
                 MarkdownEditorMonacoComponent,
                 MockComponent(MonacoEditorComponent),

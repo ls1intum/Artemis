@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -88,7 +87,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterModule.forRoot([])],
+            imports: [NgxDatatableModule, RouterModule.forRoot([])],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),

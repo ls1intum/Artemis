@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component';
-import { ArtemisTestModule } from '../../test.module';
 import { EntityResponseType, PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ModelingExplanationEditorComponent', () => {
     let fixture: ComponentFixture<ModelingExplanationEditorComponent>;

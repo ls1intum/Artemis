@@ -12,7 +12,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/entities/submission-version.model';

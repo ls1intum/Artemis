@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
@@ -16,7 +15,7 @@ describe('JvmThreadsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbProgressbar)],
+            imports: [MockComponent(NgbProgressbar)],
             declarations: [JvmThreadsComponent],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         }).compileComponents();

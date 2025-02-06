@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
-import { ArtemisTestModule } from '../../test.module';
 
 const sectionHeadlines = [
     { id: 'general', translationKey: 'some.translation.key' },

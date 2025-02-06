@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
 
 describe('CourseDetailLineChartComponent', () => {

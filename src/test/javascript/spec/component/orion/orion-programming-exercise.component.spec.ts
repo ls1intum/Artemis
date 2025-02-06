@@ -1,5 +1,4 @@
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { TestBed } from '@angular/core/testing';

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';

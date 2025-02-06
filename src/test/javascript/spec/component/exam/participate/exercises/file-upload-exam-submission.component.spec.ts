@@ -8,7 +8,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

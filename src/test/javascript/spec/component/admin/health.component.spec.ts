@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { HealthService } from 'app/admin/health/health.service';
 import { Health } from 'app/admin/health/health.model';

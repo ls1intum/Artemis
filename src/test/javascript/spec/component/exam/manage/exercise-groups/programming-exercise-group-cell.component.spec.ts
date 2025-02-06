@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';

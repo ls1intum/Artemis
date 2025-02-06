@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { MockBuilder } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';

@@ -5,7 +5,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
@@ -26,7 +25,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     const translationBasePath = 'artemisApp.quizExercise.explanationText.';
 
     beforeEach(async () => {
-        await MockBuilder(QuizScoringInfoStudentModalComponent, ArtemisTestModule)
+        await MockBuilder(QuizScoringInfoStudentModalComponent)
             .provide({ provide: TranslateService, useClass: MockTranslateService })
             .provide({ provide: NgbModal, useClass: MockNgbModalService });
 

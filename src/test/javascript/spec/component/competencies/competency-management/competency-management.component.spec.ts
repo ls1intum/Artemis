@@ -7,7 +7,6 @@ import { CompetencyManagementComponent } from 'app/course/competencies/competenc
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -48,7 +47,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbProgressbar],
+            imports: [NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
                 MockHasAnyAuthorityDirective,

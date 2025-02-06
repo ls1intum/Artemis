@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('PlagiarismCasesOverviewComponent', () => {
     let fixture: ComponentFixture<PlagiarismCasesOverviewComponent>;

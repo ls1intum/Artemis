@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { MockFileUploadExerciseService, fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';

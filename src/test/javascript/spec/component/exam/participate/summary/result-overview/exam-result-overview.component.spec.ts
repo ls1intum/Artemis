@@ -18,7 +18,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;

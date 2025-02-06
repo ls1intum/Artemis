@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
@@ -26,7 +25,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TestComponent],
+            imports: [TestComponent],
         })
             .compileComponents()
             .then(() => {

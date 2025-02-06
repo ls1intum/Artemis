@@ -1,5 +1,4 @@
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

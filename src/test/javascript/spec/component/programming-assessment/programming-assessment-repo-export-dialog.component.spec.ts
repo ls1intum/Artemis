@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -41,7 +40,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormDateTimePickerComponent, OwlNativeDateTimeModule],
+            imports: [FormDateTimePickerComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

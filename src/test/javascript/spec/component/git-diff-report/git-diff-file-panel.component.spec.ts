@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
@@ -16,7 +15,7 @@ describe('GitDiffFilePanelComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             // TODO: We cannot mock GitDiffFileComponent because of https://github.com/help-me-mom/ng-mocks/issues/8634.
-            imports: [ArtemisTestModule, GitDiffFileComponent],
+            imports: [GitDiffFileComponent],
             declarations: [
                 GitDiffFilePanelComponent,
                 MockComponent(GitDiffFilePanelTitleComponent),

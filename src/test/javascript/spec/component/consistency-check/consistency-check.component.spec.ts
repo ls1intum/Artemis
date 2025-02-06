@@ -3,7 +3,6 @@ import { ConsistencyCheckService } from 'app/shared/consistency-check/consistenc
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
@@ -36,7 +35,7 @@ describe('ConsistencyCheckComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbHighlight)],
+            imports: [MockComponent(NgbHighlight)],
             declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
         })

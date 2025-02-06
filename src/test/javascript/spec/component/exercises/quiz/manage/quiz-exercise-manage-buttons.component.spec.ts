@@ -11,7 +11,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -18,7 +17,7 @@ describe('ThemeSwitchComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ThemeSwitchComponent, MockDirective(NgbPopover)],
+            imports: [ThemeSwitchComponent, MockDirective(NgbPopover)],
             declarations: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockLocalStorageService },

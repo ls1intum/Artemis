@@ -4,7 +4,6 @@ import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -20,7 +19,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, PasswordResetFinishComponent],
+                imports: [PasswordResetFinishComponent],
                 providers: [
                     FormBuilder,
                     {

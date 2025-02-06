@@ -4,7 +4,6 @@ import { of } from 'rxjs';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;

@@ -4,7 +4,6 @@ import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';

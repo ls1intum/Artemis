@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
-import { ArtemisTestModule } from '../../test.module';
 import dayjs from 'dayjs/esm';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {

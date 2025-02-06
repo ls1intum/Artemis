@@ -4,7 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

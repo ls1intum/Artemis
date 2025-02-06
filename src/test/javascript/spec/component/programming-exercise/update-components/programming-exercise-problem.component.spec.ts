@@ -6,7 +6,6 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;

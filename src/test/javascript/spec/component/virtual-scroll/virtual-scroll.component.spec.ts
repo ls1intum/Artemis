@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SimpleChange, SimpleChanges } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { metisCoursePosts, metisGeneralCourseWidePosts } from '../../helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';

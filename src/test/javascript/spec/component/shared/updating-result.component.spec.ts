@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import {
     BuildTimingInfo,

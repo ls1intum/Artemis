@@ -20,7 +20,6 @@ import { Result } from 'app/entities/result.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('StudentExamDetailComponent', () => {

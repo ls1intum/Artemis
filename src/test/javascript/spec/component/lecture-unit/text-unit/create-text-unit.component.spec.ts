@@ -11,7 +11,6 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 
@@ -21,7 +20,7 @@ describe('CreateTextUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),

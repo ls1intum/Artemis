@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';

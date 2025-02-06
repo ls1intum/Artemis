@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';

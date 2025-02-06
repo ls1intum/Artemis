@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -37,7 +36,7 @@ describe('QuizPoolComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbModule, FormsModule],
+            imports: [NgbModule, FormsModule],
             declarations: [
                 QuizPoolComponent,
                 MockComponent(QuizPoolMappingComponent),

@@ -16,7 +16,6 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';

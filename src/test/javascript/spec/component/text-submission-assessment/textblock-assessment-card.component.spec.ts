@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
@@ -27,7 +26,7 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 TextblockAssessmentCardComponent,
                 TextblockFeedbackEditorComponent,

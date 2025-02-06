@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -80,7 +79,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule],
+            imports: [TranslateTestingModule, FormsModule],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,

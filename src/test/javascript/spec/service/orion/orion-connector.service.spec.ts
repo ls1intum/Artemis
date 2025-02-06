@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Injector } from '@angular/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';

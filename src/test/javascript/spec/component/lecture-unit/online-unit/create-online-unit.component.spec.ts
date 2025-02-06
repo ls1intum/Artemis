@@ -11,7 +11,6 @@ import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('CreateOnlineUnitComponent', () => {
@@ -19,7 +18,7 @@ describe('CreateOnlineUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),

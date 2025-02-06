@@ -3,7 +3,6 @@ import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
@@ -49,7 +48,6 @@ describe('CourseExerciseRowComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 TranslateModule.forRoot(),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/exercises', component: DummyComponent },

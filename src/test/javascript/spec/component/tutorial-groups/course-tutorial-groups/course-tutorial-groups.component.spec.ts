@@ -13,7 +13,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
@@ -35,7 +34,7 @@ describe('CourseTutorialGroupsComponent', () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(SearchFilterPipe)],
             providers: [
                 MockProvider(TutorialGroupsService),

@@ -8,7 +8,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureImportComponent', () => {
     let fixture: ComponentFixture<LectureImportComponent>;
@@ -24,7 +23,7 @@ describe('LectureImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
+            imports: [FormsModule, MockComponent(NgbPagination)],
             declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [
                 // Overwrite MockRouter declaration in ArtemisTestModule which just returns 'testValue'

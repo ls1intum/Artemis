@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

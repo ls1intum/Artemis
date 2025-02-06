@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -51,7 +50,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';

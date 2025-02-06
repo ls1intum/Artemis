@@ -30,7 +30,6 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockComponent } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
@@ -62,7 +61,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     beforeEach(() => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),

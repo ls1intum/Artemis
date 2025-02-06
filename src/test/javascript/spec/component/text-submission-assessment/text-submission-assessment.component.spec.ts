@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';

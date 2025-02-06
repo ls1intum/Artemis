@@ -10,7 +10,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
@@ -40,7 +39,7 @@ describe('TextUnitFormComponent', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 TextUnitFormComponent,
                 MockComponent(MarkdownEditorMonacoComponent),

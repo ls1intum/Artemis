@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-competencies/standardized-competency-edit.component';
@@ -40,7 +39,7 @@ describe('StandardizedCompetencyEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule],
+            imports: [ReactiveFormsModule],
             declarations: [
                 StandardizedCompetencyEditComponent,
                 MockComponent(ButtonComponent),

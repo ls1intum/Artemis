@@ -26,7 +26,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -61,7 +60,7 @@ describe('ExampleTextSubmissionComponent', () => {
             },
         } as any;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 MockDirective(TranslateDirective),
                 ExampleTextSubmissionComponent,

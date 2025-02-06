@@ -5,7 +5,6 @@ import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { By } from '@angular/platform-browser';
 import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {

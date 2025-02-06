@@ -6,7 +6,6 @@ import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/s
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
@@ -70,7 +69,7 @@ describe('SuspiciousBehaviorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockRouterLinkDirective, MockModule(FormsModule)],
+            imports: [MockRouterLinkDirective, MockModule(FormsModule)],
             declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

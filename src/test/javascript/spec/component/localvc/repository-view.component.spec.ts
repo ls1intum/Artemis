@@ -18,7 +18,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;

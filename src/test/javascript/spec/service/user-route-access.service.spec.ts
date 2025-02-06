@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
-import { ArtemisTestModule } from '../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -36,7 +35,6 @@ describe('UserRouteAccessService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 RouterModule.forRoot([
                     {
                         path: route,

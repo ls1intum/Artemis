@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -53,7 +52,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterModule.forRoot([routes[0]])],
+            imports: [NgxDatatableModule, TranslateModule.forRoot(), RouterModule.forRoot([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),

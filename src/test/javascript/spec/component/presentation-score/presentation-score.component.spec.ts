@@ -4,7 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { HttpTestingController } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('PresentationScoreComponent', () => {
     let component: PresentationScoreComponent;

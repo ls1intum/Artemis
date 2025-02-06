@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TypeAheadUserSearchFieldComponent } from 'app/shared/type-ahead-search-field/type-ahead-user-search-field.component';
 import { UserService } from 'app/core/user/user.service';
 import { of, throwError } from 'rxjs';
@@ -18,7 +17,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [MockModule(FormsModule)],
             declarations: [TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);

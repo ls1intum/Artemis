@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
@@ -86,15 +85,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockDirective(NgbTooltip),
-                RouterModule,
-                ReactiveFormsModule,
-                FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
-            ],
+            imports: [MockDirective(NgbTooltip), RouterModule, ReactiveFormsModule, FormsModule, MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 LectureAttachmentsComponent,
                 FormDateTimePickerComponent,

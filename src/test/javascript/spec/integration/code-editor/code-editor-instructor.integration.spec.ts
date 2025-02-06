@@ -6,7 +6,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -99,7 +98,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,

@@ -4,7 +4,6 @@ import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';

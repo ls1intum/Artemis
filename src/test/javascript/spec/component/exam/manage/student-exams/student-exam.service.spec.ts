@@ -5,7 +5,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Student Exam Service', () => {
     let httpClient: any;

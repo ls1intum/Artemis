@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { mockSettings, mockVariants } from './mock-settings';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -47,7 +46,7 @@ describe('IrisSettingsUpdateComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
+            imports: [MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [MockProvider(IrisSettingsService, irisSettingsServiceMock), provideHttpClient(), provideHttpClientTesting()],
         })

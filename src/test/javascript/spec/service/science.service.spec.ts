@@ -1,5 +1,4 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ScienceService } from 'app/shared/science/science.service';

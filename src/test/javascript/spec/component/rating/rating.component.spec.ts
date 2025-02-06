@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { ArtemisTestModule } from '../../test.module';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';

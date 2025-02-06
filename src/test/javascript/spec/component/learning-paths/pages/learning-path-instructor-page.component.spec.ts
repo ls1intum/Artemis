@@ -10,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { Course } from 'app/entities/course.model';
 
 describe('LearningPathInstructorPageComponent', () => {
@@ -30,7 +29,7 @@ describe('LearningPathInstructorPageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, LearningPathInstructorPageComponent],
+            imports: [LearningPathInstructorPageComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

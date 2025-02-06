@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/entities/result.model';
@@ -26,7 +25,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

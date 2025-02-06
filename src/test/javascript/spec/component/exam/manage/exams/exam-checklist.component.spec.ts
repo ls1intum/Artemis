@@ -7,7 +7,6 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';

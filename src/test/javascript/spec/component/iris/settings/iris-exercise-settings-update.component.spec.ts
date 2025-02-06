@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';

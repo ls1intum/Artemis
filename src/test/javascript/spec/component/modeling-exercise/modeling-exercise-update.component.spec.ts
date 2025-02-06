@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -41,7 +40,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbPagination)],
+            imports: [MockComponent(NgbPagination)],
             declarations: [ModelingExerciseUpdateComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -6,7 +6,6 @@ import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MockComponent } from 'ng-mocks';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
     let component: CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;

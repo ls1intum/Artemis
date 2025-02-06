@@ -20,7 +20,6 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;

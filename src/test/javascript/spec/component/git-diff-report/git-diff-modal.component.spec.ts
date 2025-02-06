@@ -1,5 +1,4 @@
 import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffReportModalComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';

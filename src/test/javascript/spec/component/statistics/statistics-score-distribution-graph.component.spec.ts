@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

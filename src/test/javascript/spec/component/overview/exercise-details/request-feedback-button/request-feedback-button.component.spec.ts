@@ -11,7 +11,6 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
@@ -26,7 +25,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RequestFeedbackButtonComponent],
+            imports: [RequestFeedbackButtonComponent],
             providers: [{ provide: ProfileService, useClass: MockProfileService }, MockProvider(HttpClient)],
         })
             .compileComponents()

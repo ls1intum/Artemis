@@ -3,7 +3,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

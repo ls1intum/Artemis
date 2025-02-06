@@ -3,7 +3,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
@@ -163,7 +162,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), ArtemisTestModule, MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),

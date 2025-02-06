@@ -1,5 +1,4 @@
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -20,7 +19,7 @@ describe('PrivacyComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule],
+            imports: [RouterModule],
             declarations: [PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },

@@ -1,6 +1,5 @@
 import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';

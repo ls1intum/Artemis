@@ -6,7 +6,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
@@ -26,7 +25,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             declarations: [],
             providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
         })

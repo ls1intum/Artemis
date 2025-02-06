@@ -1,6 +1,5 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../../test.module';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 // Mock before import to prevent errors
@@ -22,7 +21,7 @@ describe('QuizPoolMappingQuestionListComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDrop.DragDropModule],
+            imports: [DragDrop.DragDropModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { Result } from 'app/entities/result.model';

@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { HttpClient } from '@angular/common/http';
 
 describe('Exercise Group Service', () => {

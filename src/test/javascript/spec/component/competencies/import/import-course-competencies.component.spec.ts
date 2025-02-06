@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';

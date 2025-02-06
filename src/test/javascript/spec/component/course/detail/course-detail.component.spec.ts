@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

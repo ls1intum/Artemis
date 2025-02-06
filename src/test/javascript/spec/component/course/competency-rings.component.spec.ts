@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CompetencyRings', () => {
@@ -12,7 +11,7 @@ describe('CompetencyRings', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

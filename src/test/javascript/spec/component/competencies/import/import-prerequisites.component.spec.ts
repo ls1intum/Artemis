@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
@@ -17,7 +16,7 @@ describe('ImportPrerequisitesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule],
+            imports: [ImportCompetenciesComponent, ArtemisFormsModule],
             declarations: [],
             providers: [
                 {

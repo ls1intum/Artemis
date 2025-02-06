@@ -12,7 +12,6 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('OnlineUnitFormComponent', () => {
@@ -21,7 +20,7 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 OnlineUnitFormComponent,
                 FormDateTimePickerComponent,

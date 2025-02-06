@@ -18,7 +18,6 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseStatisticsComponent', () => {
@@ -319,7 +318,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NoopAnimationsModule],
+            imports: [NoopAnimationsModule],
             providers: [
                 {
                     provide: ActivatedRoute,

@@ -5,7 +5,6 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -53,7 +52,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, RouterModule.forRoot([])],
+            imports: [BrowserAnimationsModule, RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
                     find: () => {

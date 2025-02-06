@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ResultProgressBarComponent } from '../../../../../main/webapp/app/exercises/shared/result/result-progress-bar/result-progress-bar.component';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ResultProgressBarComponent', () => {
     let component: ResultProgressBarComponent;
@@ -9,7 +8,7 @@ describe('ResultProgressBarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ResultProgressBarComponent, ArtemisTestModule],
+            imports: [ResultProgressBarComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ResultProgressBarComponent);

@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

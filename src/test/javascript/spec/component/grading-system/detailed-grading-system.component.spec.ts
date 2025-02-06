@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailedGradingSystemComponent } from 'app/grading-system/detailed-grading-system/detailed-grading-system.component';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';

@@ -4,7 +4,6 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import { ArtemisTestModule } from '../../test.module';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';

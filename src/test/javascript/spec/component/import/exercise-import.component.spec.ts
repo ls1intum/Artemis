@@ -22,7 +22,6 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 describe('ExerciseImportComponent', () => {
@@ -41,7 +40,7 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
+            imports: [FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),

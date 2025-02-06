@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { ArtemisTestModule } from '../../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom, of } from 'rxjs';

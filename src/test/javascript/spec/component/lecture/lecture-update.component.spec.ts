@@ -18,7 +18,6 @@ import { of } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -52,7 +51,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,

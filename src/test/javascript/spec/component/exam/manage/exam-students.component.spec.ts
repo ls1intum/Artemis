@@ -16,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
@@ -60,7 +59,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [NgxDatatableModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),

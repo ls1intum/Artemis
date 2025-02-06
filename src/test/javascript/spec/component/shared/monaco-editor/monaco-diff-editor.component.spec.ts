@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
@@ -9,7 +8,7 @@ describe('MonacoDiffEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
+            imports: [MonacoDiffEditorComponent],
         })
             .compileComponents()
             .then(() => {

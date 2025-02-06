@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -108,7 +107,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot()],
+            imports: [TranslateModule.forRoot()],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),

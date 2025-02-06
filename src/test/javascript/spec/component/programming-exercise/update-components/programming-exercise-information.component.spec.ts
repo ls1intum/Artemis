@@ -15,7 +15,6 @@ import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercis
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -23,7 +22,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule],
+            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
                 {

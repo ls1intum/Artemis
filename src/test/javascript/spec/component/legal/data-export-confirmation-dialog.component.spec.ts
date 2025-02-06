@@ -4,7 +4,6 @@ import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -23,7 +22,7 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
             declarations: [
                 DataExportConfirmationDialogComponent,
                 AlertOverlayComponent,

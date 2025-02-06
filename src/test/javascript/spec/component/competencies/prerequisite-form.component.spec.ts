@@ -8,7 +8,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -33,7 +32,7 @@ describe('PrerequisiteFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

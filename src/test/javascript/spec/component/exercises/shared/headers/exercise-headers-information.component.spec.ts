@@ -4,7 +4,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
@@ -36,7 +35,7 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseHeadersInformationComponent, ArtemisTestModule, TranslateModule.forRoot(), NgbTooltipModule],
+            imports: [ExerciseHeadersInformationComponent, TranslateModule.forRoot(), NgbTooltipModule],
             providers: [MockProvider(ExerciseService), MockProvider(ComplaintService)],
         })
             .compileComponents()

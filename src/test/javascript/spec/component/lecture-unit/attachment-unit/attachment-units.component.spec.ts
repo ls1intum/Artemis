@@ -11,7 +11,6 @@ import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-man
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -67,7 +66,7 @@ describe('AttachmentUnitsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
+            imports: [FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 AttachmentUnitsComponent,
                 LectureUnitLayoutStubComponent,
