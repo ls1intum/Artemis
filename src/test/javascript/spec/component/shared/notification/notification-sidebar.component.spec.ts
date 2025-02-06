@@ -60,14 +60,8 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-            declarations: [
-                NotificationSidebarComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockRouterLinkDirective,
-                MockComponent(DocumentationButtonComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), ArtemisTranslatePipe],
+            declarations: [NotificationSidebarComponent, MockRouterLinkDirective, MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
