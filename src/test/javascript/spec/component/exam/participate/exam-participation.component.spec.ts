@@ -57,6 +57,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { getArtemisTestImports, getArtemisTestProviders, initializeArtemisTestLocaleDate } from '../../../test-helper';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -92,7 +93,7 @@ describe('ExamParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,
@@ -113,6 +114,7 @@ describe('ExamParticipationComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
+                ...getArtemisTestProviders(),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
