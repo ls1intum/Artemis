@@ -44,7 +44,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ModelingExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

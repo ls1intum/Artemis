@@ -37,7 +37,7 @@ describe('CourseArchiveComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseArchiveComponent,
                 SearchFilterPipe,

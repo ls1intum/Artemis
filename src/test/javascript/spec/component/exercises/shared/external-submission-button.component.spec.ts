@@ -13,7 +13,7 @@ describe('External Submission Dialog', () => {
     beforeEach(() => {
         modalService = { open: jest.fn() } as any as NgbModal;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: NgbModal, useValue: modalService }],
         })
             .compileComponents()

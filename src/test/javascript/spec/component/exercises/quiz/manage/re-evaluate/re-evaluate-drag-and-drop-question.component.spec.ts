@@ -16,7 +16,7 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()

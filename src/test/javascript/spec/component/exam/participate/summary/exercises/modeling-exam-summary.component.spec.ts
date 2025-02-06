@@ -12,7 +12,7 @@ describe('ModelingExamSummaryComponent', () => {
     let component: ModelingExamSummaryComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
+        TestBed.configureTestingModule({ imports: [] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);

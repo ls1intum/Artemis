@@ -20,7 +20,7 @@ describe('AssessmentInstructionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 AssessmentInstructionsComponent,
                 MockComponent(ExpandableSectionComponent),

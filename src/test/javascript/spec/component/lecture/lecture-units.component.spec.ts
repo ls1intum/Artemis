@@ -35,7 +35,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 MockComponent(VideoUnitFormComponent),
                 MockComponent(UnitCreationCardComponent),

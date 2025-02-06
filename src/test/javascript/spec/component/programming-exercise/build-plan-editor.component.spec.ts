@@ -31,7 +31,7 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 BuildPlanEditorComponent,
                 TranslatePipeMock,

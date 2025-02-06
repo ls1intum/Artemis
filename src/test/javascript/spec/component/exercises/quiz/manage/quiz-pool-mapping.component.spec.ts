@@ -11,7 +11,7 @@ describe('QuizPoolMappingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()

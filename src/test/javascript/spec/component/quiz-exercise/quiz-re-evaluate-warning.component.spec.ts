@@ -20,7 +20,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);

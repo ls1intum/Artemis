@@ -31,7 +31,7 @@ describe('CourseRegistrationDetailComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseRegistrationDetailComponent,
                 MockPipe(ArtemisTranslatePipe),

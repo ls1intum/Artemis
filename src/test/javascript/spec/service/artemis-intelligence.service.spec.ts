@@ -19,7 +19,7 @@ describe('ArtemisIntelligenceService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: mockWebsocketService }],
         });
 

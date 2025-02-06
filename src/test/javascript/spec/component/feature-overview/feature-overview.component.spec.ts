@@ -16,7 +16,7 @@ describe('Feature Overview Component', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [],
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ProfileService, useValue: MockProfileService },

@@ -25,7 +25,7 @@ describe('DataExportComponent', () => {
     let route: ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 DataExportComponent,
                 MockComponent(ButtonComponent),

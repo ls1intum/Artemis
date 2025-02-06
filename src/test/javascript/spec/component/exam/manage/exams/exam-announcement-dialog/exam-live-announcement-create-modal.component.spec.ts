@@ -15,7 +15,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: NgbActiveModal, useValue: { dismiss: jest.fn() } }],
         }).compileComponents();
 

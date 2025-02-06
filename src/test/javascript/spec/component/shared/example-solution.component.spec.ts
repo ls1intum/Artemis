@@ -28,7 +28,7 @@ describe('Example Solution Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExampleSolutionComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),

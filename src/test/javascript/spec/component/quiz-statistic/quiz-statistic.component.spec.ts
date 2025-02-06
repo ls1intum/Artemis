@@ -37,7 +37,7 @@ describe('QuizExercise Statistic Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
         })
             .overrideComponent(QuizStatisticComponent, {

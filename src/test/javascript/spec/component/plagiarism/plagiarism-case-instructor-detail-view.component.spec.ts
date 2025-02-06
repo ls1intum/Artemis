@@ -42,7 +42,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

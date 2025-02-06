@@ -12,7 +12,7 @@ describe('HealthModalComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(NgbActiveModal)],
         })
             .compileComponents()

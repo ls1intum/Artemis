@@ -9,7 +9,7 @@ describe('QuizReEvaluateService', () => {
     let httpMock: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService],
         });
         service = TestBed.inject(QuizReEvaluateService);

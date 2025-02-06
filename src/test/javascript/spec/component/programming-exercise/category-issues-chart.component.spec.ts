@@ -9,7 +9,7 @@ describe('CategoryIssuesChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [],
         })
             .compileComponents()

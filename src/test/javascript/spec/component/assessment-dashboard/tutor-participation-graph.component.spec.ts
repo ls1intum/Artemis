@@ -20,7 +20,7 @@ describe('TutorParticipationGraphComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock],
             providers: [{ provide: Router, useValue: router }],
         })

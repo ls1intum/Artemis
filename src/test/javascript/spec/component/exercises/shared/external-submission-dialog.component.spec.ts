@@ -23,7 +23,7 @@ describe('External Submission Dialog', () => {
             update: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: NgbActiveModal, useValue: activeModal }],
         })
             .compileComponents()

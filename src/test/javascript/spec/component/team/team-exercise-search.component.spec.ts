@@ -15,7 +15,7 @@ describe('Team Exercise Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

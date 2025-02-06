@@ -25,7 +25,7 @@ describe('CreateTutorialGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CreateTutorialGroupComponent,
                 MockComponent(LoadingIndicatorContainerComponent),

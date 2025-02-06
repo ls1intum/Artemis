@@ -37,7 +37,7 @@ describe('PresentationScoreComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .overrideTemplate(PresentationScoreComponent, '')
             .compileComponents()

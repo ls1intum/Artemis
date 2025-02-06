@@ -19,7 +19,7 @@ describe('ScienceService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },

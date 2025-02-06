@@ -18,7 +18,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 {

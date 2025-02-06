@@ -12,7 +12,7 @@ describe('FormFooterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [MockComponent(ExerciseUpdateNotificationComponent), MockComponent(ButtonComponent)],
             providers: [],
         })

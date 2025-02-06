@@ -47,7 +47,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 FileUploadExamSubmissionComponent,
                 FullscreenComponent,

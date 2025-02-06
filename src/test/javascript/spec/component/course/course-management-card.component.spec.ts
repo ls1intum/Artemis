@@ -50,7 +50,7 @@ describe('CourseManagementCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseManagementCardComponent,
                 MockPipe(ArtemisTranslatePipe),

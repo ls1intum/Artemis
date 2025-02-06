@@ -25,7 +25,7 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

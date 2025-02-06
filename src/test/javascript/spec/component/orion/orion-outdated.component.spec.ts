@@ -13,7 +13,7 @@ describe('OrionOutdatedComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockPipe(ArtemisTranslatePipe),
                 { provide: ActivatedRoute, useValue: { queryParams: of({ versionString: 'version' }) } },

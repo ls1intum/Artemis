@@ -7,7 +7,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

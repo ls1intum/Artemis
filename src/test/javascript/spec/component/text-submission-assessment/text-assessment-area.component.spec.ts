@@ -14,7 +14,7 @@ describe('TextAssessmentAreaComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 TextAssessmentAreaComponent,
                 MockComponent(TextblockAssessmentCardComponent),

@@ -55,7 +55,7 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExamChecklistComponent,
                 MockPipe(ArtemisDatePipe),

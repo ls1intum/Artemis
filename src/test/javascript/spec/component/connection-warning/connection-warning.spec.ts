@@ -12,7 +12,7 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: WebsocketService,

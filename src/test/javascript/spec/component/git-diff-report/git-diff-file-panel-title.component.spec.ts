@@ -7,7 +7,7 @@ describe('GitDiffFilePanelTitleComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [],
         }).compileComponents();

@@ -20,7 +20,7 @@ describe('TextExamSubmissionComponent', () => {
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

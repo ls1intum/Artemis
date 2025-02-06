@@ -23,7 +23,7 @@ describe('Example Submission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ExerciseService, useClass: MockExerciseService }, MockProvider(StringCountService)],
         });
         service = TestBed.inject(ExampleSubmissionService);

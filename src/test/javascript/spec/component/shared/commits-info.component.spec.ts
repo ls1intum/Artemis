@@ -61,7 +61,7 @@ describe('CommitsInfoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
         });
         fixture = TestBed.createComponent(CommitsInfoComponent);

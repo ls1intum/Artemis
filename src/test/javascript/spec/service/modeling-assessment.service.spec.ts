@@ -105,7 +105,7 @@ describe('ModelingAssessmentService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -19,7 +19,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }],
         })
             .compileComponents()

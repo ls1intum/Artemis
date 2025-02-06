@@ -23,7 +23,7 @@ describe('Mode Picker Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ModePickerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })

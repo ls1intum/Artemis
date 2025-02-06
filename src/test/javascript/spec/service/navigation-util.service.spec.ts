@@ -12,7 +12,7 @@ describe('Navigation Util Service', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: Router, useValue: router },
                 { provide: Location, useClass: Location },

@@ -49,7 +49,7 @@ describe('UserManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

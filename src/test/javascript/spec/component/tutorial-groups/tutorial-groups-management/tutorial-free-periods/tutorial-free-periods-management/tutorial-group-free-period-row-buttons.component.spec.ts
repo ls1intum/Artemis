@@ -27,7 +27,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 TutorialGroupFreePeriodRowButtonsComponent,
                 MockPipe(ArtemisDatePipe),

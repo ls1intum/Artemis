@@ -33,7 +33,7 @@ describe('AccountInformationComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: UserSettingsService, useValue: userSettingsServiceMock },

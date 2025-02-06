@@ -67,7 +67,7 @@ describe('Test case distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(ArtemisNavigationUtilService)],
         }).compileComponents();
 

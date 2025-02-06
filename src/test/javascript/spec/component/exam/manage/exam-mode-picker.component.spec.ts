@@ -12,7 +12,7 @@ describe('ExamModePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ExamModePickerComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

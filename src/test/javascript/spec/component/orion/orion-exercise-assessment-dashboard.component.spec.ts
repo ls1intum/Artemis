@@ -33,7 +33,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 OrionExerciseAssessmentDashboardComponent,
                 MockComponent(ExerciseAssessmentDashboardComponent),

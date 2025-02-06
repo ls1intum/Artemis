@@ -113,7 +113,7 @@ describe('StudentExamDetailComponent', () => {
         } as StudentExamWithGradeDTO;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockProvider(StudentExamService, {
                     updateWorkingTime: () => {

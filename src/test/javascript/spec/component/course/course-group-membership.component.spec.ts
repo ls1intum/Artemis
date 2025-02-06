@@ -26,7 +26,7 @@ describe('Course Group Membership Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [CourseGroupMembershipComponent, MockComponent(CourseGroupComponent), MockDirective(TranslateDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(CourseManagementService), MockProvider(UserService)],
         })

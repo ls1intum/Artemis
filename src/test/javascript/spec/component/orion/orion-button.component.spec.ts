@@ -10,7 +10,7 @@ describe('OrionButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [OrionButtonComponent, MockDirective(FeatureToggleDirective)],
             providers: [],
         })

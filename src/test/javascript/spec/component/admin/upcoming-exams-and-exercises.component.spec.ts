@@ -11,7 +11,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 {

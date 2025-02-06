@@ -36,7 +36,7 @@ describe('Exam Management Service Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), ExamManagementService],
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         service = TestBed.inject(ExamManagementService);

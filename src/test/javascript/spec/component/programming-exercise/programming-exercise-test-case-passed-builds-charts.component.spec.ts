@@ -9,7 +9,7 @@ describe('TestCasePassedBuildsChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
         fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
         comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;

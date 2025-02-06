@@ -57,7 +57,7 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExerciseGroupsComponent,
                 MockComponent(ExamExerciseRowButtonsComponent),

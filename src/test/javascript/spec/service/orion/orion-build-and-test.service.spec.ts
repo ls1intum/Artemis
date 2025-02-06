@@ -50,7 +50,7 @@ describe('OrionBuildAndTestService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 OrionBuildAndTestService,
                 { provide: SubmissionService, useClass: MockProgrammingSubmissionService },

@@ -9,7 +9,7 @@ describe('Modeling Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<ModelingExerciseGroupCellComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
+        TestBed.configureTestingModule({ imports: [] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);

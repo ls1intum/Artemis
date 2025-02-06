@@ -47,7 +47,7 @@ describe('LtiConfigurationComponent', () => {
             deleteLtiPlatform: jest.fn().mockReturnValue(of({})),
         };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [LtiConfigurationComponent, MockDirective(RouterLink)],
             providers: [
                 { provide: Router, useValue: mockRouter },

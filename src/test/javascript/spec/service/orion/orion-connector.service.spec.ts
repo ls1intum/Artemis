@@ -21,7 +21,7 @@ describe('OrionConnectorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 OrionConnectorService,
                 Injector,

@@ -58,7 +58,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .overrideComponent(ShortAnswerQuestionStatisticComponent, {
                 set: {

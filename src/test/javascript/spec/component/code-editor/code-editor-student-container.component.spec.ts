@@ -28,7 +28,7 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

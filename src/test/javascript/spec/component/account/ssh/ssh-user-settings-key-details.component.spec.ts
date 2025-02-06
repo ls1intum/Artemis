@@ -50,7 +50,7 @@ describe('SshUserSettingsComponent', () => {
         };
         const routerMock = { navigate: jest.fn() };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

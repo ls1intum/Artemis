@@ -76,7 +76,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(GradingSystemService)],
         })
             .compileComponents()

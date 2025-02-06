@@ -36,7 +36,7 @@ describe('ExamChecklistService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(ExamManagementService)],
         })
             .compileComponents()

@@ -15,7 +15,7 @@ describe('Team Owner Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }],
         }).compileComponents();
 

@@ -16,7 +16,7 @@ describe('MonacoEditorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         });
         // Avoids an error with the diff editor, which uses a ResizeObserver.
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {

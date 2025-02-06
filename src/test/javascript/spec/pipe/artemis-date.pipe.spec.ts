@@ -12,7 +12,7 @@ describe('ArtemisDatePipe', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [ArtemisDatePipe],
         })
             .compileComponents()

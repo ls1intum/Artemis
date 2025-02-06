@@ -59,7 +59,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .overrideComponent(DragAndDropQuestionEditComponent, {
                 set: {

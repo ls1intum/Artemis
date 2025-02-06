@@ -41,7 +41,7 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

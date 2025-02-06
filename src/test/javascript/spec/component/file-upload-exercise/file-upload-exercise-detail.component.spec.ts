@@ -56,7 +56,7 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 FileUploadExerciseDetailComponent,
                 MockPipe(HtmlForMarkdownPipe),

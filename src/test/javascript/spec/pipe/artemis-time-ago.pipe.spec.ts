@@ -11,7 +11,7 @@ describe('ArtemisTimeAgoPipe', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [ArtemisTimeAgoPipe, { provide: ChangeDetectorRef, useValue: cdRef }],
         }).compileComponents();
         translateService = TestBed.inject(TranslateService);

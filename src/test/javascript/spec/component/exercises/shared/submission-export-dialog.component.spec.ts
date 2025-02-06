@@ -32,7 +32,7 @@ describe('Submission Export Dialog Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [
                 { provide: SubmissionExportService, useValue: MockProvider(SubmissionExportService) },

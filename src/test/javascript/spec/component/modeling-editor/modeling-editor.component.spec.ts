@@ -35,7 +35,7 @@ describe('ModelingEditorComponent', () => {
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
             providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(GuidedTourService), { provide: ActivatedRoute, useValue: route }],
         })

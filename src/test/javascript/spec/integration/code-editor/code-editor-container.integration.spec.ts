@@ -80,7 +80,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 CodeEditorConflictStateService,
                 MockProvider(AlertService),

@@ -33,7 +33,7 @@ describe('ProblemStatementComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }, MockProvider(ParticipationService), MockProvider(ExerciseService)],
         })
             .compileComponents()

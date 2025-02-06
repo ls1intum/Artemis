@@ -14,7 +14,7 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService)],
         })
             .compileComponents()

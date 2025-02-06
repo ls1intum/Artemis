@@ -95,7 +95,7 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: NgbModal, useClass: MockNgbModalService },

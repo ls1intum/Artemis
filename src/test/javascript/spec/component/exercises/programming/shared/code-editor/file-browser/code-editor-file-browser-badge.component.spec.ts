@@ -10,7 +10,7 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         translateService = TestBed.inject(TranslateService);

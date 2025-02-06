@@ -8,7 +8,7 @@ describe('Course Management Exercises Search Component', () => {
     let emitSpy: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;

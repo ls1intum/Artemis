@@ -9,7 +9,7 @@ describe('Exercise Group Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         service = TestBed.inject(ExerciseGroupService);

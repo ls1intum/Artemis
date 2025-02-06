@@ -13,7 +13,7 @@ describe('EmojiPickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [TranslatePipeMock, EmojiPickerComponent, MockComponent(PickerComponent)],
         })
             .compileComponents()

@@ -31,7 +31,7 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 NonProgrammingExerciseDetailCommonActionsComponent,
                 MockComponent(SubmissionExportButtonComponent),

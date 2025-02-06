@@ -23,7 +23,7 @@ describe('HeaderParticipationPage', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 HeaderParticipationPageComponent,
                 MockComponent(DifficultyBadgeComponent),

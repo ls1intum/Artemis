@@ -12,7 +12,7 @@ describe('ScoreDisplayComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ScoreDisplayComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

@@ -36,7 +36,7 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CreateExerciseUnitComponent,
                 MockPipe(ArtemisTranslatePipe),

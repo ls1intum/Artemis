@@ -16,7 +16,7 @@ describe('StatisticsComponent', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 StatisticsComponent,
                 MockComponent(StatisticsGraphComponent),

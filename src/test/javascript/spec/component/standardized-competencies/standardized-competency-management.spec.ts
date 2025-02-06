@@ -28,7 +28,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(NgbModal)],
         })
             .compileComponents()

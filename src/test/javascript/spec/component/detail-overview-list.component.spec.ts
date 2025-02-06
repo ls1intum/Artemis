@@ -34,7 +34,7 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },

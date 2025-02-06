@@ -44,7 +44,7 @@ describe('SshUserSettingsComponent', () => {
             error: jest.fn(),
         };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },

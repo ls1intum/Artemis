@@ -46,7 +46,7 @@ describe('Plagiarism Cases Student View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: NotificationService, useClass: MockNotificationService },

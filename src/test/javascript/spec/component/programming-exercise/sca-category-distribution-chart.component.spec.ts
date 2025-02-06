@@ -50,7 +50,7 @@ describe('SCA category distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);

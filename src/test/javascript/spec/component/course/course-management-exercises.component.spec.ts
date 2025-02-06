@@ -29,7 +29,7 @@ describe('Course Management Exercises Component', () => {
     const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseManagementExercisesComponent,
                 MockPipe(ArtemisTranslatePipe),

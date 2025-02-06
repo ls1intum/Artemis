@@ -27,7 +27,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 OrionExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),

@@ -17,7 +17,7 @@ describe('SubmissionResultStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 SubmissionResultStatusComponent,
                 MockComponent(UpdatingResultComponent),

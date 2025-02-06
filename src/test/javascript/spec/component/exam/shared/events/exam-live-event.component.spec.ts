@@ -17,7 +17,7 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

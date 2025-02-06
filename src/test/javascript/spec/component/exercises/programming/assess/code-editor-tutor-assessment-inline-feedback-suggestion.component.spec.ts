@@ -13,7 +13,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent, MockComponent(FeedbackSuggestionBadgeComponent)],
         }).compileComponents();
     });

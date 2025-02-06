@@ -58,7 +58,7 @@ describe('Registered Students Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 RegisteredStudentsComponent,
                 LoadingIndicatorContainerStubComponent,

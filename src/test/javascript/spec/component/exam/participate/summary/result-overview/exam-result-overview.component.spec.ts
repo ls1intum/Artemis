@@ -124,7 +124,7 @@ const textExerciseResult = {
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExamResultOverviewComponent,
                 MockComponent(FaIconComponent),

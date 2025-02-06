@@ -29,7 +29,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 HeaderExercisePageWithDetailsComponent,
                 MockComponent(DifficultyBadgeComponent),

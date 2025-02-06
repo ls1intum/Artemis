@@ -21,7 +21,7 @@ describe('OrionValidatorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [OrionVersionValidator, MockProvider(Router), MockProvider(ProfileService)],
         });
         orionVersionValidator = TestBed.inject(OrionVersionValidator);

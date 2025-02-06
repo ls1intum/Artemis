@@ -22,7 +22,7 @@ describe('OrganizationManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [OrganizationManagementUpdateComponent, MockDirective(TranslateDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })

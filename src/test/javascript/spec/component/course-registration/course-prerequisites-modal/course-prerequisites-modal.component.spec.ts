@@ -22,7 +22,7 @@ describe('CoursePrerequisitesModal', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
             providers: [
                 MockProvider(AlertService),

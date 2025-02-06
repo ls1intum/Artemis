@@ -7,7 +7,7 @@ describe('FormStatusBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [],
         })

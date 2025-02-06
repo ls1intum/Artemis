@@ -32,7 +32,7 @@ describe('SecuredImageComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [SecuredImageComponent, UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
                 { provide: CacheableImageService, useClass: MockCacheableImageService },

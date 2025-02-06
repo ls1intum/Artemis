@@ -34,7 +34,7 @@ describe('Course Exam Archive Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseExamArchiveButtonComponent,
                 MockComponent(SecuredImageComponent),

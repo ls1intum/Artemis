@@ -46,7 +46,7 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(TeamService)],
         }).compileComponents();
     }));

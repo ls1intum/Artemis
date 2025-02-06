@@ -46,7 +46,7 @@ describe('Programming Exercise Group Cell Component', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: ProfileService, useValue: mockedProfileService }],
         })
             .compileComponents()

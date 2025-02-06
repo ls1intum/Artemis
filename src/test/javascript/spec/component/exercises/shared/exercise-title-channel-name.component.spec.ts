@@ -15,7 +15,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: SessionStorageService, useClass: MockSyncStorage }],
         }).compileComponents();
     });

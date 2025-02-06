@@ -32,7 +32,7 @@ describe('CourseOverviewGuard', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         });
         guard = TestBed.inject(CourseOverviewGuard);
         courseStorageService = TestBed.inject(CourseStorageService);

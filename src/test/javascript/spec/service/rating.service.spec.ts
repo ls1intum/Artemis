@@ -12,7 +12,7 @@ describe('Rating Service', () => {
     let elemDefault: Rating;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(RatingService);

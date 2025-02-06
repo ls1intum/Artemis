@@ -12,7 +12,7 @@ describe('UnsavedChangesWarningComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [UnsavedChangesWarningComponent, MockComponent(ButtonComponent), MockDirective(TranslateDirective)],
         }).compileComponents();
 

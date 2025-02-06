@@ -26,7 +26,7 @@ describe('LectureUnitService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         expectedResultArray = {} as HttpResponse<LectureUnit[]>;

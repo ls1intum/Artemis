@@ -121,7 +121,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },

@@ -30,7 +30,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

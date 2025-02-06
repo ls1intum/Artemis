@@ -18,7 +18,7 @@ describe('IdeSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: IdeSettingsService, useValue: mockIdeSettingsService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();

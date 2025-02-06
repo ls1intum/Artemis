@@ -39,7 +39,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ModelingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),

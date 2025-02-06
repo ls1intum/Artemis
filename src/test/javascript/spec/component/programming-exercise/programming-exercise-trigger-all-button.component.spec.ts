@@ -25,7 +25,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

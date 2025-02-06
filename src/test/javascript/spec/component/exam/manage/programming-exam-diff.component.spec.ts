@@ -36,7 +36,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     } as ProgrammingExerciseGitDiffReport;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [{ provide: NgbModal, useValue: new MockNgbModalService() }],
         });

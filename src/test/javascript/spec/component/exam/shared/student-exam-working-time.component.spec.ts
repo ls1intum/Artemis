@@ -14,7 +14,7 @@ describe('StudentExamWorkingTimeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [],
         })
             .compileComponents()

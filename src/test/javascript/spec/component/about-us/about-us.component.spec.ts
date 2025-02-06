@@ -18,7 +18,7 @@ describe('AboutUsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [AboutUsComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ProfileService), MockProvider(StaticContentService)],
         })

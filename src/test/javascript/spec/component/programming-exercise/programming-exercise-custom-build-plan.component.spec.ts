@@ -56,7 +56,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(MonacoEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }, Renderer2],
         })

@@ -28,7 +28,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),

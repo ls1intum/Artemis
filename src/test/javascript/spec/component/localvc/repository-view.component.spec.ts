@@ -33,7 +33,7 @@ describe('RepositoryViewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DomainService, useValue: mockDomainService },

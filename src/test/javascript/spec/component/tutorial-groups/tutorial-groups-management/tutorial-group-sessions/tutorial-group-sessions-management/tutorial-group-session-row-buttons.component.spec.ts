@@ -22,7 +22,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     let tutorialGroupSession: TutorialGroupSession;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()

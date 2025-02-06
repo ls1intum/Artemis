@@ -45,7 +45,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     const router = new MockRouter();
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 TutorialGroupFreePeriodsManagementComponent,
                 LoadingIndicatorContainerStubComponent,

@@ -18,7 +18,7 @@ describe('RatingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [RatingComponent, MockComponent(StarRatingComponent)],
             providers: [
                 { provide: RatingService, useClass: MockRatingService },

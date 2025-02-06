@@ -151,7 +151,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(ExamResultOverviewComponent),

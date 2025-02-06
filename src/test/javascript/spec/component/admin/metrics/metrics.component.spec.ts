@@ -23,7 +23,7 @@ describe('MetricsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClientTesting()],
             declarations: [
                 MetricsComponent,

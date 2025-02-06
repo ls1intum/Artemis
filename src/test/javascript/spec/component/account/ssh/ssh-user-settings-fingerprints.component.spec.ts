@@ -21,7 +21,7 @@ describe('SshUserSettingsFingerprintsComponent', () => {
         };
         jest.spyOn(console, 'error').mockImplementation(() => {});
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: SshUserSettingsFingerprintsService, useValue: fingerPintsServiceMock }],
         }).compileComponents();
         fixture = TestBed.createComponent(SshUserSettingsFingerprintsComponent);

@@ -46,7 +46,7 @@ describe('Exam Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ExamManagementComponent,
                 MockDirective(HasAnyAuthorityDirective),

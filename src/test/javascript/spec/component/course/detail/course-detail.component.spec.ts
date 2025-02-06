@@ -62,7 +62,7 @@ describe('Course Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),

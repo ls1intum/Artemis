@@ -13,7 +13,7 @@ describe('Course Conversations Code Of Conduct Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [CourseConversationsCodeOfConductComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [MockProvider(AlertService), { provide: ConversationService, useClass: MockConversationService }],
         })

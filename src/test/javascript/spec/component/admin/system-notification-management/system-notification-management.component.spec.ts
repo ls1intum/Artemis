@@ -29,7 +29,7 @@ describe('SystemNotificationManagementComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),

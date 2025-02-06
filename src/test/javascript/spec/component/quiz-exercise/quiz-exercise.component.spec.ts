@@ -30,7 +30,7 @@ describe('QuizExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

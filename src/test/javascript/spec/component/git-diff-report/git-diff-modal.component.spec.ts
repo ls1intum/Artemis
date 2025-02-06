@@ -25,7 +25,7 @@ describe('GitDiffReportModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffReportComponent)],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportModalComponent);

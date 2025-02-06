@@ -19,7 +19,7 @@ describe('TutorLeaderboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockProvider(AccountService),
                 {

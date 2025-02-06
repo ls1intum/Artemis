@@ -17,7 +17,7 @@ describe('Plagiarism Run Details', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismRunDetailsComponent);

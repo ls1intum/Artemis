@@ -57,7 +57,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 ProgrammingExerciseCustomAeolusBuildPlanComponent,
                 MockComponent(FaIconComponent),

@@ -16,7 +16,7 @@ describe('FeedbackTextComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(LongFeedbackTextService)],
         })
             .compileComponents()

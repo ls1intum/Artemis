@@ -7,7 +7,7 @@ describe('SecondCorrectionEnableButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
         fixture = TestBed.createComponent(SecondCorrectionEnableButtonComponent);
         comp = fixture.componentInstance;

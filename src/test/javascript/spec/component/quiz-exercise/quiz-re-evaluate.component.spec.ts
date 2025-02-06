@@ -74,7 +74,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockProvider(NgbModal),
                 { provide: ActivatedRoute, useValue: route },

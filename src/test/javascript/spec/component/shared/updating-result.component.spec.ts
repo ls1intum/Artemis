@@ -54,7 +54,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

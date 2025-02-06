@@ -28,7 +28,7 @@ describe('CourseManagementExerciseRowComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseManagementExerciseRowComponent,
                 MockPipe(ArtemisTranslatePipe),

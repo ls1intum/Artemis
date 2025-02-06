@@ -10,7 +10,7 @@ describe('TextExamSummaryComponent', () => {
     let component: TextExamSummaryComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
+        TestBed.configureTestingModule({ imports: [] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextExamSummaryComponent);

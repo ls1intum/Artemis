@@ -36,7 +36,7 @@ describe('PlagiarismCasesOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         });
         fixture = TestBed.createComponent(PlagiarismCasesOverviewComponent);
         router = TestBed.inject(Router);

@@ -21,7 +21,7 @@ describe('Create Test Run Modal Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);

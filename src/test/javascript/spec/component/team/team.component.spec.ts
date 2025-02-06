@@ -27,7 +27,7 @@ describe('TeamComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(SessionStorageService), MockProvider(LocalStorageService), MockProvider(AccountService), TeamService, ExerciseService],
         })
             .compileComponents()

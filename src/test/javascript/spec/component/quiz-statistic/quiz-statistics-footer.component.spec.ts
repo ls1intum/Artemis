@@ -36,7 +36,7 @@ describe('QuizExercise Statistic Footer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: Router, useClass: MockRouter }, QuizStatisticUtil, ShortAnswerQuestionUtil],
         })
             .overrideComponent(QuizStatisticsFooterComponent, {

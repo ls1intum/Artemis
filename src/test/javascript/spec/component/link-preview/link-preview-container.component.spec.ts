@@ -14,7 +14,7 @@ describe('LinkPreviewContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: LinkPreviewService, useClass: MockLinkPreviewService },
                 { provide: LinkifyService, useClass: LinkifyService },

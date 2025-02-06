@@ -27,7 +27,7 @@ describe('Submission Export Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })

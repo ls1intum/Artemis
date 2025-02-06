@@ -11,7 +11,7 @@ describe('ModalConfirmAutofocusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockPipe(ArtemisTranslatePipe), MockProvider(NgbActiveModal)],
         })
             .compileComponents()

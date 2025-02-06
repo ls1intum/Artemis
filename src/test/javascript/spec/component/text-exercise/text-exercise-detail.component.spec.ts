@@ -42,7 +42,7 @@ describe('TextExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 MockDirective(TranslateDirective),
                 TextExerciseDetailComponent,

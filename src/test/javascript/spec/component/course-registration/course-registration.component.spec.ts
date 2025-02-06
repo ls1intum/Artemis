@@ -33,7 +33,7 @@ describe('CourseRegistrationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 CourseRegistrationComponent,
                 MockPipe(ArtemisTranslatePipe),
