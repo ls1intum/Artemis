@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 
 @Service
@@ -51,14 +54,18 @@ public class PyrisStatusUpdateService {
 
     private final IrisConsistencyCheckService consistencyCheckService;
 
+    private final IrisLectureChatSessionService irisLectureChatSessionService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisRewritingService rewritingService, IrisConsistencyCheckService consistencyCheckService) {
+            IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
+            IrisConsistencyCheckService consistencyCheckService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
+        this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.rewritingService = rewritingService;
         this.consistencyCheckService = consistencyCheckService;
     }
@@ -167,6 +174,18 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+    }
+
+    /**
+     * Handles the status update of a Lecture Chat job.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
+        var updatedJob = irisLectureChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
