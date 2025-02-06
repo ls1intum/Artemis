@@ -3,24 +3,24 @@ import { TranslateService } from '@ngx-translate/core';
 import { SwitchEditModeButtonComponent } from '../../../../../../main/webapp/app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('SwitchEditModeButtonComponent', () => {
     let fixture: ComponentFixture<SwitchEditModeButtonComponent>;
     let comp: SwitchEditModeButtonComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [SwitchEditModeButtonComponent],
             declarations: [],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
-                comp = fixture.componentInstance;
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+        }).compileComponents();
 
-                fixture.componentRef.setInput('isSimpleMode', false);
-            });
+        fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
+        comp = fixture.componentInstance;
+
+        fixture.componentRef.setInput('isSimpleMode', false);
     });
 
     it('should initialize', () => {

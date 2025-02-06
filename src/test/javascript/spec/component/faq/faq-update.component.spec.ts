@@ -17,6 +17,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -81,6 +82,10 @@ describe('FaqUpdateComponent', () => {
                 }),
             ],
         }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
