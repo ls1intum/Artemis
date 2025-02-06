@@ -9,8 +9,6 @@ const IGNORED_CHAR_CODES = [CHAR_CODE_TAB, CHAR_CODE_LINE_FEED, CHAR_CODE_CARRIA
     providedIn: 'root',
 })
 export class FileTypeService {
-    constructor() {}
-
     /**
      * Determines for a string whether it represents the content of a binary file.
      * This is done by checking for characters that would not typically be found in plain text files, e.g. the 0-byte.

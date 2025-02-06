@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -9,11 +9,14 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { titleRegex } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { takeUntil } from 'rxjs/operators';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * Each row is a object with the structure
@@ -42,8 +45,16 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
+    private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private csvDownloadService = inject(CsvDownloadService);
+
     ngUnsubscribe = new Subject<void>();
 
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
@@ -91,15 +102,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     faCircleNotch = faCircleNotch;
     faFileImport = faFileImport;
     selectedFilter: filterValues = 'all';
-
-    constructor(
-        private fb: FormBuilder,
-        private translateService: TranslateService,
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private tutorialGroupService: TutorialGroupsService,
-        private csvDownloadService: CsvDownloadService,
-    ) {}
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();

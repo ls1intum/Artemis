@@ -1,11 +1,11 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -66,6 +66,12 @@ export interface IProgrammingSubmissionService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
+    private websocketService = inject(WebsocketService);
+    private http = inject(HttpClient);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ProgrammingExerciseParticipationService);
+    private profileService = inject(ProfileService);
+
     public SUBMISSION_RESOURCE_URL = 'api/programming-submissions/';
     public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
     // Default value: 2 minutes.
@@ -104,13 +110,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private isLocalCIProfile?: boolean = undefined;
     private profileServiceSubscription: Subscription;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private participationService: ProgrammingExerciseParticipationService,
-        private profileService: ProfileService,
-    ) {
+    constructor() {
         this.profileServiceSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.setLocalCIProfile(!!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
         });

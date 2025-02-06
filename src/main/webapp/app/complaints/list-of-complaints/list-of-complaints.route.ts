@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
@@ -8,8 +9,8 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 
 export const listOfComplaintsRoute: Routes = [
     {
-        path: ':courseId/complaints',
-        component: ListOfComplaintsComponent,
+        path: 'complaints',
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },
@@ -21,8 +22,8 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/exams/:examId/complaints',
-        component: ListOfComplaintsComponent,
+        path: 'exams/:examId/complaints',
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },
@@ -35,7 +36,7 @@ export const listOfComplaintsRoute: Routes = [
     },
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/complaints',
+            path: exerciseType + '-exercises/:exerciseId/complaints',
             component: ListOfComplaintsComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -46,8 +47,8 @@ export const listOfComplaintsRoute: Routes = [
         };
     }),
     {
-        path: ':courseId/more-feedback-requests',
-        component: ListOfComplaintsComponent,
+        path: 'more-feedback-requests',
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },
@@ -60,7 +61,7 @@ export const listOfComplaintsRoute: Routes = [
     },
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/more-feedback-requests',
+            path: exerciseType + '-exercises/:exerciseId/more-feedback-requests',
             component: ListOfComplaintsComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

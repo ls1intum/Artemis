@@ -7,6 +7,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
+import { AnswerPostComponent } from '../answer-post/answer-post.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 interface PostGroup {
     author: User | undefined;
@@ -16,6 +18,7 @@ interface PostGroup {
 @Component({
     selector: 'jhi-posting-footer',
     templateUrl: './posting-footer.component.html',
+    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe],
 })
 export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     lastReadDate = input<dayjs.Dayjs | undefined>();
@@ -61,7 +64,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     }
 
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
+        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef()?.clear();
     }
 
     /**
@@ -165,7 +168,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         this.createAnswerPostModalComponent?.close();
     }
 
-    protected postsTrackByFn(index: number, post: Post): number {
+    protected postsTrackByFn(_index: number, post: Post): number {
         return post.id!;
     }
 }

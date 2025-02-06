@@ -1,24 +1,20 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { createRequestOption } from 'app/shared/util/request.util';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { Router } from '@angular/router';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
+    private http = inject(HttpClient);
+
     public resourceUrl = 'api/system-notifications';
     public publicResourceUrl = 'api/public/system-notifications';
-
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-    ) {}
 
     /**
      * Find a notification on the server using a GET request.
@@ -53,11 +49,10 @@ export class SystemNotificationService {
      * @return {SystemNotification} A copy of notification with formatted dates.
      */
     convertSystemNotificationDatesFromClient(notification: SystemNotification): SystemNotification {
-        const copy: SystemNotification = Object.assign({}, notification, {
+        return Object.assign({}, notification, {
             notificationDate: convertDateFromClient(notification.notificationDate),
             expireDate: convertDateFromClient(notification.expireDate),
         });
-        return copy;
     }
 
     /**

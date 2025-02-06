@@ -18,13 +18,14 @@ import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequ
 import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent, OwlNativeDateTimeModule],
             declarations: [],
             providers: [
                 MockProvider(LectureService),
@@ -61,13 +62,12 @@ describe('EditPrerequisiteComponent', () => {
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
             })
-            .compileComponents()
-            .then(() => {
-                editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
-                editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
-            });
+            .compileComponents();
+
+        editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
+        editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
     });
 
     afterEach(() => {

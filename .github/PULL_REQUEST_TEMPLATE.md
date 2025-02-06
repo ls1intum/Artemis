@@ -73,18 +73,7 @@ Prerequisites:
 4. ...
 
 ### Testserver States
-> [!NOTE]
-> These badges show the state of the test servers.
-> Green = Currently available, Red = Currently locked
-> Click on the badges to get to the test servers.
-
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)](https://artemis-test1.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)](https://artemis-test2.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)](https://artemis-test3.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)](https://artemis-test4.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)](https://artemis-test5.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)](https://artemis-test6.artemis.cit.tum.de)
-[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)](https://artemis-test9.artemis.cit.tum.de)
+You can manage test servers using [Helios](https://helios.aet.cit.tum.de/). Check environment statuses in the [environment list](https://helios.aet.cit.tum.de/repo/69562331/environment/list). To deploy to a test server, go to the [CI/CD](https://helios.aet.cit.tum.de/repo/69562331/ci-cd) page, find your PR or branch, and trigger the deployment.
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
@@ -111,7 +100,7 @@ Prerequisites:
 - [ ] Test 2
 
 ### Test Coverage
-<!-- Please add the test coverages for all changed files modified in this PR here. You can use `supporting_script/generate_code_cov_table/generate_code_cov_table.py` to automatically generate the coverage table from the corresponding artefacts of your branch (follow the ReadMe for setup details). -->
+<!-- Please add the test coverages for all changed files modified in this PR here. You can use `supporting_script/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to automatically generate the coverage table from the corresponding artefacts of your branch (follow the ReadMe for setup details). -->
 <!-- Alternatively you can execute the tests locally (see build.gradle and package.json) or look into the corresponding artefacts. -->
 <!-- The line coverage must be above 90% for changes files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
 <!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->

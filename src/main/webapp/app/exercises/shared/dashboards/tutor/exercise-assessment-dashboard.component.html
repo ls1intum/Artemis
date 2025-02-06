@@ -218,8 +218,8 @@
                         } @else {
                             <jhi-code-button
                                 [smallButtons]="true"
-                                [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
                                 [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
+                                [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
                             />
                         }
                     </div>
@@ -258,7 +258,9 @@
 
         @if (tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun) {
             <div class="d-flex">
-                <div *jhiExtensionPoint="overrideAssessmentTable" class="guided-tour-exercise-dashboard-table flex-grow-1">
+                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                <!--                <div *jhiExtensionPoint="overrideAssessmentTable" class="guided-tour-exercise-dashboard-table flex-grow-1">-->
+                <div class="guided-tour-exercise-dashboard-table flex-grow-1">
                     @if (tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun) {
                         <div class="alert alert-warning row" role="alert">
                             <span
@@ -433,15 +435,25 @@
                                                                 </td>
                                                             }
                                                             <td>
+                                                                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                                                                <!--                                                                <a-->
+                                                                <!--                                                                    *jhiExtensionPoint="-->
+                                                                <!--                                                                        overrideOpenAssessmentButton;-->
+                                                                <!--                                                                        context: {-->
+                                                                <!--                                                                            submission: 'new',-->
+                                                                <!--                                                                            queryParams: getAssessmentQueryParams(correctionRound),-->
+                                                                <!--                                                                            buttonLabel: 'startAssessment',-->
+                                                                <!--                                                                        }-->
+                                                                <!--                                                                    "-->
+                                                                <!--                                                                    id="start-new-assessment"-->
+                                                                <!--                                                                    class="btn btn-success btn-sm guided-tour-new-assessment-btn"-->
+                                                                <!--                                                                    [routerLink]="getAssessmentLink('new')"-->
+                                                                <!--                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"-->
+                                                                <!--                                                                    [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"-->
+                                                                <!--                                                                    [class.guided-tour]="exercise === exerciseForGuidedTour"-->
+                                                                <!--                                                                    [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"-->
+                                                                <!--                                                                >-->
                                                                 <a
-                                                                    *jhiExtensionPoint="
-                                                                        overrideOpenAssessmentButton;
-                                                                        context: {
-                                                                            submission: 'new',
-                                                                            queryParams: getAssessmentQueryParams(correctionRound),
-                                                                            buttonLabel: 'startAssessment',
-                                                                        }
-                                                                    "
                                                                     id="start-new-assessment"
                                                                     class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                                     [routerLink]="getAssessmentLink('new')"
@@ -477,44 +489,45 @@
                                                             }
                                                             <td>
                                                                 @if ((isTestRun && complaints.length === 0) || !isTestRun) {
-                                                                    <ng-container
-                                                                        *jhiExtensionPoint="
-                                                                            overrideOpenAssessmentButton;
-                                                                            context: {
-                                                                                submission: submission,
-                                                                                queryParams: getAssessmentQueryParams(correctionRound),
-                                                                                buttonLabel:
-                                                                                    submission && calculateSubmissionStatusIsDraft(submission, correctionRound)
-                                                                                        ? 'continueAssessment'
-                                                                                        : 'openAssessment',
-                                                                            }
-                                                                        "
-                                                                    >
-                                                                        @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
+                                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                                                                    <!--                                                                    <ng-container-->
+                                                                    <!--                                                                        *jhiExtensionPoint="-->
+                                                                    <!--                                                                            overrideOpenAssessmentButton;-->
+                                                                    <!--                                                                            context: {-->
+                                                                    <!--                                                                                submission: submission,-->
+                                                                    <!--                                                                                queryParams: getAssessmentQueryParams(correctionRound),-->
+                                                                    <!--                                                                                buttonLabel:-->
+                                                                    <!--                                                                                    submission && calculateSubmissionStatusIsDraft(submission, correctionRound)-->
+                                                                    <!--                                                                                        ? 'continueAssessment'-->
+                                                                    <!--                                                                                        : 'openAssessment',-->
+                                                                    <!--                                                                            }-->
+                                                                    <!--                                                                        "-->
+                                                                    <!--                                                                    >-->
+                                                                    @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
+                                                                        <a
+                                                                            [routerLink]="getAssessmentLink(submission)"
+                                                                            [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                            class="btn btn-warning btn-sm"
+                                                                            id="continue-assessment"
+                                                                        >
+                                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
+                                                                                'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
+                                                                            }}
+                                                                        </a>
+                                                                    } @else {
+                                                                        @if (!!submission.results && !!submission.results[correctionRound]) {
                                                                             <a
                                                                                 [routerLink]="getAssessmentLink(submission)"
                                                                                 [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                class="btn btn-warning btn-sm"
-                                                                                id="continue-assessment"
+                                                                                class="btn btn-primary btn-sm"
+                                                                                id="open-assessment"
                                                                             >
-                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
-                                                                                    'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
-                                                                                }}
+                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                                                &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
                                                                             </a>
-                                                                        } @else {
-                                                                            @if (!!submission.results && !!submission.results[correctionRound]) {
-                                                                                <a
-                                                                                    [routerLink]="getAssessmentLink(submission)"
-                                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                    class="btn btn-primary btn-sm"
-                                                                                    id="open-assessment"
-                                                                                >
-                                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                                    &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
-                                                                                </a>
-                                                                            }
                                                                         }
-                                                                    </ng-container>
+                                                                    }
+                                                                    <!--                                                                    </ng-container>-->
                                                                 }
                                                             </td>
                                                         </tr>
@@ -624,39 +637,40 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    <ng-container
-                                                        *jhiExtensionPoint="
-                                                            overrideOpenAssessmentButton;
-                                                            context: {
-                                                                submission: submissionWithComplaint.submission,
-                                                                queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),
-                                                                disabled: isComplaintLocked(submissionWithComplaint.complaint),
-                                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint',
-                                                            }
-                                                        "
-                                                    >
-                                                        @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                            <a
-                                                                [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
-                                                                [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
-                                                                [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                                class="btn btn-success btn-sm"
-                                                                id="evaluate-complaint"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
-                                                            </a>
-                                                        } @else {
-                                                            <a
-                                                                [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
-                                                                [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                                class="btn btn-primary btn-sm"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                                                            </a>
-                                                        }
-                                                    </ng-container>
+                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                                                    <!--                                                    <ng-container-->
+                                                    <!--                                                        *jhiExtensionPoint="-->
+                                                    <!--                                                            overrideOpenAssessmentButton;-->
+                                                    <!--                                                            context: {-->
+                                                    <!--                                                                submission: submissionWithComplaint.submission,-->
+                                                    <!--                                                                queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),-->
+                                                    <!--                                                                disabled: isComplaintLocked(submissionWithComplaint.complaint),-->
+                                                    <!--                                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint',-->
+                                                    <!--                                                            }-->
+                                                    <!--                                                        "-->
+                                                    <!--                                                    >-->
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
+                                                        <a
+                                                            [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
+                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            class="btn btn-success btn-sm"
+                                                            id="evaluate-complaint"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
+                                                        </a>
+                                                    } @else {
+                                                        <a
+                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            class="btn btn-primary btn-sm"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                                                        </a>
+                                                    }
+                                                    <!--                                                    </ng-container>-->
                                                 </td>
                                             </tr>
                                         }
@@ -736,40 +750,41 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    <ng-container
-                                                        *jhiExtensionPoint="
-                                                            overrideOpenAssessmentButton;
-                                                            context: {
-                                                                submission: moreFeedbackRequest.submission,
-                                                                queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint),
-                                                                buttonLabel:
-                                                                    moreFeedbackRequest.complaint.accepted === undefined
-                                                                        ? 'evaluateMoreFeedbackRequest'
-                                                                        : 'showMoreFeedbackRequests',
-                                                            }
-                                                        "
-                                                    >
-                                                        @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                            <a
-                                                                class="btn btn-success btn-sm"
-                                                                [class.disabled]="isComplaintLocked(moreFeedbackRequest.complaint)"
-                                                                [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
-                                                                [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
-                                                            </a>
-                                                        } @else {
-                                                            <button
-                                                                class="btn btn-primary btn-sm"
-                                                                [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
-                                                                [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
-                                                            </button>
-                                                        }
-                                                    </ng-container>
+                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                                                    <!--                                                    <ng-container-->
+                                                    <!--                                                        *jhiExtensionPoint="-->
+                                                    <!--                                                            overrideOpenAssessmentButton;-->
+                                                    <!--                                                            context: {-->
+                                                    <!--                                                                submission: moreFeedbackRequest.submission,-->
+                                                    <!--                                                                queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint),-->
+                                                    <!--                                                                buttonLabel:-->
+                                                    <!--                                                                    moreFeedbackRequest.complaint.accepted === undefined-->
+                                                    <!--                                                                        ? 'evaluateMoreFeedbackRequest'-->
+                                                    <!--                                                                        : 'showMoreFeedbackRequests',-->
+                                                    <!--                                                            }-->
+                                                    <!--                                                        "-->
+                                                    <!--                                                    >-->
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
+                                                        <a
+                                                            class="btn btn-success btn-sm"
+                                                            [class.disabled]="isComplaintLocked(moreFeedbackRequest.complaint)"
+                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
+                                                        </a>
+                                                    } @else {
+                                                        <button
+                                                            class="btn btn-primary btn-sm"
+                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
+                                                        </button>
+                                                    }
+                                                    <!--                                                    </ng-container>-->
                                                 </td>
                                             </tr>
                                         }

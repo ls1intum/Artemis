@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -11,6 +11,13 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CollapsibleCardComponent } from '../collapsible-card.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NoDataComponent } from 'app/shared/no-data-component';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -24,16 +31,21 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     selector: 'jhi-exam-result-overview',
     styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
+    imports: [TranslateDirective, CollapsibleCardComponent, NgClass, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe],
 })
 export class ExamResultOverviewComponent implements OnInit, OnChanges {
+    private serverDateService = inject(ArtemisServerDateService);
+    exerciseService = inject(ExerciseService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
-    @Input() isGradingKeyCollapsed: boolean = true;
-    @Input() isBonusGradingKeyCollapsed: boolean = true;
+    @Input() isGradingKeyCollapsed = true;
+    @Input() isBonusGradingKeyCollapsed = true;
     @Input() exerciseInfos: Record<number, ExerciseInfo>;
-    @Input() isTestRun: boolean = false;
+    @Input() isTestRun = false;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -68,12 +80,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         'grading-key': true,
         'bonus-grading-key': true,
     };
-
-    constructor(
-        private serverDateService: ArtemisServerDateService,
-        public exerciseService: ExerciseService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         if (this.areResultsPublished()) {
@@ -199,7 +205,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             });
         } else {
             const errorMessage = 'Cannot scroll to exercise, could not find exercise with corresponding id';
-            console.error(errorMessage);
             captureException(new Error(errorMessage), {
                 extra: {
                     exerciseId,
@@ -218,14 +223,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
         }
         return false;
-    }
-
-    toggleGradingKey(): void {
-        this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
-    }
-
-    toggleBonusGradingKey(): void {
-        this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
     }
 
     toggleCollapse(resultOverviewSection: ResultOverviewSection) {

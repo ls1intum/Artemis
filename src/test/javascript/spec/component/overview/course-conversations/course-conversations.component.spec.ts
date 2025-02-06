@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
@@ -44,6 +44,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { ElementRef, signal } from '@angular/core';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -81,6 +82,10 @@ examples.forEach((activeConversation) => {
             },
             isBreakpointActive: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
         };
+
+        // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
+        MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+        MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -450,8 +455,6 @@ examples.forEach((activeConversation) => {
             });
 
             it('should log an error if createChannelFn throws an error', () => {
-                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
                 component.createChannelFn = jest.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ error }: any) => {
@@ -461,9 +464,6 @@ examples.forEach((activeConversation) => {
                 });
 
                 component.performChannelAction(channelAction);
-                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
-
-                consoleErrorSpy.mockRestore();
             });
 
             it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {

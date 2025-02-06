@@ -7,7 +7,6 @@ import { CompetencyCardComponent } from 'app/course/competencies/competency-card
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
@@ -16,7 +15,6 @@ import { IrisModule } from 'app/iris/iris.module';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
@@ -32,17 +30,13 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         NgbModule,
         ArtemisSharedComponentModule,
         RouterModule,
-        FormDateTimePickerModule,
         NgbAccordionModule,
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisCourseExerciseRowModule,
-        RatingModule,
         JudgementOfLearningRatingComponent,
         CompetencyManagementTableComponent,
         ArtemisMarkdownEditorModule,
-    ],
-    declarations: [
         CompetencyRingsComponent,
         CompetencySearchComponent,
         CompetencyRecommendationDetailComponent,

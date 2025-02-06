@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "learningPathManagement": {
+            "noGraphAvailable": "Kein Graph verfügbar, weil Knoten oder Beziehungen leer sind. Füge zuerst einige Knoten mit Beziehungen hinzu!",
             "learningPathsDisabled": {
                 "title": "Willkommen bei der Lernpfadverwaltung!",
                 "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Mit dem folgenden Button kann die Lernpfadfunktion aktiviert werden.",

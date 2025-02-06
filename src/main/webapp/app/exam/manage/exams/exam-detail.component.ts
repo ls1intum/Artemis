@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
@@ -14,16 +14,32 @@ import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faT
 import { AlertService } from 'app/core/util/alert.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { ExamChecklistComponent } from './exam-checklist-component/exam-checklist.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
+    providers: [ArtemisDurationFromSecondsPipe],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private accountService = inject(AccountService);
+    private examManagementService = inject(ExamManagementService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private gradingSystemService = inject(GradingSystemService);
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     exam: Exam;
     formattedStartText?: SafeHtml;
     formattedConfirmationStartText?: SafeHtml;
@@ -52,17 +68,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     canHaveBonus = false;
 
     examDetailSections: DetailOverviewSection[];
-
-    constructor(
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private accountService: AccountService,
-        private examManagementService: ExamManagementService,
-        private router: Router,
-        private alertService: AlertService,
-        private gradingSystemService: GradingSystemService,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-    ) {}
 
     /**
      * Initialize the exam

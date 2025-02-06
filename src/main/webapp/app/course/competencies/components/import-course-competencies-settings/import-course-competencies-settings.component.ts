@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, model } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarAlt, faCircleXmark, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { FormsModule } from 'app/forms/forms.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 export class CourseCompetencyImportSettings {
@@ -17,8 +16,7 @@ export class CourseCompetencyImportSettings {
 
 @Component({
     selector: 'jhi-import-course-competencies-settings',
-    standalone: true,
-    imports: [FormDateTimePickerModule, FormsModule, CommonModule, FontAwesomeModule, OwlDateTimeModule, OwlNativeDateTimeModule, ArtemisSharedModule],
+    imports: [FormsModule, CommonModule, FontAwesomeModule, OwlDateTimeModule, OwlNativeDateTimeModule, ArtemisSharedModule],
     templateUrl: './import-course-competencies-settings.component.html',
     styleUrl: './import-course-competencies-settings.component.scss',
 })

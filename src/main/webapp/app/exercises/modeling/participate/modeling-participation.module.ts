@@ -5,12 +5,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
@@ -24,15 +22,12 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisSharedComponentModule,
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ModelingAssessmentModule,
-        ArtemisTeamSubmissionSyncModule,
         ArtemisFullscreenModule,
-        RatingModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         RequestFeedbackButtonComponent,
+        ModelingSubmissionComponent,
     ],
-    declarations: [ModelingSubmissionComponent],
     exports: [ModelingSubmissionComponent],
 })
 export class ArtemisModelingParticipationModule {}

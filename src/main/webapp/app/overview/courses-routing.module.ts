@@ -1,17 +1,12 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CoursesComponent } from 'app/overview/courses.component';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseOverviewComponent } from './course-overview.component';
-import { CourseExamsComponent } from './course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
-import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CourseArchiveComponent } from './course-archive/course-archive.component';
+
 import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
 
 export enum CourseOverviewRoutePath {
@@ -32,7 +27,7 @@ export enum CourseOverviewRoutePath {
 const routes: Routes = [
     {
         path: '',
-        component: CoursesComponent,
+        loadComponent: () => import('app/overview/courses.component').then((m) => m.CoursesComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
@@ -45,7 +40,7 @@ const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ARCHIVE,
-        component: CourseArchiveComponent,
+        loadComponent: () => import('./course-archive/course-archive.component').then((m) => m.CourseArchiveComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.archive',
@@ -61,7 +56,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId',
-        component: CourseOverviewComponent,
+        loadComponent: () => import('./course-overview.component').then((m) => m.CourseOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.course',
@@ -70,7 +65,7 @@ const routes: Routes = [
         children: [
             {
                 path: CourseOverviewRoutePath.EXERCISES,
-                component: CourseExercisesComponent,
+                loadComponent: () => import('app/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exercises',
@@ -144,7 +139,7 @@ const routes: Routes = [
 
             {
                 path: CourseOverviewRoutePath.LECTURES,
-                component: CourseLecturesComponent,
+                loadComponent: () => import('app/overview/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
@@ -226,7 +221,7 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
-                component: CourseTutorialGroupsComponent,
+                loadComponent: () => import('./course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
@@ -237,7 +232,10 @@ const routes: Routes = [
                 children: [
                     {
                         path: ':tutorialGroupId',
-                        component: CourseTutorialGroupDetailComponent,
+                        loadComponent: () =>
+                            import('./tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
+                                (m) => m.CourseTutorialGroupDetailComponent,
+                            ),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.tutorialGroups',
@@ -251,7 +249,7 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.EXAMS,
-                component: CourseExamsComponent,
+                loadComponent: () => import('./course-exams/course-exams.component').then((m) => m.CourseExamsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
@@ -262,7 +260,7 @@ const routes: Routes = [
                 children: [
                     {
                         path: ':examId',
-                        component: ExamParticipationComponent,
+                        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',
@@ -271,7 +269,7 @@ const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
-                        loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                        loadChildren: () => import('../exam/participate/exam-participation.route').then((m) => m.examParticipationRoute),
                     },
                 ],
             },

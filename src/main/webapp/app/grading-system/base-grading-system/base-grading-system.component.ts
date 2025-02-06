@@ -37,7 +37,9 @@ export enum GradeEditMode {
     PERCENTAGE,
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class BaseGradingSystemComponent implements OnInit {
     protected gradingSystemService = inject(GradingSystemService);
     private route = inject(ActivatedRoute);

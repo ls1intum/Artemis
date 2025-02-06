@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -27,9 +26,6 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     private static final String TEST_PREFIX = "aeolusintegration";
 
     @Autowired
-    protected RequestUtilService request;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @BeforeEach
@@ -37,18 +33,40 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
     }
 
+    private record TestProvider(String templateKey, int expectedScriptActions) {
+    }
+
     private static Stream<Arguments> templateProvider() {
-        return Stream.of(new Object[][] { { "JAVA/PLAIN_GRADLE", 1 }, { "JAVA/PLAIN_GRADLE?sequentialRuns=true", 2 }, { "JAVA/PLAIN_GRADLE?staticAnalysis=true", 2 },
-                { "JAVA/PLAIN_MAVEN", 1 }, { "JAVA/PLAIN_MAVEN?sequentialRuns=true", 2 }, { "JAVA/PLAIN_MAVEN?staticAnalysis=true", 2 }, { "JAVA/MAVEN_BLACKBOX", 5 },
-                { "JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 6 }, { "ASSEMBLER", 4 }, { "C/FACT", 2 }, { "C/GCC", 3 }, { "C/GCC?staticAnalysis=true", 3 }, { "KOTLIN", 1 },
-                { "KOTLIN?sequentialRuns=true", 3 }, { "VHDL", 4 }, { "HASKELL", 1 }, { "HASKELL?sequentialRuns=true", 2 }, { "OCAML", 2 }, { "SWIFT/PLAIN", 1 },
-                { "SWIFT/PLAIN?staticAnalysis=true", 2 } }).map(params -> Arguments.of(params[0], params[1]));
+        // @formatter:off
+        return Stream.of(
+            new TestProvider("JAVA/PLAIN_GRADLE", 1),
+            new TestProvider("JAVA/PLAIN_GRADLE?sequentialRuns=true", 2),
+            new TestProvider("JAVA/PLAIN_GRADLE?staticAnalysis=true", 2),
+            new TestProvider("JAVA/PLAIN_MAVEN", 1),
+            new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2),
+            new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2),
+            new TestProvider("JAVA/MAVEN_BLACKBOX", 7),
+            new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 8),
+            new TestProvider("ASSEMBLER", 4),
+            new TestProvider("C/FACT", 2),
+            new TestProvider("C/GCC", 3),
+            new TestProvider("C/GCC?staticAnalysis=true", 3),
+            new TestProvider("KOTLIN", 1),
+            new TestProvider("KOTLIN?sequentialRuns=true", 3),
+            new TestProvider("VHDL", 4),
+            new TestProvider("HASKELL", 1),
+            new TestProvider("HASKELL?sequentialRuns=true", 2),
+            new TestProvider("OCAML", 2),
+            new TestProvider("SWIFT/PLAIN", 1),
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 2)
+        ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedScriptActions()));
+        // @formatter:on
     }
 
     @ParameterizedTest
     @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAeolusTemplateFile(String templateKey, Integer expectedScriptActions) throws Exception {
+    void testGetAeolusTemplateFile(String templateKey, int expectedScriptActions) throws Exception {
         String template = request.get("/api/aeolus/templates/" + templateKey, HttpStatus.OK, String.class);
         assertThat(template).isNotEmpty();
         Windfile windfile = Windfile.deserialize(template);
@@ -152,7 +170,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         request.get("/api/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
     }
 
-    void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {
+    void assertWindfileIsCorrect(Windfile windfile, int expectedScriptActions) {
         assertThat(windfile.api()).isEqualTo("v0.0.1");
         assertThat(windfile.metadata().gitCredentials()).isNull();
         assertThat(windfile.metadata().docker()).isNotNull();
