@@ -155,6 +155,7 @@ export class IrisChatService implements OnDestroy {
     public setUserAccepted(): void {
         this.userService.acceptExternalLLMUsage().subscribe(() => {
             this.hasJustAcceptedExternalLLMUsage = true;
+            this.accountService.setUserAcceptedExternalLLMUsage();
             this.closeAndStart();
         });
     }
