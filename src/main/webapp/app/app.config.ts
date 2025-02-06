@@ -29,7 +29,6 @@ import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
-import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -50,7 +49,6 @@ export const appConfig: ApplicationConfig = {
             GuidedTourModule,
             RouterModule,
             ScrollingModule,
-            UserSettingsModule,
             OwlNativeDateTimeModule,
             TranslateModule.forRoot({
                 loader: {
