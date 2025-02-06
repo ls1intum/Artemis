@@ -215,7 +215,7 @@ jobs:
             echo "##################################################################################################"
 
             # Build SSH-command
-            SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $node"
+            SSH="ssh -o LogLevel=ERROR -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
 
             # Remove old artemis.war
             echo "[INFO] Remove old artemis.war ..."
