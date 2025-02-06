@@ -120,7 +120,7 @@ public class ProgrammingExerciseService {
     /**
      * Dart package name Regex derived from <a href="https://dart.dev/tools/pub/pubspec#name">the pubspec file reference</a>. The reserved words not usable as identifiers are
      * derived from <a href="https://spec.dart.dev/DartLangSpecDraft.pdf">the Dart Programming Language Specification</a>.
-     * Package names are identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
+     * Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
      */
     private static final String PACKAGE_NAME_REGEX_FOR_DART = "^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)"
             + "[a-z_][a-z0-9_]*$";
