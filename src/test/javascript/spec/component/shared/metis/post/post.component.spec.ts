@@ -385,7 +385,6 @@ describe('PostComponent', () => {
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
-        component.readOnlyMode = false;
         component.showDropdown = true;
         component.posting = post;
         fixture.detectChanges();
