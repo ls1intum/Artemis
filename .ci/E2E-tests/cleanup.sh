@@ -25,3 +25,32 @@ echo "VERSIONS:"
 docker compose version || true
 docker-compose version || true
 docker version || true
+
+# Set paths
+ARTEMIS_PATH="$(readlink -f "$(dirname "$0")/../..")"
+EXEC_FILE="$ARTEMIS_PATH/docker/playwright/report/jacoco-report.exec"
+REPORT_TASK="jacocoE2EReport"
+
+# Check if the .exec file exists, with a timeout of 5 seconds
+echo "Waiting for JaCoCo .exec file to be generated at: $EXEC_FILE"
+for i in {1..5}; do
+    if [[ -f "$EXEC_FILE" ]]; then
+        echo "JaCoCo .exec file found: $EXEC_FILE"
+        break
+    else
+        echo ".exec file not yet available. Retrying in 1 second..."
+        sleep 1
+    fi
+done
+
+# Run the Gradle task to generate the JaCoCo report
+echo "Generating JaCoCo report using Gradle task: $REPORT_TASK"
+cd $ARTEMIS_PATH
+./gradlew $REPORT_TASK
+
+# Handle errors
+if [[ $? -ne 0 ]]; then
+    echo "Failed to generate JaCoCo report. Please check the Gradle logs."
+else
+    echo "JaCoCo report generated successfully. Check the output directory for details."
+fi
