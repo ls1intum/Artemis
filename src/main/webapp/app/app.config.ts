@@ -33,6 +33,7 @@ import { UserSettingsModule } from 'app/shared/user-settings/user-settings.modul
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export function initOrionConnector(connector: OrionConnectorService) {
     return () => OrionConnectorService.initConnector(connector);
@@ -40,6 +41,7 @@ export function initOrionConnector(connector: OrionConnectorService) {
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        ArtemisTranslatePipe,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
 
