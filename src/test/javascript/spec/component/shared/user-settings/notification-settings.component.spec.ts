@@ -26,7 +26,7 @@ describe('NotificationSettingsComponent', () => {
         changed: false,
     };
 
-    const imports = [ArtemisTestModule];
+    const imports: any[] = [];
     const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),

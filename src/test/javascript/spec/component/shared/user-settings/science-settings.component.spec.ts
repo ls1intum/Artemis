@@ -25,7 +25,7 @@ describe('ScienceSettingsComponent', () => {
         changed: false,
     };
 
-    const imports = [ArtemisTestModule];
+    const imports: any[] = [];
     const declarations = [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
