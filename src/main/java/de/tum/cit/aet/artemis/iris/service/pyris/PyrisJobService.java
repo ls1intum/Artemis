@@ -136,9 +136,7 @@ public class PyrisJobService {
     public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        long timeoutWebhookJob = 60;
-        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
-        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
