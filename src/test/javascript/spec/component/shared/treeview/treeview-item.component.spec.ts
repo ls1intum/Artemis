@@ -1,12 +1,10 @@
 import { Component, DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { slice } from 'lodash-es';
-import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { createGenericTestComponent } from './common';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 const fakeItemTemplate = `
 <ng-template #itemTemplate let-item="item"
@@ -40,7 +38,7 @@ const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]
 @Component({
     selector: 'test',
     template: '',
-    imports: [TreeviewItemComponent, ArtemisSharedCommonModule],
+    imports: [],
 })
 class TestComponent {
     item = fakeData.item;

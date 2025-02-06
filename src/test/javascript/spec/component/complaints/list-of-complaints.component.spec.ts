@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +24,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -77,7 +76,7 @@ describe('ListOfComplaintsComponent', () => {
             ],
         })
             .overrideComponent(ListOfComplaintsComponent, {
-                remove: { imports: [ArtemisSharedCommonModule] },
+                // remove: { imports: [ArtemisSharedCommonModule] },
             })
             .compileComponents()
             .then(() => {

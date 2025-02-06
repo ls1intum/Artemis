@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
@@ -15,7 +15,6 @@ import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
@@ -40,7 +39,7 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
+            imports: [ArtemisTestModule, MockModule(BrowserAnimationsModule)],
             declarations: [FaqUpdateComponent, MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

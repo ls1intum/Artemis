@@ -3,7 +3,7 @@ import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/g
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 
 describe('FeedbackFilterModalComponent', () => {
@@ -14,7 +14,7 @@ describe('FeedbackFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisSharedCommonModule, RangeSliderComponent, FeedbackFilterModalComponent],
+            imports: [TranslateModule.forRoot(), RangeSliderComponent, FeedbackFilterModalComponent],
             providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
         }).compileComponents();
 
