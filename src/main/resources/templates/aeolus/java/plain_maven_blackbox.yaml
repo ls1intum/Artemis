@@ -2,34 +2,42 @@ api: v0.0.1
 actions:
   - name: build
     script: mvn -B clean compile
-  - name: checkers
+  - name: main_method_checker
+    script: |-
+      main_checker_output=$(pipeline-helper main-method -s target/classes)
+
+      line_count="$(echo "$main_checker_output" | wc -l)"
+      main_class="$(echo "$main_checker_output" | head -n1)"
+
+      if [ "${line_count}" -eq 2 ]; then
+        echo main method found in file: "${main_class}"
+        sed -i "s#MAIN_CLASS#${main_class}#" testsuite/config/default.exp
+      else
+        echo "no main method found. quitting the test run."
+        exit 1
+      fi
+  - name: custom_checkers
     script: |-
       # all java files in the assignment folder should have maximal line length 80
       pipeline-helper line-length -l 80 -s ${studentParentWorkingDirectoryName}/ -e java
       # checks that the file exists and is not empty for non gui programs
       pipeline-helper file-exists ${studentParentWorkingDirectoryName}/Tests.txt
-
-      main_checker_output=$(pipeline-helper main-method -s target/classes)
-
-      IFS=$'\n' read -rd '' -a main_checker_lines <<< "${main_checker_output}"
-
-      if [ ${#main_checker_lines[@]} -eq 2 ]; then
-        export MAIN_CLASS=${main_checker_lines[0]}
-      else
-        exit 1
-      fi
-
-      JAVA_FLAGS="-Djdk.console=java.base"
+  - name: replace_script_variables
+    script: |-
+      local JAVA_FLAGS="-Djdk.console=java.base"
+      local testfiles_base_path="./testsuite/testfiles"
+      local tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
 
       sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
-      sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
-      export testfiles_base_path="./testsuite/testfiles"
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-  - name: secret-tests
+  - name: secret_tests
     script: |-
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      export step="secret"
+      if [ ! -d ./testsuite ]; then
+        echo "skipping secret tests because the testsuite folder does not exist."
+      fi
+      
+      local step="secret"
+      local tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       cd testsuite || exit
       rm ${tool}.log || true
       timeout 60s runtest --tool ${tool} ${step}.exp || true
@@ -39,36 +47,37 @@ actions:
       if [ -f "${secretExp}" ]; then
         rm "${secretExp}"
       fi
-
-      export testfiles_base_path="./testsuite/testfiles"
-
-      if [ -f "${testfiles_base_path}/secret" ]; then
-        rm "${testfiles_base_path}/secret"
+    
+      if [ -d "${testfiles_base_path}/secret" ]; then
+        rm -rf "${testfiles_base_path}/secret"
       fi
-  - name: public-tests
+  - name: public_tests
     script: |-
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      export step="public"
+      if [ ! -d ./testsuite ]; then
+        echo "skipping public tests because the testsuite folder does not exist."
+      fi
+      
+      local step="public"
+      local tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       cd testsuite || exit
       rm ${tool}.log || true
       timeout 60s runtest --tool ${tool} ${step}.exp || true
       cd ..
       pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
-  - name: advanced-tests
+  - name: advanced_tests
     script: |-
-      export testfiles_base_path="./testsuite/testfiles"
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-
-      export step="advanced"
+      if [ ! -d ./testsuite ]; then
+        echo "skipping advanced tests because the testsuite folder does not exist."
+      fi
+      
+      local step="advanced"
+      local tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       cd testsuite || exit
       rm ${tool}.log || true
       timeout 60s runtest --tool ${tool} ${step}.exp || true
       cd ..
       pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
     results:
-      - name: only-for-sending-back
-        path: "does-not-exist.json"
+      - name: custom-feedbacks
+        path: '**/customFeedbacks/TEST-*.json'
+        type: custom-feedbacks

@@ -8,7 +8,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ViewContainerRef } from '@angular/core';
+import { input, runInInjectionContext, ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
@@ -16,7 +16,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;
-    let viewContainerRef: ViewContainerRef;
     let updatePostingMock: jest.SpyInstance;
 
     beforeEach(() => {
@@ -36,7 +35,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                viewContainerRef = TestBed.inject(ViewContainerRef);
                 updatePostingMock = jest.spyOn(component, 'updatePosting');
             });
     });
@@ -61,20 +59,34 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke create embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const viewContainerRefCreateEmbeddedView = jest.spyOn(viewContainerRef, 'createEmbeddedView');
-        component.createEditAnswerPostContainerRef = viewContainerRef;
-        fixture.detectChanges();
+        const mockClear = jest.fn();
+        const mockCreateEmbeddedView = jest.fn();
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
+                clear: mockClear,
+                createEmbeddedView: mockCreateEmbeddedView,
+            } as unknown as ViewContainerRef);
+        });
         component.open();
-        expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalledOnce();
+        fixture.detectChanges();
+        expect(mockCreateEmbeddedView).toHaveBeenCalledOnce();
     });
 
     it('should invoke clear embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const viewContainerRefClear = jest.spyOn(viewContainerRef, 'clear');
-        component.createEditAnswerPostContainerRef = viewContainerRef;
-        fixture.detectChanges();
+        const mockClear = jest.fn();
+        const mockCreateEmbeddedView = jest.fn();
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
+                clear: mockClear,
+                createEmbeddedView: mockCreateEmbeddedView,
+            } as unknown as ViewContainerRef);
+        });
         component.close();
-        expect(viewContainerRefClear).toHaveBeenCalledOnce();
+        fixture.detectChanges();
+        expect(mockClear).toHaveBeenCalledOnce();
     });
 
     it('should invoke updatePosting when confirming', () => {

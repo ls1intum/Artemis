@@ -215,7 +215,7 @@
         }
         <div class="flex-grow-1 d-flex justify-content-end">
             @if (!hasImported) {
-                <button type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
+                <button type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
