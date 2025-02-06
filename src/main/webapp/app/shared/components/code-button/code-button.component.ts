@@ -10,10 +10,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_GITLAB, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
@@ -30,6 +30,7 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -66,6 +67,7 @@ export class CodeButtonComponent implements OnInit {
     private localStorage = inject(LocalStorageService);
     private participationService = inject(ParticipationService);
     private ideSettingsService = inject(IdeSettingsService);
+    private programmingExerciseSerice = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private router = inject(Router);
 
@@ -119,9 +121,13 @@ export class CodeButtonComponent implements OnInit {
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
+    theiaEnabled = false;
+    theiaPortalURL: string;
+
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    readonly faDesktop = faDesktop;
     ideName: string;
 
     constructor() {
@@ -172,6 +178,7 @@ export class CodeButtonComponent implements OnInit {
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
 
             this.configureTooltips(profileInfo);
+            this.initTheia(profileInfo);
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
@@ -238,13 +245,14 @@ export class CodeButtonComponent implements OnInit {
      * Add the credentials to the http url, if a token should be used.
      *
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysHttpWithToken if true, the http url is always used, even if the ssh url is configured (used for Theia)
      */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
-        if (this.useSsh && this.sshTemplateUrl) {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysHttpWithToken = false): string {
+        if (this.useSsh && this.sshTemplateUrl && !alwaysHttpWithToken) {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
-        const token = insertPlaceholder ? '**********' : this.getUsedToken();
+        const token = insertPlaceholder && !alwaysHttpWithToken ? '**********' : this.getUsedToken();
 
         const credentials = `://${this.user.login}${this.useToken ? `:${token}` : ''}@`;
 
@@ -432,5 +440,75 @@ export class CodeButtonComponent implements OnInit {
         } else {
             return 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
+    }
+
+    private initTheia(profileInfo: ProfileInfo) {
+        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
+            // Theia requires the Build Config of the programming exercise to be set
+            // @ts-ignore (The exercise is not undefined here)
+            this.programmingExerciseSerice.getBuildConfig(this.exercise().id!).subscribe((buildConfig) => {
+                // @ts-ignore
+                this.exercise().buildConfig = buildConfig;
+
+                // Set variables now, sanitize later on
+                this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+
+                // Verify that all conditions are met
+                // @ts-ignore
+                if (this.theiaPortalURL !== '' && this.exercise().allowOnlineIde && this.exercise().buildConfig?.theiaImage) {
+                    this.theiaEnabled = true;
+                }
+            });
+        }
+    }
+
+    async startOnlineIDE() {
+        const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
+
+        let artemisUrl: string = '';
+        if (window.location.protocol) {
+            artemisUrl += window.location.protocol + '//';
+        }
+        if (window.location.host) {
+            artemisUrl += window.location.host;
+        }
+
+        const data = {
+            appDef: this.exercise()?.buildConfig?.theiaImage ?? '',
+            gitUri: this.getHttpOrSshRepositoryUri(false, true),
+            gitUser: this.user.name,
+            gitMail: this.user.email,
+            artemisToken: artemisToken,
+            artemisUrl: artemisUrl,
+        };
+
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            return;
+        }
+
+        newWindow.name = 'Theia-IDE';
+
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = this.theiaPortalURL;
+
+        form.target = newWindow.name;
+
+        // Loop over data element and create input fields
+        for (const key in data) {
+            if (Object.hasOwn(data, key)) {
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = key;
+                const descriptor = Object.getOwnPropertyDescriptor(data, key);
+                hiddenField.value = descriptor ? descriptor.value : '';
+                form.appendChild(hiddenField);
+            }
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 }
