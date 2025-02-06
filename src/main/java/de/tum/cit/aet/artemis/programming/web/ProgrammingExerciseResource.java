@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -82,6 +83,7 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProjectKeyProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -572,23 +574,30 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises : Queries a programming exercise by its project key.
-     *
+     * GET /programming-exercises/project-key/:projectKey : Queries a programming exercise by its project key.
      *
      * @param projectKey the project key of the programming exercise
      *
-     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
+     * @return the ProgrammingExercise with this project key in an ResponseEntity or 404 Not Found if no exercise exists. It includes the students participation, submissions,
+     *         results and feedbacks.
      */
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+    public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getProgrammingExerciseByProjectKey(@PathVariable String projectKey) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        final ProgrammingExercise exercise = programmingExerciseRepository.findWithStudentParticipationLatestResultFeedbackTestCasesByProjectKey(user.getId(), projectKey)
+        final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
 
-        return ResponseEntity.ok(exercise);
+        if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this exercise");
+        }
+
+        var participations = studentParticipationRepository.findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId());
+        exercise.setStudentParticipations(participations);
+
+        return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
 
     /**
