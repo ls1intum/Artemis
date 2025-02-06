@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,12 +31,14 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 /**
  * REST controller for managing Plagiarism Cases.
@@ -55,17 +58,20 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
+    private final PlagiarismPostService plagiarismPostService;
+
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
-            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
+            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismPostService plagiarismPostService) {
         this.courseRepository = courseRepository;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismPostService = plagiarismPostService;
     }
 
     /**
@@ -269,5 +275,16 @@ public class PlagiarismCaseResource {
         Optional.ofNullable(plagiarismCase.getExercise().getPlagiarismDetectionConfig()).ifPresent(PlagiarismDetectionConfig::filterSensitiveInformation);
 
         return getPlagiarismCaseResponseEntity(plagiarismCase);
+    }
+
+    @GetMapping("posts/{postId}/informInstructor")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> informInstructorAboutPostReply(@PathVariable Long postId) {
+        log.debug("GET informInstructorAboutPostReply invoked for post {}", postId);
+        long start = System.nanoTime();
+
+        plagiarismPostService.informInstructorAboutPostReply(postId);
+        log.info("informInstructorAboutPostReply took {}", TimeLogUtil.formatDurationFrom(start));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
