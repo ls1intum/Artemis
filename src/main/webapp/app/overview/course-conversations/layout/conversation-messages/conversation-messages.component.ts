@@ -258,53 +258,70 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        // Separate pinned posts into their own group
+        // Separate pinned posts from others.
         const pinnedPosts = this.posts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
         const unpinnedPosts = this.posts.filter((post) => post.displayPriority !== DisplayPriority.PINNED);
 
+        // Sort unpinned posts ascending by creation date.
         const sortedPosts = unpinnedPosts.sort((a, b) => {
             const aDate = (a as any).creationDateDayjs;
             const bDate = (b as any).creationDateDayjs;
             return aDate?.valueOf() - bDate?.valueOf();
         });
 
-        const groups: PostGroup[] = [];
-        let currentGroup: PostGroup = {
-            author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+        // Build updated groups for non-pinned posts.
+        const updatedGroups: PostGroup[] = [];
+        if (sortedPosts.length > 0) {
+            let currentGroup: PostGroup = {
+                author: sortedPosts[0].author,
+                posts: [{ ...sortedPosts[0], isConsecutive: false }],
+            };
+            for (let i = 1; i < sortedPosts.length; i++) {
+                const currentPost = sortedPosts[i];
+                const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+                const currentDate = (currentPost as any).creationDateDayjs;
+                const lastDate = (lastPostInGroup as any).creationDateDayjs;
+                let timeDiff = Number.MAX_SAFE_INTEGER;
+                if (currentDate && lastDate) {
+                    timeDiff = currentDate.diff(lastDate, 'minute');
+                }
+                if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
+                    currentGroup.posts.push({ ...currentPost, isConsecutive: true });
+                } else {
+                    updatedGroups.push(currentGroup);
+                    currentGroup = {
+                        author: currentPost.author,
+                        posts: [{ ...currentPost, isConsecutive: false }],
+                    };
+                }
+            }
+            updatedGroups.push(currentGroup);
+        }
+
+        if (pinnedPosts.length > 0) {
+            updatedGroups.unshift({ author: undefined, posts: pinnedPosts });
+        }
+
+        const groupsEqual = (groupA: PostGroup, groupB: PostGroup): boolean => {
+            if (!groupA.author && !groupB.author) return true;
+            if (!groupA.author || !groupB.author) return false;
+            return groupA.author.id === groupB.author.id;
         };
 
-        for (let i = 1; i < sortedPosts.length; i++) {
-            const currentPost = sortedPosts[i];
-            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
-
-            const currentDate = (currentPost as any).creationDateDayjs;
-            const lastDate = (lastPostInGroup as any).creationDateDayjs;
-
-            let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentDate && lastDate) {
-                timeDiff = currentDate.diff(lastDate, 'minute');
-            }
-
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+        for (let i = 0; i < updatedGroups.length; i++) {
+            if (this.groupedPosts[i] && groupsEqual(this.groupedPosts[i], updatedGroups[i])) {
+                this.groupedPosts[i].posts = updatedGroups[i].posts;
             } else {
-                groups.push(currentGroup);
-                currentGroup = {
-                    author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
-                };
+                if (this.groupedPosts[i]) {
+                    this.groupedPosts[i] = updatedGroups[i];
+                } else {
+                    this.groupedPosts.push(updatedGroups[i]);
+                }
             }
         }
-
-        groups.push(currentGroup);
-
-        // Only add pinned group if pinned posts exist
-        if (pinnedPosts.length > 0) {
-            groups.unshift({ author: undefined, posts: pinnedPosts });
+        while (this.groupedPosts.length > updatedGroups.length) {
+            this.groupedPosts.pop();
         }
-
-        this.groupedPosts = groups;
         this.cdr.detectChanges();
     }
 
@@ -321,6 +338,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return post;
             });
 
+        // Incrementally update the grouped posts.
         this.groupPosts();
     }
 
