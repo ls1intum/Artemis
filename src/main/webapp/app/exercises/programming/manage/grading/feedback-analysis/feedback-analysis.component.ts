@@ -15,7 +15,7 @@ import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/m
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
 import { facDetails } from 'app/icons/icons';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export interface FeedbackAnalysisState {
     page: number;

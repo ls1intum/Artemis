@@ -95,6 +95,23 @@ describe('FeedbackAnalysisComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
+        const previousState: FeedbackAnalysisState = {
+            page: 1,
+            pageSize: 25,
+            searchTerm: '',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'count',
+            filterErrorCategories: ['Student Error', 'Ares Error', 'AST Error'],
+        };
+        fixture.componentRef.instance.previousRequestState.set(previousState);
+        const previousFilters: FilterData = {
+            tasks: [],
+            testCases: [],
+            occurrence: [],
+            errorCategories: [],
+        };
+        fixture.componentRef.instance.previousRequestFilters.set(previousFilters);
+        fixture.componentRef.instance.previousRequestGroupFeedback.set(false);
 
         fixture.detectChanges();
     });
