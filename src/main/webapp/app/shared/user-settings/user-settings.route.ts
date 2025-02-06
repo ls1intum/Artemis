@@ -75,8 +75,10 @@ export const userSettingsState: Routes = [
                 loadComponent: () =>
                     import('app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component').then((m) => m.VcsAccessTokensSettingsComponent),
                 data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'ide-preferences',
