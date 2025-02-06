@@ -5,8 +5,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -14,7 +13,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerComponent],
+    imports: [FormDateTimePickerComponent],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();

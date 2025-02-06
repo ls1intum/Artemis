@@ -5,30 +5,31 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
-        ArtemisSharedModule,
-        ArtemisMarkdownModule,
         NgbDropdownModule,
         ArtemisFormsModule,
         ReactiveFormsModule,
         ArtemisCompetenciesModule,
-        ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
         FormDateTimePickerComponent,
+        HelpIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        MarkdownEditorMonacoComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {

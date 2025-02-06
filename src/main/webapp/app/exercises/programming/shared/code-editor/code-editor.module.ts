@@ -6,7 +6,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
@@ -19,17 +19,14 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @NgModule({
     imports: [
         NgbModule,
-        ArtemisSharedModule,
         TreeviewModule.forRoot(),
         MonacoEditorComponent,
-        ArtemisSharedComponentModule,
         RequestFeedbackButtonComponent,
         CodeEditorMonacoComponent,
         CodeEditorGridComponent,
