@@ -6,7 +6,7 @@ import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedbac
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
