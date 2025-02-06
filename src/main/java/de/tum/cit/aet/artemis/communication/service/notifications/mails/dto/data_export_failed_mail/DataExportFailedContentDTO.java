@@ -14,6 +14,12 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 public record DataExportFailedContentDTO(String reason, String exportUsername) {
 
     public static DataExportFailedContentDTO of(Exception exception, DataExport dataExport) {
+        if (exception == null || dataExport == null) {
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+        if (dataExport.getUser() == null) {
+            throw new IllegalStateException("DataExport user cannot be null");
+        }
         return new DataExportFailedContentDTO(exception.getMessage(), dataExport.getUser().getLogin());
     }
 }

@@ -12,6 +12,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public record SAML2SetPasswordMailRecipientDTO(String langKey, String email, String login, String resetKey) implements IMailRecipientUserDTO {
 
     public static SAML2SetPasswordMailRecipientDTO of(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
+        if (user.getResetKey() == null) {
+            throw new IllegalStateException("Reset key is not set");
+        }
         return new SAML2SetPasswordMailRecipientDTO(user.getLangKey(), user.getEmail(), user.getLogin(), user.getResetKey());
     }
 }
