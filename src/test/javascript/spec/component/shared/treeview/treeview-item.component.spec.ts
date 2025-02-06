@@ -1,10 +1,13 @@
-import { Component, DebugElement } from '@angular/core';
+import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { slice } from 'lodash-es';
+
+import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { createGenericTestComponent } from './common';
+import { CommonModule } from '@angular/common';
 
 const fakeItemTemplate = `
 <ng-template #itemTemplate let-item="item"
@@ -38,7 +41,7 @@ const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]
 @Component({
     selector: 'test',
     template: '',
-    imports: [],
+    imports: [TreeviewItemComponent, FormsModule, CommonModule],
 })
 class TestComponent {
     item = fakeData.item;
@@ -50,7 +53,7 @@ const createTestComponent = (html: string) => createGenericTestComponent(html, T
 describe('TreeviewItemComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, BrowserModule],
+            imports: [FormsModule, BrowserModule, TreeviewItemComponent], // Import TreeviewItemComponent here
         });
     });
 
