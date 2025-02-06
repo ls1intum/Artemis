@@ -86,6 +86,8 @@ jobs:
           DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
           echo "-----BEGIN RSA PRIVATE KEY-----" > ~/.ssh/id_rsa
           echo "$DEPLOYMENT_SSH_KEY" | sed -r 's/^-----BEGIN RSA PRIVATE KEY----- //;s/ -----END RSA PRIVATE KEY-----//' | tr " " "\n" >> ~/.ssh/id_rsa
           echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/id_rsa
@@ -98,6 +100,15 @@ jobs:
             UserKnownHostsFile=/dev/null
           EOF
           chmod 600 ~/.ssh/config
+
+          # Test connection
+          echo "Testing SSH connection..."
+          if ! ssh -i ~/.ssh/id_rsa $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "SSH test successful"'; then
+            echo "SSH connection failed"
+            echo "SSH key format:"
+            head -n 1 ~/.ssh/id_rsa
+            exit 1
+          fi
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
