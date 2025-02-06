@@ -20,7 +20,7 @@ import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -300,27 +300,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
-    }
-
-    /**
-     * Create a or navigate to one-to-one chat with the referenced user
-     *
-     * @param referencedUserLogin login of the referenced user
-     */
-    onUserReferenceClicked(referencedUserLogin: string) {
-        if (isMessagingEnabled(this.course)) {
-            if (this.isCommunicationPage) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
-            } else {
-                this.oneToOneChatService.create(this.course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', this.course.id, 'communication'], {
-                        queryParams: {
-                            conversationId: res.body!.id,
-                        },
-                    });
-                });
-            }
-        }
     }
 
     /**
