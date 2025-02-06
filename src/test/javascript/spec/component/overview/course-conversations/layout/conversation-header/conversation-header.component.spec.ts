@@ -167,7 +167,6 @@ examples.forEach((activeConversation) => {
         }
 
         it('should dismiss modal and call createOneToOneChatWithId when userNameClicked is emitted', fakeAsync(() => {
-            // 1. Fake modalRef oluşturuyoruz.
             const fakeUserNameClicked$ = new Subject<number>();
             const fakeModalRef: NgbModalRef = {
                 componentInstance: {
@@ -179,28 +178,72 @@ examples.forEach((activeConversation) => {
                 },
                 dismiss: jest.fn(),
                 result: Promise.resolve(),
-            } as any; // cast ediyoruz
+            } as any;
 
-            // 2. Modal servisinin open metodunu spy'layıp fake modalRef döndürüyoruz.
             const modalService = TestBed.inject(NgbModal);
             jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
 
-            // 3. MetisConversationService üzerinde createOneToOneChatWithId metodunu spy'luyoruz.
             const metisConversationService = TestBed.inject(MetisConversationService);
             const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId').mockReturnValue(of(new HttpResponse({ status: 200 })) as any);
 
-            // 4. openConversationDetailDialog metodunu çağırıyoruz.
             const event = new MouseEvent('click');
             component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
 
-            // 5. Şimdi fake modalRef üzerinden userNameClicked stream'ine bir değer gönderiyoruz.
             const testUserId = 42;
             fakeUserNameClicked$.next(testUserId);
-            tick(); // Observable'ların çalışması için
+            tick();
 
-            // 6. Beklentiler: modalRef.dismiss çağrılmış ve createOneToOneChatWithId doğru parametreyle tetiklenmiş olmalı.
             expect(fakeModalRef.dismiss).toHaveBeenCalled();
             expect(createChatSpy).toHaveBeenCalledWith(testUserId);
+        }));
+
+        it('should not subscribe to userNameClicked if the modal instance does not have that property', fakeAsync(() => {
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                },
+                dismiss: jest.fn(),
+                result: Promise.resolve(),
+            } as any;
+
+            const modalService = TestBed.inject(NgbModal);
+            const metisConversationService = TestBed.inject(MetisConversationService);
+            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId');
+
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+            tick();
+
+            expect(createChatSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should always open info tab when conversation is one-to-one chat', fakeAsync(() => {
+            const oneToOneChat = generateOneToOneChatDTO({});
+            component.activeConversation = oneToOneChat;
+
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: null,
+                    initialize: jest.fn(),
+                },
+                result: Promise.resolve(),
+                dismiss: jest.fn(),
+            } as any;
+
+            const modalService = TestBed.inject(NgbModal);
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.MEMBERS);
+            tick();
+
+            expect(fakeModalRef.componentInstance.selectedTab).toEqual(ConversationDetailTabs.INFO);
         }));
 
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
