@@ -187,7 +187,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
@@ -196,7 +197,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
         component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
