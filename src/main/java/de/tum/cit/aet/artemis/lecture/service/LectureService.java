@@ -199,4 +199,17 @@ public class LectureService {
     public void ingestTranscriptionInPyris(Set<LectureTranscription> transcriptions, Course course, Lecture lecture, LectureUnit lectureUnit) {
         pyrisWebhookService.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcriptions, course, lecture, lectureUnit));
     }
+
+    /**
+     * Deletes an existing Lecture transcription from the Pyris system. If the PyrisWebhookService is unavailable, the method does nothing.
+     *
+     * @param existingLectureTranscription the Lecture transcription to be removed from Pyris
+     */
+    public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
+        if (pyrisWebhookService.isEmpty()) {
+            return;
+        }
+
+        pyrisWebhookService.get().deleteLectureTranscription(existingLectureTranscription);
+    }
 }

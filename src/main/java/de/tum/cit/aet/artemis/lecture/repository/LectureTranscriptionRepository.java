@@ -29,4 +29,7 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
     @EntityGraph(type = LOAD, attributePaths = {})
     Set<LectureTranscription> findAllByLectureId(Long lectureId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "segments" })
+    LectureTranscription findWithTranscriptionSegmentsByLectureUnitId(Long lectureUnitId);
+
 }

@@ -338,6 +338,35 @@ public class LectureResource {
     }
 
     /**
+     * DELETE courses/:courseId/lecture/:lectureId/lecture-unit/:lectureUnitId : delete the "id" lecture transcription.
+     *
+     * @param courseId      the id of the course containing the lecture transcription
+     * @param lectureId     the id of the lecture containing the lecture transcription
+     * @param lectureUnitId the id of the lecture unit containing the lecture transcription
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Course course = lecture.getCourse();
+        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
+        if (!course.getId().equals(courseId)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
+                    .body(null);
+        }
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
+        }
+        LectureTranscription lectureTranscription = lectureTranscriptionRepository.findWithTranscriptionSegmentsByLectureUnitId(lectureUnitId);
+
+        log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.getId());
+        lectureService.deleteLectureTranscriptionInPyris(lectureTranscription);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.getId().toString())).build();
+    }
+
+    /**
      * GET /lectures/:lectureId/details : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
