@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
@@ -6,6 +5,7 @@ import { CompetencySearchComponent } from 'app/course/competencies/import/compet
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
+import { getArtemisTestImports, getArtemisTestProviders, initializeArtemisTest } from '../../../test-helper';
 
 describe('CompetencySearchComponent', () => {
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
@@ -13,12 +13,13 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule],
+            imports: [...getArtemisTestImports(), ArtemisFormsModule],
             declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
-            providers: [],
+            providers: [...getArtemisTestProviders()],
         })
             .compileComponents()
             .then(() => {
+                initializeArtemisTest();
                 componentFixture = TestBed.createComponent(CompetencySearchComponent);
                 component = componentFixture.componentInstance;
                 component.search = {
