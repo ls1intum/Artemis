@@ -40,7 +40,7 @@ void main() {
 
     expect(chosenStrategy, isA<MergeSort>(),
         reason:
-            "The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates");
+            "The sort algorithm of Context was not MergeSort for a list with more than 10 dates");
   });
 
   test('use_BubbleSort_for_small_list', () {
