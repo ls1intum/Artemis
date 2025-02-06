@@ -1,5 +1,5 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -53,11 +53,13 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { getArtemisTestImports, getArtemisTestProviders, initializeArtemisTestLocaleDate } from '../../../test-helper';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -114,7 +116,12 @@ describe('ExamParticipationComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                ...getArtemisTestProviders(),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
