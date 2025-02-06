@@ -75,7 +75,7 @@ export function getArtemisTestImports() {
     return [FontAwesomeTestingModule];
 }
 
-export function initializeArtemisTest(): void {
+export function initializeArtemisTestLocaleDate(): void {
     const dpConfig = TestBed.inject(NgbDatepickerConfig);
     dpConfig.minDate = { year: dayjs().year() - 100, month: 1, day: 1 };
 
