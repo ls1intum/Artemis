@@ -47,7 +47,7 @@ describe('IrisSettingsUpdateComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, , MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
+            imports: [ArtemisTestModule, MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [MockProvider(IrisSettingsService, irisSettingsServiceMock), provideHttpClient(), provideHttpClientTesting()],
         })
