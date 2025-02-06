@@ -21,6 +21,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -29,7 +30,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
@@ -44,6 +44,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
         ItemCountComponent,
         HelpIconComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        // prettier-ignore
+        HasAnyAuthorityDirective,
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {
