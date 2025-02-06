@@ -12,6 +12,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public record ActivationMailRecipientDTO(String langKey, String email, String login, String activationKey) implements IMailRecipientUserDTO {
 
     public static ActivationMailRecipientDTO of(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
+        if (user.getActivationKey() == null) {
+            throw new IllegalStateException("Activation key is required for account activation");
+        }
         return new ActivationMailRecipientDTO(user.getLangKey(), user.getEmail(), user.getLogin(), user.getActivationKey());
     }
 }
