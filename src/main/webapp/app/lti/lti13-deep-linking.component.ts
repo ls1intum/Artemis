@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,22 +11,22 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateDirective } from '../shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from '../shared/components/shared-component.module';
 import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
         TranslateDirective,
-        ArtemisSharedComponentModule,
+
         ArtemisSharedCommonModule,
         FaIconComponent,
         FormsModule,
+        HelpIconComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        HasAnyAuthorityDirective,
     ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {

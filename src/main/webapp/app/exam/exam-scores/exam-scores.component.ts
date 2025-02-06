@@ -60,9 +60,10 @@ import {
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 export enum MedianType {
     PASSED,
@@ -75,14 +76,7 @@ export enum MedianType {
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
-    imports: [
-        RouterLink,
-        ArtemisSharedComponentModule,
-        ArtemisSharedCommonModule,
-        ExamScoresAverageScoresGraphComponent,
-        ParticipantScoresDistributionComponent,
-        ExportButtonComponent,
-    ],
+    imports: [RouterLink, ArtemisSharedCommonModule, ExamScoresAverageScoresGraphComponent, ParticipantScoresDistributionComponent, ExportButtonComponent, HelpIconComponent],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

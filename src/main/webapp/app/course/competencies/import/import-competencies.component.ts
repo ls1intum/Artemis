@@ -4,14 +4,14 @@ import { ImportCourseCompetenciesComponent } from 'app/course/competencies/impor
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-import-competencies',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedCommonModule, ArtemisCompetenciesModule],
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.COMPETENCY;

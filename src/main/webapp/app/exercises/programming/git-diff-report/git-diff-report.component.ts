@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, signal, un
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/programming-exercise-git-diff-entry.model';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/git-diff-report/git-diff-file-panel.component';
 import { captureException } from '@sentry/angular';
@@ -25,7 +24,7 @@ interface DiffInformation {
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GitDiffLineStatComponent, ArtemisSharedComponentModule, GitDiffFilePanelComponent, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, NgbTooltipModule],
+    imports: [GitDiffLineStatComponent, GitDiffFilePanelComponent, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, NgbTooltipModule, ButtonComponent],
 })
 export class GitDiffReportComponent {
     protected readonly faSpinner = faSpinner;

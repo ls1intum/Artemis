@@ -2,7 +2,6 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
@@ -45,7 +44,6 @@ const routes: Routes = [
     imports: [
         RouterModule.forChild(routes),
 
-        ArtemisSharedComponentModule,
         InfiniteScrollDirective,
         ProfilePictureComponent,
         CourseConversationsComponent,

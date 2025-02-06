@@ -1,7 +1,6 @@
 import { ModelingSubmissionComponent } from './modeling-submission.component';
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -17,7 +16,7 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisResultModule,
         ArtemisModelingEditorModule,
         ArtemisComplaintsModule,
-        ArtemisSharedComponentModule,
+
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ModelingAssessmentModule,

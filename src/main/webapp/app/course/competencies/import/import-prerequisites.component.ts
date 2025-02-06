@@ -4,14 +4,15 @@ import { ImportCourseCompetenciesComponent } from 'app/course/competencies/impor
 import { onError } from 'app/shared/util/global.utils';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-import-prerequisites',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedCommonModule, ArtemisCompetenciesModule, ButtonComponent],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.PREREQUISITE;

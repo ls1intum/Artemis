@@ -14,7 +14,6 @@ import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageabl
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -24,6 +23,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -40,7 +40,6 @@ export enum BonusStrategyDiscreteness {
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
     imports: [
-        ArtemisSharedComponentModule,
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         ModePickerComponent,
@@ -51,6 +50,7 @@ export enum BonusStrategyDiscreteness {
         NgbTooltipModule,
         FormsModule,
         CommonModule,
+        HelpIconComponent,
     ],
 })
 export class BonusComponent implements OnInit {

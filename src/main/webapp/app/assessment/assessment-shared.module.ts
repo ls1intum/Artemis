@@ -5,7 +5,7 @@ import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout
 import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/assessment-complaint-alert.component';
 import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { RouterModule } from '@angular/router';
 import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment-locks.route';
@@ -22,7 +22,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
 @NgModule({
     imports: [
         ComplaintsForTutorComponent,
-        ArtemisSharedComponentModule,
+
         RouterModule.forChild(ENTITY_STATES),
         ArtemisFeedbackModule,
         FeedbackContentPipe,

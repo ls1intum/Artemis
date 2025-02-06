@@ -13,7 +13,7 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
@@ -32,7 +32,7 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         NonProgrammingExerciseDetailCommonActionsModule,
-        ArtemisSharedComponentModule,
+
         ArtemisExerciseModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,

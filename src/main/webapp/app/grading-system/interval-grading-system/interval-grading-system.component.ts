@@ -4,7 +4,7 @@ import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode
 import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-interval-grading-system',
@@ -19,15 +20,14 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
     styleUrls: ['./interval-grading-system.component.scss'],
     imports: [
         TranslateDirective,
-        ArtemisSharedComponentModule,
         FormsModule,
         FaIconComponent,
-
         ArtemisTranslatePipe,
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         ModePickerComponent,
         DeleteButtonDirective,
+        HelpIconComponent,
     ],
 })
 export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {

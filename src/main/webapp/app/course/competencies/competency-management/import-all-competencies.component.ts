@@ -2,10 +2,11 @@ import { Component, Input, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -36,7 +37,7 @@ export type ImportAllFromCourseResult = {
 @Component({
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, NgbPagination],
+    imports: [ArtemisSharedCommonModule, NgbPagination, ButtonComponent],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default

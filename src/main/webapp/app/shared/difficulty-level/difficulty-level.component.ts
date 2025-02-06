@@ -2,7 +2,6 @@ import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
-import { ArtemisSharedComponentModule } from '../components/shared-component.module';
 import { CommonModule } from '@angular/common';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -14,7 +13,7 @@ export interface ColoredDifficultyLevel {
     selector: 'jhi-difficulty-level',
     templateUrl: './difficulty-level.component.html',
     styleUrls: ['./difficulty-level.component.scss'],
-    imports: [ArtemisSharedComponentModule, CommonModule, NgbTooltipModule],
+    imports: [CommonModule, NgbTooltipModule],
 })
 export class DifficultyLevelComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);

@@ -15,11 +15,8 @@ import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-hea
 import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiarism-run-details.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-
 @NgModule({
     imports: [
-        ArtemisSharedComponentModule,
         ArtemisModelingEditorModule,
         FormsModule,
         RouterModule,

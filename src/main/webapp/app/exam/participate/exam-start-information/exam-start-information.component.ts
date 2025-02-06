@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -10,7 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-exam-start-information',
-    imports: [ArtemisSharedComponentModule, InformationBoxComponent, StudentExamWorkingTimeComponent, ArtemisDatePipe],
+    imports: [InformationBoxComponent, StudentExamWorkingTimeComponent, ArtemisDatePipe],
     templateUrl: './exam-start-information.component.html',
 })
 export class ExamStartInformationComponent implements OnInit {

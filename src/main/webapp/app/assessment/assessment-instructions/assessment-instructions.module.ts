@@ -8,7 +8,7 @@ import { CollapsableAssessmentInstructionsComponent } from './collapsable-assess
 import { AssessmentInstructionsComponent } from './assessment-instructions/assessment-instructions.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
 
 @NgModule({
@@ -18,7 +18,7 @@ import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion
 
         ArtemisModelingEditorModule,
         ArtemisAssessmentSharedModule,
-        ArtemisSharedComponentModule,
+
         ExpandableSectionComponent,
         AssessmentInstructionsComponent,
         OrionAssessmentInstructionsComponent,

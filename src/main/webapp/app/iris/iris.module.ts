@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { IrisSettingsUpdateComponent } from './settings/iris-settings-update/iris-settings-update.component';
 import { IrisGlobalSettingsUpdateComponent } from './settings/iris-global-settings-update/iris-global-settings-update.component';
 import { IrisCommonSubSettingsUpdateComponent } from './settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
@@ -28,7 +28,6 @@ import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
         FormsModule,
         FontAwesomeModule,
 
-        ArtemisSharedComponentModule,
         RouterModule,
         IrisLogoComponent,
         IrisBaseChatbotComponent,

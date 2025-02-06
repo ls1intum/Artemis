@@ -25,7 +25,7 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
@@ -41,7 +41,6 @@ export const appConfig: ApplicationConfig = {
     providers: [
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-            ArtemisSharedComponentModule,
 
             BrowserAnimationsModule,
             BrowserModule,

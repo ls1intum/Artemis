@@ -31,7 +31,7 @@ import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-gr
 import { TutorialGroupsRegistrationImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 
@@ -42,7 +42,7 @@ import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/
         NgxDatatableModule,
         OwlDateTimeModule,
         ArtemisTutorialGroupsSharedModule,
-        ArtemisSharedComponentModule,
+
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
         CreateTutorialGroupComponent,

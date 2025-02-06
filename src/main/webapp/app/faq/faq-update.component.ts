@@ -11,7 +11,7 @@ import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -29,7 +29,7 @@ import { FormsModule } from '@angular/forms';
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [ArtemisSharedComponentModule, CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);

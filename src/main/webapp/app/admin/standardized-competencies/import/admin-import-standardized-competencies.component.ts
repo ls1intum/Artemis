@@ -13,13 +13,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +36,6 @@ interface ImportCount {
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
-        ArtemisSharedComponentModule,
         FontAwesomeModule,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
@@ -45,6 +44,7 @@ interface ImportCount {
         ArtemisTranslatePipe,
         NgbTooltipModule,
         TranslateDirective,
+        ButtonComponent,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {

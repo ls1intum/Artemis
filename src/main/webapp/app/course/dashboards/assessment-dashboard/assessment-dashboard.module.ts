@@ -7,7 +7,7 @@ import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leade
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { ExamAssessmentButtonsComponent } from './exam-assessment-buttons/exam-assessment-buttons.component';
 
@@ -19,7 +19,7 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTutorLeaderboardModule,
         ArtemisExerciseAssessmentDashboardModule,
-        ArtemisSharedComponentModule,
+
         PieChartModule,
         AssessmentDashboardComponent,
         AssessmentDashboardInformationComponent,

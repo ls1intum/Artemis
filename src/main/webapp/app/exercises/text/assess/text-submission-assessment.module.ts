@@ -13,7 +13,7 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/text
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
@@ -29,7 +29,7 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
 
         ArtemisResultModule,
         ComplaintsForTutorComponent,
-        ArtemisSharedComponentModule,
+
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         SubmissionResultStatusModule,

@@ -32,7 +32,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
@@ -82,7 +82,7 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
         ArtemisAssessmentSharedModule,
-        ArtemisSharedComponentModule,
+
         LineChartModule,
         PieChartModule,
         ArtemisPlagiarismModule,

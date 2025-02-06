@@ -6,7 +6,7 @@ import { ltiLaunchState } from './lti.route';
 import { Lti13DeepLinkingComponent } from 'app/lti/lti13-deep-linking.component';
 import { FormsModule } from '@angular/forms';
 import { Lti13SelectContentComponent } from 'app/lti/lti13-select-content.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { LtiCoursesComponent } from 'app/lti/lti13-select-course.component';
 
 import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
@@ -18,7 +18,7 @@ const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
         RouterModule.forChild(LTI_LAUNCH_ROUTES),
 
         FormsModule,
-        ArtemisSharedComponentModule,
+
         Lti13ExerciseLaunchComponent,
         Lti13DynamicRegistrationComponent,
         Lti13DeepLinkingComponent,

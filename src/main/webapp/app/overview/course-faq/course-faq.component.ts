@@ -4,7 +4,6 @@ import { debounceTime, map, takeUntil } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
@@ -27,16 +26,7 @@ import { CommonModule } from '@angular/common';
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        ArtemisSharedComponentModule,
-        CourseFaqAccordionComponent,
-        CustomExerciseCategoryBadgeComponent,
-        SearchFilterComponent,
-        NgbModule,
-        TranslateDirective,
-        FontAwesomeModule,
-        CommonModule,
-    ],
+    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');

@@ -6,7 +6,7 @@ import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
 import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
 import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -18,7 +18,7 @@ import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/s
 @NgModule({
     imports: [
         RouterModule.forChild(userSettingsState),
-        ArtemisSharedComponentModule,
+
         ClipboardModule,
         FormDateTimePickerModule,
         DocumentationLinkComponent,

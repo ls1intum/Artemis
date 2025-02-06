@@ -3,7 +3,7 @@ import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootst
 import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
@@ -29,16 +29,7 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
-    imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        FontAwesomeModule,
-        ArtemisSharedCommonModule,
-        ArtemisSharedComponentModule,
-        CustomExerciseCategoryBadgeComponent,
-        RangeSliderComponent,
-        NgbModule,
-    ],
+    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, CustomExerciseCategoryBadgeComponent, RangeSliderComponent, NgbModule],
 })
 export class ExerciseFilterModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

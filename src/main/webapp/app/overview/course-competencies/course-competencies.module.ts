@@ -2,7 +2,6 @@ import { CourseCompetenciesComponent } from 'app/overview/course-competencies/co
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -22,7 +21,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisSharedComponentModule, ArtemisCompetenciesModule, CourseCompetenciesComponent],
+    imports: [RouterModule.forChild(routes), ArtemisCompetenciesModule, CourseCompetenciesComponent],
     exports: [CourseCompetenciesComponent],
 })
 export class CourseCompetenciesModule {}

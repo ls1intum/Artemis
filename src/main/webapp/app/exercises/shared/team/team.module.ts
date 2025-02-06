@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
@@ -25,7 +25,7 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         RouterModule.forChild(teamRoute),
 
         NgxDatatableModule,
-        ArtemisSharedComponentModule,
+
         ArtemisResultModule,
         ArtemisTeamParticipeModule,
         TeamsComponent,

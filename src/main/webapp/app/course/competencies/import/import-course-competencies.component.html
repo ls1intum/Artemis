@@ -19,9 +19,7 @@
             (searchChange)="sortSelected($event)"
             [displayPagination]="false"
         >
-            <ng-template let-competency="competency">
-                <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="removeCompetency(competency)" />
-            </ng-template>
+            <ng-template let-competency="competency" />
         </jhi-import-competencies-table>
     } @else {
         <span [jhiTranslate]="'artemisApp.' + entityType + '.import.selectedTableEmpty'"></span>

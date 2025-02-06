@@ -4,7 +4,7 @@ import { textEditorRoute } from 'app/exercises/text/participate/text-editor.rout
 
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -19,7 +19,7 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
         RouterModule.forChild(textEditorRoute),
         ArtemisResultModule,
         ArtemisComplaintsModule,
-        ArtemisSharedComponentModule,
+
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisTeamParticipeModule,
         IrisModule,

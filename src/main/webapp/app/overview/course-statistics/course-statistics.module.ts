@@ -8,8 +8,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-
 const routes: Routes = [
     {
         path: '',
@@ -32,15 +30,6 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [
-        ArtemisExerciseScoresChartModule,
-
-        FontAwesomeModule,
-        RouterModule.forChild(routes),
-        BarChartModule,
-        PieChartModule,
-        ArtemisSharedComponentModule,
-        CourseStatisticsComponent,
-    ],
+    imports: [ArtemisExerciseScoresChartModule, FontAwesomeModule, RouterModule.forChild(routes), BarChartModule, PieChartModule, CourseStatisticsComponent],
 })
 export class CourseStatisticsModule {}

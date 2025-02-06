@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
@@ -27,7 +27,6 @@ import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grad
         RouterModule,
         // shared modules.
 
-        ArtemisSharedComponentModule,
         // programming exercise sub modules.
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,

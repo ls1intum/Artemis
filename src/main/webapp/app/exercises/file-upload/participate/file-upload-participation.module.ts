@@ -1,21 +1,14 @@
 import { NgModule } from '@angular/core';
 
 import { ArtemisFileUploadParticipationRoutingModule } from './file-upload-participation.route';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 @NgModule({
-    imports: [
-        ArtemisSharedComponentModule,
-        ArtemisResultModule,
-        ArtemisComplaintsModule,
-        ArtemisFileUploadParticipationRoutingModule,
-        ArtemisHeaderExercisePageWithDetailsModule,
-        FileUploadSubmissionComponent,
-    ],
+    imports: [ArtemisResultModule, ArtemisComplaintsModule, ArtemisFileUploadParticipationRoutingModule, ArtemisHeaderExercisePageWithDetailsModule, FileUploadSubmissionComponent],
     exports: [FileUploadSubmissionComponent],
 })
 export class ArtemisFileUploadParticipationModule {}

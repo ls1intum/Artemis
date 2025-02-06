@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
@@ -26,7 +25,7 @@ import { ImportCompetenciesTableComponent } from 'app/course/competencies/import
         ReactiveFormsModule,
         NgxGraphModule,
         NgbModule,
-        ArtemisSharedComponentModule,
+
         RouterModule,
         FormDateTimePickerModule,
         NgbAccordionModule,

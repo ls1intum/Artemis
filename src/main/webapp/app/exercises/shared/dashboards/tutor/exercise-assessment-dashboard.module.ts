@@ -5,7 +5,7 @@ import { exerciseAssessmentDashboardRoute } from './exercise-assessment-dashboar
 import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dashboard.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -27,7 +27,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisTutorLeaderboardModule,
-        ArtemisSharedComponentModule,
+
         ArtemisProgrammingAssessmentModule,
         ArtemisAssessmentSharedModule,
         SubmissionResultStatusModule,

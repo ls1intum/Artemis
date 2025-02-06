@@ -21,8 +21,8 @@ import { AssessmentDashboardInformationComponent, AssessmentDashboardInformation
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
@@ -33,6 +33,7 @@ import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/d
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -40,7 +41,6 @@ import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-pa
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
     imports: [
-        ArtemisSharedComponentModule,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -53,6 +53,8 @@ import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-pa
         ArtemisTutorLeaderboardModule,
         ArtemisTranslatePipe,
         TutorParticipationGraphComponent,
+        NotReleasedTagComponent,
+        DocumentationButtonComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

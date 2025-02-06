@@ -7,7 +7,6 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -17,7 +16,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ModelingAssessmentModule,
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
-        ArtemisSharedComponentModule,
+
         ExampleModelingSubmissionComponent,
     ],
 })

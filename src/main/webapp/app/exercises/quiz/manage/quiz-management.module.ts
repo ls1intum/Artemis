@@ -25,7 +25,6 @@ import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/q
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
@@ -51,7 +50,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisDifficultyPickerModule,
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisQuizParticipationModule,
-        ArtemisSharedComponentModule,
+
         ExerciseTitleChannelNameModule,
         DetailModule,
         ArtemisExerciseModule,

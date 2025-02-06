@@ -10,7 +10,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
@@ -23,7 +23,7 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
-        ArtemisSharedComponentModule,
+
         IrisModule,
         CodeEditorInstructorAndEditorContainerComponent,
         CodeEditorInstructorAndEditorOrionContainerComponent,

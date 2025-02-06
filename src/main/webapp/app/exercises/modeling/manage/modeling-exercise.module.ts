@@ -16,7 +16,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
@@ -40,7 +40,7 @@ import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/fe
         AssessmentInstructionsModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ExampleSubmissionsModule,
-        ArtemisSharedComponentModule,
+
         ArtemisExerciseModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,

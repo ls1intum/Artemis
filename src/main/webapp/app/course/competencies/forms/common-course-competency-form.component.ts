@@ -9,13 +9,14 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { merge } from 'rxjs';
 import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -27,10 +28,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         ArtemisFormsModule,
         ReactiveFormsModule,
         ArtemisCompetenciesModule,
-        ArtemisSharedComponentModule,
+
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
+        HelpIconComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {

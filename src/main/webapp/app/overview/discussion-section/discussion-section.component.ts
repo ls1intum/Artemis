@@ -22,6 +22,7 @@ import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -38,6 +39,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
         MessageInlineInputComponent,
         ArtemisTranslatePipe,
         NgbTooltipModule,
+        ButtonComponent,
     ],
     providers: [MetisService],
 })

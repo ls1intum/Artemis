@@ -8,14 +8,12 @@ import {
     ProgrammingExerciseTriggerAllButtonComponent,
 } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
 
 @NgModule({
     imports: [
-        ArtemisSharedComponentModule,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructorSubmissionStateComponent,

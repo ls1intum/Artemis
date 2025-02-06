@@ -12,7 +12,6 @@ import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -36,7 +35,7 @@ import { CommonModule } from '@angular/common';
     styleUrls: [],
     imports: [
         CustomExerciseCategoryBadgeComponent,
-        ArtemisSharedComponentModule,
+
         SearchFilterComponent,
         NgbModule,
         HtmlForMarkdownPipe,
