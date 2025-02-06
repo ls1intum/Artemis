@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -89,7 +89,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
     private alertService = inject(AlertService);
-    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
@@ -97,7 +96,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
-                    this.cdr.detectChanges();
                 }
                 if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
                     this.isCreator = true;
