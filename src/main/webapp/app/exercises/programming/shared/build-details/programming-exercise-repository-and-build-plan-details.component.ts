@@ -9,12 +9,13 @@ import type { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-d
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-programming-exercise-repository-and-build-plan-details',
     templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
-    imports: [ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent, HelpIconComponent],
+    imports: [ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent, HelpIconComponent, CommonModule],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
