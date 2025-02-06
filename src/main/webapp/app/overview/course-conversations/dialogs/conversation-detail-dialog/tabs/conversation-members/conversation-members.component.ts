@@ -39,6 +39,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     activeConversationInput = input.required<ConversationDTO>();
     activeConversation = signal<ConversationDTO | undefined>(undefined);
     changesPerformed = output<void>();
+    readonly userNameClicked = output<number>();
 
     canAddUsersToConversation = canAddUsersToConversation;
     getAsChannel = getAsChannelDTO;

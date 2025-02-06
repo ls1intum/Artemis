@@ -37,15 +37,17 @@
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
                     ></a>
                 </li>
-                <li class="nav-item members-tab">
-                    <a
-                        class="nav-link"
-                        [class.active]="selectedTab === Tabs.MEMBERS"
-                        role="button"
-                        (click)="selectedTab = Tabs.MEMBERS"
-                        jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
-                    ></a>
-                </li>
+                @if (!isOneToOneChat(activeConversation)) {
+                    <li class="nav-item members-tab">
+                        <a
+                            class="nav-link"
+                            [class.active]="selectedTab === Tabs.MEMBERS"
+                            role="button"
+                            (click)="selectedTab = Tabs.MEMBERS"
+                            jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
+                        ></a>
+                    </li>
+                }
                 @if (!isOneToOneChat(activeConversation)) {
                     <li class="nav-item settings-tab">
                         <a
@@ -62,7 +64,12 @@
         <div class="modal-body">
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
-                    <jhi-conversation-members [course]="course" [activeConversationInput]="activeConversation" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-members
+                        [course]="course"
+                        [activeConversationInput]="activeConversation"
+                        (changesPerformed)="changesWerePerformed = true"
+                        (userNameClicked)="onUserNameClicked($event)"
+                    />
                 }
                 @case (Tabs.INFO) {
                     <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />

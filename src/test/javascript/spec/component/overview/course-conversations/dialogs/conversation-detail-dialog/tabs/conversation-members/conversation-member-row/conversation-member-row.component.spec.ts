@@ -276,6 +276,31 @@ examples.forEach((activeConversation) => {
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();
             }
         }));
+
+        it('should NOT emit userId if current user clicks their own name', fakeAsync(() => {
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            component.idOfLoggedInUser = conversationMember.id!;
+            const userNameClickedSpy = jest.spyOn(component.onUserNameClicked, 'emit');
+            component.userNameClicked();
+
+            expect(userNameClickedSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should emit userId when another user clicks the name', fakeAsync(() => {
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            component.idOfLoggedInUser = loggedInUser.id!;
+            const userNameClickedSpy = jest.spyOn(component.onUserNameClicked, 'emit');
+            component.userNameClicked();
+
+            expect(userNameClickedSpy).toHaveBeenCalledWith(conversationMember.id);
+        }));
+
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {

@@ -15,3 +15,20 @@
         content: none;
     }
 }
+
+.clickable {
+    cursor: pointer;
+    transition: text-decoration 0.2s ease-in-out;
+}
+
+.clickable:hover {
+    text-decoration: underline;
+}
+
+.no-hover {
+    cursor: default;
+}
+
+.no-hover:hover {
+    text-decoration: none;
+}

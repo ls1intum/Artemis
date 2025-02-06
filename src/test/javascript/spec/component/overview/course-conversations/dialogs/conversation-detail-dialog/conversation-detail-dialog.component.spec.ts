@@ -127,5 +127,12 @@ examples.forEach((activeConversation) => {
                 expect(closeSpy).toHaveBeenCalledOnce();
             }
         });
+
+        it('should emit userNameClicked event when onUserNameClicked is called', () => {
+            const testUserId = 42;
+            const spy = jest.spyOn(component.userNameClicked, 'emit');
+            component.onUserNameClicked(testUserId);
+            expect(spy).toHaveBeenCalledWith(testUserId);
+        });
     });
 });

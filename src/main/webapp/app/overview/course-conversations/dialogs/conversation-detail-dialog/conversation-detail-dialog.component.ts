@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, output } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -35,6 +35,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     isInitialized = false;
     readonly faPeopleGroup = faPeopleGroup;
+    readonly userNameClicked = output<number>();
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
@@ -71,5 +72,9 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     private markAsChangedAndClose() {
         this.changesWerePerformed = true;
         this.clear();
+    }
+
+    onUserNameClicked(userId: number) {
+        this.userNameClicked.emit(userId);
     }
 }

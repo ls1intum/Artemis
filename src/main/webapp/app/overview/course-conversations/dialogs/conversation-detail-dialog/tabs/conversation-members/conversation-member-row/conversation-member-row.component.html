@@ -13,7 +13,16 @@
             @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }
-            {{ userLabel }}
+            <span
+                (click)="userNameClicked()"
+                [ngClass]="{
+                    clickable: !isCurrentUser,
+                    'no-hover': isCurrentUser,
+                }"
+            >
+                {{ userLabel }}
+            </span>
+
             @if (!conversationMember()?.isStudent) {
                 <fa-icon class="ms-1 text-secondary" [icon]="userIcon" [ngbTooltip]="userTooltip" />
             }

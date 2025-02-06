@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -24,6 +24,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -40,6 +41,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbDropdownItem,
         TranslateDirective,
         ArtemisTranslatePipe,
+        NgClass,
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
@@ -49,6 +51,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     course = input<Course>();
     changePerformed = output<void>();
     conversationMember = input<ConversationUserDTO>();
+    readonly onUserNameClicked = output<number>();
 
     idOfLoggedInUser: number;
 
@@ -86,6 +89,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
     private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
@@ -93,6 +97,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
+                    this.cdr.detectChanges();
                 }
                 if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
                     this.isCreator = true;
@@ -295,6 +300,12 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         } else {
             this.userIcon = faUser;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');
+        }
+    }
+
+    userNameClicked() {
+        if (this.conversationMember()?.id! !== this.idOfLoggedInUser) {
+            this.onUserNameClicked.emit(this.conversationMember()?.id!);
         }
     }
 }

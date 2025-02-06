@@ -10,7 +10,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import {
@@ -26,7 +26,9 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
-import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { HttpResponse } from '@angular/common/http';
+import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -62,10 +64,10 @@ examples.forEach((activeConversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                     MockProvider(NgbModal),
-                    MockProvider(MetisConversationService),
                     MockProvider(ConversationService),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: MetisConversationService, useClass: MockMetisConversationService },
                 ],
             }).compileComponents();
         }));
@@ -164,6 +166,43 @@ examples.forEach((activeConversation) => {
             );
         }
 
+        it('should dismiss modal and call createOneToOneChatWithId when userNameClicked is emitted', fakeAsync(() => {
+            // 1. Fake modalRef oluşturuyoruz.
+            const fakeUserNameClicked$ = new Subject<number>();
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                    userNameClicked: fakeUserNameClicked$,
+                },
+                dismiss: jest.fn(),
+                result: Promise.resolve(),
+            } as any; // cast ediyoruz
+
+            // 2. Modal servisinin open metodunu spy'layıp fake modalRef döndürüyoruz.
+            const modalService = TestBed.inject(NgbModal);
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            // 3. MetisConversationService üzerinde createOneToOneChatWithId metodunu spy'luyoruz.
+            const metisConversationService = TestBed.inject(MetisConversationService);
+            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId').mockReturnValue(of(new HttpResponse({ status: 200 })) as any);
+
+            // 4. openConversationDetailDialog metodunu çağırıyoruz.
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+
+            // 5. Şimdi fake modalRef üzerinden userNameClicked stream'ine bir değer gönderiyoruz.
+            const testUserId = 42;
+            fakeUserNameClicked$.next(testUserId);
+            tick(); // Observable'ların çalışması için
+
+            // 6. Beklentiler: modalRef.dismiss çağrılmış ve createOneToOneChatWithId doğru parametreyle tetiklenmiş olmalı.
+            expect(fakeModalRef.dismiss).toHaveBeenCalled();
+            expect(createChatSpy).toHaveBeenCalledWith(testUserId);
+        }));
+
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
             expect(detailButton).toBeTruthy();
@@ -186,7 +225,9 @@ examples.forEach((activeConversation) => {
                 expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
                 expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
-                expect(mockModalRef.componentInstance.selectedTab).toEqual(tab);
+
+                const expectedTab = component.getAsOneToOneChat(activeConversation) ? ConversationDetailTabs.INFO : tab;
+                expect(mockModalRef.componentInstance.selectedTab).toEqual(expectedTab);
             });
         }
     });
