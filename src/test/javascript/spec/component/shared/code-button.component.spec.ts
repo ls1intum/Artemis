@@ -1,62 +1,42 @@
-import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/code-button/code-button.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PROFILE_THEIA } from 'app/app.constants';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { provideRouter } from '@angular/router';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { MockSshUserSettingsService } from '../../helpers/mocks/service/mock-ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/shared/components/exercise-action-button.component';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
     let accountService: AccountService;
-    let programmingExerciseService: ProgrammingExerciseService;
     let sshUserSettingsService: SshUserSettingsService;
+    let localStorageMock: LocalStorageService;
 
-    let localStorageUseSshStoreStub: jest.SpyInstance;
     let getVcsAccessTokenSpy: jest.SpyInstance;
     let createVcsAccessTokenSpy: jest.SpyInstance;
-    let getProfileInfoSub: jest.SpyInstance;
-    let getBuildConfigSub: jest.SpyInstance;
-    let getToolTokenSpy: jest.SpyInstance;
     let getCachedSshKeysSpy: jest.SpyInstance;
-
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
     const user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
+    const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
+
+    let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
+    let router: MockRouter;
 
     const info: ProfileInfo = {
         externalCredentialProvider: '',
@@ -72,6 +52,7 @@ describe('CodeButtonComponent', () => {
         contact: '',
         externalUserManagementName: '',
         externalUserManagementURL: '',
+        repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
         features: [],
         inProduction: false,
         inDevelopment: true,
@@ -81,7 +62,6 @@ describe('CodeButtonComponent', () => {
         sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
-        useVersionControlAccessToken: true,
         git: {
             branch: 'code-button',
             commit: {
@@ -94,137 +74,126 @@ describe('CodeButtonComponent', () => {
                 },
             },
         },
-        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
+        theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
         operatorName: 'TUM',
-    };
-
-    const exercise: Exercise = {
-        id: 42,
-        type: ExerciseType.PROGRAMMING,
-        studentParticipations: [],
-        numberOfAssessmentsOfCorrectionRounds: [],
-        secondCorrectionEnabled: false,
-        studentAssignedTeamIdComputed: false,
     };
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
 
     beforeEach(() => {
+        router = new MockRouter();
+        router.setUrl('a');
+
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
-            declarations: [
-                CodeButtonComponent,
-                MockComponent(ExerciseActionButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(SafeUrlPipe),
-                MockDirective(FeatureToggleDirective),
-                MockComponent(HelpIconComponent),
-                MockDirective(TranslateDirective),
-            ],
-            providers: [
-                provideRouter([]),
-                MockProvider(AlertService),
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: SshUserSettingsService, useClass: MockSshUserSettingsService },
-                { provide: ProfileService, useClass: MockProfileService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-            ],
+            imports: [ArtemisTestModule, ExerciseActionButtonComponent],
+            providers: [MockProvider(AlertService), { provide: ActivatedRoute, useValue: route }, { provide: Router, useValue: router }, LocalStorageService],
         })
             .compileComponents()
             .then(() => {
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of(info));
+                fixture = TestBed.createComponent(CodeButtonComponent);
+                component = fixture.componentInstance;
+                profileService = TestBed.inject(ProfileService);
+                accountService = TestBed.inject(AccountService);
+                sshUserSettingsService = TestBed.inject(SshUserSettingsService);
+
+                localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
+
+                getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
+                getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');
+                createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
+
+                participation = { id: 5 };
+                component.user = user;
+
+                getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+                getCachedSshKeysSpy = jest
+                    .spyOn(sshUserSettingsService, 'getCachedSshKeys')
+                    .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
+                fixture.componentRef.setInput('repositoryUri', '');
+                jest.spyOn(localStorageMock, 'retrieve').mockImplementation((key) => {
+                    return localStorageState;
+                });
+                jest.spyOn(localStorageMock, 'store').mockImplementation(() => {});
+                createVcsAccessTokenSpy = jest
+                    .spyOn(accountService, 'createVcsAccessToken')
+                    .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
+
+                // Reset input properties
+                fixture.componentRef.setInput('repositoryUri', '');
+                fixture.componentRef.setInput('participations', []);
+                fixture.componentRef.setInput('smallButtons', true);
+                fixture.componentRef.setInput('routerLinkForRepositoryView', []);
+
+                stubServices();
             });
-
-        fixture = TestBed.createComponent(CodeButtonComponent);
-        component = fixture.componentInstance;
-        profileService = TestBed.inject(ProfileService);
-        accountService = TestBed.inject(AccountService);
-        sshUserSettingsService = TestBed.inject(SshUserSettingsService);
-        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-
-        const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
-        localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
-        getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
-        getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');
-        createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
-        getToolTokenSpy = jest.spyOn(accountService, 'getToolToken');
-
-        participation = {};
-        component.user = user;
-    });
-
-    // Mock the functions after the TestBed setup
-    beforeEach(() => {
-        getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-        getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys').mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
-
-        createVcsAccessTokenSpy = jest
-            .spyOn(accountService, 'createVcsAccessToken')
-            .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
     });
 
     afterEach(() => {
-        // completely restore all fakes created through the sandbox
         jest.restoreAllMocks();
+        localStorageState = RepositoryAuthenticationMethod.SSH;
     });
 
     it('should initialize', async () => {
-        stubServices();
+        fixture.componentRef.setInput('participations', [participation]);
 
         await component.ngOnInit();
+        component.onClick();
 
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
-        expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
         expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
 
-    it('should create new vcsAccessToken when it does not exist', async () => {
-        createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-        getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
-        stubServices();
-        participation.id = 1;
-        component.useParticipationVcsAccessToken = true;
-        component.participations = [participation];
-        await component.ngOnInit();
-        component.ngOnChanges();
+    it('should not load participation vcsAccessToken when it already exists in participation', async () => {
+        participation.vcsAccessToken = 'vcpat-1234';
+        fixture.componentRef.setInput('participations', [participation]);
 
-        expect(component.accessTokensEnabled).toBeTrue();
+        await component.ngOnInit();
+        component.onClick();
+
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
-        expect(getVcsAccessTokenSpy).toHaveBeenCalled();
-        expect(createVcsAccessTokenSpy).toHaveBeenCalled();
+        expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
     });
 
-    it('should not create new vcsAccessToken when it exists', async () => {
-        participation.id = 1;
-        component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
-        stubServices();
-        await component.ngOnInit();
-        component.ngOnChanges();
+    it('should load participation vcsAccessToken if it exists on the server', async () => {
+        fixture.componentRef.setInput('participations', [participation]);
 
-        expect(component.accessTokensEnabled).toBeTrue();
+        await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
     });
 
-    it('should get ssh url (same url for team and individual participation)', () => {
+    it('should create new vcsAccessToken when it does not exist', async () => {
+        createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+        getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
+
+        participation.id = 1;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onClick();
+
+        expect(component.user.vcsAccessToken).toEqual(vcsToken);
+        expect(getVcsAccessTokenSpy).toHaveBeenCalled();
+        expect(createVcsAccessTokenSpy).toHaveBeenCalled();
+    });
+
+    it('should get ssh url (same url for team and individual participation)', async () => {
         participation.repositoryUri = 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
         participation.team = {};
-        component.participations = [participation];
+        fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@gitlab.ase.in.tum.de:7999/';
         component.isTeamParticipation = true;
-        component.ngOnInit();
-        component.ngOnChanges();
-
-        component.useSsh = true;
-        component.sshEnabled = true;
+        fixture.detectChanges();
+        component.onClick();
 
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@gitlab.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
@@ -233,30 +202,13 @@ describe('CodeButtonComponent', () => {
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@gitlab.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
-    it('should not use ssh when ssh is not enabled (even if useSsh is set)', () => {
-        participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
-        component.useSsh = false;
-        component.isTeamParticipation = false;
-        component.accessTokensEnabled = true;
-        component.ngOnInit();
-        component.ngOnChanges();
-        component.useToken = true;
-
-        const url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should get html url (not the same url for team and individual participation)', () => {
+    it('should get copy the repository uri', async () => {
         participation.repositoryUri = info.versionControlUrl!;
         participation.team = {};
-        component.participations = [participation];
-        component.sshTemplateUrl = 'ssh://git@gitlab.ase.in.tum.de:7999/';
-        component.useSsh = false;
+        fixture.componentRef.setInput('participations', [participation]);
+        localStorageState = RepositoryAuthenticationMethod.Password;
         component.isTeamParticipation = true;
-        component.ngOnInit();
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -267,44 +219,26 @@ describe('CodeButtonComponent', () => {
         expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
-    it('should get copy the repository uri', () => {
-        participation.repositoryUri = info.versionControlUrl!;
-        participation.team = {};
-        component.participations = [participation];
-        component.useSsh = false;
-        component.isTeamParticipation = true;
-        component.ngOnInit();
-        component.ngOnChanges();
-
-        let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
-
-        participation.team = undefined;
-        component.isTeamParticipation = false;
-        url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
-    });
-
-    it('should insert the correct token in the repository uri', () => {
+    it('should insert the correct token in the repository uri', async () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
-        component.useSsh = false;
-        component.isTeamParticipation = false;
-        component.accessTokensEnabled = true;
-        component.ngOnInit();
-        component.ngOnChanges();
-        component.useToken = true;
+        fixture.componentRef.setInput('participations', [participation]);
+        localStorageState = RepositoryAuthenticationMethod.Token;
+
+        await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.onClick();
 
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:token@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:${vcsToken}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         // Team participation does not include user name
-        component.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        fixture.componentRef.setInput('repositoryUri', `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
         participation.team = {};
         component.isTeamParticipation = true;
 
@@ -313,25 +247,22 @@ describe('CodeButtonComponent', () => {
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:token@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:${vcsToken}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
-    it('should add the user login and token to the URL', () => {
+    it('should add the user login and token to the URL', async () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
-        component.useSsh = false;
+        fixture.componentRef.setInput('participations', [participation]);
+
         component.isTeamParticipation = false;
-        component.accessTokensEnabled = true;
-        component.ngOnInit();
-        component.ngOnChanges();
-        component.useToken = true;
+        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
+        fixture.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
-    it('should handle multiple participations', () => {
+    it('should handle multiple participations', async () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             repositoryUri: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git',
             testRun: false,
@@ -340,34 +271,33 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git',
             testRun: true,
         };
-        component.participations = [participation1, participation2];
-        component.ngOnInit();
-        component.ngOnChanges();
+        fixture.componentRef.setInput('participations', [participation1, participation2]);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(component.activeParticipation).toEqual(participation1);
-        expect(component.isTeamParticipation).toBeFalse();
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         component.switchPracticeMode();
 
         expect(component.activeParticipation).toEqual(participation2);
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
-        component.repositoryUri = 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git';
-        component.participations = [];
+        fixture.componentRef.setInput('repositoryUri', 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+        fixture.componentRef.setInput('participations', []);
         component.activeParticipation = undefined;
-        component.ngOnInit();
+        fixture.detectChanges();
 
         expect(component.isTeamParticipation).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
-        component.ngOnInit();
+        fixture.detectChanges();
         jest.useFakeTimers();
         component.onCopyFinished(true);
         expect(component.wasCopied).toBeTrue();
@@ -377,22 +307,19 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should not change wasCopied if copy is unsuccessful', () => {
-        component.ngOnInit();
+        fixture.detectChanges();
         component.onCopyFinished(false);
         expect(component.wasCopied).toBeFalse();
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
-        stubServices();
-
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        component.participations = [participation];
+        fixture.componentRef.setInput('participations', [participation]);
+
         component.activeParticipation = participation;
         component.sshEnabled = true;
-        component.accessTokensEnabled = true;
 
         fixture.detectChanges();
-        tick();
 
         expect(component.useSsh).toBeFalse();
 
@@ -400,17 +327,17 @@ describe('CodeButtonComponent', () => {
         tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();
-        expect(localStorageUseSshStoreStub).toHaveBeenNthCalledWith(1, 'useSsh', true);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh).toBeTrue();
 
         fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
         tick();
-        expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
         tick();
-        expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh).toBeFalse();
         expect(component.useToken).toBeTrue();
     }));
@@ -445,10 +372,12 @@ describe('CodeButtonComponent', () => {
         ],
         [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, 2],
         [[{ id: 1, testRun: true }], { exerciseGroup: {} } as Exercise, 1],
-    ])('should correctly choose active participation', (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
-        component.participations = participations;
-        component.exercise = exercise;
-        component.ngOnChanges();
+    ])('should correctly choose active participation', async (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
+        fixture.componentRef.setInput('participations', participations);
+        fixture.componentRef.setInput('exercise', exercise);
+
+        fixture.detectChanges();
+
         expect(component.activeParticipation?.id).toBe(expected);
     });
 
@@ -466,133 +395,4 @@ describe('CodeButtonComponent', () => {
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
     }
-
-    it.each([
-        [
-            'start theia button should be visible when profile is active and theia is configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            true,
-        ],
-        [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: undefined,
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: false,
-            },
-            {
-                theiaImage: 'this-is-an-old-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but url is not set',
-            {
-                activeProfiles: [PROFILE_THEIA],
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is not active but url is set',
-            {
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-    ])('%s', async (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-
-        getBuildConfigSub = jest.spyOn(programmingExerciseService, 'getBuildConfig');
-        getBuildConfigSub.mockReturnValue(of(buildConfig as ProgrammingExerciseBuildConfig));
-
-        // Expand the programmingExercise by given properties
-        component.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
-
-        await component.ngOnInit();
-
-        expect(component.theiaEnabled).toBe(expectedVisibility);
-    });
-
-    it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
-        const windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
-        const documentAppendChildSpy = jest.spyOn(document.body, 'appendChild');
-        const documentRemoveChildSpy = jest.spyOn(document.body, 'removeChild');
-        const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
-
-        component.exercise = { buildConfig: { theiaImage: 'theia-image' } } as any;
-        component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;
-        component.theiaPortalURL = 'https://theia.portal.url';
-
-        fixture.detectChanges();
-
-        await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalled();
-        expect(windowOpenSpy).toHaveBeenCalledWith('', '_blank');
-        expect(documentAppendChildSpy).toHaveBeenCalled();
-        expect(formSubmitSpy).toHaveBeenCalled();
-
-        const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
-        if (!form) {
-            throw new Error('Form element is undefined');
-        }
-        expect(form.method.toUpperCase()).toBe('GET');
-        expect(form.action).toBe('https://theia.portal.url/');
-        expect(form.target).toBe('Theia-IDE');
-
-        const inputs = form.getElementsByTagName('input');
-        const data: { [key: string]: string } = {
-            appDef: 'theia-image',
-            gitUri: 'https://admin@repo.uri',
-            gitToken: 'token',
-        };
-
-        expect(Array.from(inputs).find((input) => input.name === 'gitUri')).toBeDefined();
-
-        const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
-        expect(gitUriTest).toBeDefined();
-        expect(data.gitUri).toBe(gitUriTest!.value);
-
-        windowOpenSpy.mockRestore();
-        documentAppendChildSpy.mockRestore();
-        documentRemoveChildSpy.mockRestore();
-        formSubmitSpy.mockRestore();
-    });
 });

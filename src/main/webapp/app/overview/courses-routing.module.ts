@@ -269,7 +269,7 @@ const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
-                        loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                        loadChildren: () => import('../exam/participate/exam-participation.route').then((m) => m.examParticipationRoute),
                     },
                 ],
             },

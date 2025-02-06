@@ -17,13 +17,14 @@ import { ArtemisTestModule } from '../../test.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditCompetencyComponent, CompetencyFormStubComponent],
+            imports: [ArtemisTestModule, EditCompetencyComponent, CompetencyFormStubComponent, OwlNativeDateTimeModule],
             declarations: [],
             providers: [
                 MockProvider(LectureService),

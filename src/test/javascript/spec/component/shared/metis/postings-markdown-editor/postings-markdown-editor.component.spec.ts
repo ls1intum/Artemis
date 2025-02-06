@@ -84,6 +84,7 @@ describe('PostingsMarkdownEditor', () => {
         revealRange: jest.fn(),
         addCompleter: jest.fn(),
         addPasteListener: jest.fn(),
+        getFullText: jest.fn(),
     };
 
     const mockPositionStrategy = {
@@ -603,5 +604,40 @@ describe('PostingsMarkdownEditor', () => {
             getColumn: expect.any(Function),
         });
         expect(cursorPosition?.getColumn()).toBe(5);
+    });
+
+    it('should insert emoji at the cursor position', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+        const mockCursorPosition = new TextEditorPosition(1, 5);
+        mockEditor.getPosition.mockReturnValue(mockCursorPosition);
+
+        emojiAction.insertEmojiAtCursor(mockEditor, '😀');
+
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(1, 7));
+        expect(mockEditor.focus).toHaveBeenCalled();
+    });
+
+    it('should close the emoji picker and insert emoji on selection event', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+        emojiAction.setPoint({ x: 100, y: 200 });
+        mockEditor.getPosition.mockReturnValue(new TextEditorPosition(1, 1));
+
+        const emojiSelectSubject = new Subject<{ emoji: any; event: PointerEvent }>();
+        const componentRef = {
+            instance: {
+                emojiSelect: emojiSelectSubject.asObservable(),
+            },
+            location: { nativeElement: document.createElement('div') },
+        };
+
+        mockOverlayRef.attach.mockReturnValue(componentRef);
+        emojiAction.run(mockEditor);
+
+        const selectionEvent = { emoji: { native: '😀' }, event: new PointerEvent('click') };
+        emojiSelectSubject.next(selectionEvent);
+
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockOverlayRef.dispose).toHaveBeenCalled();
     });
 });
