@@ -65,7 +65,7 @@ public class ExamAccessService {
     }
 
     /**
-     * Checks if the user is allowed to see the exam result.
+     * Checks if the user is allowed to see the exam result if:
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
      * - OR if the exam is a test exam
