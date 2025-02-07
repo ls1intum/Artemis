@@ -44,7 +44,6 @@ export class MetisService implements OnDestroy {
     private reactionService = inject(ReactionService);
     private accountService = inject(AccountService);
     private websocketService = inject(WebsocketService);
-    private jhiWebsocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
