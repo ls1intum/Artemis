@@ -137,11 +137,11 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let jhiWebsocketService: WebsocketService;
+    let websocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
-    let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
+    let websocketServiceReceiveStub: jest.SpyInstance;
+    let websocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
@@ -222,12 +222,12 @@ describe('CourseOverviewComponent', () => {
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                jhiWebsocketService = TestBed.inject(WebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 itemsDrop = component.itemsDrop;
-                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
-                jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+                websocketServiceReceiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(quizExercise));
+                websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
@@ -543,18 +543,18 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
+        expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+        expect(websocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
     it('should do ngOnDestroy', () => {
-        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
+        const websocketServiceStub = jest.spyOn(websocketService, 'unsubscribe');
 
         component.ngOnInit();
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
+        expect(websocketServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {
