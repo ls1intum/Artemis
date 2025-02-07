@@ -108,7 +108,7 @@ artemis:
                 matlab:
                     default: "mathworks/matlab:r2024b"
                 ruby:
-                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.1"
                 dart:
                     default: "ghcr.io/ls1intum/artemis-dart-docker:v1.0.0"
 
