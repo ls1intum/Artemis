@@ -15,16 +15,17 @@
             "onlyYou": "Only you",
             "archived": "Archived",
             "sendMessage": "Send",
+            "saveMessage": "Save",
             "goToExercise": "Go to exercise",
             "goToLecture": "Go to lecture",
             "goToExam": "Go to exam",
             "conversationMessages": {
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",
-                "searchBarPlaceholder": "Search for messages within the current conversation",
-                "searchResultsMultiple": "{{ count }} messages found",
-                "searchResultsSingle": "1 message found",
-                "searchResultsNone": "No messages found"
+                "searchBarPlaceholder": "Search within current channel",
+                "searchResultsMultiple": "{{ count }} Results",
+                "searchResultsSingle": "1 Result",
+                "searchResultsNone": "No Results"
             },
             "threadSideBar": {
                 "label": "Thread",

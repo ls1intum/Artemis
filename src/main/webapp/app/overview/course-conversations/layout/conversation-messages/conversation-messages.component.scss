@@ -7,6 +7,8 @@
     --message-input-height-dev: 158px;
     --search-height: 52px;
     --channel-header-height: 52px;
+    --header-height: 68px;
+    --announcement-button-height: 48px;
 
     .search-active {
         input {
@@ -44,19 +46,19 @@
     }
 
     .posting-infinite-scroll-container {
-        max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
 
         &.hide-input-full {
-            max-height: calc(94vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(100vh - var(--header-height) - var(--search-height) - var(--channel-header-height));
         }
 
         &.hide-input {
-            max-height: calc(87vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(100vh - var(--announcement-button-height) - var(--header-height) - var(--search-height) - var(--channel-header-height));
         }
 
         &.content-height-dev {
-            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(100vh - var(--header-height) - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
 
             @include media-breakpoint-down(sm) {
                 max-height: calc(90vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
@@ -65,11 +67,11 @@
         }
 
         &.hide-input-full.content-height-dev {
-            max-height: calc(94vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(100vh - var(--header-height) - var(--search-height) - var(--channel-header-height));
         }
 
         &.hide-input.content-height-dev {
-            max-height: calc(87vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(100vh - var(--announcement-button-height) - var(--header-height) - var(--search-height) - var(--channel-header-height));
         }
 
         @include media-breakpoint-down(sm) {
@@ -111,4 +113,21 @@
 
 jhi-posting-thread {
     margin-bottom: 5px;
+}
+
+.channel-content {
+    height: calc(100vh - 15px - var(--header-height) - var(--message-input-height-dev) - var(--channel-header-height));
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.channel-search {
+    z-index: 1040;
+    margin: 0.5rem;
+    position: fixed;
+    right: 1.5rem;
+    max-width: 275px;
+    border-radius: 0.25rem;
+    background-color: var(--bs-card-bg);
 }

@@ -8,6 +8,9 @@
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
             (valueChange)="valueChange.emit()"
+            [isButtonLoading]="isLoading"
+            [isFormGroupValid]="formGroup.valid"
+            [editType]="editType"
         />
         <div class="col mt-1 text-end">
             @if (!warningDismissed) {
@@ -26,16 +29,16 @@
                     class="btn btn-sm btn-outline-secondary"
                     (click)="isModalOpen.emit()"
                 ></button>
+                <button
+                    jhi-posting-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                    class="btn btn-sm btn-outline-secondary"
+                    id="save"
+                    type="submit"
+                ></button>
             }
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="isLoading || !formGroup.valid"
-                [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
-                class="btn btn-sm btn-outline-secondary"
-                id="save"
-                type="submit"
-            ></button>
         </div>
     </div>
 </form>

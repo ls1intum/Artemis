@@ -21,6 +21,9 @@
         [resizableMinHeight]="editorHeight"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
         (keydown)="onKeyDown($event)"
+        [isButtonLoading]="isButtonLoading"
+        [isFormGroupValid]="isFormGroupValid"
+        [editType]="editType"
     >
         <ng-container id="previewMonaco">
             @if (previewMode) {

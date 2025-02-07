@@ -47,6 +47,7 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
 import { PostingContentComponent } from '../posting-content/posting-content.components';
 import { NgStyle } from '@angular/common';
 import { FileService } from 'app/shared/http/file.service';
+import { PostingEditType } from '../metis.util';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -78,6 +79,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
+    @Input() isButtonLoading = false;
+    @Input() isFormGroupValid = false;
+    @Input() editType: PostingEditType;
+
+    readonly EditType = PostingEditType;
     /**
      * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
      * In this case, file uploads have to rely on the parent post to determine the course.
