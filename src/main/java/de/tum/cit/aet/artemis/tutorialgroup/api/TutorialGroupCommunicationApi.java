@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -22,7 +21,7 @@ public class TutorialGroupCommunicationApi extends AbstractTutorialGroupApi {
         this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
-    public @Nullable Pair<Long, String> getTutorialGroupCommunicationDetails(long channelId) {
+    public Pair<Long, String> getTutorialGroupCommunicationDetails(long channelId) {
         Optional<TutorialGroup> tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channelId);
         return tutorialGroup.map(group -> Pair.of(group.getId(), group.getTitle())).orElse(null);
 
