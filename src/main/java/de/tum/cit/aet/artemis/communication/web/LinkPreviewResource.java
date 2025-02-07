@@ -115,7 +115,7 @@ public class LinkPreviewResource {
             // Ensure the host is a valid domain with a recognized TLD
             return VALID_DOMAIN_PATTERN.matcher(host).matches();
         }
-        catch (MalformedURLException e) {
+        catch (IllegalArgumentException | MalformedURLException e) {
             return false;
         }
     }
