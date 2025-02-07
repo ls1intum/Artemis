@@ -11,7 +11,6 @@ import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-grou
 import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
-import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
@@ -19,7 +18,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
     imports: [
         ArtemisSharedModule,
         RouterModule,
-        DetailModule,
         IconCardComponent,
         ProfilePictureComponent,
         TutorialGroupsTableComponent,

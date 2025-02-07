@@ -9,15 +9,15 @@ type EntityResponseType = HttpResponse<Reaction>;
 
 @Injectable({ providedIn: 'root' })
 export class ReactionService {
-    protected http = inject(HttpClient);
+    private http = inject(HttpClient);
 
     public resourceUrl = 'api/courses/';
 
     /**
      * creates a reaction
-     * @param {number} courseId
-     * @param {Reaction} reaction
-     * @return {Observable<EntityResponseType>}
+     * @param courseId
+     * @param reaction
+     * @return the create reaction
      */
     create(courseId: number, reaction: Reaction): Observable<EntityResponseType> {
         return this.http

@@ -15,16 +15,16 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (this.currentState === States.SSH && !doesUserHaveSSHkeys) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys) {
             <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
         }
-        @if (this.currentState === States.SSH && areAnySshKeysExpired) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip"></div>
         }
-        @if (this.currentState === States.Token && isInCourseManagement && !userTokenPresent) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && !userTokenPresent) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
         }
-        @if (this.currentState === States.Token && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations().length > 1) {
@@ -38,18 +38,39 @@
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                 <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
-                    {{ this.currentState === States.SSH ? 'SSH' : this.currentState === States.Token ? 'Token' : 'HTTPS' }}
+                    {{
+                        this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH
+                            ? 'SSH'
+                            : this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token
+                              ? 'Token'
+                              : 'HTTPS'
+                    }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
                     @for (mechanism of authenticationMechanism; track mechanism) {
-                        @if (mechanism === States.Password) {
-                            <a (click)="useHttpsPassword()" class="dropdown-item {{ this.currentState === States.Password ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                        @if (mechanism === RepositoryAuthenticationMethod.Password) {
+                            <a
+                                (click)="useHttpsPassword()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
+                                id="useHTTPSButton"
+                                >HTTPS</a
+                            >
                         }
-                        @if (mechanism === States.Token) {
-                            <a (click)="useHttpsToken()" class="dropdown-item {{ this.currentState === States.Token ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
+                        @if (mechanism === RepositoryAuthenticationMethod.Token) {
+                            <a
+                                (click)="useHttpsToken()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
+                                id="useHTTPSWithTokenButton"
+                                >Token</a
+                            >
                         }
-                        @if (mechanism === States.SSH) {
-                            <a (click)="useSshUrl()" class="dropdown-item {{ this.currentState === States.SSH ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                        @if (mechanism === RepositoryAuthenticationMethod.SSH) {
+                            <a
+                                (click)="useSshUrl()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
+                                id="useSSHButton"
+                                >SSH</a
+                            >
                         }
                     }
                 </div>

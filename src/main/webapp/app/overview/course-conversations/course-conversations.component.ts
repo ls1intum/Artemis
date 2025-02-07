@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -171,10 +171,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented = false;
 
-    @ViewChild(CourseWideSearchComponent)
-    courseWideSearch: CourseWideSearchComponent;
-    @ViewChild('courseWideSearchInput')
-    searchElement: ElementRef;
+    courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
+    searchElement = viewChild<ElementRef>('courseWideSearchInput');
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -420,7 +418,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
-        this.courseWideSearch?.onSearch();
+        this.courseWideSearch()?.onSearch();
     }
 
     prepareSidebarData() {
@@ -597,7 +595,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     handleSearchShortcut(event: KeyboardEvent) {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
-            this.searchElement.nativeElement.focus();
+            this.searchElement()!.nativeElement.focus();
         }
     }
 }
