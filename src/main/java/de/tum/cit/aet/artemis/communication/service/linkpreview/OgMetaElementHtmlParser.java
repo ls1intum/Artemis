@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser;
+package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Parses html meta elements from a given url.
  */
-public class OgMetaElementHtmlParser {
+class OgMetaElementHtmlParser {
 
     private static final Logger log = LoggerFactory.getLogger(OgMetaElementHtmlParser.class);
 
@@ -23,7 +23,7 @@ public class OgMetaElementHtmlParser {
      * @param url the url to parse
      * @return a list of OgMetaElements
      */
-    public List<OgMetaElement> getOgMetaElementsFrom(String url) {
+    List<OgMetaElement> getOgMetaElementsFrom(String url) {
         try {
             log.info("Parsing html meta elements from url: {}", url);
             final Document document = Jsoup.connect(url).get();
