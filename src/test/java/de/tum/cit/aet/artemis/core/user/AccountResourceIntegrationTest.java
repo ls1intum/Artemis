@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -491,7 +492,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void acceptExternalLLMUsageAlreadyAccepted() throws Exception {
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
+        ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+        user.setExternalLLMUsageAcceptedTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
         request.put("/api/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
@@ -499,6 +501,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
-        assertThat(unchangedUser.get().getExternalLLMUsageAcceptedTimestamp()).isEqualTo(user.getExternalLLMUsageAcceptedTimestamp());
+
+        ZonedDateTime actualTimestamp = unchangedUser.get().getExternalLLMUsageAcceptedTimestamp();
+        assertThat(actualTimestamp).isNotNull();
+        assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }
 }
