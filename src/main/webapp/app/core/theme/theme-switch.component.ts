@@ -7,6 +7,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -17,7 +18,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, NgbModule, FontAwesomeModule],
+    imports: [TranslateModule, NgbModule, FontAwesomeModule, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitchComponent implements OnInit {
