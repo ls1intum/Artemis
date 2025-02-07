@@ -108,7 +108,7 @@ public class LinkPreviewResource {
             }
 
             // Specifically block localhost/private IPs to prevent SSRF (Server-Side Request Forgery)
-            if (Pattern.matches("^(localhost|127\\.0\\.0\\.1|::1|0\\.0\\.0\\.0|192\\.168\\..*|10\\..*|172\\.(1[6-9]|2[0-9]|3[0-1])\\..*)$", host)) {
+            if (isPrivateNetwork(host)) {
                 return false;
             }
 
@@ -118,5 +118,10 @@ public class LinkPreviewResource {
         catch (IllegalArgumentException | MalformedURLException e) {
             return false;
         }
+    }
+
+    private boolean isPrivateNetwork(String host) {
+        return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1") || host.equals("0.0.0.0") || host.startsWith("192.168.") || host.startsWith("10.")
+                || Pattern.matches("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.", host);
     }
 }
