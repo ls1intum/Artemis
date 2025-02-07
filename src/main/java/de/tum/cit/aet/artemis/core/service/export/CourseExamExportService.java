@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
@@ -78,7 +78,7 @@ public class CourseExamExportService {
 
     private final FileService fileService;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -86,7 +86,8 @@ public class CourseExamExportService {
             TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService,
             FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
             ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
-            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService, Optional<ExamApi> examApi) {
+            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
+            Optional<ExamRepositoryApi> examRepositoryApi) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
@@ -95,7 +96,7 @@ public class CourseExamExportService {
         this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
     }
 
     /**
@@ -179,7 +180,7 @@ public class CourseExamExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportExam(Exam exam, Path outputDir, List<String> exportErrors) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
@@ -234,7 +235,7 @@ public class CourseExamExportService {
      * @return list of zip files
      */
     private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."), null);
 
@@ -309,7 +310,7 @@ public class CourseExamExportService {
      */
     private List<Path> exportExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Optional<Exam> firstExam = exams.stream().findFirst();
         if (firstExam.isEmpty()) {

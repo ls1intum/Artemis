@@ -47,8 +47,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.util.Tuple;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -95,7 +95,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final Optional<StudentExamApi> studentExamApi;
 
@@ -109,7 +109,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, Optional<ExamDateApi> examDateApi,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, Optional<ExamApi> examApi,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, Optional<ExamRepositoryApi> examRepositoryApi,
             Optional<StudentExamApi> studentExamApi, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -120,7 +120,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingTriggerService = programmingTriggerService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseDateService = exerciseDateService;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.studentExamApi = studentExamApi;
         this.examDateApi = examDateApi;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -868,7 +868,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param examId the id of the exam
      */
     public void rescheduleExamDuringConduction(Long examId) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         Exam exam = api.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(examId).orElseThrow(NoSuchElementException::new);
 
         // get all programming exercises in the exam

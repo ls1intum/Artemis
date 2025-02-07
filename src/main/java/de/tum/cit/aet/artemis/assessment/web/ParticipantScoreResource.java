@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 @Profile(PROFILE_CORE)
@@ -35,17 +35,17 @@ public class ParticipantScoreResource {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final ParticipantScoreService participantScoreService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ParticipantScoreResource(AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, Optional<ExamApi> examApi,
+    public ParticipantScoreResource(AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi,
             ParticipantScoreService participantScoreService) {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.participantScoreService = participantScoreService;
     }
 
@@ -94,7 +94,7 @@ public class ParticipantScoreResource {
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Exam exam = api.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);

@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
@@ -61,18 +61,18 @@ public class GradingScaleResource {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
     public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, CourseRepository courseRepository,
-            Optional<ExamApi> examApi, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.courseRepository = courseRepository;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
     }
@@ -176,7 +176,7 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
@@ -230,7 +230,7 @@ public class GradingScaleResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = api.findByIdElseThrow(examId);

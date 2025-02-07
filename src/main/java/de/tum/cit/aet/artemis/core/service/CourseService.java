@@ -94,9 +94,9 @@ import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -155,7 +155,7 @@ public class CourseService {
 
     private final Optional<ExamDeletionApi> examDeletionApi;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final Optional<ExamMetricsApi> examMetricsApi;
 
@@ -229,11 +229,11 @@ public class CourseService {
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, Optional<ExerciseGroupApi> exerciseGroupApi, AuditEventRepository auditEventRepository,
             UserService userService, Optional<ExamDeletionApi> examDeletionApi, CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService,
-            Optional<ExamApi> examApi, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
-            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
-            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+            Optional<ExamRepositoryApi> examRepositoryApi, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
+            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathApi learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
@@ -254,7 +254,7 @@ public class CourseService {
         this.examDeletionApi = examDeletionApi;
         this.competencyProgressApi = competencyProgressApi;
         this.groupNotificationService = groupNotificationService;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
@@ -360,7 +360,7 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
@@ -573,7 +573,7 @@ public class CourseService {
 
     private void deleteExamsOfCourse(Course course) {
         var deletionApi = examDeletionApi.orElseThrow(() -> new ApiNotPresentException(ExamDeletionApi.class, PROFILE_CORE));
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         // delete the Exams
         List<Exam> exams = api.findByCourseId(course.getId());
         for (Exam exam : exams) {
@@ -1018,13 +1018,7 @@ public class CourseService {
 
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
         // hibernate sometimes adds nulls into the list of exercise groups to keep the order
-        Set<Exercise> examExercises;
-        if (examApi.isPresent()) {
-            examExercises = examApi.get().getExercisesByCourseId(courseId);
-        }
-        else {
-            examExercises = Set.of();
-        }
+        Set<Exercise> examExercises = examRepositoryApi.map(api -> api.getExercisesByCourseId(courseId)).orElse(Set.of());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {

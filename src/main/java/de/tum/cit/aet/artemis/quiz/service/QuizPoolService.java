@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.ExamQuizQuestionsGenerator;
 import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
@@ -47,14 +47,14 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     private final QuizGroupRepository quizGroupRepository;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
-            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, Optional<ExamApi> examApi) {
+            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
     }
 
     /**
@@ -65,7 +65,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      * @return updated quiz pool
      */
     public QuizPool update(Long examId, QuizPool quizPool) {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         Exam exam = api.findByIdElseThrow(examId);
 
         quizPool.setExam(exam);

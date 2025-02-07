@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -56,16 +56,16 @@ public class ComplaintService {
 
     private final UserRepository userRepository;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final TeamRepository teamRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            Optional<ExamApi> examApi, UserRepository userRepository, TeamRepository teamRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, TeamRepository teamRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
     }
@@ -100,7 +100,7 @@ public class ComplaintService {
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
-            var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+            var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
             final Exam exam = api.findByIdElseThrow(examId.get());
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));

@@ -108,7 +108,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -185,7 +185,7 @@ public class CourseResource {
 
     private final LearningPathApi learningPathApi;
 
-    private final Optional<ExamApi> examApi;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final ComplaintService complaintService;
 
@@ -197,7 +197,7 @@ public class CourseResource {
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi, ConductAgreementService conductAgreementService,
-            Optional<AthenaModuleService> athenaModuleService, Optional<ExamApi> examApi, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<AthenaModuleService> athenaModuleService, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             LearnerProfileApi learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
@@ -218,7 +218,7 @@ public class CourseResource {
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
-        this.examApi = examApi;
+        this.examRepositoryApi = examRepositoryApi;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
@@ -662,8 +662,8 @@ public class CourseResource {
         var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
         // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
         Set<Exam> activeExams;
-        if (examApi.isPresent()) {
-            activeExams = examApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+        if (examRepositoryApi.isPresent()) {
+            activeExams = examRepositoryApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
                     ZonedDateTime.now().plusHours(1));
         }
         else {
