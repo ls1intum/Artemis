@@ -62,7 +62,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     private modalService = inject(NgbModal);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
 
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
@@ -99,8 +99,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-                    this.jhiWebsocketService.subscribe(websocketTopic);
-                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                    this.websocketService.subscribe(websocketTopic);
+                    this.websocketService.receive(websocketTopic).subscribe({
                         next: (update: CompetencyGenerationStatusUpdate) => {
                             if (update.result) {
                                 for (const competency of update.result) {
@@ -113,13 +113,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
                             if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
-                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.websocketService.unsubscribe(websocketTopic);
                                 this.isLoading = false;
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
-                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            this.websocketService.unsubscribe(websocketTopic);
                             this.isLoading = false;
                         },
                     });

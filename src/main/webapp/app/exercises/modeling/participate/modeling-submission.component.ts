@@ -87,7 +87,7 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
@@ -415,8 +415,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.automaticSubmissionWebsocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
-        this.jhiWebsocketService.subscribe(this.automaticSubmissionWebsocketChannel);
-        this.jhiWebsocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
+        this.websocketService.subscribe(this.automaticSubmissionWebsocketChannel);
+        this.websocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.model) {
@@ -631,7 +631,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
                     this.subscribeToWebsockets();
                     if (this.automaticSubmissionWebsocketChannel) {
-                        this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+                        this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
                     }
                     this.onSaveSuccess();
                 },
@@ -694,7 +694,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         clearInterval(this.autoSaveInterval);
 
         if (this.automaticSubmissionWebsocketChannel) {
-            this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+            this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }
         if (this.manualResultUpdateListener) {
             this.manualResultUpdateListener.unsubscribe();
