@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -285,6 +284,6 @@ public class PlagiarismCaseResource {
 
         plagiarismPostService.informInstructorAboutPostReply(postId);
         log.info("informInstructorAboutPostReply took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
 }

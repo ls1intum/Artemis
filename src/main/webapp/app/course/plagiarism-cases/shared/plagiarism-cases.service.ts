@@ -8,13 +8,14 @@ import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/typ
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { Exercise } from 'app/entities/exercise.model';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
 export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
-export class PlagiarismCasesService {
+export class PlagiarismCasesService extends BaseApiHttpService {
     private http = inject(HttpClient);
 
     private resourceUrl = 'api/courses';
@@ -144,7 +145,7 @@ export class PlagiarismCasesService {
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
     }
 
-    public informInstructorAboutPostReply(postId: number): Observable<void> {
-        return this.http.get<void>(`api/posts/${postId}/informInstructor`);
+    public informInstructorAboutPostReply(postId: number): Promise<void> {
+        return this.get<void>(`posts/${postId}/informInstructor`);
     }
 }

@@ -94,13 +94,13 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
         });
     }
 
-    handleStudentReply() {
+    async handleStudentReply() {
+        await this.informInstructor();
         this.postComponent.openCreateAnswerPostModal();
-        this.informInstructor();
     }
 
-    informInstructor() {
-        this.plagiarismCasesService.informInstructorAboutPostReply(this.posts[0].id!);
+    async informInstructor() {
+        await this.plagiarismCasesService.informInstructorAboutPostReply(this.posts[0].id!);
     }
 
     ngOnDestroy(): void {
