@@ -8,8 +8,6 @@ import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.google.errorprone.annotations.CheckReturnValue;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -67,19 +65,18 @@ public class ExamAccessService {
     }
 
     /**
-     * Checks if the user is allowed to see the exam result. Returns true if
+     * Checks if the user is allowed to see the exam result. Returns if
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
      * - OR if the exam is a test exam
      * - OR if the exam has not ended (including individual working time extensions)
      * - OR if the exam has already ended and the results were published
+     * Otherwise, throws a {@link AccessForbiddenException}.
      *
      * @param exercise             - Exercise that the result is requested for
      * @param studentParticipation - used to retrieve the individual exam working time
      * @param user                 - User that requests the result
-     * @return true if user is allowed to see the result, false otherwise
      */
-    @CheckReturnValue
     public void checkIfAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
         if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
             return;
