@@ -51,7 +51,7 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<ExamDateApi> examDateApi; // ToDo: Somehow get rid
+    private final Optional<ExamDateApi> examDateApi;
 
     // TODO: we should move this into some kind of EnrollmentService
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
