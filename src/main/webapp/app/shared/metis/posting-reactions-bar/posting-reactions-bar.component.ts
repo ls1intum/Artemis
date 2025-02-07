@@ -220,7 +220,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
 
             if (lastReadDate && creationDate) {
                 const lastReadDateDayJs = dayjs(lastReadDate);
-                // @ts-ignore
                 if (!isAuthor && creationDate.isAfter(lastReadDateDayJs)) {
                     showIcon = true;
                 }
@@ -414,10 +413,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
             (this.posting() as AnswerPost).resolvesPost = !(this.posting() as AnswerPost).resolvesPost;
             this.metisService.updateAnswerPost(this.posting() as AnswerPost).subscribe();
         }
-    }
-
-    checkIfPinned(): DisplayPriority {
-        return this.displayPriority;
     }
 
     openAnswerView() {
