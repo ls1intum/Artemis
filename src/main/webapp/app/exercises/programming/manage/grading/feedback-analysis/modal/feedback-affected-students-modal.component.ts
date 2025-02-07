@@ -16,7 +16,6 @@ export class AffectedStudentsModalComponent {
     courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
-    groupFeedback = input.required<boolean>();
     readonly participation = signal<FeedbackAffectedStudentDTO[]>([]);
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
