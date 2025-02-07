@@ -12,7 +12,7 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule],
+            imports: [ArtemisTestModule],
             declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
             providers: [],
         })
