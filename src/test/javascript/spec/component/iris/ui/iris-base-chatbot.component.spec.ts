@@ -50,15 +50,17 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        acceptExternalLLM: jest.fn(),
+        acceptExternalLLMUsage: jest.fn(),
     } as any;
     let accountMock = {
         userIdentity: { externalLLMUsageAccepted: dayjs() },
+        setUserAcceptedExternalLLMUsage: jest.fn(),
     } as any;
 
     beforeEach(async () => {
         accountMock = {
             userIdentity: { externalLLMUsageAccepted: dayjs() },
+            setUserAcceptedExternalLLMUsage: jest.fn(),
         } as any;
 
         await TestBed.configureTestingModule({
