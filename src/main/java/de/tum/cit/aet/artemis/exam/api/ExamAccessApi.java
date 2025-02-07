@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -36,7 +38,16 @@ public class ExamAccessApi extends AbstractExamApi {
         examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(examExercise);
     }
 
-    public void checkIfAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
-        examAccessService.checkIfAllowedToGetExamResult(exercise, studentParticipation, user);
+    /**
+     * Checks if the user is allowed to see the exam result.
+     * Otherwise, throws a {@link AccessForbiddenException}.
+     *
+     * @param examExercise         - Exam Exercise that the result is requested for
+     * @param studentParticipation - used to retrieve the individual exam working time
+     * @param user                 - User that requests the result
+     * @throws ConflictException if examExercise does not belong to an exam
+     */
+    public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        examAccessService.checkIfAllowedToGetExamResult(examExercise, studentParticipation, user);
     }
 }

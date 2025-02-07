@@ -67,23 +67,28 @@ public class ExamAccessService {
     /**
      * Checks if the user is allowed to see the exam result if:
      * - the current user is at least teaching assistant in the course
-     * - OR if the exercise is not part of an exam
+     * - OR if the examExercise is not part of an exam
      * - OR if the exam is a test exam
      * - OR if the exam has not ended (including individual working time extensions)
      * - OR if the exam has already ended and the results were published
      * Otherwise, throws a {@link AccessForbiddenException}.
      *
-     * @param exercise             - Exercise that the result is requested for
+     * @param examExercise         - Exercise that the result is requested for
      * @param studentParticipation - used to retrieve the individual exam working time
      * @param user                 - User that requests the result
+     * @throws ConflictException if examExercise does not belong to an exam
      */
-    public void checkIfAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
+    public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        if (!examExercise.isExamExercise()) {
+            throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
             return;
         }
-        Exam exam = exercise.getExam();
+        Exam exam = examExercise.getExam();
 
-        if (examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
+        if (examDateService.isExerciseWorkingPeriodOver(examExercise, studentParticipation)) {
             // students can always see their results during the exam.
             return;
         }
