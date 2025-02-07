@@ -67,7 +67,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 2);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().orElseThrow();
