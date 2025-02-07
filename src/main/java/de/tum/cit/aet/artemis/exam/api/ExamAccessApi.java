@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Profile(PROFILE_CORE)
 @Controller
@@ -32,5 +34,9 @@ public class ExamAccessApi extends AbstractExamApi {
 
     public void checkExamExerciseForExampleSolutionAccessElseThrow(Exercise examExercise) {
         examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(examExercise);
+    }
+
+    public void checkIfAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
+        examAccessService.checkIfAllowedToGetExamResult(exercise, studentParticipation, user);
     }
 }

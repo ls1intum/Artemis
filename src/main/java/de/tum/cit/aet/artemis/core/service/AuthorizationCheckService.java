@@ -25,12 +25,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -51,18 +49,15 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<ExamDateApi> examDateApi;
-
     // TODO: we should move this into some kind of EnrollmentService
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, Optional<ExamDateApi> examDateApi, TeamRepository teamRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.examDateApi = examDateApi;
         this.teamRepository = teamRepository;
     }
 
@@ -798,37 +793,6 @@ public class AuthorizationCheckService {
 
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
-    }
-
-    /**
-     * Checks if the user is allowed to see the exam result. Returns true if
-     * - the current user is at least teaching assistant in the course
-     * - OR if the exercise is not part of an exam
-     * - OR if the exam is a test exam
-     * - OR if the exam has not ended (including individual working time extensions)
-     * - OR if the exam has already ended and the results were published
-     *
-     * @param exercise             - Exercise that the result is requested for
-     * @param studentParticipation - used to retrieve the individual exam working time
-     * @param user                 - User that requests the result
-     * @return true if user is allowed to see the result, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
-        if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
-            return true;
-        }
-        Exam exam = exercise.getExam();
-        var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
-        if (!api.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
-            // students can always see their results during the exam.
-            return true;
-        }
-        if (exam.isTestExam()) {
-            // results for test exams are always visible
-            return true;
-        }
-        return exam.resultsPublished();
     }
 
     /**

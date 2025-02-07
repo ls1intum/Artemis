@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -154,6 +155,8 @@ public class TextExerciseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final CompetencyProgressApi competencyProgressApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
@@ -165,8 +168,8 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi,
-            Optional<IrisSettingsService> irisSettingsService) {
+            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, Optional<ExamAccessApi> examAccessApi,
+            CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -191,6 +194,7 @@ public class TextExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
+        this.examAccessApi = examAccessApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsService = irisSettingsService;
     }
@@ -413,9 +417,7 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
-            throw new AccessForbiddenException();
-        }
+        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(textExercise, participation, user));
 
         // if no results, check if there are really no results or the relation to results was not updated yet
         if (participation.getResults().isEmpty()) {

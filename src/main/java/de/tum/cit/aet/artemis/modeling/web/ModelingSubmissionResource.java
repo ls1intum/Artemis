@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -80,6 +81,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final PlagiarismService plagiarismService;
@@ -87,13 +90,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi, PlagiarismService plagiarismService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionApi = examSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.examAccessApi = examAccessApi;
         this.plagiarismService = plagiarismService;
     }
 
@@ -322,9 +326,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
-            throw new AccessForbiddenException();
-        }
+        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user));
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         ModelingSubmission modelingSubmission;
@@ -411,9 +413,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
-            throw new AccessForbiddenException();
-        }
+        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user));
 
         boolean isStudent = !isAtLeastTutor;
 
