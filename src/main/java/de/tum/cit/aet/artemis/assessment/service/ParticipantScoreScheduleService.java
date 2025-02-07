@@ -25,7 +25,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.ResultListener;
@@ -70,7 +69,7 @@ public class ParticipantScoreScheduleService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
@@ -160,7 +159,6 @@ public class ParticipantScoreScheduleService {
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
     // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
-    @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
@@ -223,17 +221,17 @@ public class ParticipantScoreScheduleService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
-        final int participantScoreHash = new ParticipantScoreId(exerciseId, participantId).hashCode();
-        var task = scheduledTasks.get(participantScoreHash);
+        final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
+        var task = scheduledTasks.get(participantScoreId);
         if (task != null) {
             // If a task is already scheduled, cancel it and reschedule it with the latest result
             task.cancel(true);
-            scheduledTasks.remove(participantScoreHash);
+            scheduledTasks.remove(participantScoreId);
         }
 
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
-        scheduledTasks.put(participantScoreHash, future);
+        scheduledTasks.put(participantScoreId, future);
         log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
@@ -342,7 +340,7 @@ public class ParticipantScoreScheduleService {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
         }
         finally {
-            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
+            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId));
         }
         long end = System.currentTimeMillis();
         log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
