@@ -174,4 +174,12 @@ describe('Plagiarism Cases Service', () => {
             tick();
         }),
     );
+
+    it('should inform instructor about post reply', fakeAsync(() => {
+        service.informInstructorAboutPostReply(1);
+        const req = httpMock.expectOne('api/posts/1/informInstructor');
+        expect(req.request.method).toBe('GET');
+        req.flush(null);
+        tick();
+    }));
 });

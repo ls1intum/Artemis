@@ -95,8 +95,8 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     }
 
     async handleStudentReply() {
-        await this.informInstructor();
         this.postComponent.openCreateAnswerPostModal();
+        await this.informInstructor();
     }
 
     async informInstructor() {
