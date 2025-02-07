@@ -796,7 +796,7 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
 
 .. raw:: html
 
-    <iframe src="https://tum.live/w/artemisintro/XXXXX?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/56243?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
         Watch this video on TUM-Live.
     </iframe>
 
