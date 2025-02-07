@@ -21,9 +21,9 @@ import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/c
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import dayjs from 'dayjs';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import dayjs from 'dayjs/esm';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
