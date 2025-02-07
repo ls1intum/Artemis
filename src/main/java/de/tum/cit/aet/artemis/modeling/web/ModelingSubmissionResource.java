@@ -326,7 +326,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user));
+        if (participation.getExercise().isExamExercise()) {
+            var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
+            api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user);
+        }
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         ModelingSubmission modelingSubmission;
@@ -413,7 +416,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user));
+        if (participation.getExercise().isExamExercise()) {
+            var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
+            api.checkIfAllowedToGetExamResult(participation.getExercise(), participation, user);
+        }
 
         boolean isStudent = !isAtLeastTutor;
 

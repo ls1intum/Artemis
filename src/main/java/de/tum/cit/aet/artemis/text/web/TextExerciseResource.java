@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -417,7 +418,10 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        examAccessApi.ifPresent(api -> api.checkIfAllowedToGetExamResult(textExercise, participation, user));
+        if (textExercise.isExamExercise()) {
+            var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
+            api.checkCourseAndExamAccessForStudentElseThrow(textExercise.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getExam().getId());
+        }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
         if (participation.getResults().isEmpty()) {
