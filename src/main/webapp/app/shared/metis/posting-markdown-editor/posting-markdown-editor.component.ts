@@ -83,7 +83,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() isFormGroupValid = false;
     @Input() editType: PostingEditType;
 
-    readonly EditType = PostingEditType;
+    readonly EditType = PostingEditType.CREATE;
     /**
      * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
      * In this case, file uploads have to rely on the parent post to determine the course.
