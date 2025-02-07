@@ -125,7 +125,6 @@ public class Lti13Service {
      * @param ltiIdToken           the id token for the user launching the request
      * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
-    // TODO implement Iris support
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
@@ -162,13 +161,13 @@ public class Lti13Service {
             Exercise exercise = targetExercise.get();
             handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
         }
-        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl) || targetLecture.isPresent()) {
+        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl) || targetLecture.isPresent() || getIrisFromTargetLink(targetLinkUrl)) {
             handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
         }
         else {
-            String message = "No exercise or competency to launch at " + targetLinkUrl;
+            String message = "No course content to launch at " + targetLinkUrl;
             log.error(message);
-            throw new BadRequestAlertException("Exercise not found", "LTI", "ltiExerciseNotFound");
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
     }
 
@@ -471,6 +470,33 @@ public class Lti13Service {
         }
 
         log.info("Learning path link detected: {}", targetLinkUrl);
+        return true;
+    }
+
+    /**
+     * Checks if the target link URL references an IRIS course dashboard.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL matches the IRIS course dashboard pattern, false otherwise
+     */
+    private boolean getIrisFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(IRIS_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract IRIS course dashboard from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("IRIS course dashboard link detected: {}", targetLinkUrl);
         return true;
     }
 
