@@ -708,6 +708,15 @@ public class Result extends DomainObject implements Comparable<Result> {
         setCodeIssueCount(originalResult.getCodeIssueCount());
     }
 
+    /**
+     * Checks if this result has been assessed.
+     *
+     * @return True if the result is automatic, or if it is manual and an assessment has been submitted, false otherwise.
+     */
+    public boolean isAssessmentComplete() {
+        return completionDate != null && (isManual() || isAutomatic() || isAthenaBased());
+    }
+
     @Override
     public int compareTo(Result other) {
         if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
