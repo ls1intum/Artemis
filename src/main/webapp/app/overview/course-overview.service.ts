@@ -356,14 +356,14 @@ export class CourseOverviewService {
         return examCardItem;
     }
 
-    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+    getChannelIcon(conversation: ConversationDTO): IconDefinition {
         const channelDTO = getAsChannelDTO(conversation);
-        if (channelDTO?.isPublic === false) {
-            return this.faLock;
-        } else if (channelDTO?.name === 'announcement') {
+        if (channelDTO?.isAnnouncementChannel) {
             return this.faBullhorn;
-        } else {
+        } else if (channelDTO?.isPublic) {
             return this.faHashtag;
+        } else {
+            return this.faLock;
         }
     }
 

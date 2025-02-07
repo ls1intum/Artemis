@@ -76,6 +76,7 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
+import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 
 interface CourseActionItem {
     title: string;
@@ -124,6 +125,7 @@ interface SidebarItem {
         RouterLinkActive,
         FeatureToggleHideDirective,
         SlicePipe,
+        LinkPreviewModule,
     ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -132,7 +134,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private teamService = inject(TeamService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
@@ -782,7 +784,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.teamAssignmentUpdateListener.unsubscribe();
         }
         if (this.quizExercisesChannel) {
-            this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
+            this.websocketService.unsubscribe(this.quizExercisesChannel);
         }
         this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
@@ -805,8 +807,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
-            this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.subscribe(this.quizExercisesChannel);
+            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {
