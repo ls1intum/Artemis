@@ -11,6 +11,7 @@ import { LinkPreviewComponent } from '../link-preview/link-preview.component';
     styleUrls: ['./link-preview-container.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LinkPreviewComponent],
+    providers: [LinkPreviewService],
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);

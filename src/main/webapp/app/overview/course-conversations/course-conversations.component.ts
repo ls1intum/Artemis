@@ -54,6 +54,7 @@ import { ConversationMessagesComponent } from './layout/conversation-messages/co
 import { ConversationThreadSidebarComponent } from './layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { SavedPostsComponent } from './saved-posts/saved-posts.component';
 import { captureException } from '@sentry/angular';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -110,7 +111,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     templateUrl: './course-conversations.component.html',
     styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [MetisService],
+    providers: [MetisService, LinkifyService],
     imports: [
         LoadingIndicatorContainerComponent,
         FormsModule,
