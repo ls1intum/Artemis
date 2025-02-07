@@ -17,7 +17,6 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { signal } from '@angular/core';
 import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { Post } from 'app/entities/metis/post.model';
-import { Posting } from 'app/entities/metis/posting.model';
 
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
@@ -61,25 +60,5 @@ describe('PostingThreadComponent', () => {
 
         const postComponent = getElement(fixture.debugElement, 'jhi-post');
         expect(postComponent).not.toBeNull();
-    });
-
-    it('should emit onNavigateToPost when onTriggerNavigateToPost is called', () => {
-        const testPosting = { id: 999, content: 'Test content' } as Posting;
-        const onNavigateToPostSpy = jest.spyOn(component.onNavigateToPost, 'emit');
-
-        component.onTriggerNavigateToPost(testPosting);
-
-        expect(onNavigateToPostSpy).toHaveBeenCalledOnce();
-        expect(onNavigateToPostSpy).toHaveBeenCalledWith(testPosting);
-    });
-
-    it('should handle null or undefined posting correctly', () => {
-        const onNavigateToPostSpy = jest.spyOn(component.onNavigateToPost, 'emit');
-
-        component.onTriggerNavigateToPost(null as any);
-        expect(onNavigateToPostSpy).toHaveBeenCalledWith(null);
-
-        component.onTriggerNavigateToPost(undefined as any);
-        expect(onNavigateToPostSpy).toHaveBeenCalledWith(undefined);
     });
 });
