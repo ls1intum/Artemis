@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.tutorialgroup.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -23,7 +21,7 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupService tutorialGroupService;
 
-    public TutorialGroupApi(TutorialGroupRepository tutorialGroupRepository, @Lazy TutorialGroupService tutorialGroupService) {
+    public TutorialGroupApi(TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService) {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
     }
@@ -42,9 +40,5 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     public void deleteById(Long id) {
         tutorialGroupRepository.deleteById(id);
-    }
-
-    public Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId) {
-        return tutorialGroupRepository.findByTutorialGroupChannelId(channelId);
     }
 }
