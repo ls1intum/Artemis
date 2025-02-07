@@ -14,7 +14,6 @@ import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-st
 import { Course, Language } from 'app/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../../test.module';
@@ -64,7 +63,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -124,7 +123,7 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             providers: [MockProvider(SortService), MockProvider(ActivatedRoute)],
         })
             .compileComponents()
