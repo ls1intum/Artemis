@@ -89,6 +89,7 @@ class MailServiceTest {
         student1.setId(555L);
         student1.setEmail("benige8246@omibrown.com");
         student1.setLangKey("de");
+        student1.setActivationKey("1234");
 
         student2 = new User();
         student2.setLogin("student2");
