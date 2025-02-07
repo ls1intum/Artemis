@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement, String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime startDate,
-        ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, Boolean allowComplaintsForAutomaticAssessments,
-        Boolean allowFeedbackRequests, DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, ExerciseType exerciseType,
+public record ProjectKeyProgrammingExerciseDTO(long id, String problemStatement, String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime startDate,
+        ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, boolean allowComplaintsForAutomaticAssessments,
+        boolean allowFeedbackRequests, DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, ExerciseType exerciseType,
         ZonedDateTime exampleSolutionPublicationDate, ProjectKeyCourseDTO course, Set<ProjectKeyStudentParticipationDTO> studentParticipations, String projectKey,
-        ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents) {
+        ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents, Set<ProjectKeyTestCaseDTO> testCases) {
 
     /**
      * Converts a ProgrammingExercise into a dto for the endpoint
@@ -48,12 +48,13 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
                         ProjectKeyCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()),
                         Optional.ofNullable(e.getStudentParticipations()).orElse(Set.of()).stream()
                                 .map(p -> ProjectKeyStudentParticipationDTO.of((ProgrammingExerciseStudentParticipation) p)).collect(Collectors.toSet()),
-                        e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents()))
+                        e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents(),
+                        Optional.ofNullable(e.getTestCases()).orElse(Set.of()).stream().map(ProjectKeyTestCaseDTO::of).collect(Collectors.toSet())))
                 .orElse(null);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyCourseDTO(Long id, String title, String shortName) {
+    public record ProjectKeyCourseDTO(long id, String title, String shortName) {
 
         /**
          * Converts a Course into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
@@ -67,7 +68,7 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyStudentParticipationDTO(Long id, ZonedDateTime individualDueDate, Set<ProjectKeySubmissionDTO> submissions, String participantName,
+    public record ProjectKeyStudentParticipationDTO(long id, ZonedDateTime individualDueDate, Set<ProjectKeySubmissionDTO> submissions, String participantName,
             String participantIdentifier, String repositoryUri, String buildPlanId, String branch) {
 
         /**
@@ -88,8 +89,8 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeySubmissionDTO(Long id, Boolean submitted, ZonedDateTime submissionDate, SubmissionType type, Boolean exampleSubmission, Long durationInMinutes,
-            List<ProjectKeyResultDTO> results, String commitHash, Boolean buildFailed) {
+    public record ProjectKeySubmissionDTO(long id, Boolean submitted, ZonedDateTime submissionDate, SubmissionType type, Boolean exampleSubmission, Long durationInMinutes,
+            List<ProjectKeyResultDTO> results, String commitHash, boolean buildFailed) {
 
         /**
          * Converts a ProgrammingSubmission into a dto for the endpoint
@@ -108,7 +109,7 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, AssessmentType assessmentType, Boolean rated, Boolean hasComplaint,
+    public record ProjectKeyResultDTO(long id, ZonedDateTime completionDate, Boolean successful, Double score, AssessmentType assessmentType, Boolean rated, Boolean hasComplaint,
             Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, List<ProjectKeyFeedbackDTO> feedbacks) {
 
         /**
@@ -128,8 +129,8 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyFeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, FeedbackType type, Boolean positive,
-            ProjectKeyTestCaseDTO testCase) {
+    public record ProjectKeyFeedbackDTO(long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, FeedbackType type, Boolean positive,
+            long testCaseId) {
 
         /**
          * Converts a Feedback into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
@@ -139,12 +140,12 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
          */
         public static ProjectKeyFeedbackDTO of(Feedback feedback) {
             return Optional.ofNullable(feedback).map(f -> new ProjectKeyFeedbackDTO(f.getId(), f.getText(), f.getDetailText(), f.getHasLongFeedbackText(), f.getReference(),
-                    f.getCredits(), f.getType(), f.isPositive(), ProjectKeyTestCaseDTO.of(f.getTestCase()))).orElse(null);
+                    f.getCredits(), f.getType(), f.isPositive(), f.getTestCaseId())).orElse(null);
         }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyTestCaseDTO(Long id, String testName, Double weight, Double bonusMultiplier, Double bonusPoints, Boolean active, Visibility visibility,
+    public record ProjectKeyTestCaseDTO(long id, String testName, Double weight, double bonusMultiplier, double bonusPoints, Boolean active, Visibility visibility,
             ProgrammingExerciseTestCaseType type) {
 
         /**

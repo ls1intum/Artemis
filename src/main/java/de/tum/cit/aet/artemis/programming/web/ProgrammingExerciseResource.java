@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -125,6 +126,8 @@ public class ProgrammingExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -162,9 +165,9 @@ public class ProgrammingExerciseResource {
     private final Environment environment;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
+            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -178,6 +181,7 @@ public class ProgrammingExerciseResource {
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
@@ -566,6 +570,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getProgrammingExerciseByProjectKey(@PathVariable String projectKey) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        // find programming exercise by project key
         final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
 
@@ -573,8 +578,27 @@ public class ProgrammingExerciseResource {
             throw new AccessForbiddenException("You are not allowed to access this exercise");
         }
 
-        var participations = studentParticipationRepository.findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId());
-        exercise.setStudentParticipations(participations);
+        studentParticipationRepository.findLatestByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId())
+                .ifPresent(participation -> {
+                    if (participationAuthCheckService.canAccessParticipation(participation)) {
+                        exercise.setStudentParticipations(Set.of(participation));
+
+                        // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
+                        // so we set the test cases to empty to avoid lazy loading
+                        if (participation.getSubmissions().isEmpty()) {
+                            exercise.getTestCases().clear();
+                        }
+                        else {
+                            // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
+                            exercise.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()));
+                        }
+
+                    }
+                    else {
+                        // set student participations to empty to avoid lazy loading
+                        exercise.getStudentParticipations().clear();
+                    }
+                });
 
         return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
