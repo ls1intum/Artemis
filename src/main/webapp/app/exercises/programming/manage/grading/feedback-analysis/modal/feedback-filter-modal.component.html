@@ -17,7 +17,7 @@
                             (change)="onCheckboxChange($event, 'tasks')"
                             [checked]="filters.tasks.includes(task.toString())"
                         />
-                        <label class="form-check-label">{{ task }}</label>
+                        <label class="form-check-label text-break">{{ task }}</label>
                     </div>
                 </div>
             }
@@ -37,7 +37,7 @@
                             (change)="onCheckboxChange($event, 'testCases')"
                             [checked]="filters.testCases.includes(testCase)"
                         />
-                        <label class="form-check-label">{{ testCase }}</label>
+                        <label class="form-check-label text-break">{{ testCase }}</label>
                     </div>
                 </div>
             }

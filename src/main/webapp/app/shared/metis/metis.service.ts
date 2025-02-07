@@ -43,6 +43,7 @@ export class MetisService implements OnDestroy {
     private answerPostService = inject(AnswerPostService);
     private reactionService = inject(ReactionService);
     private accountService = inject(AccountService);
+    private websocketService = inject(WebsocketService);
     private jhiWebsocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
@@ -120,7 +121,7 @@ export class MetisService implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
         }
         this.courseWideTopicSubscription.unsubscribe();
     }
@@ -294,9 +295,9 @@ export class MetisService implements OnDestroy {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param {number} postId id of the post for which the displayPriority is changed
-     * @param {DisplayPriority} displayPriority new displayPriority
-     * @return {Observable<Post>} updated post
+     * @param postId id of the post for which the displayPriority is changed
+     * @param displayPriority new displayPriority
+     * @return updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
@@ -553,14 +554,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
             this.subscriptionChannel = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.websocketService.subscribe(this.subscriptionChannel);
+        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -710,7 +711,7 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+                this.websocketService.unsubscribe(this.subscriptionChannel);
                 this.subscriptionChannel = undefined;
             }
             return;
