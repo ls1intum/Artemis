@@ -68,7 +68,7 @@ import { FormsModule } from '@angular/forms';
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);

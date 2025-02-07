@@ -4,7 +4,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
@@ -19,9 +19,9 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unrefere
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-textblock-feedback-editor',
-    templateUrl: './textblock-feedback-editor.component.html',
-    styleUrls: ['./textblock-feedback-editor.component.scss'],
+    selector: 'jhi-text-block-feedback-editor',
+    templateUrl: './text-block-feedback-editor.component.html',
+    styleUrls: ['./text-block-feedback-editor.component.scss'],
     imports: [
         FeedbackSuggestionBadgeComponent,
         FaIconComponent,
@@ -38,11 +38,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class TextblockFeedbackEditorComponent implements AfterViewInit {
-    protected route = inject(ActivatedRoute);
-    protected modalService = inject(NgbModal);
-    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+export class TextBlockFeedbackEditorComponent implements AfterViewInit {
+    private route = inject(ActivatedRoute);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     readonly FeedbackType = FeedbackType;
 

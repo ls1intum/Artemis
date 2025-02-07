@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
+import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
@@ -12,15 +12,15 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
 @Component({
-    selector: 'jhi-textblock-assessment-card',
-    templateUrl: './textblock-assessment-card.component.html',
-    styleUrls: ['./textblock-assessment-card.component.scss'],
-    imports: [TextblockFeedbackEditorComponent],
+    selector: 'jhi-text-block-assessment-card',
+    templateUrl: './text-block-assessment-card.component.html',
+    styleUrls: ['./text-block-assessment-card.component.scss'],
+    imports: [TextBlockFeedbackEditorComponent],
 })
-export class TextblockAssessmentCardComponent {
-    protected route = inject(ActivatedRoute);
+export class TextBlockAssessmentCardComponent {
+    private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
@@ -32,7 +32,7 @@ export class TextblockAssessmentCardComponent {
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();
-    @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
+    @ViewChild(TextBlockFeedbackEditorComponent) feedbackEditor: TextBlockFeedbackEditorComponent;
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
