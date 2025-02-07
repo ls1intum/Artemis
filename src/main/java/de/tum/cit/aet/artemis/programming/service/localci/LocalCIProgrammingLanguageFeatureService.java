@@ -12,9 +12,11 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASK
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVASCRIPT;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.MATLAB;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.OCAML;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.R;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUBY;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUST;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.TYPESCRIPT;
@@ -22,16 +24,21 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_BLACKBOX;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_MAVEN;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.service.LicenseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
@@ -42,8 +49,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
 @Profile(PROFILE_LOCALCI)
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
-    public LocalCIProgrammingLanguageFeatureService() {
+    protected LocalCIProgrammingLanguageFeatureService(LicenseService licenseService) {
+        super(licenseService);
+    }
+
+    @Override
+    protected Map<ProgrammingLanguage, ProgrammingLanguageFeature> getSupportedProgrammingLanguageFeatures() {
         // Must be extended once a new programming language is added
+        EnumMap<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new EnumMap<>(ProgrammingLanguage.class);
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(BASH, new ProgrammingLanguageFeature(BASH, false, false, false, false, false, List.of(), true));
@@ -53,15 +66,18 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), true));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(JAVA,
-                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), true));
+                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), true));
+        programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(RUBY, new ProgrammingLanguageFeature(RUBY, false, true, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), true));
         programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(VHDL, new ProgrammingLanguageFeature(VHDL, false, false, false, false, false, List.of(), true));
+        return programmingLanguageFeatures;
     }
 }

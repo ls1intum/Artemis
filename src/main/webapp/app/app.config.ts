@@ -32,6 +32,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 export function initOrionConnector(connector: OrionConnectorService) {
     return () => OrionConnectorService.initConnector(connector);
@@ -49,6 +50,7 @@ export const appConfig: ApplicationConfig = {
             RouterModule,
             ScrollingModule,
             UserSettingsModule,
+            OwlNativeDateTimeModule,
             TranslateModule.forRoot({
                 loader: {
                     provide: TranslateLoader,
