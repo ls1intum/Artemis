@@ -10,8 +10,8 @@
     <div class="modal-body">
         <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
             <!-- exercise dropdown -->
-            <div ngbDropdown class="dropdown-section" [ngbDropdownOpen]="isExerciseDropdownOpen">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle (click)="toggleExerciseDropdown()">
+            <div ngbDropdown class="dropdown-section">
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.exercises"></span>
                 </button>
 
@@ -64,8 +64,8 @@
             </div>
 
             <!-- lecture dropdown -->
-            <div ngbDropdown class="dropdown-section" [ngbDropdownOpen]="isLectureDropdownOpen">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle (click)="toggleLectureDropdown()">
+            <div ngbDropdown class="dropdown-section">
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
                 </button>
 
@@ -87,7 +87,7 @@
                             </thead>
                             <tbody>
                                 @for (lecture of lectures; track lecture) {
-                                    <tr id="exercise-{{ lecture.id }}">
+                                    <tr id="lecture-{{ lecture.id }}">
                                         <td class="d-md-table-cell">
                                             <input class="form-check-input" type="checkbox" (change)="selectLecture(lecture.id)" [ngModel]="isLectureSelected(lecture.id)" />
                                         </td>

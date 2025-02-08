@@ -167,7 +167,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     isLectureSelected(lectureId: number | undefined) {
-        return lectureId !== undefined && this.selectedExercises?.has(lectureId);
+        return lectureId !== undefined && this.selectedLectures?.has(lectureId);
     }
 
     enableCompetency() {
@@ -249,14 +249,5 @@ export class Lti13DeepLinkingComponent implements OnInit {
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }
-    }
-
-    //dropdowns
-    toggleExerciseDropdown() {
-        this.isExerciseDropdownOpen = !this.isExerciseDropdownOpen;
-    }
-
-    toggleLectureDropdown() {
-        this.isLectureDropdownOpen = !this.isLectureDropdownOpen;
     }
 }
