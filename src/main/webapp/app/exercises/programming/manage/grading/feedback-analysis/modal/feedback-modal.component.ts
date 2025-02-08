@@ -11,7 +11,7 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
 })
 export class FeedbackModalComponent implements OnInit {
     feedbackDetail = input.required<FeedbackDetail>();
-    longFeedbackText = signal<string | undefined>('');
+    longFeedbackText = signal<string>('');
 
     activeModal = inject(NgbActiveModal);
     longFeedbackTextService = inject(LongFeedbackTextService);
