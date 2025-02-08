@@ -41,6 +41,7 @@ export class FeedbackDetailChannelModalComponent {
                 const channelDTO = new ChannelDTO();
                 channelDTO.name = this.form.get('name')?.value;
                 channelDTO.description = this.form.get('description')?.value;
+                channelDTO.topic = 'FeedbackDiscussion';
                 channelDTO.isPublic = this.form.get('isPublic')?.value || false;
                 channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value || false;
 

@@ -64,6 +64,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
 };
 
@@ -199,6 +200,7 @@ export class CourseOverviewService {
             [ChannelSubType.GENERAL]: 'generalChannels',
             [ChannelSubType.LECTURE]: 'lectureChannels',
             [ChannelSubType.EXAM]: 'examChannels',
+            [ChannelSubType.FEEDBACK_DISCUSSION]: 'feedbackDiscussion',
         };
         return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
     }
