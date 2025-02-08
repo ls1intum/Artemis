@@ -26,8 +26,8 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
     @Test
     void shouldOnlyAccessApiDomainDto() {
         noClasses().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideOutsideOfPackage(getModuleWithSubpackage()).should()
-                .dependOnClassesThat(
-                        resideInAPackage(getModuleWithSubpackage()).and(resideOutsideOfPackages(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage())))
+                .dependOnClassesThat(resideInAPackage(getModuleWithSubpackage())
+                        .and(resideOutsideOfPackages(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage(), getModuleExceptionsSubpackage())))
                 .check(productionClasses);
     }
 
@@ -53,6 +53,10 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     protected String getModuleDtoSubpackage() {
         return getModulePackage() + ".dto..";
+    }
+
+    protected String getModuleExceptionsSubpackage() {
+        return getModulePackage() + ".exception..";
     }
 
     protected Set<Class<?>> getIgnoredClasses() {
