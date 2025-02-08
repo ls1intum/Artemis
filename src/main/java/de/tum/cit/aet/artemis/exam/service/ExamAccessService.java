@@ -88,7 +88,7 @@ public class ExamAccessService {
         }
         Exam exam = examExercise.getExam();
 
-        if (examDateService.isExerciseWorkingPeriodOver(examExercise, studentParticipation)) {
+        if (!examDateService.isExerciseWorkingPeriodOver(examExercise, studentParticipation)) {
             // students can always see their results during the exam.
             return;
         }
