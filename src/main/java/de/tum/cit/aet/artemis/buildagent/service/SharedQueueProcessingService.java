@@ -368,6 +368,7 @@ public class SharedQueueProcessingService {
         }
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
+        log.info("Adding public key {} to buildAgent info of{}", publicSshKey, buildAgentShortName);
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
