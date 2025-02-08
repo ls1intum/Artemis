@@ -276,6 +276,12 @@ public class PlagiarismCaseResource {
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 
+    /**
+     * Informs the instructor about a reply to a plagiarism post by a student.
+     *
+     * @param postId the ID of the post
+     * @return a ResponseEntity with status 200 (OK)
+     */
     @GetMapping("posts/{postId}/inform-instructor")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> informInstructorAboutPostReply(@PathVariable Long postId) {
