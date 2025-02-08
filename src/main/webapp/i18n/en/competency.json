@@ -305,6 +305,11 @@
                     "paragraph2": "In summary:",
                     "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />REQUIRE means one skill is a prerequisite for another.",
                     "paragraph4": "To create these relationships, open the 'Edit Relations' window. In this window, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "relationVideoParagraph": {
+                        "first": "Your browser doesn't support HTML5 video. Here is a ",
+                        "link": "link to the video",
+                        "last": " instead."
+                    },
                     "relationTitle1": "1. MATCH",
                     "relationParagraph1": "This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.",
                     "exampleLabel": "Example:",
