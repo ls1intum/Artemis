@@ -10,8 +10,8 @@
     <div class="modal-body">
         <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
             <!-- exercise dropdown -->
-            <div ngbDropdown class="dropdown-section">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+            <div ngbDropdown class="dropdown-section" [ngbDropdownOpen]="isExerciseDropdownOpen">
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle (click)="toggleExerciseDropdown()">
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.exercises"></span>
                 </button>
 
@@ -64,8 +64,8 @@
             </div>
 
             <!-- lecture dropdown -->
-            <div ngbDropdown class="dropdown-section">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+            <div ngbDropdown class="dropdown-section" [ngbDropdownOpen]="isLectureDropdownOpen">
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle (click)="toggleLectureDropdown()">
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
                 </button>
 

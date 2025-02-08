@@ -57,6 +57,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
     reverse = false;
     isLinking = true;
 
+    //dropdowns
+    isExerciseDropdownOpen = false;
+    isLectureDropdownOpen = false;
+
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
@@ -245,5 +249,14 @@ export class Lti13DeepLinkingComponent implements OnInit {
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }
+    }
+
+    //dropdowns
+    toggleExerciseDropdown() {
+        this.isExerciseDropdownOpen = !this.isExerciseDropdownOpen;
+    }
+
+    toggleLectureDropdown() {
+        this.isLectureDropdownOpen = !this.isLectureDropdownOpen;
     }
 }
