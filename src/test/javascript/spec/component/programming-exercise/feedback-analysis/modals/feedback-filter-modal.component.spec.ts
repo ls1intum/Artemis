@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
@@ -92,6 +92,12 @@ describe('FeedbackFilterModalComponent', () => {
         const event = { target: { checked: true, value: 'Student Error' } } as unknown as Event;
         component.onCheckboxChange(event, 'errorCategories');
         expect(component.filters.errorCategories).toEqual(['Student Error']);
+    });
+
+    it('should update filters when checkboxes change for occurrence', () => {
+        const event = { target: { checked: true, value: '1' } } as unknown as Event;
+        component.onCheckboxChange(event, 'occurrence');
+        expect(component.filters.occurrence).toEqual([0, 1, 1]);
     });
 
     it('should remove the value from filters when checkbox is unchecked for tasks', () => {

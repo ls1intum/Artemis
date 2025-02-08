@@ -391,6 +391,7 @@
                         "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
                         "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "dueDate": "Das Abgabedatum der Übung ist noch nicht erreicht. Bitte beachte, dass das Ergebnis daher noch nicht endgültig ist und sich die betroffenen Studierenden in Zukunft ändern könnten. Zudem ist das Feedback möglicherweise noch nicht für Studierende sichtbar, falls es versteckte Testfälle in der Übung gibt. Bitte überprüfe, ob du dennoch einen Feedback-Kanal erstellen möchtest!",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
                             "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",

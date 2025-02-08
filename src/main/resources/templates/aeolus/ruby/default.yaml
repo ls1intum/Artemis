@@ -3,6 +3,10 @@ metadata:
   name: "Ruby"
   id: ruby
 actions:
+  - name: install_dependencies
+    script: |-
+      cd "${testWorkingDirectory}"
+      bundler install
   - name: test
     script: |-
       cd "${testWorkingDirectory}"

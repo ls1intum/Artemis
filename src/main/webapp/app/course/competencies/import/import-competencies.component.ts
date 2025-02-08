@@ -20,7 +20,7 @@ export class ImportCompetenciesComponent extends ImportCourseCompetenciesCompone
     entityType = CourseCompetencyType.COMPETENCY;
     allowRelationImport = true;
 
-    protected readonly competencyService: CompetencyService = inject(CompetencyService);
+    private readonly competencyService = inject(CompetencyService);
 
     onSubmit() {
         this.competencyService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, this.importRelations).subscribe({

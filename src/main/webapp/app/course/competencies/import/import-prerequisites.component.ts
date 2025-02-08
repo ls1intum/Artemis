@@ -19,7 +19,7 @@ export class ImportPrerequisitesComponent extends ImportCourseCompetenciesCompon
     entityType = CourseCompetencyType.PREREQUISITE;
     allowRelationImport = false;
 
-    protected readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private readonly prerequisiteService = inject(PrerequisiteService);
 
     onSubmit() {
         this.prerequisiteService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, false).subscribe({
