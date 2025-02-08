@@ -420,7 +420,7 @@ public class TextExerciseResource {
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (textExercise.isExamExercise()) {
             var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
-            api.checkCourseAndExamAccessForStudentElseThrow(textExercise.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getExam().getId());
+            api.checkIfAllowedToGetExamResult(textExercise, participation, user);
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
