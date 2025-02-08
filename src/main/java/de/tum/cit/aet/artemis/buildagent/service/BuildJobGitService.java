@@ -50,6 +50,15 @@ public class BuildJobGitService extends AbstractGitService {
 
     private CredentialsProvider credentialsProvider;
 
+    /**
+     * Determines whether to use SSH.
+     * <p>
+     * This method overrides the default behavior and returns the configuration flag
+     * {@code artemis.version-control.build-agent-use-ssh} to indicate if SSH should be used.
+     * </p>
+     *
+     * @return {@code true} if SSH should be used; {@code false} otherwise.
+     */
     @Override
     protected boolean useSsh() {
         return useSshForBuildAgent;
