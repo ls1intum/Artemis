@@ -19,10 +19,11 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe],
+    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
