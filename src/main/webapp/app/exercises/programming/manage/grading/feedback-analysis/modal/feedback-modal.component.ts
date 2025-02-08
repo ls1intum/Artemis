@@ -19,7 +19,7 @@ export class FeedbackModalComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.feedbackDetail().hasLongFeedbackText) {
-            this.longFeedbackTextService.loadLongFeedback(this.feedbackDetail().feedbackIds[0]).subscribe((response) => {
+            this.longFeedbackTextService.find(this.feedbackDetail().feedbackIds[0]).subscribe((response) => {
                 this.longFeedbackText.set(response.body || this.feedbackDetail().detailTexts[0]);
             });
         }

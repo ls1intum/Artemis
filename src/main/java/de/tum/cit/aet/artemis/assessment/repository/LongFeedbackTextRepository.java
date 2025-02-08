@@ -39,6 +39,7 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
             FROM LongFeedbackText longFeedback
                 LEFT JOIN FETCH longFeedback.feedback feedback
                 LEFT JOIN FETCH feedback.result result
+                LEFT JOIN FETCH result.submission submission
                 LEFT JOIN FETCH result.participation
             WHERE longFeedback.feedback.id = :feedbackId
             """)

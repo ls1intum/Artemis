@@ -76,7 +76,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      */
     public async loadLongFeedback() {
         if (this.feedback.hasLongFeedbackText) {
-            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.resultId, this.feedback.id!);
+            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.feedback.id!);
             this.onFeedbackChange.emit(this.feedback);
         }
     }

@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { createSignal } from '@angular/core/primitives/signals';
 
 describe('FeedbackService', () => {
     let service: FeedbackService;
@@ -35,12 +34,10 @@ describe('FeedbackService', () => {
 
     it('should get long feedback text from server', async () => {
         const feedbackId = 42;
-        const resultId = 1;
-        const resultIdSignal = createSignal(resultId);
         const expectedResponse = 'This is a long feedback text.';
-        const promise = service.getLongFeedbackText(resultIdSignal, feedbackId);
+        const promise = service.getLongFeedbackText(feedbackId);
 
-        const req = httpMock.expectOne(`api/results/${resultId}/feedbacks/${feedbackId}/long-feedback`);
+        const req = httpMock.expectOne(`api/feedbacks/${feedbackId}/long-feedback`);
         expect(req.request.method).toBe('GET');
 
         req.flush(expectedResponse);

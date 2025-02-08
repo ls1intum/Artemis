@@ -1,4 +1,4 @@
-import { Injectable, Signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
@@ -17,9 +17,8 @@ export class FeedbackService extends BaseApiHttpService {
         return feedbacks.filter((feedback) => feedback.testCase?.id && filter.includes(feedback.testCase.id));
     };
 
-    public async getLongFeedbackText(resultId: Signal<number>, feedbackId: number): Promise<string> {
-        const resultIdValue = resultId();
-        const url = `results/${resultIdValue}/feedbacks/${feedbackId}/long-feedback`;
+    public async getLongFeedbackText(feedbackId: number): Promise<string> {
+        const url = `feedbacks/${feedbackId}/long-feedback`;
         return await this.get<string>(url, { responseType: 'text' });
     }
 }
