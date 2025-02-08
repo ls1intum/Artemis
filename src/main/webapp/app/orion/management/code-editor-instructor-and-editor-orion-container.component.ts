@@ -47,6 +47,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     faTimesCircle = faTimesCircle;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    protected readonly RepositoryType = RepositoryType;
 
     /**
      * Calls ngOnInit of its superclass and initialize the subscription to
@@ -83,6 +84,4 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         this.orionConnectorService.isBuilding(true);
         this.orionConnectorService.buildAndTestLocally();
     }
-
-    protected readonly RepositoryType = RepositoryType;
 }

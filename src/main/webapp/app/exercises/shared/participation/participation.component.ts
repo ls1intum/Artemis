@@ -36,6 +36,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -81,6 +82,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
+    protected readonly RepositoryType = RepositoryType;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();

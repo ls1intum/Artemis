@@ -20,9 +20,9 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
-
-import { ProgrammingExerciseResolve, repositorySubRoutes } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise-resolver.service';
+import { repositorySubRoutes } from 'app/exercises/programming/shared/routes/programming-exercise-repository.route';
 
 export const examManagementRoute: Routes = [
     {

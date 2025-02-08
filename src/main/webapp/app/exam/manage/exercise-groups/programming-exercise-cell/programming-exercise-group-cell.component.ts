@@ -29,6 +29,8 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     participationType = ProgrammingExerciseParticipationType;
 
+    protected readonly RepositoryType = RepositoryType;
+
     programmingExercise: ProgrammingExercise;
 
     localVCEnabled = false;
@@ -89,6 +91,4 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
             });
         }
     }
-
-    protected readonly RepositoryType = RepositoryType;
 }

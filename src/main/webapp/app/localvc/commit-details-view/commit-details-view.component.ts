@@ -24,7 +24,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
 
     report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
-    repositoryId?: number;
+    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     commitHash: string;
     isTemplate = false;
 
@@ -74,10 +74,15 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private retrieveAndHandleCommits() {
         let commitInfoSubscription;
-        if (this.repositoryType !== RepositoryType.USER) {
+
+        if (this.repositoryType === RepositoryType.TEMPLATE || this.repositoryType === RepositoryType.SOLUTION || this.repositoryType === RepositoryType.TESTS) {
             commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
-        } else if (this.repositoryId) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId);
+        }
+        if (this.repositoryType === RepositoryType.AUXILIARY) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!);
+        }
+        if (this.repositoryType === RepositoryType.USER) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId!);
         }
         if (!commitInfoSubscription) {
             return;

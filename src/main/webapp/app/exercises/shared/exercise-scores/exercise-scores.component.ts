@@ -45,6 +45,7 @@ import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Filter properties for a result
@@ -106,6 +107,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
     readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
+
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
         new Range(0, 10),

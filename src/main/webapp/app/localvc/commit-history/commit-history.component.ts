@@ -28,7 +28,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
-    participationId: number;
     exerciseId: number;
     repositoryType: RepositoryType;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
@@ -53,9 +52,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
-            this.repositoryType = params['repositoryType'] ?? 'USER';
+            this.repositoryType = params['repositoryType'] ?? RepositoryType.USER;
             this.repositoryId = Number(params['repositoryId']);
-            if (this.repositoryId && this.repositoryType === 'USER') {
+            if (this.repositoryId && this.repositoryType === RepositoryType.USER) {
                 this.loadStudentParticipation();
             } else {
                 this.loadDifferentParticipation();
@@ -130,9 +129,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleCommits() {
-        if (this.repositoryType === 'USER') {
+        if (this.repositoryType === RepositoryType.USER) {
             this.handleParticipationCommits();
-        } else if (this.repositoryType === 'AUXILIARY') {
+        } else if (this.repositoryType === RepositoryType.AUXILIARY) {
             this.handleAuxiliaryRepositoryCommits();
         } else {
             this.handleTemplateSolutionTestRepositoryCommits();

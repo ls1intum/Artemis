@@ -15,7 +15,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'ide/:participationId',
+        path: 'ide/:repositoryId',
         loadComponent: () =>
             import('app/orion/management/code-editor-instructor-and-editor-orion-container.component').then((m) => m.CodeEditorInstructorAndEditorOrionContainerComponent),
         data: {
