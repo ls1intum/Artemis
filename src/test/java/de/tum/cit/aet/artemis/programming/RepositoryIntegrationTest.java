@@ -94,6 +94,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
 
     private final String currentLocalFileContent = "testContent";
 
+    private final byte[] currentLocalBinaryFileContent = { (byte) 0b10101010, (byte) 0b11001100, (byte) 0b11110000 };
+
     private final String currentLocalFolderName = "currentFolderName";
 
     private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
@@ -145,8 +147,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         FileUtils.write(studentFile, currentLocalFileContent, Charset.defaultCharset());
 
         // add binary file to the repo folder
-        var studentFileBinary = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
-        Files.createFile(studentFileBinary);
+        var studentFilePathBinary = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        var studentFileBinary = Files.createFile(studentFilePathBinary).toFile();
+        FileUtils.writeByteArrayToFile(studentFileBinary, currentLocalBinaryFileContent);
 
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
@@ -160,9 +163,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
-        // add file to the template repo folder
+        // add files to the template repo folder
         var templateFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName);
         var templateFile = Files.createFile(templateFilePath).toFile();
+
+        var templateBinaryFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        Files.createFile(templateBinaryFilePath).toFile();
 
         // write content to the created file
         FileUtils.write(templateFile, currentLocalFileContent, Charset.defaultCharset());
