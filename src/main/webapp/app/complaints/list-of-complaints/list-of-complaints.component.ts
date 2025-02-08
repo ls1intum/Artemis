@@ -28,7 +28,6 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
     imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
-    providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
     complaintService = inject(ComplaintService);
