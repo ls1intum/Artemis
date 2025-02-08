@@ -332,7 +332,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testInformInstructorAboutPostReply_asStudent() throws Exception {
-        request.get("/api/posts/" + existingPosts.getFirst().getId() + "/informInstructor", HttpStatus.OK, Void.class);
+        request.get("/api/posts/" + existingPosts.getFirst().getId() + "/inform-instructor", HttpStatus.OK, Void.class);
     }
 
     // HELPER METHODS

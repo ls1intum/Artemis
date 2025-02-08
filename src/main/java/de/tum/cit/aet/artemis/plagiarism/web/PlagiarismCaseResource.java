@@ -276,7 +276,7 @@ public class PlagiarismCaseResource {
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 
-    @GetMapping("posts/{postId}/informInstructor")
+    @GetMapping("posts/{postId}/inform-instructor")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> informInstructorAboutPostReply(@PathVariable Long postId) {
         log.debug("GET informInstructorAboutPostReply invoked for post {}", postId);

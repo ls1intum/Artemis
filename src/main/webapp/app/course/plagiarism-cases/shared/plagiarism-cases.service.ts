@@ -146,6 +146,6 @@ export class PlagiarismCasesService extends BaseApiHttpService {
     }
 
     public informInstructorAboutPostReply(postId: number): Promise<void> {
-        return this.get<void>(`posts/${postId}/informInstructor`);
+        return this.get<void>(`posts/${postId}/inform-instructor`);
     }
 }
