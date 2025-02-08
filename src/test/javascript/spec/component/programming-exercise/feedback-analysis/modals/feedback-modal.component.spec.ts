@@ -13,7 +13,7 @@ describe('FeedbackModalComponent', () => {
     let activeModal: NgbActiveModal;
 
     const mockLongFeedbackTextService = {
-        loadLongFeedback: jest.fn().mockReturnValue({
+        find: jest.fn().mockReturnValue({
             subscribe: (callback: (response: { body: string }) => void) => callback({ body: 'Loaded long feedback' }),
         }),
     };
@@ -42,7 +42,7 @@ describe('FeedbackModalComponent', () => {
     });
 
     it('should load long feedback text if hasLongFeedbackText is true', () => {
-        expect(mockLongFeedbackTextService.loadLongFeedback).toHaveBeenCalledWith(1);
+        expect(mockLongFeedbackTextService.find).toHaveBeenCalledWith(1);
         expect(component.longFeedbackText()).toBe('Loaded long feedback');
     });
 
