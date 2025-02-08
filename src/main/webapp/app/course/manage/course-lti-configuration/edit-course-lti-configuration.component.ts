@@ -44,7 +44,6 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
         ItemCountComponent,
         HelpIconComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        // prettier-ignore
         HasAnyAuthorityDirective,
     ],
 })
