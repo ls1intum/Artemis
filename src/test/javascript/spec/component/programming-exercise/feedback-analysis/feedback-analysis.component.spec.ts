@@ -35,6 +35,7 @@ describe('FeedbackAnalysisComponent', () => {
             relativeCount: 50,
             taskName: '1',
             errorCategory: 'Student Error',
+            hasLongFeedbackText: false,
         },
         {
             feedbackIds: [2],
@@ -44,6 +45,7 @@ describe('FeedbackAnalysisComponent', () => {
             relativeCount: 25,
             taskName: '2',
             errorCategory: 'AST Error',
+            hasLongFeedbackText: false,
         },
     ];
 

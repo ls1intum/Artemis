@@ -89,7 +89,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
                 numberOfMembers: undefined,
                 subType: undefined,
                 subTypeReferenceId: undefined,
-                topic: undefined,
+                topic: 'FeedbackDiscussion',
                 tutorialGroupId: undefined,
                 tutorialGroupTitle: undefined,
                 type: 'channel',

@@ -11,10 +11,11 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
 })
 export class FeedbackModalComponent implements OnInit {
     feedbackDetail = input.required<FeedbackDetail>();
+    longFeedbackText = signal<string | undefined>('');
+
     activeModal = inject(NgbActiveModal);
-    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
-    longFeedbackText = signal<string | undefined>(this.feedbackDetail().detailTexts[0]);
     longFeedbackTextService = inject(LongFeedbackTextService);
+    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
 
     ngOnInit(): void {
         if (this.feedbackDetail().hasLongFeedbackText) {
