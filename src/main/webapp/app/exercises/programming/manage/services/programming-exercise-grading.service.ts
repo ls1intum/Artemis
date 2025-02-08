@@ -47,7 +47,7 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/programming-exercises';
@@ -60,7 +60,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
-        Object.values(this.connections).forEach((connection) => this.jhiWebsocketService.unsubscribe(connection));
+        Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
     }
 
     /**
@@ -155,10 +155,10 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | undefined) {
         const testCaseTopic = `/topic/programming-exercises/${exerciseId}/test-cases`;
-        this.jhiWebsocketService.subscribe(testCaseTopic);
+        this.websocketService.subscribe(testCaseTopic);
         this.connections[exerciseId] = testCaseTopic;
         this.subjects[exerciseId] = new BehaviorSubject(initialValue);
-        this.jhiWebsocketService
+        this.websocketService
             .receive(testCaseTopic)
             .pipe(
                 map((testCases) => (testCases.length ? testCases : undefined)),
