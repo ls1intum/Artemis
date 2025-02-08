@@ -6,11 +6,13 @@ import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedbac
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
-    imports: [FormsModule, ReactiveFormsModule],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';

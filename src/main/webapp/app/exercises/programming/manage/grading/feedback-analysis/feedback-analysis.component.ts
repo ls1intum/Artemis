@@ -15,6 +15,11 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
 import { facDetails } from 'app/icons/icons';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormsModule } from '@angular/forms';
 
 export interface FeedbackAnalysisState {
     page: number;
@@ -28,7 +33,7 @@ export interface FeedbackAnalysisState {
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [SortIconComponent, NgbModule, NgbPagination],
+    imports: [SortIconComponent, NgbModule, NgbPagination, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
