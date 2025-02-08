@@ -113,7 +113,8 @@
                 "actions": {
                     "leave": "Leave Conversation",
                     "archiveChannel": "Archive Channel",
-                    "unarchiveChannel": "Unarchive Channel"
+                    "unarchiveChannel": "Unarchive Channel",
+                    "togglePrivacy": "Toggle Privacy"
                 }
             },
             "conversationDetail": {

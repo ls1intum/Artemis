@@ -32,6 +32,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     course = input.required<Course>();
 
     channelArchivalChange = output<void>();
+    channelPrivacyChange = output<void>();
     channelDeleted = output<void>();
     conversationLeave = output<void>();
 
@@ -173,6 +174,27 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
                     this.channelDeleted.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => this.dialogErrorSource.next(errorResponse.message),
+            });
+    }
+
+    toggleChannelPrivacy() {
+        const channel = getAsChannelDTO(this.activeConversation()!);
+        if (!channel) {
+            return;
+        }
+
+        this.channelService
+            .toggleChannelPrivacy(this.course().id!, channel.id!)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe({
+                next: (res) => {
+                    const updatedChannel = res.body;
+                    if (updatedChannel) {
+                        this.conversationAsChannel = updatedChannel;
+                        this.channelPrivacyChange.emit();
+                    }
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 }

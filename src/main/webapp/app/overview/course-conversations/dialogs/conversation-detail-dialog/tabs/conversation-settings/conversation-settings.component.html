@@ -13,6 +13,16 @@
                     }
                 </div>
                 @if (conversationAsChannel; as channel) {
+                    @if (true) {
+                        <div class="col-12 settings-section text-center">
+                            <button
+                                type="button"
+                                class="btn btn-danger archive"
+                                (click)="toggleChannelPrivacy()"
+                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.togglePrivacy"
+                            ></button>
+                        </div>
+                    }
                     @if (!channel.isArchived && canChangeChannelArchivalState) {
                         <div class="col-12 settings-section text-center">
                             <button

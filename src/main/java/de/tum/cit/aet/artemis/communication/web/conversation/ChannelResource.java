@@ -511,6 +511,37 @@ public class ChannelResource extends ConversationManagementResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/toggle-privacy
+     *
+     * Kanalın gizlilik durumunu değiştirir: Eğer kanal public ise private yapar, private ise public yapar.
+     *
+     * @param courseId  değiştirmek istediğimiz kanalın bağlı olduğu kursun ID’si
+     * @param channelId gizlilik durumu değiştirilecek kanalın ID’si
+     * @return güncellenen kanalın DTO’su
+     */
+    @PostMapping("{courseId}/channels/{channelId}/toggle-privacy")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ChannelDTO> toggleChannelPrivacy(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to toggle privacy for channel : {}", channelId);
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
+        if (!channelFromDatabase.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+
+        channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
+
+        boolean isCurrentlyPublic = Boolean.TRUE.equals(channelFromDatabase.getIsPublic());
+        channelFromDatabase.setIsPublic(!isCurrentlyPublic);
+
+        var updatedChannel = channelRepository.save(channelFromDatabase);
+
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
+    }
+
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {
         courseId.ifPresent(courseIdValue -> {
             if (!channel.getCourse().getId().equals(courseIdValue)) {

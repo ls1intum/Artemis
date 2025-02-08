@@ -113,7 +113,8 @@
                 "actions": {
                     "leave": "Konversation verlassen",
                     "archiveChannel": "Kanal archivieren",
-                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen"
+                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen",
+                    "togglePrivacy": "Toggle Privacy"
                 }
             },
             "conversationDetail": {

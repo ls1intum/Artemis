@@ -99,6 +99,18 @@ export class ChannelService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/revoke-channel-moderator`, userLogins, { observe: 'response' });
     }
 
+    /**
+     * Toggles the privacy status of a channel (if public, it becomes private; if private, it becomes public).
+     *
+     * @param courseId The ID of the course the channel belongs to.
+     * @param channelId The ID of the channel whose privacy status will be changed.
+     */
+    toggleChannelPrivacy(courseId: number, channelId: number): Observable<HttpResponse<ChannelDTO>> {
+        return this.http
+            .post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels/${channelId}/toggle-privacy`, null, { observe: 'response' })
+            .pipe(map(this.convertDateFromServer));
+    }
+
     public convertDateFromServer = (res: HttpResponse<ChannelDTO>): HttpResponse<ChannelDTO> => {
         if (res.body) {
             this.convertServerDates(res.body);
