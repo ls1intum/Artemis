@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.plagiarism.exceptions;
+package de.tum.cit.aet.artemis.plagiarism.exception;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
