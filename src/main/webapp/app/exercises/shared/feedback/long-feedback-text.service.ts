@@ -11,4 +11,8 @@ export class LongFeedbackTextService {
     find(resultId: number, feedbackId: number): Observable<LongFeedbackResponse> {
         return this.http.get(`api/results/${resultId}/feedbacks/${feedbackId}/long-feedback`, { observe: 'response', responseType: 'text' });
     }
+
+    loadLongFeedback(feedbackId: number): Observable<LongFeedbackResponse> {
+        return this.http.get(`api/feedbacks/${feedbackId}/long-feedback`, { observe: 'response', responseType: 'text' });
+    }
 }

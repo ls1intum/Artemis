@@ -54,6 +54,20 @@ public class LongFeedbackTextResource {
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(longFeedbackText.getText());
     }
 
+    /**
+     * Gets the long feedback associated with the specified feedback.
+     *
+     * @param feedbackId The feedback for which the long feedback should be fetched.
+     * @return The long feedback text belonging to the feedback with id {@code feedbackId}.
+     */
+    @GetMapping("feedbacks/{feedbackId}/long-feedback")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
+        log.debug("REST request to get long feedback: {} (result: {})", feedbackId);
+        final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(longFeedbackText.getText());
+    }
+
     private void checkCanAccessResultElseThrow(final Long resultId, final LongFeedbackText longFeedbackText) {
         final Result result = longFeedbackText.getFeedback().getResult();
         if (!result.getId().equals(resultId)) {

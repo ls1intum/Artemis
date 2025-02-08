@@ -1245,50 +1245,51 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return A page of {@link FeedbackDetailDTO} objects representing the aggregated feedback details.
      */
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                    LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
-                    COUNT(f.id),
-                    0,
-                    f.detailText,
-                    f.testCase.testName,
-                    COALESCE((
-                        SELECT MAX(t.taskName)
-                        FROM ProgrammingExerciseTask t
-                        LEFT JOIN t.testCases tct
-                        WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
-                    ), 'Not assigned to task'),
-                    CASE
-                        WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                        WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
-                        ELSE 'Student Error'
-                    END
-                )
-                FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.results r ON r.id = (
-                    SELECT MAX(pr.id)
-                    FROM p.results pr
-                    WHERE pr.participation.id = p.id
-                )
-                INNER JOIN r.feedbacks f
-                WHERE p.exercise.id = :exerciseId
-                    AND p.testRun = FALSE
-                    AND f.positive = FALSE
-                    AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
-                    AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
-                    AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
-                            SELECT tct.testName
-                            FROM ProgrammingExerciseTask t
-                            LEFT JOIN t.testCases tct
-                            WHERE t.taskName IN (:filterTaskNames)
-                        ))
-                    AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                                WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                                WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
-                                ELSE 'Student Error'
-                            END IN (:filterErrorCategories))
-                GROUP BY f.detailText, f.testCase.testName
-                HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
-            """)
+                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
+                     LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
+                     COUNT(f.id),
+                     0,
+                     f.detailText,
+                     f.testCase.testName,
+                     COALESCE((
+                         SELECT MAX(t.taskName)
+                         FROM ProgrammingExerciseTask t
+                         LEFT JOIN t.testCases tct
+                         WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                     ), 'Not assigned to task'),
+                     CASE
+                         WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
+                         WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                         ELSE 'Student Error'
+                     END,
+                     f.hasLongFeedbackText
+                 )
+                 FROM ProgrammingExerciseStudentParticipation p
+                 INNER JOIN p.results r ON r.id = (
+                     SELECT MAX(pr.id)
+                     FROM p.results pr
+                     WHERE pr.participation.id = p.id
+                 )
+                 INNER JOIN r.feedbacks f
+                 WHERE p.exercise.id = :exerciseId
+                     AND p.testRun = FALSE
+                     AND f.positive = FALSE
+                     AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                     AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
+                     AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
+                             SELECT tct.testName
+                             FROM ProgrammingExerciseTask t
+                             LEFT JOIN t.testCases tct
+                             WHERE t.taskName IN (:filterTaskNames)
+                         ))
+                     AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
+                                 WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
+                                 WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                                 ELSE 'Student Error'
+                             END IN (:filterErrorCategories))
+                 GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
+                 HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
+            \s""")
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
             @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
             @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, @Param("pageable") Pageable pageable);

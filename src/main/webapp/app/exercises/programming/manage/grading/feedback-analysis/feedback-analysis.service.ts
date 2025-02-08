@@ -21,6 +21,7 @@ export interface FeedbackDetail {
     testCaseName: string;
     taskName: string;
     errorCategory: string;
+    hasLongFeedbackText: boolean;
 }
 export interface FeedbackAffectedStudentDTO {
     participationId: number;
