@@ -63,7 +63,7 @@ public class LongFeedbackTextResource {
     @GetMapping("feedbacks/{feedbackId}/long-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
-        log.debug("REST request to get long feedback: {} (result: {})", feedbackId);
+        log.debug("REST request to get long feedback: {}", feedbackId);
         final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(longFeedbackText.getText());
     }
