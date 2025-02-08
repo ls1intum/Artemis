@@ -50,6 +50,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             @Param("dateTime") ZonedDateTime dateTime);
 
     @Query("""
+            SELECT DISTINCT sp
+            FROM ProgrammingExerciseStudentParticipation sp
+                LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+            WHERE sp.id = :participationId
+                AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id) FROM sp.submissions s2))
+                AND (r.id IS NULL OR r.id = (SELECT MAX(re2.id) FROM s.results re2))
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestSubmissionLatestResultAndFeedbacks(@Param("participationId") long participationId);
+
+    @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr

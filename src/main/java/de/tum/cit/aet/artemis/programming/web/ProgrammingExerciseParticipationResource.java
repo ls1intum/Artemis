@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +34,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -50,10 +56,12 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -97,12 +105,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -117,6 +127,7 @@ public class ProgrammingExerciseParticipationResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -163,6 +174,40 @@ public class ProgrammingExerciseParticipationResource {
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
+    }
+
+    @GetMapping("programming-exercise-participations/repo-url")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacks(
+            @RequestParam("repoUrl") String encodedRepoUrl) throws URISyntaxException {
+        String decodedUrl = URLDecoder.decode(encodedRepoUrl, StandardCharsets.UTF_8);
+        var repoUrl = new URI(decodedUrl);
+
+        // remove potential username and password from the repo url + change ssh protocol to https
+        var participationURL = new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
+
+        // find participation by url
+        var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(participationURL.toString())
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationURL.toString()));
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        var participationWithLatestSubmissionLatestResultFeedbacks = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestSubmissionLatestResultAndFeedbacks(participation.getId()).orElseThrow(() -> new EntityNotFoundException("Participation", participation.getId()));
+
+        // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
+        // so we set the test cases to empty to avoid lazy loading
+        if (participationWithLatestSubmissionLatestResultFeedbacks.getSubmissions().isEmpty()) {
+            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().getTestCases().clear();
+        }
+        else {
+            // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
+            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise()
+                    .setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.getProgrammingExercise().getId()));
+        }
+
+        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participationWithLatestSubmissionLatestResultFeedbacks));
     }
 
     /**
