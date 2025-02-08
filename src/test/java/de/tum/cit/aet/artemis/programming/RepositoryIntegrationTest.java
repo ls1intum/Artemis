@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -364,7 +365,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.cit.aet.artemis.programming.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.cit.aet.artemis.programming.domain.File.class), FileType.FILE);
-        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class), anyBoolean());
 
         MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
         mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
