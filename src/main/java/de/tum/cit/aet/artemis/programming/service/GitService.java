@@ -71,6 +71,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -95,8 +96,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
-
-    private static final List<String> BINARY_EXTENSIONS = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin", ".msi", ".pyc", ".iso", ".o", ".app");
 
     private final ProfileService profileService;
 
@@ -1033,6 +1032,7 @@ public class GitService extends AbstractGitService {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
+        List<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
@@ -1043,7 +1043,7 @@ public class GitService extends AbstractGitService {
                 continue;
             }
 
-            if (omitBinaries && nextFile.isFile() && BINARY_EXTENSIONS.stream().anyMatch(nextFile.getName()::endsWith)) {
+            if (omitBinaries && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
                 log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }
