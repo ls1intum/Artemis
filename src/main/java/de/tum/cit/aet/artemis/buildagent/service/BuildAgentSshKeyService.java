@@ -67,9 +67,12 @@ public class BuildAgentSshKeyService {
     }
 
     private void generateKeyPair() throws NoSuchAlgorithmException {
+        log.info("Generating key pair...");
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(4096);
         keyPair = keyGen.generateKeyPair();
+        // temp
+        log.info("Generated RSA key pair: {} {}", keyPair.getPublic().toString(), keyPair.getPrivate().toString());
     }
 
     private void writePrivateKey() throws IOException, GeneralSecurityException {
@@ -78,6 +81,10 @@ public class BuildAgentSshKeyService {
 
         try (OutputStream outputStream = Files.newOutputStream(privateKeyPath)) {
             writer.writePrivateKey(keyPair, sshKeyComment, new OpenSSHKeyEncryptionContext(), outputStream);
+        }
+        catch (IOException | GeneralSecurityException e) {
+            log.error("Failed to write private key", e);
+            throw new RuntimeException(e);
         }
 
         // Avoid an UnsupportedOperationException on Windows
