@@ -302,8 +302,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     userNameClicked() {
-        if (this.conversationMember()?.id! !== this.idOfLoggedInUser) {
-            this.onUserNameClicked.emit(this.conversationMember()?.id!);
+        const memberId = this.conversationMember()?.id;
+        if (memberId) {
+            this.onUserNameClicked.emit(memberId);
         }
     }
 }

@@ -14,7 +14,6 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';
@@ -64,7 +63,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should not show the settings tab for one-to-one chats', () => {
-            if (isOneToOneChatDTO(activeConversation)) {
+            if (component.isOneToOneChat) {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeFalsy();
             } else {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeTruthy();
@@ -102,7 +101,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should react correctly to events from settings tab', () => {
-            if (!isOneToOneChatDTO(activeConversation)) {
+            if (!component.isOneToOneChat) {
                 component.selectedTab = ConversationDetailTabs.SETTINGS;
                 fixture.detectChanges();
 

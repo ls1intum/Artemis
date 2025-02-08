@@ -127,11 +127,21 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         }
         modalRef.componentInstance.initialize();
 
-        if (modalRef.componentInstance.userNameClicked) {
-            modalRef.componentInstance.userNameClicked.subscribe((username: number) => {
+        const userNameClicked = modalRef.componentInstance.userNameClicked;
+        if (userNameClicked) {
+            const subscription = userNameClicked.subscribe((username: number) => {
                 modalRef.dismiss();
-                this.metisConversationService.createOneToOneChatWithId(username).subscribe();
+                this.metisConversationService
+                    .createOneToOneChatWithId(username)
+                    .pipe(
+                        catchError((error) => {
+                            return EMPTY;
+                        }),
+                    )
+                    .subscribe();
             });
+
+            modalRef.closed.subscribe(() => subscription.unsubscribe());
         }
 
         from(modalRef.result)

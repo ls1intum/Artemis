@@ -3,7 +3,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,8 @@ import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -24,7 +26,16 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
-    imports: [ChannelIconComponent, FaIconComponent, TranslateDirective, RouterLink, ConversationMembersComponent, ConversationInfoComponent, ConversationSettingsComponent],
+    imports: [
+        ChannelIconComponent,
+        FaIconComponent,
+        TranslateDirective,
+        RouterLink,
+        ConversationMembersComponent,
+        ConversationInfoComponent,
+        ConversationSettingsComponent,
+        ProfilePictureComponent,
+    ],
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
@@ -34,14 +45,22 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
+    isOneToOneChat = false;
+    otherUser?: ConversationUserDTO;
     readonly faPeopleGroup = faPeopleGroup;
     readonly userNameClicked = output<number>();
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
+        if (this.activeConversation) {
+            const conversation = getAsOneToOneChatDTO(this.activeConversation);
+            if (conversation) {
+                this.isOneToOneChat = true;
+                this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+            }
+        }
     }
 
-    isOneToOneChat = isOneToOneChatDTO;
     getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
 

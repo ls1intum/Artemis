@@ -168,6 +168,8 @@ examples.forEach((activeConversation) => {
 
         it('should dismiss modal and call createOneToOneChatWithId when userNameClicked is emitted', fakeAsync(() => {
             const fakeUserNameClicked$ = new Subject<number>();
+            const fakeClosed$ = new Subject<void>();
+
             const fakeModalRef: NgbModalRef = {
                 componentInstance: {
                     course: undefined,
@@ -177,6 +179,7 @@ examples.forEach((activeConversation) => {
                     userNameClicked: fakeUserNameClicked$,
                 },
                 dismiss: jest.fn(),
+                closed: fakeClosed$,
                 result: Promise.resolve(),
             } as any;
 
