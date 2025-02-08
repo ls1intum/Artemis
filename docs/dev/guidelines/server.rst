@@ -501,7 +501,7 @@ To enforce minimal access for external tools, Artemis provides an additional ann
 This annotation is used to restrict Tool Tokens to certain endpoints.
 A Tool Token is a normal jwt token with the claim ``"tools": "TOOLTYPE"`` specified.
 
-How it works:
+**How it works?**
 
 * **Requests without a tool claim** (e.g., requests from users in a browser) can access all endpoints as long as they meet role-based authorization rules. So they are not restricted by the ``@AllowedTools`` annotation.
 * **Requests with a tool claim** (e.g., ``{"tool": "SCORPIO"}`` in the JWT) can only access endpoints annotated with ``@AllowedTools(ToolTokenType.__)`` (e.g. ``@AllowedTools(ToolTokenType.SCORPIO)``).
