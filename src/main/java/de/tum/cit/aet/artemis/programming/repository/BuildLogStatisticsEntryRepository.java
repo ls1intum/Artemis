@@ -79,6 +79,14 @@ public interface BuildLogStatisticsEntryRepository extends ArtemisJpaRepository<
 
     }
 
+    @Transactional // required due to delete
+    @Modifying
+    @Query("""
+            DELETE FROM BuildLogStatisticsEntry e
+            WHERE e.programmingSubmission.participation.id = :participationId
+            """)
+    void deleteByParticipationId(@Param("participationId") Long participationId);
+
     @Transactional // ok because of delete
     @Modifying
     void deleteByProgrammingSubmissionId(long programmingSubmissionId);
