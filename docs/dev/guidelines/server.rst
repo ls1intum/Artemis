@@ -504,12 +504,12 @@ A Tool Token is a normal jwt token with the claim ``"tools": "TOOLTYPE"`` specif
 How it works:
 
 * **Requests without a tool claim** (e.g., requests from users in a browser) can access all endpoints as long as they meet role-based authorization rules. So they are not restricted by the ``@AllowedTools`` annotation.
-* **Requests with a tool claim** (e.g., {"tool": "SCORPIO"} in the JWT) can only access endpoints annotated with @AllowedTools(ToolTokenType.__) (e.g. ``@AllowedTools(ToolTokenType.SCORPIO)``).
+* **Requests with a tool claim** (e.g., ``{"tool": "SCORPIO"}`` in the JWT) can only access endpoints annotated with ``@AllowedTools(ToolTokenType.__)`` (e.g. ``@AllowedTools(ToolTokenType.SCORPIO)``).
 * If a tool tries to access an unannotated endpoint, it receives a 403 Forbidden response.
 
 **When to Use It?**
 
-Use @AllowedTools to restrict what tools can do, without limiting normal requests.
+Use ``@AllowedTools`` to restrict what tools can do, without limiting normal requests.
 For example, an endpoint that provides a Scorpio-specific (VSCode Extension) integration:
 
 .. code-block:: java
@@ -523,7 +523,7 @@ For example, an endpoint that provides a Scorpio-specific (VSCode Extension) int
 **Best Practices**
 
 * Requests without a tool claim are unrestricted, meaning users and standard API clients will not be affected.
-* Tool-based requests must explicitly be allowed by annotating endpoints with @AllowedTools(ToolTokenType.VSCODE).
+* Tool-based requests must explicitly be allowed by annotating endpoints with ``@AllowedTools(ToolTokenType.VSCODE)``.
 * Nevertheless, try to follow the **Principle of Least Privilege** and use tool tokens whenever possible.
 * If multiple tools should be allowed for one endpoint, list them:
 
@@ -533,7 +533,7 @@ For example, an endpoint that provides a Scorpio-specific (VSCode Extension) int
 
 **How to Get Tool Tokens**
     #. Verify that the tool type is already defined in ``ToolTokenType.java``
-    #. send a POST request to the endpoint ``{{base_url}}/api/public/authenticate?tool=TOOLTYPE``
+    #. Send a POST request to the endpoint ``{{base_url}}/api/public/authenticate?tool=TOOLTYPE``
 
 
 Implicit pre- and post-authorization annotations
