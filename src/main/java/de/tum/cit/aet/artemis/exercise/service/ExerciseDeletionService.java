@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
@@ -70,7 +70,7 @@ public class ExerciseDeletionService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
+    private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
     private final TextExerciseService textExerciseService;
 
@@ -85,8 +85,8 @@ public class ExerciseDeletionService {
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            LectureUnitService lectureUnitService, Optional<PlagiarismResultApi> plagiarismResultApi, TextExerciseService textExerciseService, ChannelRepository channelRepository,
+            ChannelService channelService, CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -97,7 +97,7 @@ public class ExerciseDeletionService {
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismResultApi = plagiarismResultApi;
         this.textExerciseService = textExerciseService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
@@ -180,7 +180,7 @@ public class ExerciseDeletionService {
         }
 
         // delete all plagiarism results belonging to this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
@@ -240,7 +240,7 @@ public class ExerciseDeletionService {
      */
     public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
         // delete all plagiarism results for this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, true, true, true);
