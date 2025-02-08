@@ -46,8 +46,8 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
 
-    protected metisService: MetisService = inject(MetisService);
-    protected changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
+    private metisService = inject(MetisService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;

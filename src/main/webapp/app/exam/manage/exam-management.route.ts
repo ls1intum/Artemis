@@ -1,10 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
-
-import { ProgrammingExerciseResolve, repositorySubRoutes } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
-
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
@@ -24,6 +20,9 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
+
+import { ProgrammingExerciseResolve, repositorySubRoutes } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
+import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise-resolver.service';
 
 export const examManagementRoute: Routes = [
     {
@@ -186,7 +185,7 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+        loadChildren: () => import('app/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: ':examId/bonus',
@@ -822,15 +821,15 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('../../exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
+        loadChildren: () => import('../../exercises/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
-        loadChildren: () => import('../../exercises/text/assess/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
+        loadChildren: () => import('../../exercises/text/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
-        loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
+        loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',
