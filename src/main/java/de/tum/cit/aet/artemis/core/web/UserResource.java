@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -65,14 +65,14 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final Optional<LtiService> ltiService;
+    private final Optional<LtiApi> ltiApi;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.ltiService = ltiService;
+        this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
     }
 
@@ -144,7 +144,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
-        if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
+        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
