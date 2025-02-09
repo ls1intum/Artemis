@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,8 +39,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "peinttest";
-
-    private static final Log log = LogFactory.getLog(ProgrammingExerciseTest.class);
 
     private Long programmingExerciseId;
 
