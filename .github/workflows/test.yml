@@ -42,6 +42,8 @@ env:
   CI: true
   node: 22
   java: 21
+  # Run all tests for non-draft pull-requests or the default branch. Otherwise, only module-affected tests are run.
+  RUN_ALL_TESTS: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || github.event.repository.default_branch == github.ref_name }}
 
 jobs:
 
@@ -61,8 +63,7 @@ jobs:
         cache: 'gradle'
     - name: Java Tests (module-affected)
       # Not a non-draft pull-request and not the default branch
-      if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft == false)
-        && github.event.repository.default_branch != github.ref_name }}
+      if: ${{ !env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
 
@@ -88,8 +89,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
-      if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
-        || github.event.repository.default_branch == github.ref_name}}
+      if: ${{ env.  }}
       run: |
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
