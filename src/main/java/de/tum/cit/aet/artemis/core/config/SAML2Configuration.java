@@ -127,16 +127,16 @@ public class SAML2Configuration {
         return true;
     }
 
-    private static X509Certificate readPublicCert(String file) throws IOException, CertificateException {
-        try (InputStream inStream = Files.newInputStream(Path.of(file))) {
+    private static X509Certificate readPublicCert(String filepath) throws IOException, CertificateException {
+        try (InputStream inStream = Files.newInputStream(Path.of(filepath))) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inStream);
         }
     }
 
-    private RSAPrivateKey readPrivateKey(String file) throws IOException {
+    private RSAPrivateKey readPrivateKey(String filepath) throws IOException {
         // Read PKCS#8 File!
-        try (var keyReader = Files.newBufferedReader(Path.of(file), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
+        try (var keyReader = Files.newBufferedReader(Path.of(filepath), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
             return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
