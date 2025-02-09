@@ -85,7 +85,7 @@ export class TextExerciseCreationPage {
     private async clearText(textEditor: Locator) {
         await textEditor.click();
         await textEditor.press('Control+a');
-        await textEditor.press('Backspace');
+        await textEditor.press('Delete');
     }
 
     private async typeText(textEditor: Locator, text: string) {
