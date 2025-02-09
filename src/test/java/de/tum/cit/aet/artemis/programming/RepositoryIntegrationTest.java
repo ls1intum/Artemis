@@ -168,10 +168,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         var templateFile = Files.createFile(templateFilePath).toFile();
 
         var templateBinaryFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
-        Files.createFile(templateBinaryFilePath).toFile();
+        var templateBinaryFile = Files.createFile(templateBinaryFilePath).toFile();
 
-        // write content to the created file
+        // write content to the created files
         FileUtils.write(templateFile, currentLocalFileContent, Charset.defaultCharset());
+        FileUtils.writeByteArrayToFile(templateBinaryFile, currentLocalBinaryFileContent);
 
         // add folder to the template repo folder
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
