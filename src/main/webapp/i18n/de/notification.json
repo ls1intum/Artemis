@@ -128,7 +128,8 @@
                 "sshKeyExpiresSoon": "SSH-Schlüssel läuft bald ab",
                 "sshKeyHasExpired": "SSH-Schlüssel ist abgelaufen",
                 "vcsAccessTokenAdded": "Neues VCS Zugriffstoken hinzugefügt",
-                "vcsAccessTokenExpired": "VCS Zugriffstoken abgelaufen"
+                "vcsAccessTokenExpired": "VCS Zugriffstoken abgelaufen",
+                "vcsAccessTokenExpiresSoon": "VCS Zugriffstoken läuft bald ab"
             },
             "text": {
                 "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
@@ -160,7 +161,8 @@
                 "sshKeyExpiresSoon": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" läuft am {{ placeholderValues.1 }} ab.",
                 "sshKeyHasExpired": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" ist am {{ placeholderValues.1 }} abgelaufen.",
                 "vcsAccessTokenAdded": "Du hast erfolgreich ein persönliches Zugriffstoken hinzugefügt.",
-                "vcsAccessTokenExpired": "Dein persönliches Zugriffstoken ist abgelaufen."
+                "vcsAccessTokenExpired": "Dein persönliches Zugriffstoken ist abgelaufen.",
+                "vcsAccessTokenExpiresSoon": "Dein persönliches Zugriffstoken läuft bald ab."
             }
         },
         "tutorialGroupNotification": {
