@@ -69,6 +69,7 @@ public class LtiDeepLinkingService {
      * @param clientRegistrationId Client registration ID for the LTI tool.
      * @param courseId             ID of the course for deep linking.
      * @param unitIds              Set of IDs of the exercises/lectures for deep linking.
+     * @param type                 The type of deep linking (exercise, lecture, competency, iris, learning path).
      * @return Constructed deep linking response URL.
      * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
      */
