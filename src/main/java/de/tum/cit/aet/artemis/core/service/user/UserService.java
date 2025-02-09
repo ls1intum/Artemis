@@ -329,7 +329,6 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
-                participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
                 userRepository.delete(savedNonActivatedUser);
                 clearUserCaches(savedNonActivatedUser);
                 userRepository.flush();
