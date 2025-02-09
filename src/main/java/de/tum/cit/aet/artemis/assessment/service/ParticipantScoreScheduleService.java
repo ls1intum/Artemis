@@ -25,6 +25,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.ResultListener;
@@ -159,6 +160,7 @@ public class ParticipantScoreScheduleService {
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
     // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
+    @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
