@@ -66,6 +66,8 @@ jobs:
       run: |
         set -o pipefail
 
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+
         # Explicitly fetch as the clone action only clones the current branch
         git fetch origin "$DEFAULT_BRANCH"
 
