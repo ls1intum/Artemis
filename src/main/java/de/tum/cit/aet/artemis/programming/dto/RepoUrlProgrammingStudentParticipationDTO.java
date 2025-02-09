@@ -32,7 +32,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
 
     /**
      * Converts a ProgrammingExerciseStudentParticipation into a dto for the endpoint
-     * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+     * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
      *
      * @param participation to convert
      * @return the converted DTO
@@ -52,7 +52,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
 
         /**
          * Converts a ProgrammingSubmission into a dto for the endpoint
-         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param submission to convert
          * @return the converted DTO
@@ -71,7 +71,8 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
             Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, List<RepoUrlFeedbackDTO> feedbacks) {
 
         /**
-         * Converts a Result into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * Converts a Result into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param result to convert
          * @return the converted DTO
@@ -91,7 +92,8 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
             long testCaseId) {
 
         /**
-         * Converts a Feedback into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * Converts a Feedback into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param feedback to convert
          * @return the converted DTO
@@ -111,7 +113,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
 
         /**
          * Converts a ProgrammingExercise into a dto for the endpoint
-         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param exercise to convert
          * @return the converted DTO
@@ -131,7 +133,8 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
     public record RepoUrlCourseDTO(long id, String title, String shortName) {
 
         /**
-         * Converts a Course into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * Converts a Course into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param course to convert
          * @return the converted DTO
@@ -147,7 +150,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
 
         /**
          * Converts a ProgrammingExerciseTestCase into a dto for the endpoint
-         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String)}.
          *
          * @param testCase to convert
          * @return the converted DTO

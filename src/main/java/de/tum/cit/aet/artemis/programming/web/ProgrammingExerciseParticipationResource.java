@@ -176,21 +176,38 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(participation);
     }
 
+    /**
+     * Get the given student participation with its latest submission, latest result and feedbacks by its repository URL.
+     *
+     * @param encodedRepoUrl the URL-encoded repository URL
+     * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO} in body,
+     *         or with status 404 (Not Found) if the participation is not found,
+     *         or with status 403 (Forbidden) if the user doesn't have access to the participation
+     */
     @GetMapping("programming-exercise-participations/repo-url")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacks(
-            @RequestParam("repoUrl") String encodedRepoUrl) throws URISyntaxException {
-        String decodedUrl = URLDecoder.decode(encodedRepoUrl, StandardCharsets.UTF_8);
-        var repoUrl = new URI(decodedUrl);
+    public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(
+            @RequestParam("repoUrl") String encodedRepoUrl) {
+        URI repoUrl;
+        try {
+            String decodedUrl = URLDecoder.decode(encodedRepoUrl, StandardCharsets.UTF_8);
+            repoUrl = new URI(decodedUrl);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("The provided URL could not be decoded", ENTITY_NAME, "invalidUrlEncoding");
+        }
+        catch (URISyntaxException e) {
+            throw new BadRequestAlertException("The provided URL is not a valid URI: " + e.getMessage(), ENTITY_NAME, "invalidUriFormat");
+        }
 
         URI participationURL;
         try {
-            // remove potential username and password from the repo url + change ssh protocol to https
+            // remove potential username and password from the repo url
             participationURL = new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
         }
         catch (URISyntaxException e) {
-            throw new IllegalArgumentException("The provided URL does not have a valid URL format");
+            throw new BadRequestAlertException("Failed to sanitize repository URL: " + e.getMessage(), ENTITY_NAME, "invalidUriSanitization");
         }
         // find participation by url
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(participationURL.toString())
