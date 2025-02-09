@@ -30,12 +30,20 @@ $draggable-width: 15px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    max-height: 80vh; /* Prevent overlapping */
-    min-height: 500px; /* Ensure it doesn’t collapse */
+    max-height: 80vh;
+    min-height: auto;
     overflow-y: auto;
-    margin-bottom: 2rem;
-    scroll-behavior: smooth;
-    resize: vertical; /* ✅ Allows resizing */
+}
+.modeling-assessment input {
+    opacity: 1;
+    visibility: visible;
+    display: block;
+}
+#modeling-assessment-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100px; /* Ensure container is big enough */
+    overflow: visible; /* Prevents hidden elements */
 }
 
 /* Resizable elements */
