@@ -60,10 +60,16 @@ jacocoTestReport {
         )
     }
 
-    finalizedBy reportedModules
+    def sortedTasks = reportedModules
         .sort()
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
+    sortedTasks.eachWithIndex { task, index ->
+        if (index > 0) {
+            task.mustRunAfter(sortedTasks[index - 1])
+        }
+    }
+    mustRunAfter sortedTasks
 }
 
 jacocoTestCoverageVerification {
@@ -82,10 +88,16 @@ jacocoTestCoverageVerification {
     def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
     applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
 
-    finalizedBy reportedModules
+    def sortedTasks = reportedModules
         .sort()
         .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
         .findAll { task -> task != null}
+    sortedTasks.eachWithIndex { task, index ->
+        if (index > 0) {
+            task.mustRunAfter(sortedTasks[index - 1])
+        }
+    }
+    mustRunAfter sortedTasks
 }
 check.dependsOn jacocoTestCoverageVerification
 
