@@ -61,7 +61,7 @@ def write_summary_to_file(coverage_by_module, output_file):
         f.write("|-------------|---------------------------|----------------|\n")
         for result in coverage_by_module:
             f.write(f"| {result['module']} | {result['instruction_coverage']:.2f} | {result['missed_classes']} |\n")
-        f.write("\n**Note**: the module with the name `test` represents the aggregated coverage of all executed test modules.")
+        f.write("\n**Note**: the module with the name `aggregated` represents the aggregated coverage of all executed test modules.")
 
 
 if __name__ == "__main__":
