@@ -24,33 +24,34 @@ Here is a short overview on the advantages and disadvantages of the provided mec
 | Method               | Advantages                                         | Disadvantages                                                 |
 +======================+====================================================+===============================================================+
 | Password             | - easy to use                                      | - slow with external authentication                           |
-|                      |                                                    | - potentially very insecure (when user has weak password)     |
+|                      |                                                    | - insecure (when user has weak password)                      |
 |                      |                                                    | - not available to all universities                           |
 +----------------------+----------------------------------------------------+---------------------------------------------------------------+
 | User Token           | - easy to use, simple setup and revocation         | - dangerous if it gets leaked                                 |
 |                      | - useful for repository access via API             |                                                               |
-|                      | - very secure                                      |                                                               |
+|                      | - secure                                           |                                                               |
 +----------------------+----------------------------------------------------+---------------------------------------------------------------+
 | Participation Token  | - easy to use, no setup needed                     | - only usable for one repository                              |
-|                      | - very limited access scope                        |                                                               |
-|                      | - very secure                                      |                                                               |
+|                      | - limited access scope to a single exercise        |                                                               |
+|                      | - secure                                           |                                                               |
 +----------------------+----------------------------------------------------+---------------------------------------------------------------+
-| SSH                  | - very secure                                      | - slower than HTTPS                                           |
+| SSH                  | - secure                                           | - slower than HTTPS                                           |
 |                      | - industry standard for use with git               | - can be difficult to use                                     |
 |                      | - easy to use after correct set up                 | - can be overwhelming for new users                           |
 +----------------------+----------------------------------------------------+---------------------------------------------------------------+
 
-The participation token is the preferred authentication method for students due to its simplicity, security, and lack of setup requirements.
-While SSH offers strong security, its complexity, setup challenges, and higher computational overhead make it less ideal.
-Password usage is discouraged for security reasons.
-Therefore, the order of authentication mechanisms should be ideally set up in the following order: token, SSH, and lastly password, with the option to disable password authentication entirely.
+The participation token is the recommended authentication method for students due to its simplicity, security, and lack of setup requirements.
+While SSH provides strong security, its complexity and setup challenges may make it less convenient.
+Password authentication remains the default but should be used with caution — admins are encouraged to disable it when possible or enforce strong password policies to enhance security.
+Therefore, the generally suggested order of authentication mechanisms would ideally be: token, SSH, and lastly password.
 
 
 Cloning a repository
 ^^^^^^^^^^^^^^^^^^^^
 
-Using the chosen mechanism, you can use Sourcetree, git from the terminal, or any client you like to clone your Git repository.
+Using the chosen mechanism, you can use `Tower <https://www.git-tower.com/>`_, `git from the terminal <https://git-scm.com/downloads/>`_, or `any other client <https://git-scm.com/downloads/guis/>`_ you like to clone your Git repository.
 These instructions show you how to clone your repository using Git from the terminal.
+
 
 From the exercise view, click the code button to display the Clone dialog.
 Copy the clone URL (either the SSH format or the HTTPS, with or without token).
@@ -63,21 +64,21 @@ Clone over HTTPS:
 
 .. code-block:: bash
 
-   git clone https://username@artemis.cit.tum.de/course/documentation-tests.git
+   git clone https://username@artemis.tum.de/course/documentation-tests.git
 
 
 Clone over HTTPS with access token:
 
 .. code-block:: bash
 
-   git clone https://username:<your-access-token>@artemis.cit.tum.de/course/documentation-tests.git
+   git clone https://username:<your-access-token>@artemis.tum.de/course/documentation-tests.git
 
 
 Clone over SSH:
 
 .. code-block:: bash
 
-   git clone ssh://git@artemis.cit.tum.de/course/documentation-tests.git
+   git clone ssh://git@artemis.tum.de/course/documentation-tests.git
 
 
 If the clone was successful, a new sub-directory appears on your local drive.
