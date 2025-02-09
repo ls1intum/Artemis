@@ -89,7 +89,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
-      if: ${{ env.  }}
+      if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
