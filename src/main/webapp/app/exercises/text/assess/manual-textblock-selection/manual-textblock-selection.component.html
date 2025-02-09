@@ -1,6 +1,6 @@
 @for (group of textBlockRefGroups; track group) {
     @if (group.singleRef) {
-        <jhi-textblock-assessment-card
+        <jhi-text-block-assessment-card
             [textBlockRef]="group.singleRef"
             [selected]="selectedRef === group.singleRef"
             (didSelect)="selectedRef = $event; selectedRefChange.emit($event)"

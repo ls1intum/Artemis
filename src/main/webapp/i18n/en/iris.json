@@ -18,6 +18,10 @@
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this programming exercise"
                     },
+                    "lecture": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this lecture"
+                    },
                     "course": {
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this course"
@@ -26,10 +30,15 @@
                 "subSettings": {
                     "chatSettings": "Chat Settings",
                     "textExerciseChatSettings": "Text Exercise Chat Settings",
+                    "lectureChatSettings": "Lecture Chat Settings",
                     "courseChatSettings": "Course Chat Settings",
                     "lectureIngestionSettings": {
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
+                    },
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "Send FAQs To Pyris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "proactivityBuildFailedEventEnabled": {
@@ -110,8 +119,10 @@
                 "lectureUnitError": "Error while sending lecture unit to Pyris",
                 "lectureSuccess": "Lecture ingestion in Pyris started successfully",
                 "lectureError": "Error while sending lecture to Pyris",
-                "allLecturesSuccess": "All lectures ingestion in Pyris started successfully",
+                "allLecturesSuccess": "All lecture ingestion in Pyris started successfully",
+                "allFaqsSuccess": "All Faq ingestion in Pyris started successfully",
                 "allLecturesError": "Error while sending all lectures to Pyris",
+                "allFaqsError": "Error while sending all Faqs to Pyris",
                 "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
                 "pyrisUnavailable": "Pyris is currently unavailable.",
                 "pyrisError": "An error occurred while getting ingestion state from Pyris."

@@ -19,7 +19,6 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
 import { ArtemisTestModule } from '../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
@@ -42,7 +41,7 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, NgbPaginationMocksModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,

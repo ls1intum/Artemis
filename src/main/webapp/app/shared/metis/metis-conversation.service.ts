@@ -29,8 +29,8 @@ export class MetisConversationService implements OnDestroy {
     private groupChatService = inject(GroupChatService);
     private oneToOneChatService = inject(OneToOneChatService);
     private channelService = inject(ChannelService);
-    protected conversationService = inject(ConversationService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private conversationService = inject(ConversationService);
+    private websocketService = inject(WebsocketService);
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private router = inject(Router);
@@ -76,7 +76,7 @@ export class MetisConversationService implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.subscribedConversationMembershipTopic) {
-            this.jhiWebsocketService.unsubscribe(this.subscribedConversationMembershipTopic);
+            this.websocketService.unsubscribe(this.subscribedConversationMembershipTopic);
             this.subscribedConversationMembershipTopic = undefined;
         }
 
@@ -377,10 +377,10 @@ export class MetisConversationService implements OnDestroy {
         }
 
         const conversationMembershipTopic = this.getConversationMembershipTopic(courseId, userId);
-        this.jhiWebsocketService.subscribe(conversationMembershipTopic);
+        this.websocketService.subscribe(conversationMembershipTopic);
         this.subscribedConversationMembershipTopic = conversationMembershipTopic;
 
-        this.jhiWebsocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
+        this.websocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
             this.onConversationMembershipMessageReceived(websocketDTO);
         });
     }
