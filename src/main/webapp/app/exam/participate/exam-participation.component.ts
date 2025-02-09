@@ -264,7 +264,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
-    //Make sure to warn the user before leaving (or reloading) the page in exam mode
+    /**
+     * Make sure to warn the user before leaving (or reloading) the page in exam mode
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
     @HostListener('window:beforeunload', ['$event'])
     beforeUnloadHandler(event: BeforeUnloadEvent) {
         if (this.examStartConfirmed && !this.isOver()) {
