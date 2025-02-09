@@ -1,39 +1,87 @@
 $draggable-width: 15px;
 
+.parent-container {
+    display: flex;
+    flex-direction: column; /* Stack sections vertically */
+    gap: 1rem;
+    position: relative;
+    height: 100vh; /* Ensures full viewport height */
+    overflow: hidden;
+}
+
+/* Center points at the top */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    z-index: 10;
+}
+
+/* Enable resizing */
 .modeling-assessment {
     position: relative;
     display: flex;
-    flex-flow: column nowrap;
-    height: 100%;
+    flex-direction: column;
+    flex-grow: 1;
+    max-height: 80vh; /* Prevent overlapping */
+    min-height: 500px; /* Ensure it doesn’t collapse */
+    overflow-y: auto;
+    margin-bottom: 2rem;
+    scroll-behavior: smooth;
+    resize: vertical; /* ✅ Allows resizing */
+}
 
-    .card-header {
+/* Resizable elements */
+.resizable {
+    display: flex;
+
+    .draggable-right,
+    .draggable-bottom {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        font-size: 1rem;
-        font-weight: 500;
+        justify-content: center;
+        min-width: $draggable-width;
     }
 }
 
-.resizable {
-    $draggable-width: 15px;
-}
-
+/* Ensure the Apollon modeling container takes full height */
 .apollon-container {
-    height: 100%;
     width: 100%;
+    flex-grow: 1;
+    min-height: 500px; /* Prevent shrinking */
 }
 
+/* Allow Apollon row to expand */
 .apollon-row {
     display: flex;
-    height: 100%;
+    flex-grow: 1;
+    min-height: 500px;
 }
 
-/* Target the modeling-assessment class for print media */
+/* Additional Feedback Section */
+#additional-feedback {
+    flex-shrink: 0;
+    margin-top: 1rem;
+}
+
+/* Adjust for Landscape Mode */
+@media screen and (orientation: landscape) {
+    .modeling-assessment {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}
+
+/* Ensure proper printing */
 @media print {
     .modeling-assessment {
-        /* Adjust the size of the container to fit the print area */
         height: auto !important;
         max-height: 100vh !important;
     }
