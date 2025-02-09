@@ -62,9 +62,7 @@ jobs:
       DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY}}
       DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY}}
       DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
-
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
-
       HEALTH_CHECK_URL: "${{vars.DEPLOYMENT_URL}}/management/health"
       WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
 
@@ -86,7 +84,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
-      - name: Setup SSH and Test Connectivity
+      - name: Setup SSH and Known Hosts
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
           SSH_AUTH_SOCK: /tmp/ssh_agent_${{ github.run_id }}.sock  
@@ -95,33 +93,17 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # Debug key format (safely)
-          echo "Checking key format..."
-          echo "$DEPLOYMENT_SSH_KEY" | grep -c "BEGIN RSA PRIVATE KEY" || echo "No BEGIN line found"
-          echo "$DEPLOYMENT_SSH_KEY" | grep -c "END RSA PRIVATE KEY" || echo "No END line found"
-    
-          # Write key with proper formatting
+          # Write private key
           echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-          # Verify key file format (safely)
-          echo "Key file structure:"
-          grep "BEGIN" ~/.ssh/id_rsa || echo "No BEGIN line in file"
-          grep "END" ~/.ssh/id_rsa || echo "No END line in file"
-          
-          # Create SSH config
-          cat > ~/.ssh/config << EOF
-          Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null
-          EOF
-          chmod 600 ~/.ssh/config
+          # Write known hosts
+          echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-          # Test SSH with debug output
+          # Test SSH connection
           echo "Testing SSH connection..."
-          ssh -v -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "test"'
+          ssh -v -i ~/.ssh/id_rsa $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "test"'
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
@@ -129,7 +111,7 @@ jobs:
           echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
           for node in $HOSTS_SPACE_SEPARATED
           do
-              SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
+              SSH="ssh -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
               echo "[INFO] Stop artemis.service on ${node} ..."
               $SSH sudo systemctl stop artemis
           done
@@ -137,13 +119,15 @@ jobs:
       - name: Phase 1 - Deploy to Primary Node
         run: |
           echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
-          SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
+          SSH="ssh -o LogLevel=ERROR -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
+          
+          # Store the war file name
+          WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
           
           # Check if artifacts directory contains the WAR file
           echo "[INFO] Checking local artifacts..."
           ls -la artifacts/
-          WAR_COUNT=$(ls -1 artifacts/*.war 2>/dev/null | wc -l)
-          if [ "$WAR_COUNT" -eq 0 ]; then
+          if [ ! -f "$WAR_FILE" ]; then
             echo "Error: No WAR file found in artifacts directory"
             exit 1
           fi
@@ -153,13 +137,13 @@ jobs:
           $SSH "if [ ! -d /opt/artemis ]; then echo 'Error: /opt/artemis directory does not exist'; exit 1; fi"
           $SSH "if [ ! -w /opt/artemis ]; then echo 'Error: /opt/artemis directory is not writable'; exit 1; fi"
           
-          # Remove old backup if exists (don't fail if it doesn't exist)
+          # Remove old backup if exists
           echo "[INFO] Remove old artemis.war ..."
           $SSH "rm -f /opt/artemis/artemis.war.old"
           
           # Copy new artemis.war to node
           echo "[INFO] Copy new artemis.war ..."
-          scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
+          scp -v -i ~/.ssh/id_rsa "$WAR_FILE" $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
           if [ $? -ne 0 ]; then
             echo "Error: Failed to copy WAR file"
             exit 1
@@ -201,13 +185,14 @@ jobs:
               sleep 10
             fi
           done
+
       - name: Phase 2 - Deploy to Secondary Nodes
         run: |
           HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
+          WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
           
           echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
 
-          # Deploy to secondary nodes
           for node in $HOSTS_SPACE_SEPARATED
           do
             echo "##################################################################################################"
@@ -219,24 +204,24 @@ jobs:
 
             # Remove old artemis.war
             echo "[INFO] Remove old artemis.war ..."
-            $SSH rm /opt/artemis/artemis.war.old
+            $SSH "rm -f /opt/artemis/artemis.war.old"
 
             # Copy new artemis.war to node
             echo "[INFO] Copy new artemis.war ..."
-            scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_rsa artifacts/*.war $DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new
+            scp -i ~/.ssh/id_rsa "$WAR_FILE" "$DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new"
 
             # Stop Artemis-Service on node
             echo "[INFO] Stop artemis.service ..."
-            $SSH sudo systemctl stop artemis
+            $SSH "sudo systemctl stop artemis"
 
             # Replace old artemis.war
             echo "[INFO] Rename old artemis.war ..."
-            $SSH mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+            $SSH "mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old || true"
             echo "[INFO] Rename new artemis.war ..."
-            $SSH mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+            $SSH "mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war"
 
             # Start Artemis-Service on node
             echo "[INFO] Start artemis.service ..."
-            $SSH sudo systemctl start artemis
+            $SSH "sudo systemctl start artemis"
           done
       
