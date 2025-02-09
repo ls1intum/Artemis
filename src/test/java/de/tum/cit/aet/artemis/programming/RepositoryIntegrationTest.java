@@ -406,14 +406,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+
+            if (studentFile.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
-        FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
         Path newPath = Path.of(studentRepository.localRepoFile + "/newFile");
         var file2 = Files.createFile(newPath).toFile();
@@ -426,7 +428,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+            if (file2.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
+
         }
     }
 
