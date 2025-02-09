@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,6 +77,9 @@ public class ProgrammingExerciseParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
+
+    @Value("${server.url}")
+    private String serverUrl;
 
     private final ParticipationRepository participationRepository;
 
@@ -203,8 +207,9 @@ public class ProgrammingExerciseParticipationResource {
 
         URI participationURL;
         try {
-            // remove potential username and password from the repo url
-            participationURL = new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
+            var serverUrl = new URI(this.serverUrl);
+            // remove potential username and password from the repo url + change protocol to match stored urls
+            participationURL = new URI(serverUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
         }
         catch (URISyntaxException e) {
             throw new BadRequestAlertException("Failed to sanitize repository URL: " + e.getMessage(), ENTITY_NAME, "invalidUriSanitization");
