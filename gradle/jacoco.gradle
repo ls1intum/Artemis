@@ -162,9 +162,9 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
 
     def sourcePath;
     if (moduleName == "aggregated") {
-        sourcePath = "$BasePath/**/*.java"
+        sourcePath = "$BasePath/**/*.class"
     } else {
-        sourcePath = "$BasePath/$moduleName/**/*.java"
+        sourcePath = "$BasePath/$moduleName/**/*.class"
     }
     task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
     task.classDirectories.setFrom(
