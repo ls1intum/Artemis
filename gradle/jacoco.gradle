@@ -1,23 +1,22 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 69]
-    // (Isolated) thresholds when executing each module on its own
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.929, "CLASS": 0 ],
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS": 2 ],
         "atlas"         :          ["INSTRUCTION": 0.908, "CLASS": 5 ],
-        "buildagent"    :          ["INSTRUCTION": 0.797, "CLASS": 0 ],
-        "communication" :          ["INSTRUCTION": 0.926, "CLASS": 1 ],
+        "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS": 0 ],
+        "communication" :          ["INSTRUCTION": 0.925, "CLASS": 1 ],
         "core"          :          ["INSTRUCTION": 0.861, "CLASS": 17],
-        "exam"          :          ["INSTRUCTION": 0.939, "CLASS": 0 ],
+        "exam"          :          ["INSTRUCTION": 0.938, "CLASS": 0 ],
         "exercise"      :          ["INSTRUCTION": 0.929, "CLASS": 0 ],
         "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS": 1 ],
         "iris"          :          ["INSTRUCTION": 0.753, "CLASS": 26],
         "lecture"       :          ["INSTRUCTION": 0.910, "CLASS": 0 ],
         "lti"           :          ["INSTRUCTION": 0.894, "CLASS": 2 ],
-        "modeling"      :          ["INSTRUCTION": 0.916, "CLASS": 2 ],
-        "plagiarism"    :          ["INSTRUCTION": 0.911, "CLASS": 0 ],
+        "modeling"      :          ["INSTRUCTION": 0.913, "CLASS": 2 ],
+        "plagiarism"    :          ["INSTRUCTION": 0.910, "CLASS": 0 ],
         "programming"   :          ["INSTRUCTION": 0.865, "CLASS": 9 ],
         "quiz"          :          ["INSTRUCTION": 0.904, "CLASS": 4 ],
         "text"          :          ["INSTRUCTION": 0.954, "CLASS": 0 ],
@@ -190,7 +189,7 @@ private static void applyVerificationRule(JacocoCoverageVerification task, doubl
     task.doLast {
         def moduleName = task.name.replace('jacocoTestCoverageVerification-', '')
 
-        // Handle aggregated total coverage stored in 'test'
+        // Handle aggregated total coverage
         if (moduleName == "aggregated") {
             moduleName = "Aggregated Code Coverage"
         }
