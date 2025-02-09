@@ -184,9 +184,14 @@ public class ProgrammingExerciseParticipationResource {
         String decodedUrl = URLDecoder.decode(encodedRepoUrl, StandardCharsets.UTF_8);
         var repoUrl = new URI(decodedUrl);
 
-        // remove potential username and password from the repo url + change ssh protocol to https
-        var participationURL = new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
-
+        URI participationURL;
+        try {
+            // remove potential username and password from the repo url + change ssh protocol to https
+            participationURL = new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
+        }
+        catch (URISyntaxException e) {
+            throw new IllegalArgumentException("The provided URL does not have a valid URL format");
+        }
         // find participation by url
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(participationURL.toString())
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationURL.toString()));
@@ -199,7 +204,7 @@ public class ProgrammingExerciseParticipationResource {
         // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
         // so we set the test cases to empty to avoid lazy loading
         if (participationWithLatestSubmissionLatestResultFeedbacks.getSubmissions().isEmpty()) {
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().getTestCases().clear();
+            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().setTestCases(Set.of());
         }
         else {
             // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name

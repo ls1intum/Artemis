@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,7 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -39,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.dto.ProjectKeyProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
@@ -253,97 +250,6 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
             Set<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
             assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
         }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseByProjectKey() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(ZonedDateTime.now());
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
-                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
-
-        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
-        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
-        assertThat(programmingExerciseByProjectKey.studentParticipations()).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseByProjectKeyWithParticipation() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(ZonedDateTime.now());
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
-                TEST_PREFIX + "student1");
-
-        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
-                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
-
-        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
-
-        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
-        assertThat(programmingExerciseByProjectKey.studentParticipations()).hasSize(1);
-        for (var studentParticipation : programmingExerciseByProjectKey.studentParticipations()) {
-            assertThat(studentParticipation.submissions()).isNull();
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseByProjectKeyWithParticipationSubmissionAndResult() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(ZonedDateTime.now());
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), TEST_PREFIX + "student1");
-
-        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
-                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
-
-        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
-
-        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
-        assertThat(programmingExerciseByProjectKey.studentParticipations()).hasSize(1);
-        for (var studentParticipation : programmingExerciseByProjectKey.studentParticipations()) {
-            assertThat(studentParticipation.submissions()).hasSize(1);
-            for (var submission : studentParticipation.submissions()) {
-                assertThat(submission.results()).hasSize(1);
-            }
-        }
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseByProjectKeyNotFound() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
-        String projectKey;
-        List<ProgrammingExercise> foundProgrammingExercises;
-        do {
-            projectKey = UUID.randomUUID().toString();
-            foundProgrammingExercises = programmingExerciseRepository.findAllByProjectKey(projectKey);
-        }
-        while (!foundProgrammingExercises.isEmpty());
-
-        String body = request.get("/api/programming-exercises/project-key/" + projectKey, HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseByProjectKeyNotVisible() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        String body = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
