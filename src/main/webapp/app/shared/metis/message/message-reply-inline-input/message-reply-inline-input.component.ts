@@ -18,7 +18,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
-    protected localStorageService = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
 
     warningDismissed = false;
 

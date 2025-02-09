@@ -40,8 +40,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService);
-    quizExerciseService = inject(QuizExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected quizExerciseService = inject(QuizExerciseService); // needed in html code
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
@@ -90,10 +90,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Get the id of the quiz exercise
-     * @param index the index of the quiz (not used at the moment)
+     * @param _index the index of the quiz (not used at the moment)
      * @param item the quiz exercise of which the id should be returned
      */
-    trackId(index: number, item: QuizExercise) {
+    trackId(_index: number, item: QuizExercise) {
         return item.id!;
     }
 
@@ -107,8 +107,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Convert seconds to full minutes
-     * @param seconds {number} the number of seconds
-     * @returns {number} the number of full minutes
+     * @param seconds the number of seconds
+     * @returns the number of full minutes
      */
     fullMinutesForSeconds(seconds: number) {
         return Math.floor(seconds / 60);
