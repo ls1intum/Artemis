@@ -79,7 +79,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
-    protected exerciseService = inject(ExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private courseExerciseService = inject(CourseExerciseService);
     private accountService = inject(AccountService);
