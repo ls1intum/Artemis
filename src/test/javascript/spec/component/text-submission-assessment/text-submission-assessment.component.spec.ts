@@ -6,8 +6,8 @@ import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
+import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
+import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -149,8 +149,8 @@ describe('TextSubmissionAssessmentComponent', () => {
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
-                MockComponent(TextblockAssessmentCardComponent),
-                MockComponent(TextblockFeedbackEditorComponent),
+                MockComponent(TextBlockAssessmentCardComponent),
+                MockComponent(TextBlockFeedbackEditorComponent),
                 MockComponent(ManualTextblockSelectionComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockComponent(ConfirmIconComponent),

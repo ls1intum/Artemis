@@ -1,0 +1,503 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "RuboCop",
+          "version": "1.71.0",
+          "informationUri": "https://rubocop.org",
+          "rules": [
+            {
+              "id": "Bundler/GemComment",
+              "name": "BundlerGemComment",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Add a comment describing each gem.",
+                "tags": [
+                  "bundler"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_bundler.html#bundlergemcomment"
+              },
+              "shortDescription": {
+                "text": "Add a comment describing each gem."
+              },
+              "fullDescription": {
+                "text": "Add a comment describing each gem."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_bundler.html#bundlergemcomment",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_bundler.html#bundlergemcomment",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_bundler.html#bundlergemcomment)"
+              }
+            },
+            {
+              "id": "Style/ConstantVisibility",
+              "name": "StyleConstantVisibility",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Check that class- and module constants have visibility declarations.",
+                "tags": [
+                  "style"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_style.html#styleconstantvisibility"
+              },
+              "shortDescription": {
+                "text": "Check that class- and module constants have visibility declarations."
+              },
+              "fullDescription": {
+                "text": "Check that class- and module constants have visibility declarations."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_style.html#styleconstantvisibility",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_style.html#styleconstantvisibility",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_style.html#styleconstantvisibility)"
+              }
+            },
+            {
+              "id": "Metrics/MethodLength",
+              "name": "MetricsMethodLength",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Avoid methods longer than 10 lines of code.",
+                "tags": [
+                  "metrics"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmethodlength"
+              },
+              "shortDescription": {
+                "text": "Avoid methods longer than 10 lines of code."
+              },
+              "fullDescription": {
+                "text": "Avoid methods longer than 10 lines of code."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmethodlength",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmethodlength",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_metrics.html#metricsmethodlength)"
+              }
+            },
+            {
+              "id": "Style/ImplicitRuntimeError",
+              "name": "StyleImplicitRuntimeError",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Use `raise` or `fail` with an explicit exception class and message, rather than just a message.",
+                "tags": [
+                  "style"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_style.html#styleimplicitruntimeerror"
+              },
+              "shortDescription": {
+                "text": "Use `raise` or `fail` with an explicit exception class and message, rather than just a message."
+              },
+              "fullDescription": {
+                "text": "Use `raise` or `fail` with an explicit exception class and message, rather than just a message."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_style.html#styleimplicitruntimeerror",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_style.html#styleimplicitruntimeerror",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_style.html#styleimplicitruntimeerror)"
+              }
+            },
+            {
+              "id": "Style/MethodCallWithArgsParentheses",
+              "name": "StyleMethodCallWithArgsParentheses",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Use parentheses for method calls with arguments.",
+                "tags": [
+                  "style"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_style.html#stylemethodcallwithargsparentheses"
+              },
+              "shortDescription": {
+                "text": "Use parentheses for method calls with arguments."
+              },
+              "fullDescription": {
+                "text": "Use parentheses for method calls with arguments."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_style.html#stylemethodcallwithargsparentheses",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_style.html#stylemethodcallwithargsparentheses",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_style.html#stylemethodcallwithargsparentheses)"
+              }
+            },
+            {
+              "id": "Metrics/AbcSize",
+              "name": "MetricsAbcSize",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "A calculated magnitude based on number of assignments, branches, and conditions.",
+                "tags": [
+                  "metrics"
+                ]
+              },
+              "shortDescription": {
+                "text": "A calculated magnitude based on number of assignments, branches, and conditions."
+              },
+              "fullDescription": {
+                "text": "A calculated magnitude based on number of assignments, branches, and conditions."
+              }
+            },
+            {
+              "id": "Layout/MultilineAssignmentLayout",
+              "name": "LayoutMultilineAssignmentLayout",
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "precision": "very-high",
+                "description": "Check for a newline after the assignment operator in multi-line assignments.",
+                "tags": [
+                  "layout"
+                ],
+                "queryURI": "https://docs.rubocop.org/rubocop/cops_layout.html#layoutmultilineassignmentlayout"
+              },
+              "shortDescription": {
+                "text": "Check for a newline after the assignment operator in multi-line assignments."
+              },
+              "fullDescription": {
+                "text": "Check for a newline after the assignment operator in multi-line assignments."
+              },
+              "helpUri": "https://docs.rubocop.org/rubocop/cops_layout.html#layoutmultilineassignmentlayout",
+              "help": {
+                "text": "More info: https://docs.rubocop.org/rubocop/cops_layout.html#layoutmultilineassignmentlayout",
+                "markdown": "[More info](https://docs.rubocop.org/rubocop/cops_layout.html#layoutmultilineassignmentlayout)"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "Bundler/GemComment",
+          "ruleIndex": 0,
+          "message": {
+            "text": "Bundler/GemComment: Missing gem description comment."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/Gemfile",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 3,
+                  "endColumn": 26
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Bundler/GemComment",
+          "ruleIndex": 0,
+          "message": {
+            "text": "Bundler/GemComment: Missing gem description comment."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/Gemfile",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 1,
+                  "endColumn": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ConstantVisibility",
+          "ruleIndex": 1,
+          "message": {
+            "text": "Style/ConstantVisibility: Explicitly make `ITERATIONS` public or private using either `#public_constant` or `#private_constant`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/client.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 3,
+                  "endColumn": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ConstantVisibility",
+          "ruleIndex": 1,
+          "message": {
+            "text": "Style/ConstantVisibility: Explicitly make `DATES_LENGTH_MIN` public or private using either `#public_constant` or `#private_constant`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/client.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 3,
+                  "endColumn": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ConstantVisibility",
+          "ruleIndex": 1,
+          "message": {
+            "text": "Style/ConstantVisibility: Explicitly make `DATES_LENGTH_MAX` public or private using either `#public_constant` or `#private_constant`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/client.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 3,
+                  "endColumn": 23
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Metrics/MethodLength",
+          "ruleIndex": 2,
+          "message": {
+            "text": "Metrics/MethodLength: Method has too many lines. [12/10]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/client.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 3,
+                  "endColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ImplicitRuntimeError",
+          "ruleIndex": 3,
+          "message": {
+            "text": "Style/ImplicitRuntimeError: Use `raise` with an explicit exception class and message, rather than just a message."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/context.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 5,
+                  "endColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/MethodCallWithArgsParentheses",
+          "ruleIndex": 4,
+          "message": {
+            "text": "Style/MethodCallWithArgsParentheses: Use parentheses for method calls with arguments."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/context.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 5,
+                  "endColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ImplicitRuntimeError",
+          "ruleIndex": 3,
+          "message": {
+            "text": "Style/ImplicitRuntimeError: Use `raise` with an explicit exception class and message, rather than just a message."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/context.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 5,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/MethodCallWithArgsParentheses",
+          "ruleIndex": 4,
+          "message": {
+            "text": "Style/MethodCallWithArgsParentheses: Use parentheses for method calls with arguments."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/context.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 5,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Metrics/AbcSize",
+          "ruleIndex": 5,
+          "message": {
+            "text": "Metrics/AbcSize: Assignment Branch Condition size for merge is too high. [<18, 15, 12> 26.32/17]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/merge_sort.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 3,
+                  "endColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Metrics/MethodLength",
+          "ruleIndex": 2,
+          "message": {
+            "text": "Metrics/MethodLength: Method has too many lines. [27/10]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/merge_sort.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 3,
+                  "endColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Style/ConstantVisibility",
+          "ruleIndex": 1,
+          "message": {
+            "text": "Style/ConstantVisibility: Explicitly make `DATES_SIZE_THRESHOLD` public or private using either `#public_constant` or `#private_constant`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/policy.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 3,
+                  "endColumn": 27
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "Layout/MultilineAssignmentLayout",
+          "ruleIndex": 6,
+          "message": {
+            "text": "Layout/MultilineAssignmentLayout: Right hand side of multi-line assignment is on the same line as the assignment operator `=`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../assignment/src/policy.rb",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 5,
+                  "endColumn": 24
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
