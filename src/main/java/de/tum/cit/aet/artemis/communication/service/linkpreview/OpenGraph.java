@@ -1,29 +1,21 @@
-package de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser;
+package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * OpenGraph is a class that represents the OpenGraph data of a website.
+ * OpenGraph is a record that represents the OpenGraph data of a website.
  * It contains a map of all properties and their content.
  * The content is a list of Content objects.
  * The Content object contains the value of the property and extra data.
  * The extra data is a map of all extra data and their values.
  */
-public class OpenGraph {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record OpenGraph(Map<String, List<Content>> openGraphMap) {
 
-    private final Map<String, List<Content>> openGraphMap;
-
-    OpenGraph(Map<String, List<Content>> openGraphMap) {
-        this.openGraphMap = openGraphMap;
-    }
-
-    public Set<String> getAllProperties() {
-        return openGraphMap.keySet();
-    }
-
-    public Content getContentOf(String property) {
+    Content getContentOf(String property) {
         return getContentOf(property, 0);
     }
 
@@ -35,7 +27,7 @@ public class OpenGraph {
      * @param index    the index
      * @return the content of the property at the given index
      */
-    public Content getContentOf(String property, int index) {
+    Content getContentOf(String property, int index) {
         if (openGraphMap.get(property) == null) {
             return null;
         }

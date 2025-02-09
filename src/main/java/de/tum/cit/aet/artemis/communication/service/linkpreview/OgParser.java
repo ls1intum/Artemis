@@ -1,25 +1,18 @@
-package de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser;
+package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser.OgMetaElement;
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
-
 /**
  * Parses the Open Graph meta tags of a website.
  */
-public class OgParser {
+class OgParser {
 
     private final OgMetaElementHtmlParser ogMetaElementHtmlParser;
 
-    public OgParser() {
-        this.ogMetaElementHtmlParser = new OgMetaElementHtmlParser();
-    }
-
-    public OgParser(OgMetaElementHtmlParser ogMetaElementHtmlParser) {
+    OgParser(OgMetaElementHtmlParser ogMetaElementHtmlParser) {
         this.ogMetaElementHtmlParser = ogMetaElementHtmlParser;
     }
 
@@ -29,7 +22,7 @@ public class OgParser {
      * @param url the url
      * @return the OpenGraph data of the given url
      */
-    public OpenGraph getOpenGraphOf(String url) {
+    OpenGraph getOpenGraphOf(String url) {
         final List<OgMetaElement> ogMetaElements = ogMetaElementHtmlParser.getOgMetaElementsFrom(url);
 
         final Map<String, List<Content>> openGraphMap = convertOgMetaElementsToOpenGraphMap(ogMetaElements);
@@ -41,8 +34,8 @@ public class OgParser {
         final Map<String, List<Content>> openGraphMap = new HashMap<>();
 
         for (OgMetaElement ogMetaElement : ogMetaElements) {
-            final String property = ogMetaElement.getProperty();
-            final String contentValue = ogMetaElement.getContent();
+            final String property = ogMetaElement.property();
+            final String contentValue = ogMetaElement.content();
 
             if (openGraphMap.containsKey(property)) {
                 updateContents(ogMetaElement, openGraphMap.get(property), contentValue);
@@ -60,17 +53,17 @@ public class OgParser {
             setExtraDataOnLastContent(ogMetaElement, contents, contentValue);
             return;
         }
-        contents.add(new Content(contentValue));
+        contents.add(new Content(contentValue, null));
     }
 
     private void setExtraDataOnLastContent(OgMetaElement ogMetaElement, List<Content> contents, String contentValue) {
         final Content lastContent = contents.getLast();
-        lastContent.setExtraData(ogMetaElement.getExtraData(), contentValue);
+        lastContent.addExtraData(ogMetaElement.extraData(), contentValue);
     }
 
     private List<Content> getNewContents(String content) {
         final List<Content> contents = new ArrayList<>();
-        contents.add(new Content(content));
+        contents.add(new Content(content, null));
         return contents;
     }
 }
