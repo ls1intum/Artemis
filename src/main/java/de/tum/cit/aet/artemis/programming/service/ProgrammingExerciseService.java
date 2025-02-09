@@ -46,7 +46,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -122,6 +121,9 @@ public class ProgrammingExerciseService {
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_SWIFT = Pattern.compile(PACKAGE_NAME_REGEX_FOR_SWIFT);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_GO = Pattern.compile(PACKAGE_NAME_REGEX_FOR_GO);
+
+    // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
+    private static final int MIN_DOCKER_MEMORY = 6;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -1102,11 +1104,16 @@ public class ProgrammingExerciseService {
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.createDockerRunConfig(dockerFlagsDTO.network(), dockerFlagsDTO.env(), dockerFlagsDTO.cpuCount(),
-                dockerFlagsDTO.memory(), dockerFlagsDTO.memorySwap());
+        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY) {
+            throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY + "MB", "Exercise", "memoryLimitInvalid");
+        }
 
-        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
-            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        if (dockerFlagsDTO.cpuCount() <= 0) {
+            throw new BadRequestAlertException("The cpu count is invalid. The minimum cpu count is 1", "Exercise", "cpuCountInvalid");
+        }
+
+        if (dockerFlagsDTO.memorySwap() < 0) {
+            throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
     }
 }
