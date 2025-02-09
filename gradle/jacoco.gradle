@@ -1,7 +1,6 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 69]
-    // (Isolated) thresholds when executing each module on its own
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.929, "CLASS": 0 ],
