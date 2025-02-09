@@ -89,7 +89,7 @@ jobs:
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
       if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
-        || github.event.repository.default_branch != github.ref_name}}
+        || github.event.repository.default_branch == github.ref_name}}
       run: |
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
