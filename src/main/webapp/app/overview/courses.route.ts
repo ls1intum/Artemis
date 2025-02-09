@@ -124,7 +124,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.quizExercise',
                 },
-                loadChildren: () => import('../exercises/quiz/participate/quiz-participation.route').then((m) => m.quizParticipationRoute),
+                loadChildren: () => import('../exercises/quiz/participate/quiz-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId',
