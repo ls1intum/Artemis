@@ -36,6 +36,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
@@ -531,6 +532,21 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_ADDED_TEXT);
+        }
+
+        @Test
+        void shouldNotifyUserAboutSoonExpiringVcsAccessToken() {
+            user.setVcsAccessToken("token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().minusHours(5).plusDays(7));
+            userTestRepository.save(user);
+
+            userTokenExpiryNotificationService.sendTokenExpirationNotifications();
+
+            sentNotifications = notificationTestRepository.findAll();
+            assertThat(sentNotifications).hasSize(1);
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT);
         }
 
         @Test
