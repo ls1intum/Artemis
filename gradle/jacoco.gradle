@@ -72,22 +72,11 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    // Only run full coverage when no specific/all modules set
-    enabled = reportedModules.size() == 0 || reportedModules.size() == (ModuleCoverageThresholds.size() + 1) // +1 for aggregated
+    // Handled by each task itself
+    enabled = false
 
-    classDirectories.setFrom(
-        files(classDirectories.files.collect { classDir ->
-            project.fileTree(classDir) {
-                excludes=ignoredDirectories
-            }
-        })
-    )
-
-    def minInstructionCoveredRatio = AggregatedCoverageThresholds["INSTRUCTION"] as double
-    def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
-    applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
-
-    if (enabled) {
+    def verifyCoverage = reportedModules.size() == 0 || reportedModules.size() == (ModuleCoverageThresholds.size() + 1) // +1 for aggregated
+    if (verifyCoverage) {
         def sortedTasks = reportedModules
             .sort()
             .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
