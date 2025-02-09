@@ -204,7 +204,7 @@ private static void applyVerificationRule(JacocoCoverageVerification task, doubl
     task.doLast {
         def moduleName = task.name.replace('jacocoTestCoverageVerification-', '')
 
-        // Handle aggregated total coverage stored in 'test'
+        // Handle aggregated total coverage
         if (moduleName == "aggregated") {
             moduleName = "Aggregated Code Coverage"
         }
