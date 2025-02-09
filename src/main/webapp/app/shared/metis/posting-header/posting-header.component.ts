@@ -54,8 +54,8 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
 
-    protected metisService: MetisService = inject(MetisService);
-    protected accountService: AccountService = inject(AccountService);
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
 
     isPostResolved = computed<boolean>(() => {
         const posting = this.posting();
