@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
@@ -26,8 +26,6 @@ describe('AffectedStudentsModalComponent', () => {
         { participationId: 102, firstName: 'I', lastName: 'B', login: 'IB', repositoryURI: 'repo2' },
     ];
 
-    const groupFeedback = false;
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), AffectedStudentsModalComponent],
@@ -50,7 +48,6 @@ describe('AffectedStudentsModalComponent', () => {
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
-        fixture.componentRef.setInput('groupFeedback', groupFeedback);
         fixture.detectChanges();
     });
 

@@ -3,6 +3,8 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
+    IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -18,9 +20,11 @@ export abstract class IrisSettings implements BaseEntity {
     type: IrisSettingsType;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
 }
 
 export class IrisGlobalSettings implements IrisSettings {
@@ -28,9 +32,11 @@ export class IrisGlobalSettings implements IrisSettings {
     type = IrisSettingsType.GLOBAL;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
 }
 
 export class IrisCourseSettings implements IrisSettings {
@@ -39,9 +45,11 @@ export class IrisCourseSettings implements IrisSettings {
     courseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
+    irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
 }
 
 export class IrisExerciseSettings implements IrisSettings {

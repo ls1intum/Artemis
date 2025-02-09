@@ -128,7 +128,7 @@ public class ResultService {
 
     private static final int MAX_FEEDBACK_IDS = 5;
 
-    private static final double SIMILARITY_THRESHOLD = 0.9;
+    private static final double SIMILARITY_THRESHOLD = 0.7;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
