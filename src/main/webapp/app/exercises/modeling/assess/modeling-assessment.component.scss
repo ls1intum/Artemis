@@ -1,95 +1,39 @@
 $draggable-width: 15px;
 
-.parent-container {
-    display: flex;
-    flex-direction: column; /* Stack sections vertically */
-    gap: 1rem;
-    position: relative;
-    height: 100vh; /* Ensures full viewport height */
-    overflow: hidden;
-}
-
-/* Center points at the top */
-.card-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-size: 1rem;
-    font-weight: 500;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    z-index: 10;
-}
-
-/* Enable resizing */
 .modeling-assessment {
     position: relative;
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    max-height: 80vh;
-    min-height: auto;
-    overflow-y: auto;
-}
-.modeling-assessment input {
-    opacity: 1;
-    visibility: visible;
-    display: block;
-}
-#modeling-assessment-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100px; /* Ensure container is big enough */
-    overflow: visible; /* Prevents hidden elements */
-}
+    flex-flow: column nowrap;
+    height: 100%;
 
-/* Resizable elements */
-.resizable {
-    display: flex;
-
-    .draggable-right,
-    .draggable-bottom {
+    .card-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        min-width: $draggable-width;
+        justify-content: space-between;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 500;
     }
 }
 
-/* Ensure the Apollon modeling container takes full height */
-.apollon-container {
-    width: 100%;
-    flex-grow: 1;
-    min-height: 500px; /* Prevent shrinking */
+.resizable {
+    $draggable-width: 15px;
 }
 
-/* Allow Apollon row to expand */
+.apollon-container {
+    height: 100%;
+    width: 100%;
+}
+
 .apollon-row {
     display: flex;
-    flex-grow: 1;
-    min-height: 500px;
+    height: 100%;
 }
 
-/* Additional Feedback Section */
-#additional-feedback {
-    flex-shrink: 0;
-    margin-top: 1rem;
-}
-
-/* Adjust for Landscape Mode */
-@media screen and (orientation: landscape) {
-    .modeling-assessment {
-        max-height: 70vh;
-        overflow-y: auto;
-    }
-}
-
-/* Ensure proper printing */
+/* Target the modeling-assessment class for print media */
 @media print {
     .modeling-assessment {
+        /* Adjust the size of the container to fit the print area */
         height: auto !important;
         max-height: 100vh !important;
     }
