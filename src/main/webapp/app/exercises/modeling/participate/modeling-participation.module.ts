@@ -5,7 +5,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
@@ -23,7 +22,6 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisSharedComponentModule,
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ModelingAssessmentModule,
         ArtemisFullscreenModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
