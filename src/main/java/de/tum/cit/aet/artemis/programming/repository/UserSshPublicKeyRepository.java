@@ -32,5 +32,5 @@ public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSsh
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByUserId(Long id);
+    void deleteAllByUserId(Long userId);
 }

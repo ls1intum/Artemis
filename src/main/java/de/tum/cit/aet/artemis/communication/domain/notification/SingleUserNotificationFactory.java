@@ -68,6 +68,8 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationCreationTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationDeletionTarget;
@@ -211,6 +213,9 @@ public class SingleUserNotificationFactory {
             }
             case VCS_ACCESS_TOKEN_EXPIRED -> {
                 return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_EXPIRED_TITLE, VCS_ACCESS_TOKEN_EXPIRED_TEXT, true, new String[] {});
+            }
+            case VCS_ACCESS_TOKEN_EXPIRES_SOON -> {
+                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE, VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT, true, new String[] {});
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }

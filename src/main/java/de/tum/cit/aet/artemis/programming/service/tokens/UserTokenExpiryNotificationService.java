@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,27 +38,32 @@ public class UserTokenExpiryNotificationService {
     public void sendTokenExpirationNotifications() {
         log.info("Sending Token expiration notifications to single user");
         notifyOnExpiredToken();
+        notifyUserOnUpcomingVcsAccessTokenExpiry();
     }
 
     /**
-     * Notifies the user at the day of key expiry, that the key has expired
+     * Notifies the user at the day of VCS access token expiry
      */
     public void notifyOnExpiredToken() {
-        notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), (user) -> {
-            singleUserNotificationService.notifyUserAboutExpiredVcsAccessToken(user);
-            return null;
-        });
+        notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), singleUserNotificationService::notifyUserAboutExpiredVcsAccessToken);
     }
 
     /**
-     * Notifies users whose SSH keys are expiring within the specified date range, with the notification specified by the
+     * Notifies the user one week before the VCS access tokens expiry
+     */
+    public void notifyUserOnUpcomingVcsAccessTokenExpiry() {
+        notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), singleUserNotificationService::notifyUserAboutSoonExpiringVcsAccessToken);
+    }
+
+    /**
+     * Notifies users whose VCS access tokens are expiring within the specified date range, with the notification specified by the
      * notifyFunction
      *
      * @param fromDate       the start of the expiry date range
      * @param toDate         the end of the expiry date range
      * @param notifyFunction a function to handle user notification
      */
-    private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Function<User, Void> notifyFunction) {
-        userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction::apply);
+    private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Consumer<User> notifyFunction) {
+        userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction);
     }
 }

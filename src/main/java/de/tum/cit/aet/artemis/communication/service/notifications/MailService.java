@@ -57,8 +57,13 @@ public class MailService implements InstantNotificationService {
 
     private static final String REASON = "reason";
 
+    private static final String CONTACT_EMAIL = "contactEmail";
+
     @Value("${server.url}")
     private URL artemisServerUrl;
+
+    @Value("${info.contact}")
+    private String contactEmailAddress;
 
     private final MessageSource messageSource;
 
@@ -258,7 +263,7 @@ public class MailService implements InstantNotificationService {
         context.setVariable(USER, user);
         context.setVariable(NOTIFICATION, notification);
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
-
+        context.setVariable(CONTACT_EMAIL, contactEmailAddress);
         context.setVariable(TIME_SERVICE, this.timeService);
         String subject = messageSource.getMessage(notification.getTitle(), null, context.getLocale());
 
@@ -275,7 +280,6 @@ public class MailService implements InstantNotificationService {
                 context.setVariable(SSH_KEY_EXPIRY_DATE, userSshPublicKey.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
             }
         }
-
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
             setContextForTutorialGroupNotifications(context, notificationType, tutorialGroupNotificationSubject);
         }
@@ -410,6 +414,7 @@ public class MailService implements InstantNotificationService {
             case SSH_KEY_HAS_EXPIRED -> templateEngine.process("mail/notification/sshKeyHasExpiredEmail", context);
             case VCS_ACCESS_TOKEN_ADDED -> templateEngine.process("mail/notification/vcsAccessTokenAddedEmail", context);
             case VCS_ACCESS_TOKEN_EXPIRED -> templateEngine.process("mail/notification/vcsAccessTokenExpiredEmail", context);
+            case VCS_ACCESS_TOKEN_EXPIRES_SOON -> templateEngine.process("mail/notification/vcsAccessTokenExpiresSoonEmail", context);
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };

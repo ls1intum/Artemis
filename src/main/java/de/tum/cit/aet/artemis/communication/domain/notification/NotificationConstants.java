@@ -57,6 +57,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UPDATED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -161,6 +162,8 @@ public class NotificationConstants {
     public static final String VCS_ACCESS_TOKEN_ADDED_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenAdded";
 
     public static final String VCS_ACCESS_TOKEN_EXPIRED_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenExpired";
+
+    public static final String VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenExpiresSoon";
 
     // Texts
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT = "artemisApp.groupNotification.text.liveExamExerciseUpdate";
@@ -305,6 +308,8 @@ public class NotificationConstants {
 
     public static final String VCS_ACCESS_TOKEN_EXPIRED_TEXT = "artemisApp.singleUserNotification.text.vcsAccessTokenExpired";
 
+    public static final String VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT = "artemisApp.singleUserNotification.text.vcsAccessTokenExpiresSoon";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(EXERCISE_SUBMISSION_ASSESSED, EXERCISE_SUBMISSION_ASSESSED_TITLE).put(ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -332,7 +337,8 @@ public class NotificationConstants {
             .put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE).put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE)
             .put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE).put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE)
             .put(SSH_KEY_ADDED, SSH_KEY_ADDED_TITLE).put(SSH_KEY_EXPIRES_SOON, SSH_KEY_EXPIRES_SOON_TITLE).put(SSH_KEY_HAS_EXPIRED, SSH_KEY_HAS_EXPIRED_TITLE)
-            .put(VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_ADDED_TITLE).put(VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRED_TITLE).build();
+            .put(VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_ADDED_TITLE).put(VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRED_TITLE)
+            .put(VCS_ACCESS_TOKEN_EXPIRES_SOON, VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title
