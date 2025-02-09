@@ -14,9 +14,8 @@ import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProgrammingExerciseDockerFlagsComponent } from '../custom-build-plans/programming-exercise-docker-flags/programming-exercise-docker-flags.component';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -33,8 +32,6 @@ import { ProgrammingExerciseDockerFlagsComponent } from '../custom-build-plans/p
         ProgrammingExerciseCustomAeolusBuildPlanComponent,
         KeyValuePipe,
         RemoveKeysPipe,
-        ProgrammingExerciseDockerFlagsComponent,
-        CommonModule,
     ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
@@ -53,7 +50,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
-    dockerFlagsValid: boolean = true;
 
     fieldSubscriptions: (Subscription | undefined)[] = [];
 
@@ -102,7 +98,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     calculateFormValid() {
         const isPackageNameValid = this.isPackageNameValid();
         const isCustomBuildPlanValid = this.isCustomBuildPlanValid();
-        this.formValid = Boolean((this.selectLanguageField.isDisabled || this.selectLanguageField.valid) && isPackageNameValid && isCustomBuildPlanValid && this.dockerFlagsValid);
+        this.formValid = Boolean((this.selectLanguageField.isDisabled || this.selectLanguageField.valid) && isPackageNameValid && isCustomBuildPlanValid);
         this.formValidChanges.next(this.formValid);
     }
 
@@ -136,9 +132,5 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         }
 
         return true;
-    }
-    isValidDockerFlagsChange(isValid: boolean) {
-        this.dockerFlagsValid = isValid;
-        this.calculateFormValid();
     }
 }

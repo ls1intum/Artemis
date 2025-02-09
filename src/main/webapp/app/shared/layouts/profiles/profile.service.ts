@@ -88,6 +88,10 @@ export class ProfileService {
                         profileInfo.buildTimeoutMax = data.buildTimeoutMax;
                         profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
 
+                        profileInfo.defaultContainerCpuCount = data.defaultContainerCpuCount;
+                        profileInfo.defaultContainerMemoryLimitInMB = data.defaultContainerMemoryLimitInMB;
+                        profileInfo.defaultContainerMemorySwapLimitInMB = data.defaultContainerMemorySwapLimitInMB;
+
                         return profileInfo;
                     }),
                 )
