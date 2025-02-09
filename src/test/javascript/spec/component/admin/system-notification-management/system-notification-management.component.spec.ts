@@ -13,7 +13,6 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
 import '@angular/localize/init';
 
 describe('SystemNotificationManagementComponent', () => {
@@ -31,7 +30,7 @@ describe('SystemNotificationManagementComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPaginationMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),
