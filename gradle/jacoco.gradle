@@ -61,6 +61,7 @@ jacocoTestReport {
     }
 
     finalizedBy reportedModules
+        .sort()
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
 }
@@ -81,8 +82,8 @@ jacocoTestCoverageVerification {
     def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
     applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
 
-    // TODO: somehow the report order is in reversed alphabetical order, it would be great if it could be from A to Z
     finalizedBy reportedModules
+        .sort()
         .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
         .findAll { task -> task != null}
 }
