@@ -92,7 +92,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record RepoUrlFeedbackDTO(long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, FeedbackType type, Boolean positive,
-            long testCaseId) {
+            Long testCaseId) {
 
         /**
          * Converts a Feedback into a dto for the endpoint

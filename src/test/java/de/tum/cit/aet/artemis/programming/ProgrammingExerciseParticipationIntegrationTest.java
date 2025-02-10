@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -673,9 +674,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoIdentifierWithSubmissionAndResult() throws Exception {
         var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
+        var testCases = testCaseRepository.findByExerciseId(participation.getExercise().getId()).toArray(ProgrammingExerciseTestCase[]::new);
+
         var earlyResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
+        earlyResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), earlyResult);
         var laterResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
+        participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), laterResult);
         var latestResult = participationUtilService.addResultToParticipation(participation, laterResult.getSubmission());
+        latestResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), latestResult);
 
         var encodedUrl = URLEncoder.encode(extractRepoIdentifier(participation.getRepositoryUri()), StandardCharsets.UTF_8);
         RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl,
@@ -686,11 +692,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
         assertThat(participationDTO.submissions()).hasSize(1);
-        assertThat(participationDTO.submissions().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlSubmissionDTO[]::new)[0].id())
-                .isEqualTo(latestResult.getSubmission().getId());
-        for (var submission : participationDTO.submissions()) {
-            assertThat(submission.results()).hasSize(1);
-            assertThat(submission.results().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlResultDTO[]::new)[0].id()).isEqualTo(latestResult.getId());
+        var submissionDTO = participationDTO.submissions().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlSubmissionDTO[]::new)[0];
+        assertThat(submissionDTO.id()).isEqualTo(latestResult.getSubmission().getId());
+        assertThat(submissionDTO.results()).hasSize(1);
+        var resultDTO = submissionDTO.results().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlResultDTO[]::new)[0];
+        assertThat(resultDTO.id()).isEqualTo(latestResult.getId());
+        assertThat(resultDTO.feedbacks()).isNotEmpty();
+        for (var feedbackDTO : resultDTO.feedbacks()) {
+            assertThat(feedbackDTO.testCaseId()).isNotNull();
         }
 
         assertThat(participationDTO.exercise().testCases()).isNotEmpty();
