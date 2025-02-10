@@ -3,10 +3,6 @@ import { Component, inject } from '@angular/core';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
 import { onError } from 'app/shared/util/global.utils';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,7 +13,7 @@ import { CompetencySearchComponent } from 'app/course/competencies/import/compet
 @Component({
     selector: 'jhi-import-prerequisites',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ArtemisCompetenciesModule, ButtonComponent, TranslateDirective, FormsModule],
+    imports: [ButtonComponent, TranslateDirective, FormsModule, ImportCompetenciesTableComponent, CompetencySearchComponent],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.PREREQUISITE;

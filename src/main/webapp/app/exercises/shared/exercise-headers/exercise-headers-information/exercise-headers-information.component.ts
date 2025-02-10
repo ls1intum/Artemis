@@ -10,14 +10,11 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
-
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { CommonModule } from '@angular/common';

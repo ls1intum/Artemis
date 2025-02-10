@@ -10,7 +10,6 @@ import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-so
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -18,8 +17,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-management-table',

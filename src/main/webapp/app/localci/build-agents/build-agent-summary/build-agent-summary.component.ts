@@ -9,12 +9,9 @@ import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 

@@ -1,5 +1,4 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';

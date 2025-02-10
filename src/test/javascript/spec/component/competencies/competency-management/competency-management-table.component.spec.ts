@@ -11,7 +11,6 @@ import { MockProvider } from 'ng-mocks';
 import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 describe('CompetencyManagementTableComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementTableComponent>;

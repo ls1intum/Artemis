@@ -9,11 +9,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -25,7 +21,7 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    imports: [NgxDatatableModule, SubmissionResultStatusModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule],
+    imports: [NgxDatatableModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);

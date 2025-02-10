@@ -7,7 +7,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
 import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
-
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
@@ -17,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-course-archive',
