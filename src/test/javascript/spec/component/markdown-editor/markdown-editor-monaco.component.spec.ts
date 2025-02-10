@@ -12,7 +12,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CdkDragMove, DragDropModule } from '@angular/cdk/drag-drop';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -30,7 +30,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [MockProvider(FileUploaderService), MockProvider(AlertService)],
-            imports: [FormsModule, NgbNavModule, ArtemisTestModule, ArtemisSharedModule, MockDirective(NgbTooltip), DragDropModule],
+            imports: [FormsModule, NgbNavModule, ArtemisTestModule, MockDirective(NgbTooltip), DragDropModule],
             declarations: [
                 MarkdownEditorMonacoComponent,
                 MockComponent(MonacoEditorComponent),

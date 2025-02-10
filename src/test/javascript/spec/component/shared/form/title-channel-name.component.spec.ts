@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { MockDirective } from 'ng-mocks';
 
@@ -13,7 +13,7 @@ describe('TitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
             providers: [NgForm],
         }).compileComponents();

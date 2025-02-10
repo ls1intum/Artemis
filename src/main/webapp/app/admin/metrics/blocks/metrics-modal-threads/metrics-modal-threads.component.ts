@@ -5,14 +5,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { Thread, ThreadState } from '../../metrics.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisTranslatePipe],
 })
 export class MetricsModalThreadsComponent implements OnInit {
     ThreadState = ThreadState;
