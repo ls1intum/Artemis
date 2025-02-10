@@ -7,7 +7,6 @@ import { PostComponent } from 'app/shared/metis/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/entities/metis/post.model';
 import { post } from '../../../../../helpers/sample/metis-sample-data';
-import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -17,7 +16,7 @@ describe('ConversationThreadSidebarComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule],
+            imports: [],
             declarations: [
                 ConversationThreadSidebarComponent,
                 MockComponent(FaIconComponent),

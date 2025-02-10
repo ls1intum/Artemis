@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -17,14 +17,13 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
     private alertService = inject(AlertService);
     private conversationService = inject(ConversationService);
 
-    @Input()
-    course: Course;
+    course = input.required<Course>();
 
     responsibleContacts: User[] = [];
 
     ngOnInit() {
-        if (this.course.id) {
-            this.conversationService.getResponsibleUsersForCodeOfConduct(this.course.id).subscribe({
+        if (this.course().id) {
+            this.conversationService.getResponsibleUsersForCodeOfConduct(this.course().id!).subscribe({
                 next: (res: HttpResponse<User[]>) => {
                     if (res.body) {
                         this.responsibleContacts = res.body;
