@@ -1,7 +1,6 @@
-import { Injectable, NgModule, Pipe, PipeTransform } from '@angular/core';
-import { LangChangeEvent, TranslateLoader, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { Pipe, PipeTransform } from '@angular/core';
+import { LangChangeEvent } from '@ngx-translate/core';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { ActivatedRouteSnapshot } from '@angular/router';
 
@@ -81,14 +80,6 @@ export class MockLanguageHelper {
     }
 }
 
-const translations: any = {};
-
-class FakeLoader implements TranslateLoader {
-    getTranslation(lang: string): Observable<any> {
-        return of(translations);
-    }
-}
-
 @Pipe({
     name: 'artemisTranslate',
 })
@@ -99,27 +90,3 @@ export class TranslatePipeMock implements PipeTransform {
         return query + (args && args.length > 0 ? ': ' + JSON.stringify(args) : '');
     }
 }
-
-@Injectable()
-export class TranslateServiceStub {
-    public get<T>(key: T): Observable<T> {
-        return of(key);
-    }
-}
-
-@NgModule({
-    declarations: [],
-    providers: [
-        { provide: TranslateService, useClass: TranslateServiceStub },
-        { provide: TranslatePipe, useClass: TranslatePipeMock },
-        { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-    ],
-    imports: [
-        TranslateModule.forRoot({
-            loader: { provide: TranslateLoader, useClass: FakeLoader },
-        }),
-        TranslatePipeMock,
-    ],
-    exports: [TranslatePipeMock, TranslateModule],
-})
-export class TranslateTestingModule {}
