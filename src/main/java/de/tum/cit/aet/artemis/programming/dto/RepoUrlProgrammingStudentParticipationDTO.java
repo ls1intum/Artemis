@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,7 +41,8 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
     public static RepoUrlProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation) {
         return Optional.ofNullable(participation)
                 .map(p -> new RepoUrlProgrammingStudentParticipationDTO(p.getId(), p.getIndividualDueDate(),
-                        Optional.ofNullable(p.getSubmissions()).orElse(Set.of()).stream().map(s -> RepoUrlSubmissionDTO.of((ProgrammingSubmission) s)).collect(Collectors.toSet()),
+                        Optional.ofNullable(p.getSubmissions()).orElse(Set.of()).stream().filter(Objects::nonNull).map(s -> RepoUrlSubmissionDTO.of((ProgrammingSubmission) s))
+                                .collect(Collectors.toSet()),
                         p.getParticipantName(), p.getParticipantIdentifier(), p.getRepositoryUri(), p.getBuildPlanId(), p.getBranch(),
                         RepoUrlProgrammingExerciseDTO.of(p.getProgrammingExercise())))
                 .orElse(null);
@@ -60,7 +62,8 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
         public static RepoUrlSubmissionDTO of(ProgrammingSubmission submission) {
             return Optional.ofNullable(submission)
                     .map(s -> new RepoUrlSubmissionDTO(s.getId(), s.isSubmitted(), s.getSubmissionDate(), s.getType(), s.isExampleSubmission(), s.getDurationInMinutes(),
-                            Optional.ofNullable(s.getResults()).orElse(List.of()).stream().map(RepoUrlResultDTO::of).toList(), s.getCommitHash(), s.isBuildFailed()))
+                            Optional.ofNullable(s.getResults()).orElse(List.of()).stream().filter(Objects::nonNull).map(RepoUrlResultDTO::of).toList(), s.getCommitHash(),
+                            s.isBuildFailed()))
                     .orElse(null);
         }
 
@@ -81,7 +84,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
             return Optional.ofNullable(result)
                     .map(r -> new RepoUrlResultDTO(r.getId(), r.getCompletionDate(), r.isSuccessful(), r.getScore(), r.getAssessmentType(), r.isRated(), r.hasComplaint(),
                             r.isExampleResult(), r.getTestCaseCount(), r.getPassedTestCaseCount(), r.getCodeIssueCount(),
-                            Optional.ofNullable(r.getFeedbacks()).orElse(List.of()).stream().map(RepoUrlFeedbackDTO::of).toList()))
+                            Optional.ofNullable(r.getFeedbacks()).orElse(List.of()).stream().filter(Objects::nonNull).map(RepoUrlFeedbackDTO::of).toList()))
                     .orElse(null);
         }
 
@@ -124,7 +127,7 @@ public record RepoUrlProgrammingStudentParticipationDTO(long id, ZonedDateTime i
                             e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(), e.getBonusPoints(), e.getAssessmentType(), e.getAllowComplaintsForAutomaticAssessments(),
                             e.getAllowFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
                             RepoUrlCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()), e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents(),
-                            Optional.ofNullable(e.getTestCases()).orElse(Set.of()).stream().map(RepoUrlTestCaseDTO::of).collect(Collectors.toSet())))
+                            Optional.ofNullable(e.getTestCases()).orElse(Set.of()).stream().filter(Objects::nonNull).map(RepoUrlTestCaseDTO::of).collect(Collectors.toSet())))
                     .orElse(null);
         }
     }

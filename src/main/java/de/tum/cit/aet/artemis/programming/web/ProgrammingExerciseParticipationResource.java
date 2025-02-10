@@ -78,8 +78,8 @@ public class ProgrammingExerciseParticipationResource {
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
-    @Value("${server.url}")
-    private String serverUrl;
+    @Value("${artemis.version-control.url}")
+    private String vcUrl;
 
     private final ParticipationRepository participationRepository;
 
@@ -207,7 +207,7 @@ public class ProgrammingExerciseParticipationResource {
 
         URI participationURL;
         try {
-            var serverUrl = new URI(this.serverUrl);
+            var serverUrl = new URI(this.vcUrl);
             // remove potential username and password from the repo url + change protocol to match stored urls
             participationURL = new URI(serverUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), repoUrl.getQuery(), repoUrl.getFragment());
         }
@@ -215,26 +215,49 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Failed to sanitize repository URL: " + e.getMessage(), ENTITY_NAME, "invalidUriSanitization");
         }
         // find participation by url
-        var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(participationURL.toString())
+        var participation = programmingExerciseParticipationService.findStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(participationURL.toString())
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationURL.toString()));
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        var participationWithLatestSubmissionLatestResultFeedbacks = programmingExerciseStudentParticipationRepository
-                .findByIdWithLatestSubmissionLatestResultAndFeedbacks(participation.getId()).orElseThrow(() -> new EntityNotFoundException("Participation", participation.getId()));
+        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participation));
+    }
 
-        // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
-        // so we set the test cases to empty to avoid lazy loading
-        if (participationWithLatestSubmissionLatestResultFeedbacks.getSubmissions().isEmpty()) {
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().setTestCases(Set.of());
+    /**
+     * Get the given student participation with its latest submission, latest result and feedbacks by its repository identifier.
+     * The repository identifier is the last part of the repository URL.
+     * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-identifier}.git
+     *
+     * @param encodedRepoIdentifier the URL-encoded repository identifier
+     * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO} in body,
+     *         or with status 404 (Not Found) if the participation is not found,
+     *         or with status 403 (Forbidden) if the user doesn't have access to the participation
+     */
+    @GetMapping("programming-exercise-participations/repo-identifier")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoIdentifier(
+            @RequestParam("repoIdentifier") String encodedRepoIdentifier) {
+        String decodedIdentifier;
+        try {
+            decodedIdentifier = URLDecoder.decode(encodedRepoIdentifier, StandardCharsets.UTF_8);
         }
-        else {
-            // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise()
-                    .setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.getProgrammingExercise().getId()));
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("The provided URL could not be decoded", ENTITY_NAME, "invalidUrlEncoding");
         }
 
-        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participationWithLatestSubmissionLatestResultFeedbacks));
+        // build url to format <server.url>/git/<project_key>/<repo-identifier>.git
+        // with repo-identifier containing the project key at the beginning
+        var projectKey = decodedIdentifier.split("-")[0];
+        String repoUrl = vcUrl + "/git/" + projectKey.toUpperCase() + "/" + decodedIdentifier + ".git";
+
+        // find participation by url
+        var participation = programmingExerciseParticipationService.findStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(repoUrl)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", repoUrl));
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participation));
     }
 
     /**
