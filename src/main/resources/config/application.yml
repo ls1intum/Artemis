@@ -45,6 +45,9 @@ artemis:
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
     # push-notification-relay: https://hermes.artemis.cit.tum.de
 
+    atlas:
+      enabled: true
+
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
