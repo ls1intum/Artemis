@@ -10,8 +10,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 
@@ -39,7 +38,7 @@ describe('ExamStartInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+            imports: [],
             declarations: [
                 ExamStartInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
