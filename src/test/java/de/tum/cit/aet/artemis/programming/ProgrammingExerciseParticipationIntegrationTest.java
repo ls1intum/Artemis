@@ -9,8 +9,6 @@ import static org.mockito.Mockito.doThrow;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -660,9 +658,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByRepoIdentifier() throws Exception {
         var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
 
-        var encodedUrl = URLEncoder.encode(extractRepoIdentifier(participation.getRepositoryUri()), StandardCharsets.UTF_8);
-        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl,
-                HttpStatus.OK, RepoUrlProgrammingStudentParticipationDTO.class);
+        var repoIdentifier = extractRepoIdentifier(participation.getRepositoryUri());
+        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier/" + repoIdentifier, HttpStatus.OK,
+                RepoUrlProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
         assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
@@ -683,9 +681,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var latestResult = participationUtilService.addResultToParticipation(participation, laterResult.getSubmission());
         latestResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), latestResult);
 
-        var encodedUrl = URLEncoder.encode(extractRepoIdentifier(participation.getRepositoryUri()), StandardCharsets.UTF_8);
-        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl,
-                HttpStatus.OK, RepoUrlProgrammingStudentParticipationDTO.class);
+        var repoIdentifier = extractRepoIdentifier(participation.getRepositoryUri());
+        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier/" + repoIdentifier, HttpStatus.OK,
+                RepoUrlProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
         assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
@@ -721,8 +719,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
         while (foundParticipation.isPresent());
 
-        var encodedUrl = URLEncoder.encode(extractRepoIdentifier(repoUrl.toString()), StandardCharsets.UTF_8);
-        String body = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl, HttpStatus.NOT_FOUND, String.class);
+        var repoIdentifier = extractRepoIdentifier(repoUrl.toString());
+        String body = request.get("/api/programming-exercise-participations/repo-identifier/" + repoIdentifier, HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -730,8 +728,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByRepoIdentifierNotVisible() throws Exception {
         var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student2");
 
-        var encodedUrl = URLEncoder.encode(extractRepoIdentifier(participation.getRepositoryUri()), StandardCharsets.UTF_8);
-        String body = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl, HttpStatus.FORBIDDEN, String.class);
+        var repoIdentifier = extractRepoIdentifier(participation.getRepositoryUri());
+        String body = request.get("/api/programming-exercise-participations/repo-identifier/" + repoIdentifier, HttpStatus.FORBIDDEN, String.class);
     }
 
     ProgrammingExerciseStudentParticipation setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(String login) {
