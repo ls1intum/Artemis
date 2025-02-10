@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -11,12 +11,12 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
@@ -36,7 +36,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -45,6 +45,9 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -169,6 +172,9 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AthenaService, useClass: MockAthenaService },
                 MockProvider(Router),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
     });
@@ -465,7 +471,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs).toEqual(
             // Checking if sortAndSetTextBlockRefs selected the right TextBlockRef (the one having a feedback)
             // Performing partial match for { block: { text: ...}, feedback: { id: ... } }
-            expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'text.' }), feedback: expect.objectContaining({ id: 3 }) })]),
+            expect.arrayContaining([
+                expect.objectContaining({
+                    block: expect.objectContaining({ text: 'text.' }),
+                    feedback: expect.objectContaining({ id: 3 }),
+                }),
+            ]),
         );
 
         // Checking if a new block was added to compensate for the loss of submitted text due to the overlap between blocks
