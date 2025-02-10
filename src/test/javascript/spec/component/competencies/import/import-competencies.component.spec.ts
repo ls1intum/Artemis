@@ -1,9 +1,8 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
@@ -16,7 +15,7 @@ describe('ImportCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule],
+            imports: [ImportCompetenciesComponent, ArtemisTestModule],
             declarations: [],
             providers: [
                 {

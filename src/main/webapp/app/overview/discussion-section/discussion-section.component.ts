@@ -15,11 +15,11 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -28,12 +28,12 @@ import { MessageInlineInputComponent } from 'app/shared/metis/message/message-in
     imports: [
         FontAwesomeModule,
         ArtemisSharedModule,
-        ArtemisPlagiarismCasesSharedModule,
         InfiniteScrollDirective,
         FormsModule,
         ReactiveFormsModule,
         PostingThreadComponent,
         MessageInlineInputComponent,
+        ButtonComponent,
     ],
     providers: [MetisService],
 })

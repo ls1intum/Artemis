@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { finalize } from 'rxjs';
+import { combineLatest, finalize } from 'rxjs';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +13,6 @@ import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-config
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -21,7 +20,7 @@ import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, N
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -42,9 +41,9 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
-        ArtemisSharedPipesModule,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        RemoveKeysPipe,
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {

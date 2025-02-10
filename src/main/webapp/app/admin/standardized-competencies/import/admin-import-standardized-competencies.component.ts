@@ -23,8 +23,8 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -37,11 +37,11 @@ interface ImportCount {
     imports: [
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownModule,
         FontAwesomeModule,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         NgbCollapse,
+        HtmlForMarkdownPipe,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
