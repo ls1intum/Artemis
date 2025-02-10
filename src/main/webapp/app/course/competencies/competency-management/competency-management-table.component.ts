@@ -11,12 +11,12 @@ import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressb
 import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
-    imports: [ArtemisSharedModule, ArtemisMarkdownModule, NgbProgressbar, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle],
+    imports: [ArtemisSharedModule, NgbProgressbar, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, HtmlForMarkdownPipe],
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;

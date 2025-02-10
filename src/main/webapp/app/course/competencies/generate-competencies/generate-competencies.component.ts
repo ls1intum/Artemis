@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,9 +20,9 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dt
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -49,7 +49,7 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, FormsModule, ReactiveFormsModule, CourseDescriptionFormComponent, CompetencyRecommendationDetailComponent],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);
@@ -245,5 +245,19 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

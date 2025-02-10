@@ -5,13 +5,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
 
 @Component({
     selector: 'jhi-import-competencies',
     templateUrl: './import-course-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, CompetencySearchComponent, ImportCompetenciesTableComponent],
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.COMPETENCY;

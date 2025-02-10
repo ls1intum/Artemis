@@ -14,7 +14,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
@@ -23,12 +22,13 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent, NgbModule],
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, SearchFilterComponent, NgbModule, HtmlForMarkdownPipe],
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
