@@ -37,11 +37,14 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseMode } from 'app/entities/exercise.model';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -88,6 +91,12 @@ describe('ModelingSubmissionComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
             ],
         })
             .compileComponents()
