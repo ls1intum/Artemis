@@ -37,7 +37,7 @@ import { ProgrammingExerciseCreationPage } from './pageobjects/exercises/program
 import { QuizExerciseCreationPage } from './pageobjects/exercises/quiz/QuizExerciseCreationPage';
 import { StudentExamManagementPage } from './pageobjects/exam/StudentExamManagementPage';
 import { TextExerciseCreationPage } from './pageobjects/exercises/text/TextExerciseCreationPage';
-import { CreateModelingExercisePage } from './pageobjects/exercises/modeling/CreateModelingExercisePage';
+import { ModelingExerciseCreationPage } from './pageobjects/exercises/modeling/ModelingExerciseCreationPage';
 import { ExamTestRunPage } from './pageobjects/exam/ExamTestRunPage';
 import { CourseManagementExercisesPage } from './pageobjects/course/CourseManagementExercisesPage';
 import { TextExerciseExampleSubmissionsPage } from './pageobjects/exercises/text/TextExerciseExampleSubmissionsPage';
@@ -115,7 +115,7 @@ export type ArtemisPageObjects = {
     fileUploadExerciseCreation: FileUploadExerciseCreationPage;
     fileUploadExerciseEditor: FileUploadEditorPage;
     fileUploadExerciseFeedback: FileUploadExerciseFeedbackPage;
-    modelingExerciseCreation: CreateModelingExercisePage;
+    modelingExerciseCreation: ModelingExerciseCreationPage;
     modelingExerciseEditor: ModelingEditor;
     modelingExerciseFeedback: ModelingExerciseFeedbackPage;
     programmingExerciseCreation: ProgrammingExerciseCreationPage;
@@ -292,7 +292,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         await use(new FileUploadExerciseFeedbackPage(page));
     },
     modelingExerciseCreation: async ({ page }, use) => {
-        await use(new CreateModelingExercisePage(page));
+        await use(new ModelingExerciseCreationPage(page));
     },
     modelingExerciseEditor: async ({ page }, use) => {
         await use(new ModelingEditor(page));

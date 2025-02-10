@@ -1,21 +1,7 @@
-import { Page } from '@playwright/test';
 import { MODELING_EXERCISE_BASE } from '../../../constants';
-import { Dayjs } from 'dayjs';
-import { enterDate } from '../../../utils';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-export class CreateModelingExercisePage {
-    private readonly page: Page;
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async setTitle(title: string) {
-        const titleField = this.page.locator('#field_title');
-        await titleField.clear();
-        await titleField.fill(title);
-    }
-
+export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     async addCategories(categories: string[]) {
         for (const category of categories) {
             const categoriesField = this.page.locator('#field_categories');
@@ -40,18 +26,6 @@ export class CreateModelingExercisePage {
         const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/import/*`);
         await this.page.click('#save-entity');
         return await responsePromise;
-    }
-
-    async setReleaseDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-releaseDate', date);
-    }
-
-    async setDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-dueDate', date);
-    }
-
-    async setAssessmentDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-assessmentDueDate', date);
     }
 
     async includeInOverallScore(selection: string = 'No') {

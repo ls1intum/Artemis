@@ -1,24 +1,11 @@
-import { Page, expect } from '@playwright/test';
-import { clearTextField, drag, enterDate } from '../../../utils';
-import { Dayjs } from 'dayjs';
+import { expect } from '@playwright/test';
+import { clearTextField, drag } from '../../../utils';
 import { QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-export class QuizExerciseCreationPage {
-    private readonly page: Page;
+export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async setTitle(title: string) {
-        await this.page.locator('#field_title').fill(title);
-    }
-
-    async setVisibleFrom(date: Dayjs) {
-        await enterDate(this.page, '#pick-releaseDate', date);
-    }
 
     async addMultipleChoiceQuestion(title: string, points = 1) {
         await this.page.locator('#quiz-add-mc-question').click();
