@@ -55,7 +55,8 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  * <p>
  * The approach is two-sided, to make the participant scores eventually consistent within seconds without overloading the database.
  * Using a listener on the {@link Result} entity, changes are detected and forwarded (via the broker if not on the main instance) to this service.
- * This method is fast, but not 100% reliable. Therefore, a cron job regularly checks for invalid participant scores and updates them.
+ * This method is fast, but not 100% reliable. For example, network outages could cause this service to miss result updates.
+ * Therefore, a cron job regularly checks for invalid participant scores and updates them.
  * In all cases, using asynchronous scheduled tasks speeds up all requests that modify results.
  *
  * @see ResultListener
@@ -156,6 +157,7 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Every minute, query for modified results and schedule a task to update the participant scores.
+     * This is used as a fallback in case Result updates are lost for any reason.
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
