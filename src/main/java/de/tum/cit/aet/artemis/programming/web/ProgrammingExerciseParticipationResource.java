@@ -186,7 +186,7 @@ public class ProgrammingExerciseParticipationResource {
      * The repository identifier is the last part of the repository URL.
      * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-identifier}.git
      *
-     * @param decodedIdentifier the URL repository identifier
+     * @param repoIdentifier the URL repository identifier
      * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO} in body,
      *         or with status 404 (Not Found) if the participation is not found,
      *         or with status 403 (Forbidden) if the user doesn't have access to the participation
