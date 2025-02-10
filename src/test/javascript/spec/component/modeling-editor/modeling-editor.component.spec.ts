@@ -2,7 +2,7 @@ import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
@@ -16,6 +16,8 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -37,7 +39,13 @@ describe('ModelingEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(GuidedTourService), { provide: ActivatedRoute, useValue: route }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(GuidedTourService),
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
