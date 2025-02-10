@@ -77,7 +77,6 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
-import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 
 interface CourseActionItem {
     title: string;
@@ -126,7 +125,6 @@ interface SidebarItem {
         RouterLinkActive,
         FeatureToggleHideDirective,
         SlicePipe,
-        LinkPreviewModule,
     ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {

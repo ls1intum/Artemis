@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-export const quizParticipationRoute: Routes = [
+export const routes: Routes = [
     {
         path: 'live',
         loadComponent: () => import('./quiz-participation.component').then((m) => m.QuizParticipationComponent),
