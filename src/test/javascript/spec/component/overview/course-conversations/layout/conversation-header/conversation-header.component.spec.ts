@@ -270,14 +270,14 @@ examples.forEach((activeConversation) => {
             component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
             tick();
 
-            expect(onUpdateSidebarSpy).toHaveBeenCalled();
+            expect(onUpdateSidebarSpy).toHaveBeenCalledOnce();
         }));
 
         it('should emit collapseSearch when toggleSearchBar is called', () => {
             const collapseSearchSpy = jest.spyOn(component.collapseSearch, 'emit');
             component.toggleSearchBar();
 
-            expect(collapseSearchSpy).toHaveBeenCalled();
+            expect(collapseSearchSpy).toHaveBeenCalledOnce();
         });
 
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
