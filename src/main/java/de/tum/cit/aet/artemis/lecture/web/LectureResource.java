@@ -359,11 +359,14 @@ public class LectureResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
-        LectureTranscription lectureTranscription = lectureTranscriptionRepository.findWithTranscriptionSegmentsByLectureUnitId(lectureUnitId);
-
-        log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.getId());
-        lectureService.deleteLectureTranscriptionInPyris(lectureTranscription);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.getId().toString())).build();
+        Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findWithTranscriptionSegmentsByLectureUnitId(lectureUnitId);
+        if (lectureTranscription.isEmpty()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscriptionForId"))
+                    .body(null);
+        }
+        log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.get().getId());
+        lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
     }
 
     /**

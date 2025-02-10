@@ -9,5 +9,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisWebhookTranscriptionDeletionExecutionDTO(PyrisTranscriptionIngestionWebhookDTO lectureTranscriptionDTO, PyrisPipelineExecutionSettingsDTO settings,
-        List<PyrisStageDTO> initalStages) {
+        List<PyrisStageDTO> initialStages) {
 }

@@ -143,13 +143,14 @@ public class PyrisWebhookService {
     }
 
     /**
-     * executes the faq deletion webhook to delete faq from the vector database on pyris
+     * executes the lecture transcription deletion webhook to delete lecture transcriptions from the vector database on pyris
      *
      * @param toUpdateLectureTranscription The lecture transcription that got Updated as webhook DTO
      * @return jobToken if the job was created else null
      */
     private String executeLectureTranscriptionDeletionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateLectureTranscription) {
-        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(0, 0, 0);
+        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateLectureTranscription.courseId(), toUpdateLectureTranscription.lectureId(),
+                toUpdateLectureTranscription.transcription().getLectureUnit().getId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookTranscriptionDeletionExecutionDTO executionDTO = new PyrisWebhookTranscriptionDeletionExecutionDTO(toUpdateLectureTranscription, settingsDTO, List.of());
         pyrisConnectorService.executeLectureTranscriptionDeletionWebhook(executionDTO);

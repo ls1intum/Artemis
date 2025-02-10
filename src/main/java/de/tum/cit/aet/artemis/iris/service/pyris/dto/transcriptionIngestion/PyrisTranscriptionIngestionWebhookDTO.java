@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 
 /**
  * Represents a webhook data transfer object for lecture transcriptions on lecture unit level in the Pyris system.
- * This DTO is used to encapsulate the information related to updates of lecture units,
+ * This DTO is used to encapsulate the information related to updates of lecture transcriptions,
  * providing necessary details such as lecture and course identifiers, names, and descriptions.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

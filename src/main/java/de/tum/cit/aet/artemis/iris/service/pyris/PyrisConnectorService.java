@@ -135,7 +135,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Executes a webhook and adds lecture transcriptions to the webhook with the given variant. This webhook deletes a lecture transcription in the Pyris system.
+     * This webhook deletes a lecture transcription in the Pyris system.
      *
      * @param executionDTO The DTO sent as a body for the execution
      */
