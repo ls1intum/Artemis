@@ -16,7 +16,6 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SortService } from 'app/shared/service/sort.service';
 import { Renderer2 } from '@angular/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -26,15 +25,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        ArtemisSharedComponentModule,
-        ArtemisSharedModule,
-        CourseFaqAccordionComponent,
-        CustomExerciseCategoryBadgeComponent,
-        SearchFilterComponent,
-        ArtemisMarkdownModule,
-        NgbModule,
-    ],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');

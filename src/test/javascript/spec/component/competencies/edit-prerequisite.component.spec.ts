@@ -15,9 +15,6 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
-import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditPrerequisiteComponent', () => {
@@ -25,7 +22,7 @@ describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent, OwlNativeDateTimeModule],
+            imports: [ArtemisTestModule, EditPrerequisiteComponent, MockComponent(PrerequisiteFormComponent), OwlNativeDateTimeModule],
             declarations: [],
             providers: [
                 MockProvider(LectureService),
@@ -59,12 +56,7 @@ describe('EditPrerequisiteComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
         editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;

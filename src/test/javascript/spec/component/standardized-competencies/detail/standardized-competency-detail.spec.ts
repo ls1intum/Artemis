@@ -7,7 +7,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 describe('StandardizedCompetencyDetailComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
@@ -25,7 +24,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyDetailComponent, ArtemisTestModule, ArtemisSharedCommonModule, ArtemisMarkdownModule],
+            imports: [StandardizedCompetencyDetailComponent, ArtemisTestModule, ArtemisSharedCommonModule],
             declarations: [MockPipe(HtmlForMarkdownPipe), MockDirective(TranslateDirective)],
             providers: [],
         })

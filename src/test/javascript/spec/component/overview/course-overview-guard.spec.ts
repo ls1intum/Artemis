@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { CourseOverviewRoutePath } from 'app/overview/courses-routing.module';
+import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview/courses.route';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
