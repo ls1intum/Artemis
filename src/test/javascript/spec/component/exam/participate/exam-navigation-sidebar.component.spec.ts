@@ -13,6 +13,10 @@ import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamNavigationSidebarComponent', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
@@ -31,6 +35,9 @@ describe('ExamNavigationSidebarComponent', () => {
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
