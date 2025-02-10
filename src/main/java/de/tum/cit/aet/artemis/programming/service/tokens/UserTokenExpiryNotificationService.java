@@ -51,7 +51,7 @@ public class UserTokenExpiryNotificationService {
     /**
      * Notifies the user one week before the VCS access tokens expiry
      */
-    public void notifyUserOnUpcomingVcsAccessTokenExpiry() {
+    public void notifyUsersOnUpcomingVcsAccessTokenExpiry() {
         notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), singleUserNotificationService::notifyUserAboutSoonExpiringVcsAccessToken);
     }
 
