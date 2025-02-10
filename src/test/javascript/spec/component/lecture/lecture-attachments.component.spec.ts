@@ -16,11 +16,16 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
 import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -97,7 +102,11 @@ describe('LectureAttachmentsComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
                 { provide: FileService, useClass: MockFileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(AttachmentService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
