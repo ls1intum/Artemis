@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
+import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 

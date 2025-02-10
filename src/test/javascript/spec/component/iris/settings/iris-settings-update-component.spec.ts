@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
@@ -11,7 +11,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { firstValueFrom, of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltipMockDirective } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -48,14 +47,7 @@ describe('IrisSettingsUpdateComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgbTooltipMockDirective,
-                MockJhiTranslateDirective,
-                IrisCourseSettingsUpdateComponent,
-                IrisSettingsUpdateComponent,
-                IrisCommonSubSettingsUpdateComponent,
-            ],
+            imports: [ArtemisTestModule, MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [MockProvider(IrisSettingsService, irisSettingsServiceMock), provideHttpClient(), provideHttpClientTesting()],
         })
