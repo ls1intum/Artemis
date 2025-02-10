@@ -15,7 +15,7 @@ describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;
     let systemNotificationComponentFixture: ComponentFixture<SystemNotificationComponent>;
     let systemNotificationService: SystemNotificationService;
-    let jhiWebsocketService: WebsocketService;
+    let websocketService: WebsocketService;
 
     const createActiveNotification = (type: SystemNotificationType, id: number) => {
         return {
@@ -54,7 +54,7 @@ describe('System Notification Component', () => {
                 systemNotificationComponentFixture = TestBed.createComponent(SystemNotificationComponent);
                 systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
                 systemNotificationService = TestBed.inject(SystemNotificationService);
-                jhiWebsocketService = TestBed.inject(WebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
             });
     });
 
@@ -88,8 +88,8 @@ describe('System Notification Component', () => {
         const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createInactiveNotification(SystemNotificationType.INFO, 2)];
         const newNotifications = [createActiveNotification(SystemNotificationType.WARNING, 3), createInactiveNotification(SystemNotificationType.INFO, 4)];
 
-        const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
-        const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(newNotifications));
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe');
+        const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(newNotifications));
         const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
         systemNotificationComponent.ngOnInit();

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -62,7 +62,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     private modalService = inject(NgbModal);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
 
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
@@ -99,8 +99,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-                    this.jhiWebsocketService.subscribe(websocketTopic);
-                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                    this.websocketService.subscribe(websocketTopic);
+                    this.websocketService.receive(websocketTopic).subscribe({
                         next: (update: CompetencyGenerationStatusUpdate) => {
                             if (update.result) {
                                 for (const competency of update.result) {
@@ -113,13 +113,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
                             if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
-                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.websocketService.unsubscribe(websocketTopic);
                                 this.isLoading = false;
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
-                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            this.websocketService.unsubscribe(websocketTopic);
                             this.isLoading = false;
                         },
                     });
@@ -245,5 +245,19 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

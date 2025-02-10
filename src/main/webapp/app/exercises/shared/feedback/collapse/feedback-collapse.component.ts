@@ -4,6 +4,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -30,6 +31,8 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
+    debounceToggleCollapse = BaseApiHttpService.debounce(this.toggleCollapse.bind(this), 200);
+
     ngOnInit(): void {
         this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
     }
@@ -55,5 +58,9 @@ export class FeedbackCollapseComponent implements OnInit {
         }
 
         return text.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
+    }
+
+    toggleCollapse(): void {
+        this.isCollapsed = !this.isCollapsed;
     }
 }
