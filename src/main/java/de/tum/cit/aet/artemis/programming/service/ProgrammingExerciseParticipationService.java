@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -42,7 +41,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
@@ -68,12 +66,9 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
-    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -81,7 +76,6 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -165,31 +159,6 @@ public class ProgrammingExerciseParticipationService {
     @NotNull
     public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
-    }
-
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoUrl(String repoUrl) {
-        // find participation by url
-        var participation = studentParticipationRepository.findByRepositoryUri(repoUrl);
-        if (participation.isEmpty()) {
-            return participation;
-        }
-
-        var participationWithLatestSubmissionLatestResultFeedbacks = studentParticipationRepository
-                .findByIdWithLatestSubmissionLatestResultAndFeedbacks(participation.get().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participation.get().getId()));
-
-        // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
-        // so we set the test cases to empty to avoid lazy loading
-        if (participationWithLatestSubmissionLatestResultFeedbacks.getSubmissions().isEmpty()) {
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().setTestCases(Set.of());
-        }
-        else {
-            // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise()
-                    .setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.get().getProgrammingExercise().getId()));
-        }
-
-        return Optional.of(participationWithLatestSubmissionLatestResultFeedbacks);
     }
 
     /**

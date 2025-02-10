@@ -656,76 +656,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseStudentParticipationByRepoUrl() throws Exception {
-        var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
-
-        var encodedUrl = URLEncoder.encode(participation.getRepositoryUri(), StandardCharsets.UTF_8);
-        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-url?repoUrl=" + encodedUrl, HttpStatus.OK,
-                RepoUrlProgrammingStudentParticipationDTO.class);
-
-        assertThat(participationDTO.id()).isEqualTo(participation.getId());
-        assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
-        assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        assertThat(participationDTO.exercise().testCases()).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseStudentParticipationByRepoUrlWithSubmissionAndResult() throws Exception {
-        var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
-        participation = addResultsToStudentProgrammingParticipation(participation);
-        var latestSubmission = participation.findLatestSubmission();
-
-        var encodedUrl = URLEncoder.encode(participation.getRepositoryUri(), StandardCharsets.UTF_8);
-        RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-url?repoUrl=" + encodedUrl, HttpStatus.OK,
-                RepoUrlProgrammingStudentParticipationDTO.class);
-
-        assertThat(participationDTO.id()).isEqualTo(participation.getId());
-        assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
-        assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-
-        assertThat(participationDTO.submissions()).hasSize(1);
-        assertThat(participationDTO.submissions().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlSubmissionDTO[]::new)[0].id()).isEqualTo(latestSubmission.get().getId());
-        for (var submission : participationDTO.submissions()) {
-            assertThat(submission.results()).hasSize(1);
-            assertThat(submission.results().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlResultDTO[]::new)[0].id())
-                    .isEqualTo(latestSubmission.get().getLatestResult().getId());
-        }
-
-        assertThat(participationDTO.exercise().testCases()).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseStudentParticipationByRepoUrlNotFound() throws Exception {
-        var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
-
-        // Generate a random URI that is not in the database
-        URI repoUrl;
-        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
-        do {
-            repoUrl = new URI(participation.getRepositoryUri());
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID().toString(), repoUrl.getQuery(),
-                    repoUrl.getFragment());
-            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
-        }
-        while (foundParticipation.isPresent());
-
-        var encodedUrl = URLEncoder.encode(repoUrl.toString(), StandardCharsets.UTF_8);
-        String body = request.get("/api/programming-exercise-participations/repo-url?repoUrl=" + encodedUrl, HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseStudentParticipationByRepoUrlNotVisible() throws Exception {
-        var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student2");
-
-        var encodedUrl = URLEncoder.encode(participation.getRepositoryUri(), StandardCharsets.UTF_8);
-        String body = request.get("/api/programming-exercise-participations/repo-url?repoUrl=" + encodedUrl, HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoIdentifier() throws Exception {
         var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
 
@@ -743,9 +673,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoIdentifierWithSubmissionAndResult() throws Exception {
         var participation = setupStudentProgrammingParticipationInProgrammingExerciseWithTestCasesSubmissionAndResult(TEST_PREFIX + "student1");
-        participation = addResultsToStudentProgrammingParticipation(participation);
-
-        var latestSubmission = participation.findLatestSubmission();
+        var earlyResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
+        var laterResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
+        var latestResult = participationUtilService.addResultToParticipation(participation, laterResult.getSubmission());
 
         var encodedUrl = URLEncoder.encode(extractRepoIdentifier(participation.getRepositoryUri()), StandardCharsets.UTF_8);
         RepoUrlProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-identifier?repoIdentifier=" + encodedUrl,
@@ -756,11 +686,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
         assertThat(participationDTO.submissions()).hasSize(1);
-        assertThat(participationDTO.submissions().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlSubmissionDTO[]::new)[0].id()).isEqualTo(latestSubmission.get().getId());
+        assertThat(participationDTO.submissions().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlSubmissionDTO[]::new)[0].id())
+                .isEqualTo(latestResult.getSubmission().getId());
         for (var submission : participationDTO.submissions()) {
             assertThat(submission.results()).hasSize(1);
-            assertThat(submission.results().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlResultDTO[]::new)[0].id())
-                    .isEqualTo(latestSubmission.get().getLatestResult().getId());
+            assertThat(submission.results().toArray(RepoUrlProgrammingStudentParticipationDTO.RepoUrlResultDTO[]::new)[0].id()).isEqualTo(latestResult.getId());
         }
 
         assertThat(participationDTO.exercise().testCases()).isNotEmpty();
@@ -800,14 +730,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         return participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, login);
-    }
-
-    ProgrammingExerciseStudentParticipation addResultsToStudentProgrammingParticipation(ProgrammingExerciseStudentParticipation participation) {
-        var earlyResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
-        var laterResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
-        var latestResult = participationUtilService.addResultToParticipation(participation, laterResult.getSubmission());
-
-        return (ProgrammingExerciseStudentParticipation) participationRepository.findByIdWithResultsAndSubmissionsResults(participation.getId()).get();
     }
 
     String extractRepoIdentifier(String repoUrl) {
