@@ -14,8 +14,8 @@ import { ButtonComponent } from 'app/shared/components/button.component';
     imports: [ButtonComponent],
 })
 export class ProgrammingExerciseStudentRepoDownloadComponent {
-    protected programmingExerciseService = inject(ProgrammingExerciseService);
-    protected alertService = inject(AlertService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;

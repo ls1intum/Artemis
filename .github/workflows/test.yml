@@ -93,7 +93,7 @@ jobs:
       uses: codacy/codacy-coverage-reporter-action@master
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
+        coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
       if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
       uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
@@ -117,9 +117,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Coverage Report Server Tests
-        path: build/reports/jacoco/test/html
+        path: build/reports/jacoco/aggregated/html
     - name: Append Per-Module Coverage to Job Summary
-      if: success() || failure()
+      if: success()
       run: |
         AGGREGATED_REPORT_FILE=./module_coverage_report.md
         python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE

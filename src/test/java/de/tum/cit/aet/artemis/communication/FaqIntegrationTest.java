@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -27,6 +28,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private FaqRepository faqRepository;
+
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
 
     private Course course1;
 
@@ -46,6 +50,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        irisRequestMockProvider.enableMockingOfRequests();
 
     }
 
@@ -164,6 +169,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFaq_shouldDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
         request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
         assertThat(faqOptional).isEmpty();

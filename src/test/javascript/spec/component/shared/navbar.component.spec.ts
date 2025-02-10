@@ -31,9 +31,6 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -95,7 +92,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, NgbCollapseMocksModule, NgbDropdownMocksModule],
+            imports: [],
             declarations: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),

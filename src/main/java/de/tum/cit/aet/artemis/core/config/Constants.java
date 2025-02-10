@@ -243,9 +243,7 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
-
-    public static final String INFO_SHOW_CLONE_URL_WITHOUT_TOKEN = "showCloneUrlWithoutToken";
+    public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
