@@ -33,7 +33,6 @@ import { SubmissionVersionService } from 'app/exercises/shared/submission-versio
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
-import { ArtemisFormsModule } from '../../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
@@ -109,7 +108,6 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisFormsModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),

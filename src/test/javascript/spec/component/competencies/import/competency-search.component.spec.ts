@@ -3,9 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
-import { getArtemisTestProviders } from '../../../test-helper';
 
 describe('CompetencySearchComponent', () => {
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
@@ -13,9 +11,8 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisFormsModule],
             declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
-            providers: [...getArtemisTestProviders()],
+            providers: [],
         })
             .compileComponents()
             .then(() => {

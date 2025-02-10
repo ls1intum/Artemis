@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -14,9 +14,10 @@ import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -39,8 +40,8 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
-            declarations: [FaqUpdateComponent, MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
+            imports: [MockModule(BrowserAnimationsModule)],
+            declarations: [FaqUpdateComponent, MockComponent(MarkdownEditorMonacoComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -81,6 +82,10 @@ describe('FaqUpdateComponent', () => {
                 }),
             ],
         }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;

@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/entities/lecture.model';
@@ -27,7 +27,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
@@ -51,7 +51,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,

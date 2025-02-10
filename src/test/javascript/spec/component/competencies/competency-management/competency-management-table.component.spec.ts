@@ -10,8 +10,6 @@ import { MockProvider } from 'ng-mocks';
 import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 describe('CompetencyManagementTableComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementTableComponent>;
@@ -22,7 +20,7 @@ describe('CompetencyManagementTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyManagementTableComponent, ArtemisSharedModule, ArtemisMarkdownModule],
+            imports: [CompetencyManagementTableComponent],
             declarations: [],
             providers: [MockProvider(AlertService), { provide: NgbModal, useClass: MockNgbModalService }],
         })

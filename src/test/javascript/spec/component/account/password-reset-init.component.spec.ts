@@ -12,7 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { ArtemisFormsModule } from '../../../../../main/webapp/app/forms/artemis-forms.module';
 
 describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;
@@ -20,7 +19,7 @@ describe('PasswordResetInitComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisFormsModule, PasswordResetInitComponent],
+            imports: [PasswordResetInitComponent],
             providers: [
                 FormBuilder,
                 { provide: ProfileService, useClass: MockProfileService },
