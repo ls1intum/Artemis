@@ -51,7 +51,7 @@ describe('User Settings Directive', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -155,7 +155,7 @@ describe('Notification Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule],
+            imports: [],
             providers: [
                 provideRouter([]),
                 provideHttpClient(),
