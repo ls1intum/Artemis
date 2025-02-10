@@ -14,6 +14,7 @@ concurrency: staging
 
 env:
   build_workflow_name: build.yml
+  branch_to_deploy: develop
 
 jobs:
   check-build-status:
@@ -21,6 +22,10 @@ jobs:
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }} 
     steps:
+      - name: Print inputs
+        run: |
+          echo "Branch: ${{ github.event.inputs.branch }}"
+          echo "Commit SHA: ${{ github.event.inputs.commit_sha }}"
       - name: Get workflow runs
         id: get_workflow_run
         uses: octokit/request-action@v2.x
@@ -42,7 +47,7 @@ jobs:
             | select(
               .head_sha == $COMMIT and (
                 # Match either push to develop or release created
-                ((.event == "push" and .head_branch == "develop") or .event == "release")
+                ((.event == "push" and .head_branch == "${{ env.branch_to_deploy }}") or .event == "release")
               )
             ) 
             | .id
@@ -50,7 +55,7 @@ jobs:
           
           if [ -z "$WORKFLOW_ID" ]; then
             echo "::error::No valid build found for commit $COMMIT_SHA. Ensure this commit has a successful build from either:"
-            echo "  - A push to develop branch"
+            echo "  - A push to ${{ env.branch_to_deploy }} branch"
             echo "  - A release creation"
             exit 1
           fi
