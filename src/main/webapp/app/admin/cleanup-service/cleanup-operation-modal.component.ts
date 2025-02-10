@@ -4,14 +4,17 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { Observable, Subject } from 'rxjs';
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisSharedModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule],
 })
 export class CleanupOperationModalComponent implements OnInit {
     operation = input.required<CleanupOperation>();

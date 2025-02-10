@@ -15,9 +15,9 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CreateCompetency', () => {
@@ -26,7 +26,7 @@ describe('CreateCompetency', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreateCompetencyComponent, ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
+            imports: [CreateCompetencyComponent, CompetencyFormComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(CompetencyService),
