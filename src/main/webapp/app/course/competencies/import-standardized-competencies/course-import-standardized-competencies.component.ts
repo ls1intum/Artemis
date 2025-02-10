@@ -5,8 +5,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-course-import-standardized-competencies',
@@ -14,10 +14,10 @@ import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies
     imports: [
         ArtemisSharedCommonModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownModule,
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
+        HtmlForMarkdownPipe,
     ],
 })
 export class CourseImportStandardizedCompetenciesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
