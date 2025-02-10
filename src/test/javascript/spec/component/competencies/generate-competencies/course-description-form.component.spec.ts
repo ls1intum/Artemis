@@ -4,7 +4,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
@@ -16,7 +15,7 @@ describe('CourseDescriptionFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule],
             declarations: [
                 CourseDescriptionFormComponent,
                 MockPipe(ArtemisTranslatePipe),

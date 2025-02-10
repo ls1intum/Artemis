@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -30,7 +30,6 @@ describe('FeedbackDetailChannelModalComponent', () => {
             errorCategory: 'StudentError',
         } as any);
         fixture.componentInstance.isConfirmModalOpen.set(false);
-        fixture.componentRef.setInput('groupFeedback', false);
         fixture.detectChanges();
     });
 
