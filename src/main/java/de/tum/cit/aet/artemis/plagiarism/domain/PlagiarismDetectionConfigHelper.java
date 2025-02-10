@@ -17,9 +17,6 @@ public final class PlagiarismDetectionConfigHelper {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismDetectionConfigHelper.class);
 
-    private PlagiarismDetectionConfigHelper() {
-    }
-
     /**
      * Ads missing plagiarism checks config for course exercises.
      *
