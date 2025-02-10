@@ -184,20 +184,23 @@ public class LtiDeepLinkingService {
     private Map<String, Object> setExerciseContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
-        return exerciseOpt.map(exercise -> createExerciseContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
+        return exerciseOpt.map(exercise -> createExerciseContentItem(exerciseOpt.get(), launchUrl))
+                .orElseThrow(() -> new BadRequestAlertException("Exercise not found.", "LTI", "exerciseNotFound"));
     }
 
     private Map<String, Object> setLectureContentItem(String courseId, String lectureId) {
         Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/lectures/%s", courseId, lectureId);
-        return lectureOpt.map(lecture -> createLectureContentItem(lectureOpt.get(), launchUrl)).orElse(null);
+        return lectureOpt.map(lecture -> createLectureContentItem(lectureOpt.get(), launchUrl))
+                .orElseThrow(() -> new BadRequestAlertException("Lecture not found.", "LTI", "lectureNotFound"));
     }
 
     private Map<String, Object> setCompetencyContentItem(String courseId) {
         Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(Long.parseLong(courseId))
                 .flatMap(course -> course.getCompetencies().stream().findFirst());
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/competencies", courseId);
-        return competencyOpt.map(competency -> createSingleUnitContentItem(launchUrl)).orElse(null);
+        return competencyOpt.map(competency -> createSingleUnitContentItem(launchUrl))
+                .orElseThrow(() -> new BadRequestAlertException("No competencies found.", "LTI", "CompetenciesNotFound"));
     }
 
     private Map<String, Object> setLearningPathContentItem(String courseId) {
@@ -206,7 +209,9 @@ public class LtiDeepLinkingService {
             String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
             return createSingleUnitContentItem(launchUrl);
         }
-        return null;
+        else {
+            throw new BadRequestAlertException("No learning paths found.", "LTI", "learningPathsNotFound");
+        }
     }
 
     private Map<String, Object> setIrisContentItem(String courseId) {
@@ -217,10 +222,12 @@ public class LtiDeepLinkingService {
                 return createSingleUnitContentItem(launchUrl);
             }
             else {
-                return null;
+                throw new BadRequestAlertException("Course Analytics Dashboard not activated", "LTI", "noCourseAnalyticsDashboard");
             }
         }
-        return null;
+        else {
+            throw new BadRequestAlertException("No course found.", "LTI", "courseNotFound");
+        }
     }
 
     private Map<String, Object> createExerciseContentItem(Exercise exercise, String url) {
