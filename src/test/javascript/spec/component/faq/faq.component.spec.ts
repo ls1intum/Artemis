@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -10,7 +10,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { FaqService } from 'app/faq/faq.service';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/faq/faq.component';
@@ -68,7 +67,7 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
+            imports: [ArtemisTestModule, MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -10,7 +10,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 
 describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
@@ -18,7 +17,7 @@ describe('ImportAllCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
             declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()

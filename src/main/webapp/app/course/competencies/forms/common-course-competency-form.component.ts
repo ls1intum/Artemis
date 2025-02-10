@@ -6,14 +6,12 @@ import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAU
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -21,14 +19,12 @@ import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
     styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
         ArtemisSharedModule,
-        ArtemisMarkdownModule,
         NgbDropdownModule,
-        ArtemisFormsModule,
         ReactiveFormsModule,
-        ArtemisCompetenciesModule,
         ArtemisSharedComponentModule,
-        ArtemisMarkdownEditorModule,
         FormDateTimePickerComponent,
+        TaxonomySelectComponent,
+        MarkdownEditorMonacoComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
@@ -95,6 +91,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
     }
+
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.

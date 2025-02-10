@@ -70,8 +70,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/iris-settings',
-        loadChildren: () =>
-            import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),
+        loadChildren: () => import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
     },
     {
         path: 'text-exercises/:exerciseId/exercise-statistics',
@@ -87,7 +86,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/tutor-effort-statistics',
-        loadChildren: () => import('../tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
+        loadChildren: () => import('../tutor-effort/tutor-effort-statistics.route').then((m) => m.tutorEffortStatisticsRoute),
     },
     {
         path: 'text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
