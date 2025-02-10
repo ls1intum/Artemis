@@ -5,6 +5,8 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 
 @Component({
     selector: 'jhi-programming-repository-buttons-detail',

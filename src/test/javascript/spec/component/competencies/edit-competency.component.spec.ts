@@ -12,7 +12,6 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -23,7 +22,7 @@ describe('EditCompetencyComponent', () => {
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditCompetencyComponent, CompetencyFormStubComponent, OwlNativeDateTimeModule],
+            imports: [ArtemisTestModule, EditCompetencyComponent, OwlNativeDateTimeModule, MockComponent(CompetencyFormComponent)],
             declarations: [],
             providers: [
                 MockProvider(LectureService),

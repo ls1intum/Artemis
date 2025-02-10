@@ -5,11 +5,15 @@ import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
 
 @Component({
     selector: 'jhi-import-competencies',

@@ -1,4 +1,5 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
@@ -145,7 +146,12 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
+            this.onPageChanged.emit({
+                overViewChange: false,
+                exercise: this.exercises[this.exerciseIndex],
+                forceSave: !!forceSave,
+                submission: submission,
+            });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;

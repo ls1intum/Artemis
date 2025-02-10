@@ -13,6 +13,8 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
@@ -28,6 +30,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { CommonModule } from '@angular/common';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-faq',
@@ -35,7 +38,6 @@ import { CommonModule } from '@angular/common';
     styleUrls: [],
     imports: [
         CustomExerciseCategoryBadgeComponent,
-
         SearchFilterComponent,
         NgbModule,
         HtmlForMarkdownPipe,

@@ -10,6 +10,7 @@ import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -17,6 +18,8 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 @Component({
     selector: 'jhi-build-agent-details',

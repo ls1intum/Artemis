@@ -17,6 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-course-archive',

@@ -24,7 +24,7 @@ describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent, OwlNativeDateTimeModule],
+            imports: [ArtemisTestModule, EditPrerequisiteComponent, MockComponent(PrerequisiteFormComponent), OwlNativeDateTimeModule],
             declarations: [],
             providers: [
                 MockProvider(LectureService),

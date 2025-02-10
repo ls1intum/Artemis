@@ -5,6 +5,7 @@ import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/course/
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -16,11 +17,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-course-import-standardized-prerequisites',
     templateUrl: './course-import-standardized-prerequisites.component.html',
     imports: [
+        ArtemisSharedCommonModule,
+        ArtemisSharedComponentModule,
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,

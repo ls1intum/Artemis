@@ -6,14 +6,18 @@ import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAU
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
@@ -22,10 +26,12 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
     styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
         NgbDropdownModule,
-        ArtemisFormsModule,
         ReactiveFormsModule,
+        ArtemisSharedComponentModule,
         ArtemisCompetenciesModule,
         FormDateTimePickerComponent,
+        TaxonomySelectComponent,
+        MarkdownEditorMonacoComponent,
         HelpIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -96,6 +102,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
     }
+
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.

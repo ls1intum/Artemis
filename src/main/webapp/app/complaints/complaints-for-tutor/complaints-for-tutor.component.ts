@@ -16,9 +16,11 @@ import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/compla
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 

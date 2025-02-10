@@ -16,12 +16,14 @@ import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.mod
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({

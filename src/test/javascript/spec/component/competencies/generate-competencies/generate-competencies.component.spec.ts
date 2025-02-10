@@ -25,8 +25,9 @@ import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('GenerateCompetenciesComponent', () => {
