@@ -24,7 +24,6 @@ import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fing
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -46,7 +45,6 @@ export const appConfig: ApplicationConfig = {
 
             BrowserAnimationsModule,
             BrowserModule,
-            GuidedTourModule,
             RouterModule,
             ScrollingModule,
             OwlNativeDateTimeModule,
