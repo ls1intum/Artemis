@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
+import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { TranslateModule } from '@ngx-translate/core';
