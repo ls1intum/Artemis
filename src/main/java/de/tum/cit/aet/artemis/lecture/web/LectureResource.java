@@ -345,7 +345,7 @@ public class LectureResource {
      * @param lectureUnitId the id of the lecture unit containing the lecture transcription
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/")
+    @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
