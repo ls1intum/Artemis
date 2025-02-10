@@ -6,7 +6,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
@@ -30,7 +29,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
 @NgModule({
     imports: [
         ArtemisSharedCommonModule,
-        ArtemisSharedPipesModule,
         RouterModule,
         LoadingIndicatorContainerComponent,
         DetailOverviewNavigationBarComponent,
@@ -58,7 +56,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
     ],
     exports: [
         ArtemisSharedCommonModule,
-        ArtemisSharedPipesModule,
         RouterModule,
         CircularProgressBarComponent,
         ConfirmEntityNameComponent,

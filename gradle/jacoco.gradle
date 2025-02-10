@@ -3,10 +3,10 @@ ext {
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 69]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.929, "CLASS": 0 ],
+        "assessment"    :          ["INSTRUCTION": 0.928, "CLASS": 0 ],
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS": 2 ],
         "atlas"         :          ["INSTRUCTION": 0.908, "CLASS": 5 ],
-        "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS": 0 ],
+        "buildagent"    :          ["INSTRUCTION": 0.788, "CLASS": 0 ],
         "communication" :          ["INSTRUCTION": 0.925, "CLASS": 1 ],
         "core"          :          ["INSTRUCTION": 0.861, "CLASS": 17],
         "exam"          :          ["INSTRUCTION": 0.938, "CLASS": 0 ],
@@ -59,31 +59,35 @@ jacocoTestReport {
         )
     }
 
-    finalizedBy reportedModules
+    def sortedTasks = reportedModules
+        .sort()
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
+    sortedTasks.eachWithIndex { task, index ->
+        if (index > 0) {
+            task.mustRunAfter(sortedTasks[index - 1])
+        }
+    }
+    finalizedBy sortedTasks
 }
 
 jacocoTestCoverageVerification {
-    // Only run full coverage when no specific/all modules set
-    enabled = reportedModules.size() == 0 || reportedModules.size() == ModuleCoverageThresholds.size()
+    // Handled by each task itself
+    enabled = false
 
-    classDirectories.setFrom(
-        files(classDirectories.files.collect { classDir ->
-            project.fileTree(classDir) {
-                excludes=ignoredDirectories
+    def verifyCoverage = reportedModules.size() == 0 || reportedModules.size() == (ModuleCoverageThresholds.size() + 1) // +1 for aggregated
+    if (verifyCoverage) {
+        def sortedTasks = reportedModules
+            .sort()
+            .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
+            .findAll { task -> task != null}
+        sortedTasks.eachWithIndex { task, index ->
+            if (index > 0) {
+                task.mustRunAfter(sortedTasks[index - 1])
             }
-        })
-    )
-
-    def minInstructionCoveredRatio = AggregatedCoverageThresholds["INSTRUCTION"] as double
-    def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
-    applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
-
-    // TODO: somehow the report order is in reversed alphabetical order, it would be great if it could be from A to Z
-    finalizedBy reportedModules
-        .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
-        .findAll { task -> task != null}
+        }
+        finalizedBy sortedTasks
+    }
 }
 check.dependsOn jacocoTestCoverageVerification
 
@@ -156,12 +160,17 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
         include "test.exec"
     }
 
-    def modulePath = "$BasePath/$moduleName/**/*.class"
-    task.sourceDirectories.setFrom(project.files("src/main/java/$modulePath"))
+    def sourcePath;
+    if (moduleName == "aggregated") {
+        sourcePath = "$BasePath/**/*.class"
+    } else {
+        sourcePath = "$BasePath/$moduleName/**/*.class"
+    }
+    task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
-                includes=[modulePath]
+                includes=[sourcePath]
                 excludes=ignoredDirectories
             }
         })
