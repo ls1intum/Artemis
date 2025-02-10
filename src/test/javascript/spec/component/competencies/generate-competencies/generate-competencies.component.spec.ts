@@ -25,7 +25,6 @@ import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('GenerateCompetenciesComponent', () => {
@@ -37,7 +36,7 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisCompetenciesModule],
+            imports: [ArtemisTestModule, GenerateCompetenciesComponent],
             declarations: [
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),

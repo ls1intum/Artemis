@@ -16,7 +16,7 @@ describe('ImportAllCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule, MockComponent(NgbPagination)],
+            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, MockComponent(NgbPagination)],
             declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()
