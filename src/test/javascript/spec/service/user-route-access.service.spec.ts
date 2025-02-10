@@ -14,6 +14,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('UserRouteAccessService', () => {
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
@@ -49,6 +51,8 @@ describe('UserRouteAccessService', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(StateStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(CourseExerciseDetailsComponent, '')
