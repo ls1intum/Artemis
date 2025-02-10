@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
     faDownload,
@@ -19,10 +19,12 @@ import {
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { FileService } from 'app/shared/http/file.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-attachment-unit',
-    imports: [LectureUnitComponent, ArtemisSharedCommonModule],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective],
     templateUrl: './attachment-unit.component.html',
 })
 export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit> {

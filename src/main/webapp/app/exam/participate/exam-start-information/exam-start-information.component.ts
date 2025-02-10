@@ -1,16 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { SafeHtml } from '@angular/platform-browser';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-exam-start-information',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, StudentExamWorkingTimeComponent],
+    imports: [InformationBoxComponent, StudentExamWorkingTimeComponent, ArtemisDatePipe],
     templateUrl: './exam-start-information.component.html',
 })
 export class ExamStartInformationComponent implements OnInit {

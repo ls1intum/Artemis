@@ -6,17 +6,19 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, ArtemisSharedComponentModule, PlagiarismCasesOverviewComponent],
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, PlagiarismCasesOverviewComponent, ButtonComponent, HelpIconComponent, DocumentationButtonComponent],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     private suspiciousSessionsService = inject(SuspiciousSessionsService);
