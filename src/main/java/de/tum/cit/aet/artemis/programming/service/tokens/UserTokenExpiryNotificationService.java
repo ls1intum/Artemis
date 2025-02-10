@@ -42,14 +42,14 @@ public class UserTokenExpiryNotificationService {
     }
 
     /**
-     * Notifies the user at the day of VCS access token expiry
+     * Notifies the users at the day of VCS access token expiry
      */
     public void notifyOnExpiredToken() {
         notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), singleUserNotificationService::notifyUserAboutExpiredVcsAccessToken);
     }
 
     /**
-     * Notifies the user one week before the VCS access tokens expiry
+     * Notifies the users one week before the VCS access tokens expiry
      */
     public void notifyUsersOnUpcomingVcsAccessTokenExpiry() {
         notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), singleUserNotificationService::notifyUserAboutSoonExpiringVcsAccessToken);
