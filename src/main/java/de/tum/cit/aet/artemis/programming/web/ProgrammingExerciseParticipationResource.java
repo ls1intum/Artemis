@@ -195,11 +195,11 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoIdentifier(
-            @PathVariable("repoIdentifier") String decodedIdentifier) {
+            @PathVariable("repoIdentifier") String repoIdentifier) {
         // build url to format <server.url>/git/<project_key>/<repo-identifier>.git
         // with repo-identifier containing the project key at the beginning
-        var projectKey = decodedIdentifier.split("-")[0];
-        String repoUrl = vcUrl + "/git/" + projectKey.toUpperCase() + "/" + decodedIdentifier + ".git";
+        var projectKey = repoIdentifier.split("-")[0];
+        String repoUrl = vcUrl + "/git/" + projectKey.toUpperCase() + "/" + repoIdentifier + ".git";
 
         // find participation by url
         var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl)
