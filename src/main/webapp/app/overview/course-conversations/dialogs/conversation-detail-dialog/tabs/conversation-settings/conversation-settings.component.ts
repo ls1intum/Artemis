@@ -9,8 +9,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { faBoxArchive, faBoxOpen, faHashtag, faLock, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { canChangeChannelArchivalState, canChangeChannelPrivacyState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -40,10 +40,15 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     readonly faTrash = faTrash;
+    readonly faBoxArchive = faBoxArchive;
+    readonly faBoxOpen = faBoxOpen;
+    readonly faHashtag = faHashtag;
+    readonly faLock = faLock;
 
     conversationAsChannel: ChannelDTO | undefined;
     canLeaveConversation: boolean;
     canChangeChannelArchivalState: boolean;
+    canChangeChannelPrivacyState: boolean;
     canDeleteChannel: boolean;
 
     private modalService = inject(NgbModal);
@@ -59,6 +64,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         this.canLeaveConversation = canLeaveConversation(conversation);
         this.conversationAsChannel = getAsChannelDTO(conversation);
         this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
+        this.canChangeChannelPrivacyState = this.conversationAsChannel ? canChangeChannelPrivacyState(this.conversationAsChannel) : false;
         this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course(), this.conversationAsChannel) : false;
     }
 
@@ -84,17 +90,24 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         throw new Error('The conversation type is not supported');
     }
 
+    toggleChannelArchivalState(event: Event): void {
+        const channel = getAsChannelDTO(this.activeConversation()!);
+        if (!channel) {
+            return;
+        }
+        if (channel.isArchived) {
+            this.openUnArchivalModal(channel);
+        } else {
+            this.openArchivalModal(channel);
+        }
+    }
+
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
 
-    openArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation()!);
-        if (!channel) {
-            return;
-        }
-
+    openArchivalModal(channel: ChannelDTO) {
         const keys = {
             titleKey: 'artemisApp.dialogs.archiveChannel.title',
             questionKey: 'artemisApp.dialogs.archiveChannel.question',
@@ -102,7 +115,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             confirmButtonKey: 'artemisApp.dialogs.archiveChannel.confirmButton',
         };
 
-        const modalRef = this.createModal(channel, event, keys);
+        const modalRef = this.createModal(channel, keys);
 
         this.openModal(modalRef, () => {
             this.channelService.archive(this.course().id!, channel.id!).subscribe({
@@ -114,19 +127,14 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
-    openUnArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation()!);
-        if (!channel) {
-            return;
-        }
-
+    openUnArchivalModal(channel: ChannelDTO) {
         const keys = {
             titleKey: 'artemisApp.dialogs.unArchiveChannel.title',
             questionKey: 'artemisApp.dialogs.unArchiveChannel.question',
             descriptionKey: 'artemisApp.dialogs.unArchiveChannel.description',
             confirmButtonKey: 'artemisApp.dialogs.unArchiveChannel.confirmButton',
         };
-        const modalRef = this.createModal(channel, event, keys);
+        const modalRef = this.createModal(channel, keys);
 
         this.openModal(modalRef, () => {
             this.channelService
@@ -150,8 +158,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             .subscribe(unArchiveObservable);
     }
 
-    private createModal(channel: ChannelDTO, event: MouseEvent, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
-        event.stopPropagation();
+    private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = { channelName: channel.name };
         modalRef.componentInstance.translationKeys = keys;

@@ -112,9 +112,10 @@
                 "settingsUnavailable": "Keine Einstellungen möglich",
                 "actions": {
                     "leave": "Konversation verlassen",
-                    "archiveChannel": "Kanal archivieren",
-                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen",
-                    "togglePrivacy": "Toggle Privacy"
+                    "archiveChannel": "Kanal für alle archivieren",
+                    "unarchiveChannel": "Kanal für alle dearchivieren",
+                    "publicChannel": "In einen öffentlichen Kanal umwandeln",
+                    "privateChannel": "In einen privaten Kanal umwandeln"
                 }
             },
             "conversationDetail": {

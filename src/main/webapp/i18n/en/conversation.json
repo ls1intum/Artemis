@@ -112,9 +112,10 @@
                 "settingsUnavailable": "No settings possible",
                 "actions": {
                     "leave": "Leave Conversation",
-                    "archiveChannel": "Archive Channel",
-                    "unarchiveChannel": "Unarchive Channel",
-                    "togglePrivacy": "Toggle Privacy"
+                    "archiveChannel": "Archive channel for everyone",
+                    "unarchiveChannel": "Unarchive channel for everyone",
+                    "publicChannel": "Change to a public channel",
+                    "privateChannel": "Change to a private channel"
                 }
             },
             "conversationDetail": {

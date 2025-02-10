@@ -13,34 +13,32 @@
                     }
                 </div>
                 @if (conversationAsChannel; as channel) {
-                    @if (true) {
+                    @if (canChangeChannelPrivacyState) {
                         <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger archive"
-                                (click)="toggleChannelPrivacy()"
-                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.togglePrivacy"
-                            ></button>
+                            <button type="button" class="btn btn-danger privacy-toggle" (click)="toggleChannelPrivacy()">
+                                <fa-icon [icon]="channel.isPublic ? faLock : faHashtag" class="me-2" />
+                                <span
+                                    jhiTranslate="{{
+                                        channel.isPublic
+                                            ? 'artemisApp.dialogs.conversationSettings.actions.privateChannel'
+                                            : 'artemisApp.dialogs.conversationSettings.actions.publicChannel'
+                                    }}"
+                                ></span>
+                            </button>
                         </div>
                     }
-                    @if (!channel.isArchived && canChangeChannelArchivalState) {
+                    @if (canChangeChannelArchivalState) {
                         <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger archive"
-                                (click)="openArchivalModal($event)"
-                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.archiveChannel"
-                            ></button>
-                        </div>
-                    }
-                    @if (channel.isArchived && canChangeChannelArchivalState) {
-                        <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger unarchive"
-                                (click)="openUnArchivalModal($event)"
-                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.unarchiveChannel"
-                            ></button>
+                            <button type="button" class="btn btn-danger archive-toggle" (click)="toggleChannelArchivalState($event)">
+                                <fa-icon [icon]="channel.isArchived ? faBoxOpen : faBoxArchive" class="me-2" />
+                                <span
+                                    jhiTranslate="{{
+                                        channel.isArchived
+                                            ? 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel'
+                                            : 'artemisApp.dialogs.conversationSettings.actions.archiveChannel'
+                                    }}"
+                                ></span>
+                            </button>
                         </div>
                     }
                     @if (canDeleteChannel) {
