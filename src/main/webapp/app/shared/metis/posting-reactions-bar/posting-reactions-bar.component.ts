@@ -415,6 +415,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    checkIfPinned(): DisplayPriority {
+        return this.displayPriority;
+    }
+
     openAnswerView() {
         this.showAnswersChange.emit(true);
         this.openPostingCreateEditModal.emit();
