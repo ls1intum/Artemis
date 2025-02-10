@@ -89,6 +89,17 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     List<Submission> findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(Long participationId);
 
+    @Query("""
+            SELECT DISTINCT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+            WHERE s.participation.id = :participationId
+                AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :participationId))
+                AND (r.id IS NULL OR r.id = (SELECT MAX(re2.id) FROM s.results re2))
+            """)
+    Set<Submission> findAllWithLatestSubmissionLatestResultAndFeedbacksByParticipationId(@Param("participationId") long participationId);
+
     /**
      * Get all submissions with their results by the submission ids
      *

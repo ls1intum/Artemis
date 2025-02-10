@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -75,6 +74,8 @@ public class ProgrammingExerciseParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
+
+    private final SubmissionRepository submissionRepository;
 
     @Value("${artemis.version-control.url}")
     private String vcUrl;
@@ -114,7 +115,8 @@ public class ProgrammingExerciseParticipationResource {
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            SubmissionRepository submissionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -130,6 +132,7 @@ public class ProgrammingExerciseParticipationResource {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -183,24 +186,16 @@ public class ProgrammingExerciseParticipationResource {
      * The repository identifier is the last part of the repository URL.
      * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-identifier}.git
      *
-     * @param encodedRepoIdentifier the URL-encoded repository identifier
+     * @param decodedIdentifier the URL repository identifier
      * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO} in body,
      *         or with status 404 (Not Found) if the participation is not found,
      *         or with status 403 (Forbidden) if the user doesn't have access to the participation
      */
-    @GetMapping("programming-exercise-participations/repo-identifier")
+    @GetMapping("programming-exercise-participations/repo-identifier/{repoIdentifier}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<RepoUrlProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoIdentifier(
-            @RequestParam("repoIdentifier") String encodedRepoIdentifier) {
-        String decodedIdentifier;
-        try {
-            decodedIdentifier = URLDecoder.decode(encodedRepoIdentifier, StandardCharsets.UTF_8);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestAlertException("The provided URL could not be decoded", ENTITY_NAME, "invalidUrlEncoding");
-        }
-
+            @PathVariable("repoIdentifier") String decodedIdentifier) {
         // build url to format <server.url>/git/<project_key>/<repo-identifier>.git
         // with repo-identifier containing the project key at the beginning
         var projectKey = decodedIdentifier.split("-")[0];
@@ -212,21 +207,18 @@ public class ProgrammingExerciseParticipationResource {
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        var participationWithLatestSubmissionLatestResultFeedbacks = programmingExerciseStudentParticipationRepository
-                .findByIdWithLatestSubmissionLatestResultAndFeedbacks(participation.getId()).orElseThrow(() -> new EntityNotFoundException("Participation", participation.getId()));
-
+        participation.setSubmissions(submissionRepository.findAllWithLatestSubmissionLatestResultAndFeedbacksByParticipationId(participation.getId()));
         // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
         // so we set the test cases to empty to avoid lazy loading
-        if (participationWithLatestSubmissionLatestResultFeedbacks.getSubmissions().isEmpty()) {
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise().setTestCases(Set.of());
+        if (participation.getSubmissions().isEmpty()) {
+            participation.getProgrammingExercise().setTestCases(Set.of());
         }
         else {
             // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
-            participationWithLatestSubmissionLatestResultFeedbacks.getProgrammingExercise()
-                    .setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participationWithLatestSubmissionLatestResultFeedbacks.getExercise().getId()));
+            participation.getProgrammingExercise().setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.getExercise().getId()));
         }
 
-        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participationWithLatestSubmissionLatestResultFeedbacks));
+        return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participation));
     }
 
     /**
