@@ -7,7 +7,7 @@ import { Subject, Subscription } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -50,7 +50,7 @@ export interface LectureAttachmentFormData {
 })
 export class LectureAttachmentsComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faPaperclip = faPaperclip;
