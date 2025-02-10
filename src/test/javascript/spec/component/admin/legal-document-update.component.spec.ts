@@ -18,6 +18,8 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -45,6 +47,8 @@ describe('LegalDocumentUpdateComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({}),
                 },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
