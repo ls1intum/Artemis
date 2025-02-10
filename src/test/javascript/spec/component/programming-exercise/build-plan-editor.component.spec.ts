@@ -13,7 +13,6 @@ import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-pla
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -33,7 +32,7 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 BuildPlanEditorComponent,
                 TranslatePipeMock,

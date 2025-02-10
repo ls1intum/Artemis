@@ -21,6 +21,7 @@ import { PrerequisiteService } from 'app/course/competencies/prerequisite.servic
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
@@ -32,7 +33,7 @@ describe('PrerequisiteFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -163,7 +164,14 @@ describe('PrerequisiteFormComponent', () => {
 
     it('validator should verify title is unique', fakeAsync(() => {
         const existingTitles = ['nameExisting'];
-        jest.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        jest.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: existingTitles,
+                    status: 200,
+                }),
+            ),
+        );
         prerequisiteFormComponent.isEditMode = true;
         prerequisiteFormComponent.formData.title = 'initialName';
 
