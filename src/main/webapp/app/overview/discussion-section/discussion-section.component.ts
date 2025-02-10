@@ -14,11 +14,12 @@ import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.di
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
@@ -27,12 +28,13 @@ import { ButtonComponent } from 'app/shared/components/button.component';
     styleUrls: ['./discussion-section.component.scss'],
     imports: [
         FontAwesomeModule,
-        ArtemisSharedModule,
         InfiniteScrollDirective,
         FormsModule,
         ReactiveFormsModule,
         PostingThreadComponent,
         MessageInlineInputComponent,
+        ArtemisTranslatePipe,
+        NgbTooltipModule,
         ButtonComponent,
     ],
     providers: [MetisService],

@@ -1,9 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { DateType } from '../pipes/artemis-date.pipe';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 export interface InformationBox {
     title: string;
@@ -42,7 +45,7 @@ export interface StringNumberContent {
 export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent;
 
 @Component({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, NgbTooltipModule],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',
     styleUrls: ['./information-box.component.scss'],
