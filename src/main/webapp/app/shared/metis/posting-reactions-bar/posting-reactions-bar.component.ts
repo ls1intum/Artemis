@@ -415,6 +415,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    /**
+     * Checks whether the post is pinned.
+     * Used in posting.directive.ts to determine the pin status for the dropdown menu.
+     *
+     * @returns {DisplayPriority} The display priority of the post.
+     */
     checkIfPinned(): DisplayPriority {
         return this.displayPriority;
     }
