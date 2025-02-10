@@ -38,7 +38,7 @@ public class UserTokenExpiryNotificationService {
     public void sendTokenExpirationNotifications() {
         log.info("Sending Token expiration notifications to single user");
         notifyOnExpiredToken();
-        notifyUserOnUpcomingVcsAccessTokenExpiry();
+        notifyUsersOnUpcomingVcsAccessTokenExpiry();
     }
 
     /**
