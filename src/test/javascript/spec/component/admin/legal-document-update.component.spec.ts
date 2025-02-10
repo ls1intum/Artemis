@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
