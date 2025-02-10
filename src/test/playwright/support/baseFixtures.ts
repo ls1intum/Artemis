@@ -15,13 +15,16 @@ const test = baseTest.extend<{
             await use('autoTestFixture');
 
             const jsCoverage = await page.coverage.stopJSCoverage();
+
+            // On CI, modify URLs of coverage entries to access sources
+            // directly from the "artemis-app" container.
+            // Because files served via "nginx" require HTTPS certificates
+            // for accessing them, and it's not clear how we can make
+            // "monocart-reporter" handle that while generating a coverage report.
             if (process.env.CI) {
-                console.log('Adjusting coverage entry urls...');
-                console.log(`Source urls before: ${jsCoverage.map((entry) => entry.url)}`);
                 for (const entry of jsCoverage) {
                     entry.url = entry.url.replace(process.env.BASE_URL!, 'http://artemis-app:8080');
                 }
-                console.log(`Source urls after: ${jsCoverage.map((entry) => entry.url)}`);
             }
             await addCoverageReport(jsCoverage, test.info());
         },
