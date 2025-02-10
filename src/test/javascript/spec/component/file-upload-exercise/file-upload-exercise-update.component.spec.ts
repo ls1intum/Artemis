@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { of, Subject } from 'rxjs';
 
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -23,6 +23,8 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { NgModel } from '@angular/forms';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -31,13 +33,15 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: Router, useClass: MockRouter },
                 MockProvider(TranslateService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
