@@ -1,6 +1,6 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
@@ -42,6 +42,7 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { AthenaService } from 'app/assessment/athena.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -90,6 +91,8 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
