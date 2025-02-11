@@ -3,7 +3,7 @@ name: Artemis Staging Deployment
 on:
   workflow_dispatch:
     inputs:
-      branch:
+      branch_name:
         description: 'Branch to deploy'
         required: true
       commit_sha:
@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Print inputs
         run: |
-          echo "Branch: ${{ github.event.inputs.branch }}"
+          echo "Branch: ${{ github.event.inputs.branch_name }}"
           echo "Commit SHA: ${{ github.event.inputs.commit_sha }}"
       - name: Get workflow runs
         id: get_workflow_run
@@ -38,7 +38,7 @@ jobs:
         id: set_build_workflow_id
         run: |
           COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
-          BRANCH="${{ github.event.inputs.branch }}"
+          BRANCH="${{ github.event.inputs.branch_name }}"
           WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
           
           # Find the workflow run for the specific commit
