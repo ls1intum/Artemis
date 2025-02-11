@@ -2,14 +2,13 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-feedback-modal',
     templateUrl: './feedback-modal.component.html',
-    imports: [ArtemisSharedCommonModule, TranslateDirective, CommonModule],
+    imports: [TranslateDirective, CommonModule],
 })
 export class FeedbackModalComponent implements OnInit {
     feedbackDetail = input.required<FeedbackDetail>();
