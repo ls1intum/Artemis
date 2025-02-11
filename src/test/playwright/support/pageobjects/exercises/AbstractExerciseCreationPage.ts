@@ -33,12 +33,6 @@ export class AbstractExerciseCreationPage {
         await textEditor.press('Delete');
     }
 
-    async importExercise(saveButtonSelector: string, importUrl: string) {
-        const responsePromise = this.page.waitForResponse(importUrl);
-        await this.page.locator(saveButtonSelector).click();
-        return await responsePromise;
-    }
-
     async waitForFormToLoad() {
         await this.page.locator('[name*="editForm"]').waitFor({ state: 'visible', timeout: 10000 });
     }
