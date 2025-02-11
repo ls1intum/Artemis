@@ -92,7 +92,9 @@ public class PlagiarismPostService extends PostingService {
 
     public void informInstructorAboutPostReply(long postId) {
         Post post = postRepository.findPostByIdElseThrow(postId);
-        plagiarismCaseService.informInstructorAboutPostReply(post);
+        if (post.getPlagiarismCase() != null) {
+            plagiarismCaseService.informInstructorAboutPostReply(post);
+        }
     }
 
     /**

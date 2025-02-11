@@ -52,6 +52,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     affectedExerciseRouterLink: (string | number)[];
 
     isAfterDueDate: boolean;
+    isButtonVisible: boolean = true;
 
     readonly dayjs = dayjs;
 
@@ -95,6 +96,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     }
 
     async handleStudentReply() {
+        this.isButtonVisible = false;
         this.postComponent.openCreateAnswerPostModal();
         await this.informInstructor();
     }

@@ -174,6 +174,6 @@ describe('Plagiarism Cases Student View Component', () => {
         component.handleStudentReply();
         tick();
         expect(informInstructorSpy).toHaveBeenCalledWith(1);
-        expect(openCreateAnswerPostModalSpy).toHaveBeenCalled();
+        expect(openCreateAnswerPostModalSpy).toHaveBeenCalledOnce();
     }));
 });

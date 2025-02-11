@@ -287,7 +287,6 @@ public class PlagiarismCaseResource {
     public ResponseEntity<Void> informInstructorAboutPostReply(@PathVariable Long postId) {
         log.debug("GET informInstructorAboutPostReply invoked for post {}", postId);
         long start = System.nanoTime();
-
         plagiarismPostService.informInstructorAboutPostReply(postId);
         log.info("informInstructorAboutPostReply took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
