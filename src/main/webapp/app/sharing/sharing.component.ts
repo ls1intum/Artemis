@@ -1,31 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
 import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
-import { LoginService } from 'app/core/login/login.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    standalone: false
 })
 export class SharingComponent implements OnInit {
     courses: Course[];
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    reverse: boolean;
+    reverse: boolean = false;
     predicate: string;
     shoppingBasket: ShoppingBasket;
     sharingInfo: SharingInfo = new SharingInfo();
@@ -39,14 +35,11 @@ export class SharingComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private authServerProvider: AuthServerProvider,
-        private accountService: AccountService,
         private userRouteAccessService: UserRouteAccessService,
-        private loginService: LoginService,
-        private stateStorageService: StateStorageService,
         private courseService: CourseManagementService,
         private sortService: SortService,
         private programmingExerciseSharingService: ProgrammingExerciseSharingService,
+        private notificationService: NotificationService,
     ) {
         this.route.params.subscribe((params) => {
             this.sharingInfo.basketToken = params['basketToken'];
@@ -76,7 +69,7 @@ export class SharingComponent implements OnInit {
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             },
-            error: (res: HttpErrorResponse) => alert('Cannot load courses: [' + res.message + ']'),
+            error: (res: HttpErrorResponse) => this.notificationService.showError('Cannot load courses: ' + res.message),
         });
     }
 

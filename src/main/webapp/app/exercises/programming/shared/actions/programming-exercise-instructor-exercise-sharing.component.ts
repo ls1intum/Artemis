@@ -17,7 +17,7 @@ import { HttpResponse } from '@angular/common/http';
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.sharing.export'"
-            (onClick)="preOpenSharingTab(); exportExerciseToSharing(exerciseId)"
+            (onClick)="exportExerciseToSharing(exerciseId)"
         />
     `,
     imports: [ButtonComponent],
@@ -26,7 +26,7 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
-    sharingTab: WindowProxy | null;
+    sharingTab: WindowProxy | null = null;
 
     @Input()
     exerciseId: number;
@@ -39,14 +39,6 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
         private alertService: AlertService,
     ) {}
 
-    preOpenSharingTab() {
-        // the focus back to this window is not working, so we open in this window
-        /*
-        if(!this.sharingTab) {
-            this.sharingTab = window.open("about:blank", "sharing");
-        }
-        */
-    }
     /**
      * **CodeAbility changes**: Used to initiate export of an exercise to
      * Sharing.
@@ -56,22 +48,24 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
     exportExerciseToSharing(programmingExerciseId: number) {
         this.sharingService.exportProgrammingExerciseToSharing(programmingExerciseId, window.location.href).subscribe({
             next: (redirect: HttpResponse<string>) => {
-                if (redirect) {
-                    const redirectURL = redirect.body?.toString();
+                const redirectURL = redirect?.body;
+                if (redirectURL) {
                     if (this.sharingTab) {
                         if (!window.name) {
                             window.name = 'artemis';
                         }
-                        this.sharingTab.location.href = redirectURL! + '&window=' + window.name;
+                        this.sharingTab.location.href = `${redirectURL}&window=${window.name}`;
                         this.sharingTab.focus();
                         //                    const sharingWindow = window.open(redirectURL, 'sharing');
                     } else {
-                        window.location.href = redirectURL!;
+                        window.location.href = redirectURL;
                     }
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
                 }
             },
             error: (errorResponse) => {
-                this.alertService.error('Unable to export exercise. Error: ' + errorResponse.message);
+                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', { message: errorResponse.message });
             },
         });
     }

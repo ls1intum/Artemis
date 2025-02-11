@@ -731,8 +731,11 @@
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
             },
             "sharing": {
-                "import": "Import Programming Exercise from Sharing Platform",
-                "export": "Export to Sharing"
+                "import": "Import programming exercise from Sharing Platform",
+                "export": "Export to Sharing",
+                "error": {
+                    "export": "Unable to export programming exercise"
+                }
             }
         },
         "error": {
