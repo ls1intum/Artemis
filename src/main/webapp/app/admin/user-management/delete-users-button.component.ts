@@ -1,15 +1,14 @@
 import { Component, EventEmitter, Output, WritableSignal, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ButtonType } from 'app/shared/components/button.component';
+
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { Subject } from 'rxjs';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 /**
  * Button to delete not enrolled users with a confirmation dialog
@@ -18,7 +17,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 @Component({
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [ButtonComponent],
 })
 export class DeleteUsersButtonComponent {
     private adminUserService = inject(AdminUserService);
