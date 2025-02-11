@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
-import { ArtemisTestModule } from '../../../../../../test.module';
 
 describe('CodeEditorFileBrowserBadgeComponent', () => {
     let component: CodeEditorFileBrowserBadgeComponent;
@@ -11,7 +10,7 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         translateService = TestBed.inject(TranslateService);

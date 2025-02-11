@@ -22,7 +22,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -102,14 +101,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -855,14 +847,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -975,14 +960,7 @@ describe('Course Management Update Component Create', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -10,7 +10,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
@@ -20,7 +19,7 @@ describe('TutorLeaderboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 MockProvider(AccountService),
                 {

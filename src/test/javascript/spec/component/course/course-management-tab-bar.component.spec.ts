@@ -10,7 +10,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -50,7 +49,7 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [RouterModule, ArtemisTestModule],
+            imports: [RouterModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

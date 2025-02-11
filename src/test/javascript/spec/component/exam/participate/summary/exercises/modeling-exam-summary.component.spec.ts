@@ -6,14 +6,13 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
     let component: ModelingExamSummaryComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
+        TestBed.configureTestingModule({ imports: [] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);

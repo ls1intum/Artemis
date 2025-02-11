@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InformationBoxComponent } from '../../../../../main/webapp/app/shared/information-box/information-box.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('InformationBoxComponent', () => {
     let component: InformationBoxComponent;
@@ -11,7 +10,7 @@ describe('InformationBoxComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [InformationBoxComponent, ArtemisTestModule, TranslateModule.forRoot(), NgbTooltipModule],
+            imports: [InformationBoxComponent, TranslateModule.forRoot(), NgbTooltipModule],
         }).compileComponents();
         fixture = TestBed.createComponent(InformationBoxComponent);
         component = fixture.componentInstance;

@@ -21,7 +21,6 @@ import { of } from 'rxjs';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
@@ -137,7 +136,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(QuizExerciseService)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
@@ -505,7 +504,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('preview mode', () => {
         beforeEach(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -667,7 +666,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('solution mode', () => {
         beforeEach(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)

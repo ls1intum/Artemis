@@ -16,7 +16,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
@@ -63,7 +62,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -123,7 +122,7 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(SortService), MockProvider(ActivatedRoute)],
         })
             .compileComponents()

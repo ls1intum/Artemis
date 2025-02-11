@@ -9,13 +9,17 @@ import { MetricsRequestComponent } from 'app/admin/metrics/blocks/metrics-reques
 import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 import { of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;
@@ -24,8 +28,18 @@ describe('MetricsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClientTesting()],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
             declarations: [
                 MetricsComponent,
                 MockComponent(FaIconComponent),

@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../test.module';
 
 const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
 
@@ -13,7 +12,7 @@ describe('ArtemisDatePipe', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [ArtemisDatePipe],
         })
             .compileComponents()

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -21,7 +20,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);

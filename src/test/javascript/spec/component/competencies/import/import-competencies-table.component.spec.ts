@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -15,7 +14,7 @@ describe('ImportCompetenciesTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule],
+            imports: [ReactiveFormsModule],
             declarations: [
                 ImportCompetenciesTableComponent,
                 MockPipe(ArtemisTranslatePipe),

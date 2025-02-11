@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StandardizedCompetencyFilterStubComponent } from './filter/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -34,13 +33,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                CourseImportStandardizedPrerequisitesComponent,
-                StandardizedCompetencyFilterComponent,
-                StandardizedCompetencyDetailComponent,
-                KnowledgeAreaTreeComponent,
-                ArtemisTestModule,
-            ],
+            imports: [CourseImportStandardizedPrerequisitesComponent, StandardizedCompetencyFilterComponent, StandardizedCompetencyDetailComponent, KnowledgeAreaTreeComponent],
             declarations: [
                 StandardizedCompetencyFilterStubComponent,
                 StandardizedCompetencyDetailStubComponent,

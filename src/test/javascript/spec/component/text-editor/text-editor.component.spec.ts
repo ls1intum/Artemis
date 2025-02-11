@@ -3,7 +3,6 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -64,7 +63,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([textEditorRoute[0]])],
+            imports: [RouterModule.forRoot([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),

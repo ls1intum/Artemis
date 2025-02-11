@@ -14,7 +14,6 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('EditAttachmentUnitComponent', () => {
     let fixture: ComponentFixture<EditAttachmentUnitComponent>;
@@ -30,7 +29,7 @@ describe('EditAttachmentUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentUnitService),
                 MockProvider(AlertService),

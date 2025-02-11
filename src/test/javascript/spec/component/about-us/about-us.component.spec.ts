@@ -1,5 +1,4 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -19,7 +18,7 @@ describe('AboutUsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [AboutUsComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ProfileService), MockProvider(StaticContentService)],
         })

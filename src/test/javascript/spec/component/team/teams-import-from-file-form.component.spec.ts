@@ -5,7 +5,6 @@ import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 import { unparse } from 'papaparse';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;
@@ -23,7 +22,7 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { MockProvider } from 'ng-mocks';
@@ -26,7 +25,7 @@ describe('IrisEnabledComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, IrisEnabledComponent, TranslatePipeMock],
+            imports: [IrisEnabledComponent, TranslatePipeMock],
             providers: [provideRouter([]), MockProvider(IrisSettingsService)],
         })
             .compileComponents()

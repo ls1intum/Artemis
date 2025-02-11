@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
@@ -23,7 +22,7 @@ describe('AbstractScienceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()

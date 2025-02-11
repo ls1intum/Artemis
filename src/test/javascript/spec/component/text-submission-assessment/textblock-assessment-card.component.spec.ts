@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
-import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
+import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
+import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
@@ -22,15 +21,15 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { EventEmitter } from '@angular/core';
 
 describe('TextblockAssessmentCardComponent', () => {
-    let component: TextBlockAssessmentCardComponent;
-    let fixture: ComponentFixture<TextBlockAssessmentCardComponent>;
+    let component: TextblockAssessmentCardComponent;
+    let fixture: ComponentFixture<TextblockAssessmentCardComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
-                TextBlockAssessmentCardComponent,
-                TextBlockFeedbackEditorComponent,
+                TextblockAssessmentCardComponent,
+                TextblockFeedbackEditorComponent,
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
                 MockComponent(ConfirmIconComponent),
@@ -42,7 +41,7 @@ describe('TextblockAssessmentCardComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TextBlockAssessmentCardComponent);
+                fixture = TestBed.createComponent(TextblockAssessmentCardComponent);
                 component = fixture.componentInstance;
                 component.textBlockRef = TextBlockRef.new();
                 fixture.detectChanges();
@@ -72,7 +71,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.selected = false;
         component.feedbackEditor = {
             focus: () => {},
-        } as TextBlockFeedbackEditorComponent;
+        } as TextblockFeedbackEditorComponent;
         const focusSpy = jest.spyOn(component.feedbackEditor!, 'focus');
         component.select(true);
         jest.advanceTimersByTime(300);
@@ -89,7 +88,7 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should only show Feedback Editor if Feedback is set', () => {
-        let element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
+        let element = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         expect(element).toBeFalsy();
 
         component.textBlockRef.initFeedback();
@@ -97,7 +96,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.feedback!.gradingInstruction.usageCount = 0;
 
         fixture.detectChanges();
-        element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
+        element = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         expect(element).toBeTruthy();
     });
 
@@ -106,8 +105,8 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.detectChanges();
 
         jest.spyOn(component.didDelete, 'emit');
-        const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
-        const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
+        const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
+        const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
 
         expect(component.textBlockRef.feedback).toBeUndefined();
@@ -121,8 +120,8 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.detectChanges();
 
         jest.spyOn(component.didDelete, 'emit');
-        const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
-        const feedbackEditorComponent = feedbackEditor.componentInstance as TextBlockFeedbackEditorComponent;
+        const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
+        const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
 
         expect(component.textBlockRef.feedback).toBeUndefined();
@@ -134,7 +133,6 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
-        // @ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();
@@ -147,7 +145,6 @@ describe('TextblockAssessmentCardComponent', () => {
             type: FeedbackType.MANUAL,
         };
         component.textBlockRef.selectable = false;
-        // @ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();

@@ -12,7 +12,6 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -29,7 +28,6 @@ describe('PostingContentPartComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,

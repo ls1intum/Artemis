@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('DifficultyLevelComponent', () => {
     let component: DifficultyLevelComponent;
@@ -9,7 +8,7 @@ describe('DifficultyLevelComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [DifficultyLevelComponent, NgbTooltipModule, ArtemisTestModule],
+            imports: [DifficultyLevelComponent, NgbTooltipModule],
         }).compileComponents();
         fixture = TestBed.createComponent(DifficultyLevelComponent);
         component = fixture.componentInstance;

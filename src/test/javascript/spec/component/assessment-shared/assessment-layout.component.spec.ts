@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
@@ -22,7 +21,7 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
+            imports: [MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,

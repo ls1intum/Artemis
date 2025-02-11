@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
@@ -18,7 +17,7 @@ describe('Exam Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExamResolve, MockProvider(ExamManagementService)],
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         resolve = TestBed.inject(ExamResolve);
@@ -102,7 +101,7 @@ describe('Exam Group Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExerciseGroupResolve, MockProvider(ExerciseGroupService)],
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         resolve = TestBed.inject(ExerciseGroupResolve);
@@ -152,7 +151,7 @@ describe('Student Exam Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [StudentExamResolve, MockProvider(StudentExamService)],
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         resolve = TestBed.inject(StudentExamResolve);

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
@@ -13,7 +12,7 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: WebsocketService,

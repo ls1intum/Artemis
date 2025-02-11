@@ -11,7 +11,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
@@ -34,7 +33,7 @@ describe('ProblemStatementComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }, MockProvider(ParticipationService), MockProvider(ExerciseService)],
         })
             .compileComponents()

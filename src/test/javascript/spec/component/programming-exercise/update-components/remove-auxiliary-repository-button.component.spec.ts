@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -14,7 +13,7 @@ describe('RemoveAuxiliaryRepositoryButton', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockComponent(ButtonComponent)],
+            imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
             providers: [],
         })
             .compileComponents()

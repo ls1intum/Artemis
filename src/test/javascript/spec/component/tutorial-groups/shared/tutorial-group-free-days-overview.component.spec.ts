@@ -10,7 +10,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Component, Input, IterableDiffers } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../../test.module';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
@@ -27,7 +26,7 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbPopover), ArtemisTestModule, ArtemisTranslatePipe],
+            imports: [MockDirective(NgbPopover), ArtemisTranslatePipe],
             declarations: [
                 TutorialGroupFreeDaysOverviewComponent,
                 MockComponent(FaStackComponent),

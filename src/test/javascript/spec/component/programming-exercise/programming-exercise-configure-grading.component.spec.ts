@@ -50,7 +50,6 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
@@ -189,7 +188,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
+            imports: [NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,

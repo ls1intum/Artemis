@@ -1,14 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, EventEmitter } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -23,7 +22,7 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
             declarations: [
                 DataExportConfirmationDialogComponent,
                 AlertOverlayComponent,
@@ -31,7 +30,7 @@ describe('DataExportConfirmationDialogComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [JhiLanguageHelper, AlertService],
+            providers: [JhiLanguageHelper, AlertService, MockProvider(NgbActiveModal)],
         }).compileComponents();
         fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);
         comp = fixture.componentInstance;

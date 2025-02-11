@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { By } from '@angular/platform-browser';
 
@@ -10,7 +9,7 @@ describe('AssessmentComplaintAlertComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

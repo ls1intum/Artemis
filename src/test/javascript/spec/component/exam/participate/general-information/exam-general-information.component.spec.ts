@@ -4,7 +4,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../../../test.module';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -30,7 +29,7 @@ describe('ExamGeneralInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

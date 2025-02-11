@@ -11,7 +11,6 @@ import { of, throwError } from 'rxjs';
 import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
 import { Team } from '../../../../../main/webapp/app/entities/team.model';
 import { mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 
@@ -28,7 +27,7 @@ describe('TeamComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(SessionStorageService), MockProvider(LocalStorageService), MockProvider(AccountService), TeamService, ExerciseService],
         })
             .compileComponents()

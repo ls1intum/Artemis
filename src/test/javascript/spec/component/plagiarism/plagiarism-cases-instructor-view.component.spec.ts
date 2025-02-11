@@ -16,7 +16,6 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { ExerciseType } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -109,7 +108,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 TranslateTestingModule,
                 ArtemisDatePipe,
                 RouterModule.forRoot([

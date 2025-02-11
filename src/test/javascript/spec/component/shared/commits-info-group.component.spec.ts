@@ -3,7 +3,6 @@ import { CommitsInfoGroupComponent } from 'app/exercises/programming/shared/comm
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import type { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { CommitsInfoRowComponent } from 'app/exercises/programming/shared/commits-info/commits-info-group/commits-info-row/commits-info-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -29,7 +28,7 @@ describe('CommitsInfoGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipModule],
+            imports: [NgbTooltipModule],
             declarations: [CommitsInfoGroupComponent, CommitsInfoRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(TruncatePipe)],
         });
         fixture = TestBed.createComponent(CommitsInfoGroupComponent);

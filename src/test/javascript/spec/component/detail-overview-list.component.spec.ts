@@ -11,7 +11,6 @@ import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../test.module';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -35,7 +34,7 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },

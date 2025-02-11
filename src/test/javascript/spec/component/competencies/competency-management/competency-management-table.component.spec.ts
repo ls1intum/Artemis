@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import '@angular/localize/init';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
@@ -21,7 +20,7 @@ describe('CompetencyManagementTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyManagementTableComponent, ArtemisTestModule],
+            imports: [CompetencyManagementTableComponent],
             declarations: [],
             providers: [MockProvider(AlertService), { provide: NgbModal, useClass: MockNgbModalService }],
         })

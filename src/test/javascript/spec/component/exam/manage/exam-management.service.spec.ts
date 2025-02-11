@@ -1,7 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTestModule } from '../../../test.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
@@ -37,7 +36,7 @@ describe('Exam Management Service Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), ExamManagementService],
-            imports: [ArtemisTestModule],
+            imports: [],
         });
 
         service = TestBed.inject(ExamManagementService);

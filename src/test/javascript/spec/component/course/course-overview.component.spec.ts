@@ -3,7 +3,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
@@ -136,11 +135,11 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let websocketService: WebsocketService;
+    let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let websocketServiceReceiveStub: jest.SpyInstance;
-    let websocketServiceSubscribeSpy: jest.SpyInstance;
+    let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
+    let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
@@ -163,7 +162,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), ArtemisTestModule, MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -214,12 +213,12 @@ describe('CourseOverviewComponent', () => {
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                websocketService = TestBed.inject(WebsocketService);
+                jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 itemsDrop = component.itemsDrop;
-                websocketServiceReceiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(quizExercise));
-                websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
+                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
+                jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
@@ -535,18 +534,18 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        expect(websocketServiceReceiveStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
     it('should do ngOnDestroy', () => {
-        const websocketServiceStub = jest.spyOn(websocketService, 'unsubscribe');
+        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
 
         component.ngOnInit();
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(websocketServiceStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {

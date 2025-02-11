@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,7 +21,7 @@ describe('Password Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, PasswordComponent],
+                imports: [PasswordComponent],
                 providers: [
                     FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },

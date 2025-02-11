@@ -3,7 +3,6 @@ import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programm
 import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -57,7 +56,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(MonacoEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }, Renderer2],
         })

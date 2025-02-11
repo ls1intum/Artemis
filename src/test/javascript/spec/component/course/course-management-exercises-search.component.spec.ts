@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 
@@ -9,7 +8,7 @@ describe('Course Management Exercises Search Component', () => {
     let emitSpy: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;

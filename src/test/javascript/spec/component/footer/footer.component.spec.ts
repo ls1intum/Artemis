@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
@@ -13,7 +12,7 @@ describe('FooterComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [FooterComponent, MockPipe(ArtemisTranslatePipe)],
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterModule.forRoot([])],
+            imports: [TranslateModule.forRoot(), RouterModule.forRoot([])],
             providers: [],
         }).compileComponents();
     });

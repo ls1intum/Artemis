@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 
 describe('MetricsSystemComponent', () => {
@@ -9,7 +8,7 @@ describe('MetricsSystemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MetricsSystemComponent],
+            imports: [MetricsSystemComponent],
         })
             .compileComponents()
             .then(() => {

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
@@ -54,7 +53,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
                 MockProvider(TextExerciseService),

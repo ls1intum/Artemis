@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
@@ -21,7 +20,7 @@ describe('SidebarCardSmallComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
+            imports: [MockModule(RouterModule)],
             declarations: [
                 SidebarCardSmallComponent,
                 SidebarCardItemComponent,

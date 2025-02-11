@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -15,7 +14,7 @@ describe('ImportCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportCompetenciesComponent, ArtemisTestModule],
+            imports: [ImportCompetenciesComponent],
             declarations: [],
             providers: [
                 {

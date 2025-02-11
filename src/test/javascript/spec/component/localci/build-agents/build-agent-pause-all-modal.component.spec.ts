@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuildAgentPauseAllModalComponent } from '../../../../../../main/webapp/app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BuildAgentPauseAllModalComponent', () => {
@@ -15,7 +14,7 @@ describe('BuildAgentPauseAllModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BuildAgentPauseAllModalComponent],
+            imports: [BuildAgentPauseAllModalComponent],
             providers: [{ provide: NgbActiveModal, useValue: activeModal }],
         }).compileComponents();
 

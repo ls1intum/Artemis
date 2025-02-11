@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisTestModule } from '../../test.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -33,7 +32,7 @@ describe('Guided tour integration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbCollapse)],
+            imports: [MockDirective(NgbCollapse)],
             declarations: [GuidedTourComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

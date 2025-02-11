@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -250,7 +249,7 @@ describe('BonusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
+            imports: [FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),

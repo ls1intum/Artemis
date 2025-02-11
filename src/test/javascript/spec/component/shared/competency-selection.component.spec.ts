@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -19,7 +18,7 @@ describe('CompetencySelection', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

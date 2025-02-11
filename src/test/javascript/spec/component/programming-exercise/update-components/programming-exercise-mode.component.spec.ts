@@ -12,8 +12,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { ArtemisTestModule } from '../../../test.module';
-
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 
 describe('ProgrammingExerciseModeComponent', () => {
@@ -25,7 +23,6 @@ describe('ProgrammingExerciseModeComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ProgrammingExerciseModeComponent,
                 MockComponent(DifficultyPickerComponent),

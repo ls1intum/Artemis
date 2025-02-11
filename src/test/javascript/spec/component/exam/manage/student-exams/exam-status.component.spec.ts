@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExamConductionState, ExamReviewState, ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockPipe } from 'ng-mocks';
@@ -56,7 +55,7 @@ describe('ExamStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ExamStatusComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -1,7 +1,6 @@
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/account/settings/settings.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -31,7 +30,7 @@ describe('SettingsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, SettingsComponent],
+            imports: [SettingsComponent],
             providers: [
                 FormBuilder,
                 { provide: LocalStorageService, useClass: MockSyncStorage },

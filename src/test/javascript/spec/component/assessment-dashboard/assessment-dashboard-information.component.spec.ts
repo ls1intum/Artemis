@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,
@@ -14,7 +13,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);

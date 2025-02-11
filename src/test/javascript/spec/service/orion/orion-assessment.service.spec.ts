@@ -1,6 +1,5 @@
 import { BehaviorSubject, of } from 'rxjs';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
@@ -24,7 +23,7 @@ describe('OrionAssessmentService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [],
             providers: [
                 MockProvider(OrionConnectorService),

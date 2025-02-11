@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -13,7 +12,7 @@ describe('Submission Export Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(SubmissionExportService);

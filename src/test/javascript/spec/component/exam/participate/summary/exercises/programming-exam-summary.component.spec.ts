@@ -19,7 +19,6 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 
@@ -95,7 +94,7 @@ describe('ProgrammingExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }],
         })
             .compileComponents()

@@ -9,7 +9,6 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import 'jest-extended';
 
 describe('Lti13ExerciseLaunchComponent', () => {
@@ -31,7 +30,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

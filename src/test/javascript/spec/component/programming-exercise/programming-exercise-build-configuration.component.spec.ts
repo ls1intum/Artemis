@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
@@ -21,7 +20,7 @@ describe('ProgrammingExercise Docker Image', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             providers: [{ provide: ProfileService, useValue: profileServiceMock }],
         })
             .compileComponents()

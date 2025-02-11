@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
@@ -85,7 +84,7 @@ describe('ResultComponent', () => {
         global.URL.revokeObjectURL = jest.fn();
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },

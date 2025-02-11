@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -12,7 +11,7 @@ describe('ModalConfirmAutofocusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockPipe(ArtemisTranslatePipe), MockProvider(NgbActiveModal)],
         })
             .compileComponents()

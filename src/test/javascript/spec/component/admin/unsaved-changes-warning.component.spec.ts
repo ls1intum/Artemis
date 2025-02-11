@@ -4,7 +4,6 @@ import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('UnsavedChangesWarningComponent', () => {
@@ -13,7 +12,7 @@ describe('UnsavedChangesWarningComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [UnsavedChangesWarningComponent, MockComponent(ButtonComponent), MockDirective(TranslateDirective)],
         }).compileComponents();
 

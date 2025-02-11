@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
@@ -18,7 +17,7 @@ describe('OrionTutorAssessmentComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             declarations: [
                 OrionTutorAssessmentComponent,
                 MockComponent(CodeEditorTutorAssessmentContainerComponent),

@@ -5,7 +5,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import dayjs from 'dayjs/esm';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
@@ -21,7 +20,7 @@ describe('TextExamSubmissionComponent', () => {
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

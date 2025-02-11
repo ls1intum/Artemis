@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GraphColors } from 'app/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -77,7 +76,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [MockProvider(GradingSystemService)],
         })
             .compileComponents()

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 
 describe('Exercise Update Warning Component Tests', () => {
@@ -8,7 +7,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

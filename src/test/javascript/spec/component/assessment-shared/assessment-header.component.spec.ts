@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockProvider } from 'ng-mocks';
@@ -44,7 +43,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: AlertService,

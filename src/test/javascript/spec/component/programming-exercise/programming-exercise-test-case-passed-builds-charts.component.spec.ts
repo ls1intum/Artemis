@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TestCasePassedBuildsChartComponent', () => {
     let comp: TestCasePassedBuildsChartComponent;
@@ -10,7 +9,7 @@ describe('TestCasePassedBuildsChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
         fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
         comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;

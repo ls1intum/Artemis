@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { of } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -33,7 +32,7 @@ describe('CourseOverviewGuard', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         });
         guard = TestBed.inject(CourseOverviewGuard);
         courseStorageService = TestBed.inject(CourseStorageService);

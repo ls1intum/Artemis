@@ -10,7 +10,6 @@ import { of } from 'rxjs';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../../test.module';
 import { OnlineUnitFormComponent } from '../../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
@@ -20,7 +19,7 @@ describe('EditOnlineUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),

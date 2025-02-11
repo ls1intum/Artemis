@@ -12,7 +12,6 @@ import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
@@ -85,7 +84,7 @@ describe('CodeButtonComponent', () => {
         router.setUrl('a');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ExerciseActionButtonComponent],
+            imports: [ExerciseActionButtonComponent],
             providers: [MockProvider(AlertService), { provide: ActivatedRoute, useValue: route }, { provide: Router, useValue: router }, LocalStorageService],
         })
             .compileComponents()

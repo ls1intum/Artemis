@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -17,7 +16,7 @@ describe('Feature Overview Component', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [],
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ProfileService, useValue: MockProfileService },

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +26,7 @@ describe('UserSettingsContainerComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [UserSettingsContainerComponent, ArtemisTestModule, RouterModule],
+            imports: [UserSettingsContainerComponent, RouterModule],
             providers: [
                 { provide: ProfileService, useValue: profileServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

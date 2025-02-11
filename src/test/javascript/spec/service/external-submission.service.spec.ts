@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../test.module';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -16,7 +15,7 @@ describe('External Submission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(ExternalSubmissionService);

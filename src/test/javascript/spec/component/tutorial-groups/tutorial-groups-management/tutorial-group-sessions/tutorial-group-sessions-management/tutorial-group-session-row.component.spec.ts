@@ -16,7 +16,6 @@ import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupSessionRowComponent', () => {
     let component: TutorialGroupSessionRowComponent;
@@ -26,7 +25,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTestModule],
+            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe],
             declarations: [TutorialGroupSessionRowComponent],
             providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService)],
         }).compileComponents();

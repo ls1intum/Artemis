@@ -4,7 +4,6 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { By } from '@angular/platform-browser';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
@@ -14,7 +13,7 @@ describe('FileUploadExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

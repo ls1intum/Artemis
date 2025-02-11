@@ -7,7 +7,6 @@ import { FormsModule } from '@angular/forms';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
@@ -18,7 +17,7 @@ describe('ExerciseImportWrapperComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(ExerciseImportTabsComponent), MockComponent(ExerciseImportComponent), FormsModule],
+            imports: [MockComponent(ExerciseImportTabsComponent), MockComponent(ExerciseImportComponent), FormsModule],
             declarations: [ExerciseImportWrapperComponent, MockDirective(TranslateDirective)],
         }).compileComponents();
 

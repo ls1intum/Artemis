@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { advanceTo } from 'jest-date-mock';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
@@ -41,7 +40,7 @@ describe('AuditsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

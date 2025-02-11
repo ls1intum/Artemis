@@ -3,7 +3,6 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { AlertService } from 'app/core/util/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
@@ -20,7 +19,7 @@ describe('DeleteUsersButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         })
             .compileComponents()
             .then(() => {

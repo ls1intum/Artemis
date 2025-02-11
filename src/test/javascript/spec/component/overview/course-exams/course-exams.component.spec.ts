@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam/exam.model';
-import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
@@ -100,7 +99,7 @@ describe('CourseExamsComponent', () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [CourseExamsComponent, SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
             providers: [
                 { provide: Router, useValue: router },

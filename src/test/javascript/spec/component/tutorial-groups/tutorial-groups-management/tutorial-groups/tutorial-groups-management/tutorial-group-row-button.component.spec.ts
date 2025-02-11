@@ -12,7 +12,6 @@ import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-gr
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router, RouterModule } from '@angular/router';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
-import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -27,7 +26,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
+            imports: [MockModule(RouterModule)],
             providers: [MockProvider(TutorialGroupsService), MockProvider(NgbModal), { provide: Router, useValue: router }],
         }).compileComponents();
 

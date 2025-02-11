@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -44,7 +43,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockJhiTranslateDirective],
+            imports: [FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockJhiTranslateDirective],
             declarations: [IrisCommonSubSettingsUpdateComponent],
         })
             .compileComponents()

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceDirective } from 'app/shared/science/science.directive';
@@ -23,7 +22,7 @@ describe('ScienceDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()

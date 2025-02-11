@@ -14,7 +14,6 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -31,7 +30,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
 
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

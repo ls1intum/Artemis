@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-test-component',
@@ -22,7 +23,18 @@ describe('DataExportRequestButtonDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TestComponent],
+            imports: [TestComponent],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
+                {
+                    provide: NgbModal,
+                    useValue: null,
+                },
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -6,7 +6,6 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exerc
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -96,7 +95,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
