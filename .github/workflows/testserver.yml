@@ -14,7 +14,6 @@ concurrency: staging
 
 env:
   build_workflow_name: build.yml
-  branch_to_deploy: develop
 
 jobs:
   check-build-status:
@@ -31,7 +30,7 @@ jobs:
         id: get_workflow_run
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ env.branch_to_deploy }}&event=push
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch_name }}&event=push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
@@ -45,7 +44,7 @@ jobs:
           WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r --arg COMMIT "$COMMIT_SHA" '.workflow_runs[] | select(.head_sha == $COMMIT) | .id')
           
           if [ -z "$WORKFLOW_ID" ]; then
-            echo "::error::No build found for commit $COMMIT_SHA on branch ${{ env.branch_to_deploy }}"
+            echo "::error::No build found for commit $COMMIT_SHA on branch ${{ github.event.inputs.branch_name }}"
             exit 1
           fi
           
