@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-export const userSettingsState: Routes = [
+export const routes: Routes = [
     {
         path: 'user-settings',
         loadComponent: () => import('app/shared/user-settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),
@@ -75,8 +75,10 @@ export const userSettingsState: Routes = [
                 loadComponent: () =>
                     import('app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component').then((m) => m.VcsAccessTokensSettingsComponent),
                 data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'ide-preferences',

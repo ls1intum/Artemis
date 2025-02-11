@@ -5,16 +5,20 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    imports: [FormDateTimePickerModule, ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();

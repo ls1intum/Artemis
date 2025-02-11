@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -11,19 +11,35 @@ import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { AccountService } from 'app/core/auth/account.service';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
 })
 export class FaqUpdateComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private faqService = inject(FaqService);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+
     faq: Faq;
     isSaving: boolean;
     isAllowedToSave: boolean;
@@ -33,17 +49,13 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
+    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    artemisIntelligenceActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId)] : []));
+
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
     readonly faBan = faBan;
-
-    private alertService = inject(AlertService);
-    private faqService = inject(FaqService);
-    private activatedRoute = inject(ActivatedRoute);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private accountService = inject(AccountService);
 
     ngOnInit() {
         this.isSaving = false;
