@@ -2,8 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -15,6 +14,8 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SidebarCardElement } from 'app/types/sidebar';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', undefined), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 5, type: ExerciseType.TEXT } as Exercise;
 const EXERCISE_2 = {
@@ -76,15 +77,15 @@ describe('ExerciseFilterModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                MockModule(FormsModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(FontAwesomeModule),
-                MockModule(ArtemisSharedCommonModule),
-                MockModule(ArtemisSharedComponentModule),
-            ],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(FontAwesomeModule)],
             declarations: [ExerciseFilterModalComponent, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(RangeSliderComponent)],
-            providers: [MockProvider(NgbActiveModal)],
+            providers: [
+                MockProvider(NgbActiveModal),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseFilterModalComponent);
