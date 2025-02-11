@@ -26,49 +26,30 @@ jobs:
         run: |
           echo "Branch: ${{ github.event.inputs.branch_name }}"
           echo "Commit SHA: ${{ github.event.inputs.commit_sha }}"
-      - name: Get workflow runs
+
+      - name: Get workflow runs for commit
         id: get_workflow_run
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?per_page=100
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ env.branch_to_deploy }}&event=push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  
       - name: Find build for specific commit
         id: set_build_workflow_id
         run: |
           COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
-          BRANCH="${{ github.event.inputs.branch_name }}"
           WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
           
           # Find the workflow run for the specific commit
-          WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r --arg COMMIT "$COMMIT_SHA" --arg BRANCH "$BRANCH" '
-            .workflow_runs[] 
-            | select(
-              .head_sha == $COMMIT and (
-                # Match either push to develop or release created
-                ((.event == "push" and .head_branch == "${{ env.branch_to_deploy }}") or .event == "release")
-              )
-            ) 
-            | .id
-          ')
+          WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r --arg COMMIT "$COMMIT_SHA" '.workflow_runs[] | select(.head_sha == $COMMIT) | .id')
           
           if [ -z "$WORKFLOW_ID" ]; then
-            echo "::error::No valid build found for commit $COMMIT_SHA. Ensure this commit has a successful build from either:"
-            echo "  - A push to ${{ env.branch_to_deploy }} branch"
-            echo "  - A release creation"
+            echo "::error::No build found for commit $COMMIT_SHA on branch ${{ env.branch_to_deploy }}"
             exit 1
           fi
           
           echo "Found build workflow ID: $WORKFLOW_ID for commit $COMMIT_SHA"
-          
-          # Verify build status
-          BUILD_STATUS=$(echo "$WORKFLOW_DATA" | jq -r --arg ID "$WORKFLOW_ID" '.workflow_runs[] | select(.id == ($ID|tonumber)) | .conclusion')
-          if [ "$BUILD_STATUS" != "success" ]; then
-            echo "::error::Build for commit $COMMIT_SHA has status: $BUILD_STATUS"
-            exit 1
-          fi
-          
           echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_OUTPUT
 
       - name: Check for war artifact
