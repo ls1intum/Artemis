@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -216,6 +217,14 @@ public class ProgrammingExerciseParticipationResource {
         else {
             // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
             participation.getProgrammingExercise().setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.getExercise().getId()));
+
+            var results = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+
+            // set testcases per feedback to null to avoid lazy loading
+            results.forEach(result -> result.getFeedbacks().forEach(feedback -> feedback.setTestCase(null)));
+
+            // filter results in submission user is allowed to see
+            resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         }
 
         return ResponseEntity.ok(RepoUrlProgrammingStudentParticipationDTO.of(participation));
