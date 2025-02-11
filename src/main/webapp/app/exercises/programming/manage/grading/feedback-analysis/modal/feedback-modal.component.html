@@ -20,7 +20,7 @@
     </div>
 
     <h5 class="mb-3" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
-    @if (longFeedbackText() !== '') {
+    @if (longFeedbackText()) {
         <p>{{ longFeedbackText() }}</p>
     } @else {
         <p>{{ feedbackDetail().detailTexts[0] }}</p>
