@@ -13,10 +13,17 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -32,7 +39,19 @@ export enum BonusStrategyDiscreteness {
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SafeHtmlPipe, GradeStepBoundsPipe, ModePickerComponent],
+    imports: [
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        ModePickerComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        DeleteButtonDirective,
+        FontAwesomeModule,
+        NgbTooltipModule,
+        FormsModule,
+        CommonModule,
+        HelpIconComponent,
+    ],
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);

@@ -24,15 +24,14 @@ import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fing
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
+
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export function initOrionConnector(connector: OrionConnectorService) {
     return () => OrionConnectorService.initConnector(connector);
@@ -40,16 +39,14 @@ export function initOrionConnector(connector: OrionConnectorService) {
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        ArtemisTranslatePipe,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-            ArtemisSharedComponentModule,
-            ArtemisSharedModule,
+
             BrowserAnimationsModule,
             BrowserModule,
-            GuidedTourModule,
             RouterModule,
             ScrollingModule,
-            UserSettingsModule,
             OwlNativeDateTimeModule,
             TranslateModule.forRoot({
                 loader: {

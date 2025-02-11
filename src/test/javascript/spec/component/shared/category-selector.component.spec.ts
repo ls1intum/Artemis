@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -56,7 +55,6 @@ describe('CategorySelectorComponent', () => {
                 MockModule(MatFormFieldModule),
                 MockModule(MatChipsModule),
                 MockModule(MatSelectModule),
-                MockModule(ArtemisColorSelectorModule),
                 MockModule(ReactiveFormsModule),
                 MockModule(FormsModule),
             ],
