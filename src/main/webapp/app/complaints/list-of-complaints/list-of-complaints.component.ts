@@ -17,14 +17,18 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
+    providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
     complaintService = inject(ComplaintService);

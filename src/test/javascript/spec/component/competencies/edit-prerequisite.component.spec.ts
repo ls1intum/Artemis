@@ -16,6 +16,7 @@ import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-pre
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
@@ -57,6 +58,10 @@ describe('EditPrerequisiteComponent', () => {
             ],
             schemas: [],
         }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
         editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;

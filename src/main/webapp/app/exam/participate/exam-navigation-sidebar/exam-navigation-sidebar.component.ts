@@ -1,5 +1,4 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
@@ -19,6 +18,11 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',
@@ -28,7 +32,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
