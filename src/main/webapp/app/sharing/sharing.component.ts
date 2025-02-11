@@ -10,7 +10,7 @@ import { ProgrammingExerciseSharingService } from 'app/exercises/programming/man
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
-import { NotificationService } from 'app/shared/notification/notification.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-sharing',
@@ -39,7 +39,7 @@ export class SharingComponent implements OnInit {
         private courseService: CourseManagementService,
         private sortService: SortService,
         private programmingExerciseSharingService: ProgrammingExerciseSharingService,
-        private notificationService: NotificationService,
+        private alertService: AlertService,
     ) {
         this.route.params.subscribe((params) => {
             this.sharingInfo.basketToken = params['basketToken'];
@@ -69,7 +69,7 @@ export class SharingComponent implements OnInit {
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             },
-            error: (res: HttpErrorResponse) => this.notificationService.showError('Cannot load courses: ' + res.message),
+            error: (res: HttpErrorResponse) => this.alertService.error('Cannot load courses: ' + res.message),
         });
     }
 
