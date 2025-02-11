@@ -1,36 +1,29 @@
-<div class="parent-container">
-    <div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
-        @if (title || displayPoints) {
-            <div class="card-header bg-primary text-white">
-                @if (title) {
-                    <span>{{ title }}</span>
-                }
-                <span class="flex-fill"></span>
-                @if (displayPoints) {
-                    <jhi-score-display [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints" [course]="course" />
-                }
-            </div>
-        }
-        <div class="apollon-row" id="apollon-assessment-row">
-            <div #editorContainer class="apollon-container"></div>
-            @if (resizeOptions && resizeOptions.horizontalResize) {
-                <div class="draggable-right">
-                    <fa-icon [icon]="faGripLinesVertical" />
-                </div>
+<div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
+    @if (title || displayPoints) {
+        <div class="card-header bg-primary text-white">
+            @if (title) {
+                <span>{{ title }}</span>
+            }
+            <span class="flex-fill"></span>
+            @if (displayPoints) {
+                <jhi-score-display [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints" [course]="course" />
             }
         </div>
-        @if (resizeOptions && resizeOptions.verticalResize) {
-            <div class="draggable-bottom">
-                <fa-icon [icon]="faGripLines" />
+    }
+    <div class="apollon-row" id="apollon-assessment-row">
+        <div #editorContainer class="apollon-container"></div>
+        @if (resizeOptions && resizeOptions.horizontalResize) {
+            <div class="draggable-right">
+                <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
-        @if (explanation) {
-            <jhi-modeling-explanation-editor [explanation]="explanation" [readOnly]="true" />
-        }
     </div>
-
-    <!-- Additional feedback section starts here -->
-    <div id="additional-feedback">
-        <!-- Feedback block -->
-    </div>
+    @if (resizeOptions && resizeOptions.verticalResize) {
+        <div class="draggable-bottom">
+            <fa-icon [icon]="faGripLines" />
+        </div>
+    }
+    @if (explanation) {
+        <jhi-modeling-explanation-editor [explanation]="explanation" [readOnly]="true" />
+    }
 </div>

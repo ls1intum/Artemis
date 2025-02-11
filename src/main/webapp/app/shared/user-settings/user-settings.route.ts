@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-export const userSettingsState: Routes = [
+export const routes: Routes = [
     {
         path: 'user-settings',
         loadComponent: () => import('app/shared/user-settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),

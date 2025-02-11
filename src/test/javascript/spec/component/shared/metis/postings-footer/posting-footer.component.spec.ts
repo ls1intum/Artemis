@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
@@ -35,7 +34,6 @@ describe('PostingFooterComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisCoursesRoutingModule)],
             providers: [
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },

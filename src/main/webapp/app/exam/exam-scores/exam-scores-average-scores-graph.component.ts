@@ -11,14 +11,14 @@ import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type NameToValueMap = { [name: string]: any };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, BarChartModule, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);

@@ -2,13 +2,13 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlass, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
     styleUrls: ['./search-filter.component.scss'],
-    imports: [ArtemisSharedModule, FaIconComponent, FormsModule, ReactiveFormsModule],
+    imports: [FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe],
 })
 export class SearchFilterComponent {
     faMagnifyingGlass = faMagnifyingGlass;
