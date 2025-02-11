@@ -4,7 +4,7 @@ import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus,
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,23 +12,38 @@ import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { CommonModule } from '@angular/common';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent, NgbModule],
+    imports: [
+        CustomExerciseCategoryBadgeComponent,
+        SearchFilterComponent,
+        NgbModule,
+        HtmlForMarkdownPipe,
+        TranslateDirective,
+        FontAwesomeModule,
+        DeleteButtonDirective,
+        RouterModule,
+        SortByDirective,
+        SortDirective,
+        CommonModule,
+    ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
