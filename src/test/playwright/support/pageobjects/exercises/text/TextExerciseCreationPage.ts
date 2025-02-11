@@ -7,12 +7,6 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly EXAMPLE_SOLUTION_SELECTOR = '#exampleSolution';
     private readonly ASSESSMENT_INSTRUCTIONS_SELECTOR = '#gradingInstructions';
 
-    async typeTitle(title: string) {
-        const titleField = this.page.locator('#field_title');
-        await titleField.clear();
-        await titleField.fill(title);
-    }
-
     async typeMaxPoints(maxPoints: number) {
         await this.page.locator('#field_points').fill(maxPoints.toString());
     }
