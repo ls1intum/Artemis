@@ -12,7 +12,6 @@ import static org.mockito.Mockito.mock;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -873,7 +872,7 @@ public class ProgrammingExerciseUtilService {
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Paths.get("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Paths.get("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
+        doReturn(Path.of("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
+        doReturn(Path.of("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

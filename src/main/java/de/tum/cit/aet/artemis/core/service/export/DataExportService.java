@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.service.export;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -100,11 +100,10 @@ public class DataExportService {
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
         var filePath = Path.of(dataExport.getFilePath());
-        var finalZipFile = filePath.toFile();
         try {
-            return new InputStreamResource(new FileInputStream(finalZipFile));
+            return new InputStreamResource(Files.newInputStream(filePath));
         }
-        catch (FileNotFoundException e) {
+        catch (IOException e) {
             log.error("Could not find data export file", e);
             throw new InternalServerErrorException("Could not find data export file");
         }

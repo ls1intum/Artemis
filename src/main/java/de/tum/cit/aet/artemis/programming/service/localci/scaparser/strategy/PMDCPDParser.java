@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +67,7 @@ class PMDCPDParser implements ParserStrategy {
             // Iterate through the files to create on commonly used error message refering to all instances of duplication.
             for (DuplicationFile file : duplication.files()) {
                 String unixPath = ParserStrategy.transformToUnixPath(file.path());
-                String filename = new File(unixPath).getName();
+                String filename = Path.of(unixPath).toFile().getName();
                 messageBuilder.append("\n - ").append(filename).append(": Lines ").append(file.startLine()).append(" to ").append(file.endLine());
             }
 

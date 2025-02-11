@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.util;
 import static org.assertj.core.api.Fail.fail;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -165,7 +164,7 @@ public class GitUtilService {
     public void deleteRepo(REPOS repo) {
         try {
             String repoPath = getCompleteRepoPathStringByType(repo);
-            FileUtils.deleteDirectory(new File(repoPath));
+            FileUtils.deleteDirectory(Path.of(repoPath).toFile());
             setRepositoryToNull(repo);
         }
         catch (IOException ignored) {
@@ -285,7 +284,7 @@ public class GitUtilService {
     }
 
     public VcsRepositoryUri getRepoUriByType(REPOS repo) {
-        return new VcsRepositoryUri(new File(getCompleteRepoPathStringByType(repo)));
+        return new VcsRepositoryUri(Path.of(getCompleteRepoPathStringByType(repo)).toFile());
     }
 
     public static final class MockFileRepositoryUri extends VcsRepositoryUri {
@@ -305,7 +304,7 @@ public class GitUtilService {
     public void writeEmptyJsonFileToPath(Path path) throws Exception {
         var fileContent = "{}";
         path.toFile().getParentFile().mkdirs();
-        try (FileWriter writer = new FileWriter(path.toFile(), StandardCharsets.UTF_8)) {
+        try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write(fileContent);
         }
     }
