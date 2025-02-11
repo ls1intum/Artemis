@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -292,7 +291,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
 
-        fileService.deleteFiles(filesToRemove.stream().map(Paths::get).toList());
+        fileService.deleteFiles(filesToRemove.stream().map(Path::of).toList());
     }
 
     private Set<String> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {

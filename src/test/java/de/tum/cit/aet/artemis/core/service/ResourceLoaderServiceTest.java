@@ -14,7 +14,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -175,7 +174,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
         // Instantiate the class under test and invoke the method.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader);
-        Path path = Paths.get("path", "to", "resource.txt");
+        Path path = Path.of("path", "to", "resource.txt");
         Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
 
         // Verify the temporary file was created.
