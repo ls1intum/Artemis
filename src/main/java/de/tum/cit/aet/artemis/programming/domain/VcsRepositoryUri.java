@@ -45,6 +45,18 @@ public class VcsRepositoryUri {
     }
 
     /**
+     * Initializes a new instance of the {@link VcsRepositoryUri} class from a repository name
+     * builds an url to format <server.url>/git/<project_key>/<repo-name>.git
+     *
+     * @param vcBaseUrl      The base URL of the version control system
+     * @param repositoryName containing the project key at the beginning
+     */
+    public VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
+        var projectKey = repositoryName.split("-")[0];
+        this.uri = new URI(vcBaseUrl + "/git/" + projectKey.toUpperCase() + "/" + repositoryName + ".git");
+    }
+
+    /**
      * Associates a username with the current VCS repository URI and returns the instance for chaining.
      *
      * @param username The username to be associated with the URI.
