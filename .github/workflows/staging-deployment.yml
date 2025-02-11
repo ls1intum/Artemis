@@ -30,7 +30,8 @@ jobs:
         id: get_workflow_run
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch_name }}&event=push
+          # Remove the event filter to get all events
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
@@ -40,8 +41,21 @@ jobs:
           COMMIT_SHA="${{ github.event.inputs.commit_sha }}"
           WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
           
-          # Find the workflow run for the specific commit
-          WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r --arg COMMIT "$COMMIT_SHA" '.workflow_runs[] | select(.head_sha == $COMMIT) | .id')
+          # Find the workflow run for the specific commit across all supported events
+          WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r --arg COMMIT "$COMMIT_SHA" '
+            .workflow_runs[] 
+            | select(
+                .head_sha == $COMMIT and (
+                  # List all events that can trigger builds
+                  .event == "push" or
+                  .event == "pull_request" or
+                  .event == "release" or
+                  .event == "workflow_dispatch" or
+                  .event == "schedule"
+                )
+              ) 
+            | .id
+          ' | head -n1)  # Get the first matching workflow
           
           if [ -z "$WORKFLOW_ID" ]; then
             echo "::error::No build found for commit $COMMIT_SHA on branch ${{ github.event.inputs.branch_name }}"
