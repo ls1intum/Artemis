@@ -110,7 +110,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-
                 ArtemisDatePipe,
                 RouterModule.forRoot([
                     {
