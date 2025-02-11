@@ -4,8 +4,10 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { GitDiffFileComponent } from 'app/exercises/programming/git-diff-report/git-diff-file.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { NgbAccordionModule, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+
+import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-git-diff-file-panel',
@@ -13,7 +15,16 @@ import { NgbAccordionModule, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./git-diff-file-panel.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule, NgbAccordionModule, NgbCollapse],
+    imports: [
+        GitDiffFilePanelTitleComponent,
+        GitDiffLineStatComponent,
+        GitDiffFileComponent,
+        NgbAccordionModule,
+        NgbCollapse,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        NgbTooltipModule,
+    ],
 })
 export class GitDiffFilePanelComponent {
     protected readonly faAngleUp = faAngleUp;

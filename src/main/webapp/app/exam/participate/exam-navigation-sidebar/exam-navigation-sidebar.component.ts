@@ -1,12 +1,10 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -19,8 +17,12 @@ import { CommitState, DomainChange, DomainType } from 'app/exercises/programming
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { getIconTooltip } from 'app/entities/exercise.model';
 import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',
@@ -30,7 +32,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisSidebarModule, ArtemisSharedModule],
+    imports: [ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
@@ -143,7 +145,12 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
+            this.onPageChanged.emit({
+                overViewChange: false,
+                exercise: this.exercises[this.exerciseIndex],
+                forceSave: !!forceSave,
+                submission: submission,
+            });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;

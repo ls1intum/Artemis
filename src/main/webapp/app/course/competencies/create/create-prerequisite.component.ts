@@ -3,17 +3,19 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-prerequisite',
     templateUrl: './create-prerequisite.component.html',
-    imports: [ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
+    imports: [PrerequisiteFormComponent, DocumentationButtonComponent, TranslateDirective],
 })
 export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent {
     private prerequisiteService = inject(PrerequisiteService);
