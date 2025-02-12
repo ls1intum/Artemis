@@ -3,8 +3,8 @@ import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
-import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter, Router, UrlSegment } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockDirective, MockProvider } from 'ng-mocks';
 
@@ -30,6 +30,8 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     template: '',
@@ -105,6 +107,7 @@ describe('ExamUpdateComponent', () => {
                             );
                         },
                     }),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 
@@ -609,6 +612,7 @@ describe('ExamUpdateComponent', () => {
                         },
                     }),
                     MockDirective(NgForm),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 
