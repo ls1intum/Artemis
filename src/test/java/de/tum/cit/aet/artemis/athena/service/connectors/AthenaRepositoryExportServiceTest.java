@@ -4,11 +4,9 @@ import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.AT
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,10 +77,10 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
 
         programmingExerciseUtilService.createGitRepository();
 
-        File resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
-        File resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
+        Path resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
+        Path resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
 
-        assertThat(resultStudentRepo.toPath()).isEqualTo(Paths.get("repo.zip")); // The student repository ZIP is returned
+        assertThat(resultStudentRepo).isEqualTo(Path.of("repo.zip")); // The student repository ZIP is returned
         assertThat(resultSolutionRepo).exists(); // The solution repository ZIP can actually be created in the test
     }
 

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.HashMap;
@@ -171,7 +170,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
+        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
