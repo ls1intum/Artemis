@@ -151,12 +151,13 @@ public class RepositoryService {
      * This method filters out all non-file type entries and reads the content of each file.
      * Note: If an I/O error occurs reading any file, this exception is caught internally and logged.
      *
-     * @param repository The repository from which files are to be fetched.
+     * @param repository   The repository from which files are to be fetched.
+     * @param omitBinaries omit binary files for brevity and reducing size
      * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
      *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
      */
-    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
-        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
+        var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
@@ -168,6 +169,10 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
+        return getFilesContentFromWorkingCopy(repository, false);
     }
 
     /**
