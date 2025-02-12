@@ -6,3 +6,10 @@ edition = "2021"
 [dependencies]
 chrono = { version = "0.4.38", default-features = false }
 rand = "0.8.5"
+# %static-code-analysis-start%
+
+[lints.rust]
+
+[lints.clippy]
+pedantic = "deny"
+# %static-code-analysis-stop%

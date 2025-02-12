@@ -15,6 +15,7 @@ public enum StaticCodeAnalysisTool {
 
     // @formatter:off
     CHECKSTYLE("checkstyle-result.xml"),
+    CLIPPY("clippy.sarif"),
     GCC("gcc.xml"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
@@ -32,6 +33,7 @@ public enum StaticCodeAnalysisTool {
         entry(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD)),
         entry(ProgrammingLanguage.PYTHON, List.of(RUFF)),
         entry(ProgrammingLanguage.RUBY, List.of(RUBOCOP)),
+        entry(ProgrammingLanguage.RUST, List.of(CLIPPY)),
         entry(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT))
     ));
     // @formatter:on
