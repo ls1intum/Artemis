@@ -216,7 +216,7 @@ public class ConversationMessageResource {
     @GetMapping("communication/courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
-        log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, postIds.size());
+        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds.size());
         long start = System.nanoTime();
 
         if (postIds == null || postIds.isEmpty()) {

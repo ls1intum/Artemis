@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(value = "api/communication")
+@RequestMapping(value = "api/communication/")
 public class ForwardedMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ForwardedMessageResource.class);
