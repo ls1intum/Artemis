@@ -6,7 +6,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -31,6 +31,7 @@ examples.forEach((activeConversation) => {
         const canLeaveConversation = jest.spyOn(ConversationPermissionUtils, 'canLeaveConversation');
         const canChangeArchivalState = jest.spyOn(ConversationPermissionUtils, 'canChangeChannelArchivalState');
         const canDeleteChannel = jest.spyOn(ConversationPermissionUtils, 'canDeleteChannel');
+        let modalServiceOpen: jest.SpyInstance<NgbModalRef, [content: any, options?: NgbModalOptions | undefined], any>;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -56,6 +57,17 @@ examples.forEach((activeConversation) => {
                 component.activeConversation = input<ConversationDTO>(activeConversation);
                 component.ngOnInit();
             });
+            const modalService = TestBed.inject(NgbModal);
+            modalServiceOpen = jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: {
+                    translationParameters: undefined,
+                    translationKeys: undefined,
+                    canBeUndone: false,
+                    initialize: () => {},
+                },
+                result: Promise.resolve(),
+            } as unknown as NgbModalRef);
+
             fixture.detectChanges();
         });
 
@@ -171,6 +183,7 @@ examples.forEach((activeConversation) => {
                     .mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: false } })));
 
                 const privacyChangeSpy = jest.spyOn(component.channelPrivacyChange, 'emit');
+
                 component.toggleChannelPrivacy();
                 tick();
 
@@ -179,6 +192,46 @@ examples.forEach((activeConversation) => {
 
                 expect(component.conversationAsChannel!.isPublic).toBeFalse();
                 expect(privacyChangeSpy).toHaveBeenCalledOnce();
+            }
+        }));
+
+        it('should open the public channel modal if channel is currently private', fakeAsync(() => {
+            if (isChannelDTO(activeConversation)) {
+                runInInjectionContext(fixture.debugElement.injector, () => {
+                    const conversation = component.activeConversation();
+                    (conversation as ChannelDTO).isPublic = false;
+                    component.activeConversation = input<ConversationDTO>(conversation as ConversationDTO);
+                });
+                fixture.detectChanges();
+
+                const channelService = TestBed.inject(ChannelService);
+                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: true } })));
+
+                component.toggleChannelPrivacy();
+                tick();
+
+                expect(modalServiceOpen).toHaveBeenCalledOnce();
+                expect(modalServiceOpen).toHaveBeenCalledWith(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
+            }
+        }));
+
+        it('should open the private channel modal if channel is currently public', fakeAsync(() => {
+            if (isChannelDTO(activeConversation)) {
+                runInInjectionContext(fixture.debugElement.injector, () => {
+                    const conversation = component.activeConversation();
+                    (conversation as ChannelDTO).isPublic = true;
+                    component.activeConversation = input<ConversationDTO>(conversation as ConversationDTO);
+                });
+                fixture.detectChanges();
+
+                const channelService = TestBed.inject(ChannelService);
+                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: false } })));
+
+                component.toggleChannelPrivacy();
+                tick();
+
+                expect(modalServiceOpen).toHaveBeenCalledOnce();
+                expect(modalServiceOpen).toHaveBeenCalledWith(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
             }
         }));
 

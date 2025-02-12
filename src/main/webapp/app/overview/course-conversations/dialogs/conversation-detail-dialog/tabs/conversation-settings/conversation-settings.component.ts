@@ -184,24 +184,55 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             });
     }
 
+    openPublicChannelModal(channel: ChannelDTO) {
+        const keys = {
+            titleKey: 'artemisApp.dialogs.publicChannel.title',
+            questionKey: 'artemisApp.dialogs.publicChannel.question',
+            descriptionKey: 'artemisApp.dialogs.publicChannel.description',
+            confirmButtonKey: 'artemisApp.dialogs.publicChannel.confirmButton',
+        };
+        this.openPrivacyChangeModal(channel, keys);
+    }
+
+    openPrivateChannelModal(channel: ChannelDTO) {
+        const keys = {
+            titleKey: 'artemisApp.dialogs.privateChannel.title',
+            questionKey: 'artemisApp.dialogs.privateChannel.question',
+            descriptionKey: 'artemisApp.dialogs.privateChannel.description',
+            confirmButtonKey: 'artemisApp.dialogs.privateChannel.confirmButton',
+        };
+        this.openPrivacyChangeModal(channel, keys);
+    }
+
+    private openPrivacyChangeModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }) {
+        const modalRef = this.createModal(channel, keys);
+        this.openModal(modalRef, () => {
+            this.channelService
+                .toggleChannelPrivacy(this.course().id!, channel.id!)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    next: (res) => {
+                        const updatedChannel = res.body;
+                        if (updatedChannel) {
+                            this.conversationAsChannel = updatedChannel;
+                            this.channelPrivacyChange.emit();
+                        }
+                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
+        });
+    }
+
     toggleChannelPrivacy() {
         const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
 
-        this.channelService
-            .toggleChannelPrivacy(this.course().id!, channel.id!)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe({
-                next: (res) => {
-                    const updatedChannel = res.body;
-                    if (updatedChannel) {
-                        this.conversationAsChannel = updatedChannel;
-                        this.channelPrivacyChange.emit();
-                    }
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        if (!channel.isPublic) {
+            this.openPublicChannelModal(channel);
+        } else {
+            this.openPrivateChannelModal(channel);
+        }
     }
 }
