@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -63,14 +62,33 @@ public class PyrisDTOService {
         // var templateRepositoryContents = new HashMap<String, String>();
         // var solutionRepositoryContents = new HashMap<String, String>();
 
-        Optional<Repository> testRepo = Optional.empty();
+        Map<String, String> testsRepositoryContents = Map.of();
         try {
-            testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
+            var repositoryUri = exercise.getVcsTestRepositoryUri();
+            if (profileService.isLocalVcsActive()) {
+                testsRepositoryContents = Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
+                    var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);
+                    if (lastCommitObjectId == null) {
+                        return null;
+                    }
+                    var lastCommitHash = lastCommitObjectId.getName();
+                    try {
+                        return repositoryService.getFilesContentFromBareRepository(bareRepository, lastCommitHash);
+                    }
+                    catch (IOException e) {
+                        log.error("Could not fetch repository contents from bare repository", e);
+                        return null;
+                    }
+                }).orElse(Map.of());
+            }
+            else {
+                testsRepositoryContents = Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repositoryService::getFilesContentFromWorkingCopy)
+                        .orElse(Map.of());
+            }
         }
         catch (GitAPIException e) {
             log.error("Could not fetch existing test repository", e);
         }
-        var testsRepositoryContents = testRepo.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));

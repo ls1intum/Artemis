@@ -287,7 +287,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository);
+            var filesWithContent = repositoryService.getFilesContentFromWorkingCopy(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }

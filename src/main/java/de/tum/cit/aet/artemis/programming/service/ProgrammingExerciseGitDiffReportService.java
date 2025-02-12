@@ -185,6 +185,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
 
+        // TODO: for LocalVC, we should do that without checking out the repository
+
         var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri(), submission.getCommitHash(),
                 false);
         var oldTreeParser = new FileTreeIterator(templateRepo);
@@ -269,6 +271,7 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
         var repositoryUri = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUri();
+        // TODO: for LocalVC we should directly access the bare repository to avoid checkout and pull
         var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
         var repo1Path = repo1.getLocalPath();
         var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
