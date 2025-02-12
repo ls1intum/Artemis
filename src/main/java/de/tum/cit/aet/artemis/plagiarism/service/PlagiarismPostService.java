@@ -90,6 +90,12 @@ public class PlagiarismPostService extends PostingService {
         return savedPost;
     }
 
+    /**
+     * Informs the instructor about a reply to a post.
+     *
+     * @param postId the ID of the post to inform the instructor about
+     * @throws BadRequestAlertException if the post does not belong to a plagiarism case
+     */
     public void informInstructorAboutPostReply(long postId) {
         Post post = postRepository.findPostByIdElseThrow(postId);
         if (post.getPlagiarismCase() != null) {
