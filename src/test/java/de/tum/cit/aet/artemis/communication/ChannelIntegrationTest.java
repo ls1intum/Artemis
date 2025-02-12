@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -1007,6 +1008,27 @@ class ChannelIntegrationTest extends AbstractConversationTest {
             });
         });
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldToggleChannelPrivacy() throws Exception {
+        var initialChannel = createChannel(true, TEST_PREFIX + "togglePrivacy");
+        assertThat(initialChannel.getIsPublic()).isTrue();
+
+        // Toggle privacy
+        MultiValueMap<String, String> emptyParams = new LinkedMultiValueMap<>();
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep1 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep1.getIsPublic()).isFalse();
+
+        // Toggle privacy again
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep2 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep2.getIsPublic()).isTrue();
+
+        // cleanup
+        conversationRepository.deleteById(initialChannel.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

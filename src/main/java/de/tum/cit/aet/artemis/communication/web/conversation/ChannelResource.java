@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
@@ -514,14 +515,15 @@ public class ChannelResource extends ConversationManagementResource {
     /**
      * POST /api/courses/:courseId/channels/:channelId/toggle-privacy
      *
-     * Kanalın gizlilik durumunu değiştirir: Eğer kanal public ise private yapar, private ise public yapar.
+     * Toggles the privacy status of a channel: If the channel is public, it becomes private;
+     * if it is private, it becomes public.
      *
-     * @param courseId  değiştirmek istediğimiz kanalın bağlı olduğu kursun ID’si
-     * @param channelId gizlilik durumu değiştirilecek kanalın ID’si
-     * @return güncellenen kanalın DTO’su
+     * @param courseId  The ID of the course to which the channel belongs
+     * @param channelId The ID of the channel whose privacy status will be changed
+     * @return The updated channel's DTO
      */
     @PostMapping("{courseId}/channels/{channelId}/toggle-privacy")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<ChannelDTO> toggleChannelPrivacy(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to toggle privacy for channel : {}", channelId);
         checkCommunicationEnabledElseThrow(courseId);
