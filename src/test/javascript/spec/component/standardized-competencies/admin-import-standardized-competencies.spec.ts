@@ -15,10 +15,7 @@ import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
-import { ArtemisSharedComponentModule } from '../../../../../main/webapp/app/shared/components/shared-component.module';
 import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
-import { ArtemisMarkdownModule } from '../../../../../main/webapp/app/shared/markdown.module';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -32,9 +29,6 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(StandardizedCompetencyDetailComponent),
-                MockModule(ArtemisSharedModule),
-                MockModule(ArtemisSharedComponentModule),
-                MockModule(ArtemisMarkdownModule),
                 MockModule(FontAwesomeModule),
                 MockComponent(StandardizedCompetencyDetailComponent),
                 MockComponent(KnowledgeAreaTreeComponent),

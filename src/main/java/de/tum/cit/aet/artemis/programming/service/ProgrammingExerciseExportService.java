@@ -853,7 +853,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToMavenProjectName(Repository repo, String participantIdentifier, String pomFilePath) {
         try {
-            File pomFile = new File(pomFilePath);
+            File pomFile = Path.of(pomFilePath).toFile();
             // check if file exists and full file name is pom.xml and not just the file ending.
             if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
                 return;
@@ -889,7 +889,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToEclipseProjectName(Repository repo, String participantIdentifier, String eclipseProjectFilePath) {
         try {
-            File eclipseProjectFile = new File(eclipseProjectFilePath);
+            File eclipseProjectFile = Path.of(eclipseProjectFilePath).toFile();
             // Check if file exists and full file name is .project and not just the file ending.
             if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
                 return;

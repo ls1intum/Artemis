@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -117,10 +116,10 @@ public class SAML2Configuration {
             return false;
         }
 
-        File keyFile = new File(config.getKeyFile());
-        File certFile = new File(config.getCertFile());
+        Path keyFile = Path.of(config.getKeyFile());
+        Path certFile = Path.of(config.getCertFile());
 
-        if (!keyFile.exists() || !certFile.exists()) {
+        if (!Files.exists(keyFile) || !Files.exists(certFile)) {
             log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
             return false;
         }
@@ -128,16 +127,16 @@ public class SAML2Configuration {
         return true;
     }
 
-    private static X509Certificate readPublicCert(String file) throws IOException, CertificateException {
-        try (InputStream inStream = new FileInputStream(file)) {
+    private static X509Certificate readPublicCert(String filepath) throws IOException, CertificateException {
+        try (InputStream inStream = Files.newInputStream(Path.of(filepath))) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inStream);
         }
     }
 
-    private RSAPrivateKey readPrivateKey(String file) throws IOException {
+    private RSAPrivateKey readPrivateKey(String filepath) throws IOException {
         // Read PKCS#8 File!
-        try (var keyReader = new FileReader(file, StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
+        try (var keyReader = Files.newBufferedReader(Path.of(filepath), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
             return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);

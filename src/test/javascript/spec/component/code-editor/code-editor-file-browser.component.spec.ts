@@ -17,7 +17,6 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
@@ -39,7 +38,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
+            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 CodeEditorFileBrowserFileComponent,
