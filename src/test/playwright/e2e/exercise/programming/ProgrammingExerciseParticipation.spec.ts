@@ -167,7 +167,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             const firstSubmission = submissions[0];
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, firstSubmission.student);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, firstSubmission.student, firstSubmission.submission, firstSubmission.commitMessage);
-            await programmingExerciseOverview.checkResultScore(javaAllSuccessfulSubmission.expectedResult);
+            await programmingExerciseOverview.checkResultScore(firstSubmission.submission.expectedResult);
 
             for (let i = 1; i < submissions.length; i++) {
                 const { student, submission, commitMessage } = submissions[i];
@@ -177,7 +177,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                 await courseOverview.openExercise(exercise.title!);
                 submission.deleteFiles = [];
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, student, submission, commitMessage);
-                await programmingExerciseOverview.checkResultScore(javaAllSuccessfulSubmission.expectedResult);
+                await programmingExerciseOverview.checkResultScore(submission.expectedResult);
             }
 
             await login(studentFour, '/');
