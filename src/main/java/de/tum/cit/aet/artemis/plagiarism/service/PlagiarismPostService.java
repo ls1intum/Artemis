@@ -95,6 +95,9 @@ public class PlagiarismPostService extends PostingService {
         if (post.getPlagiarismCase() != null) {
             plagiarismCaseService.informInstructorAboutPostReply(post);
         }
+        else {
+            throw new BadRequestAlertException("Post does not belong to a plagiarism case", METIS_POST_ENTITY_NAME, "noPlagiarismCase");
+        }
     }
 
     /**

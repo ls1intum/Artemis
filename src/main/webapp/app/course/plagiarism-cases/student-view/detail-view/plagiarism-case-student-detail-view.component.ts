@@ -52,7 +52,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     affectedExerciseRouterLink: (string | number)[];
 
     isAfterDueDate: boolean;
-    isButtonVisible: boolean = true;
+    isButtonVisible = true;
 
     readonly dayjs = dayjs;
 
@@ -102,7 +102,9 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     }
 
     async informInstructor() {
-        await this.plagiarismCasesService.informInstructorAboutPostReply(this.posts[0].id!);
+        if (this.posts[0].id) {
+            await this.plagiarismCasesService.informInstructorAboutPostReply(this.posts[0].id);
+        }
     }
 
     ngOnDestroy(): void {

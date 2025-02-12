@@ -20,6 +20,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -214,7 +215,7 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    @NotificationPlaceholderCreator(values = { NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT })
+    @NotificationPlaceholderCreator(values = { NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY })
     public static String[] createPlaceholdersPlagiarism(String courseTitle, String exerciseType, String exerciseTitle) {
         return new String[] { courseTitle, exerciseType, exerciseTitle };
     }
