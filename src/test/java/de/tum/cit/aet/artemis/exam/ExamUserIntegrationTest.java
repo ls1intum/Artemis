@@ -5,7 +5,9 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -337,8 +339,9 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     }
 
     private MockMultipartFile loadFile(String path, String fileName) throws Exception {
-        File signingImage = new File(ResourceUtils.getFile(path), fileName);
-        FileInputStream input = new FileInputStream(signingImage);
+        Path signingPath = ResourceUtils.getFile(path).toPath().resolve(fileName);
+        File signingImage = signingPath.toFile();
+        InputStream input = Files.newInputStream(signingPath);
         return new MockMultipartFile("file", signingImage.getName(), "image/png", IOUtils.toByteArray(input));
     }
 

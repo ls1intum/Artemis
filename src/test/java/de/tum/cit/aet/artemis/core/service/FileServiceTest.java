@@ -69,6 +69,10 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
+    private static final Path lineEndingsUnixPath = Path.of(".", "exportTest", "LineEndingsUnix.java");
+
+    private static final Path lineEndingsWindowsPath = Path.of(".", "exportTest", "LineEndingsWindows.java");
+
     private static URI createURIWithPath(String prefix, Path path) {
         String replacementForWindows = path.toString().replace('\\', '/');
         return URI.create(prefix + replacementForWindows + '/');
@@ -189,36 +193,36 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void normalizeFileEndingsUnix_noChange() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
+        int size = Files.readAllBytes(lineEndingsUnixPath).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     void normalizeFileEndingsUnix_normalized() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
+        int size = Files.readAllBytes(lineEndingsUnixPath).length;
         assertThat(size).isEqualTo(129);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java"));
-        size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
+        fileService.normalizeLineEndings(lineEndingsUnixPath);
+        size = Files.readAllBytes(lineEndingsUnixPath).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     void normalizeFileEndingsWindows_noChange() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
+        int size = Files.readAllBytes(lineEndingsWindowsPath).length;
         assertThat(size).isEqualTo(136);
     }
 
     @Test
     void normalizeFileEndingsWindows_normalized() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
+        int size = Files.readAllBytes(lineEndingsWindowsPath).length;
         assertThat(size).isEqualTo(136);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java"));
-        size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
+        fileService.normalizeLineEndings(lineEndingsWindowsPath);
+        size = Files.readAllBytes(lineEndingsWindowsPath).length;
         assertThat(size).isEqualTo(129);
     }
 
@@ -232,11 +236,12 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void normalizeEncodingISO_8559_1() throws IOException {
         copyFile("EncodingISO_8559_1.java", "EncodingISO_8559_1.java");
-        Charset charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
+        final var exportTestPath = Path.of(".", "exportTest", "EncodingISO_8559_1.java");
+        Charset charset = fileService.detectCharset(Files.readAllBytes(exportTestPath));
         assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
-        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java"));
-        charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
+        fileService.convertToUTF8(exportTestPath);
+        charset = fileService.detectCharset(Files.readAllBytes(exportTestPath));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 

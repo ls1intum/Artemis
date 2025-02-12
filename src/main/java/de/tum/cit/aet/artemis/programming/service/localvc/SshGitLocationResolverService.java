@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -56,7 +55,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         final var gitCommand = args[0];
-        final var localVCRepositoryUri = new LocalVCRepositoryUri(Paths.get(repositoryPath), localVCBaseUrl);
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(Path.of(repositoryPath), localVCBaseUrl);
         final var projectKey = localVCRepositoryUri.getProjectKey();
         final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;

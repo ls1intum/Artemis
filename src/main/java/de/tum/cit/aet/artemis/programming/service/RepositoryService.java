@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -245,7 +243,7 @@ public class RepositoryService {
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
-        InputStream inputStream = new FileInputStream(file.get());
+        InputStream inputStream = Files.newInputStream(file.get().toPath());
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
@@ -332,7 +330,7 @@ public class RepositoryService {
      */
     private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
-        Path unknownInputPath = Paths.get(unescapedPath).normalize();
+        Path unknownInputPath = Path.of(unescapedPath).normalize();
         Path absoluteRepositoryPath = repository.getLocalPath().normalize().toAbsolutePath();
         Path absoluteInputPath = absoluteRepositoryPath.resolve(unknownInputPath).normalize();
         if (!absoluteInputPath.startsWith(absoluteRepositoryPath)) {
