@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
@@ -9,10 +9,11 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exam-bar',
-    imports: [CommonModule, ArtemisSharedCommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent],
+    imports: [CommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule],
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',
 })

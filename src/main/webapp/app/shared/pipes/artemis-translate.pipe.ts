@@ -1,10 +1,13 @@
-import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { ChangeDetectorRef, Injectable, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Pipe({
     name: 'artemisTranslate',
     pure: false,
 })
+// needed to be injectable in the notification.service
+@Injectable({ providedIn: 'root' })
+
 /**
  * a simple wrapper to prevent compile errors in IntelliJ
  */

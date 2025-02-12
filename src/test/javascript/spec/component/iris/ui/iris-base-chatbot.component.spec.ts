@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,7 +19,6 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import {
     mockClientMessage,
     mockServerMessage,
@@ -62,7 +61,7 @@ describe('IrisBaseChatbotComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisFormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
+            imports: [FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -1,15 +1,16 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [CodeButtonComponent, TranslateDirective],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {
