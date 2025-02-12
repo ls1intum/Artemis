@@ -1,9 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 
-@Pipe({
-    name: 'exerciseTypeLabel',
-})
+@Pipe({ name: 'exerciseTypeLabel' })
 export class ExerciseTypePipe implements PipeTransform {
     /**
      * Returns the type of the exercise as a string.

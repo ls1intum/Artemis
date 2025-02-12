@@ -5,7 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 describe('OrionOutdatedComponent', () => {
     let comp: OrionOutdatedComponent;
@@ -14,8 +15,8 @@ describe('OrionOutdatedComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [OrionOutdatedComponent, TranslatePipeMock],
             providers: [
+                MockPipe(ArtemisTranslatePipe),
                 { provide: ActivatedRoute, useValue: { queryParams: of({ versionString: 'version' }) } },
                 { provide: ProfileService, useClass: MockProfileService },
             ],

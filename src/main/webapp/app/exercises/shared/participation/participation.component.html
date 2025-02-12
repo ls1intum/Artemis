@@ -22,7 +22,7 @@
                     />
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoSubmissions"></span>
                 </label>
-                @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
+                @if (exercise?.type === ExerciseType.PROGRAMMING && afterDueDate) {
                     <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                         <input
                             type="radio"
@@ -120,7 +120,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            @if (value) {
+                            @if (value && getRepositoryLink(row, value)) {
                                 <span>
                                     @if (!localVCEnabled) {
                                         <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
@@ -128,8 +128,8 @@
                                         <jhi-code-button
                                             class="ms-2"
                                             [smallButtons]="true"
-                                            [routerLinkForRepositoryView]="'./' + row.id + '/repository'"
-                                            [repositoryUri]="getRepositoryLink(row, value)"
+                                            [routerLinkForRepositoryView]="[row.id, 'repository']"
+                                            [repositoryUri]="getRepositoryLink(row, value)!"
                                         />
                                     }
                                 </span>

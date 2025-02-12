@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { KeyValuePipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-submission-policy-update',
@@ -92,6 +95,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
         }
     `,
     styleUrls: ['../../programming/manage/programming-exercise-form.scss'],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, HelpIconComponent, KeyValuePipe],
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;

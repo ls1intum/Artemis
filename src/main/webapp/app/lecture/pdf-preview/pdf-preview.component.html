@@ -57,7 +57,7 @@
             <div>
                 <a
                     type="button"
-                    class="btn btn-default"
+                    class="btn btn-secondary"
                     [routerLink]="
                         attachment()
                             ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture!.id, 'attachments']
@@ -65,7 +65,7 @@
                     "
                     [ngbTooltip]="'entity.action.view' | artemisTranslate"
                 >
-                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="entity.action.cancel"></span>
                 </a>
             </div>
@@ -76,7 +76,7 @@
                     class="btn btn-primary"
                     [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
                 >
-                    <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate"></fa-icon>
+                    <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>

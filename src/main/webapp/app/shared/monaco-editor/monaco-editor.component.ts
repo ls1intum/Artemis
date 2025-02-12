@@ -1,26 +1,26 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import * as monaco from 'monaco-editor';
-import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
-import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
+import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
+import Graphemer from 'graphemer';
 
 import { EmojiConvertor } from 'emoji-js';
+import * as monaco from 'monaco-editor';
+import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 
 export const MAX_TAB_SIZE = 8;
 
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
-    standalone: true,
     styleUrls: ['monaco-editor.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
@@ -67,6 +67,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
+    private customBackspaceCommandId: string | undefined;
 
     /*
      * Injected services and elements.
@@ -155,6 +156,44 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
             this.onBlurEditor.emit();
         });
+
+        this.customBackspaceCommandId =
+            this._editor.addCommand(monaco.KeyCode.Backspace, () => {
+                const model = this._editor.getModel();
+                const selection = this._editor.getSelection();
+                if (!model || !selection) return;
+
+                if (!selection.isEmpty()) {
+                    this._editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
+
+                const lineNumber = selection.startLineNumber;
+                const column = selection.startColumn;
+                const lineContent = model.getLineContent(lineNumber);
+
+                const textBeforeCursor = lineContent.substring(0, column - 1);
+                const splitter = new Graphemer();
+                const graphemes = splitter.splitGraphemes(textBeforeCursor);
+
+                if (graphemes.length === 0) return;
+
+                graphemes.pop();
+                const newTextBeforeCursor = graphemes.join('');
+                const textAfterCursor = lineContent.substring(column - 1);
+
+                const newLineContent = newTextBeforeCursor + textAfterCursor;
+                model.pushEditOperations(
+                    [],
+                    [
+                        {
+                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                            text: newLineContent,
+                        },
+                    ],
+                    () => null,
+                );
+            }) || undefined;
     }
 
     ngOnDestroy() {
@@ -217,7 +256,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const convertedText = this.convertTextToEmoji(text);
         if (this.isConvertedToEmoji(text, convertedText)) {
             this._editor.setValue(convertedText);
-            this.setPosition({ column: this.getPosition().column + 2 + text.length, lineNumber: this.getPosition().lineNumber });
+            this.setPosition({ column: this.getPosition().column + convertedText.length + text.length, lineNumber: this.getPosition().lineNumber });
         }
         if (this.getText() !== convertedText) {
             this._editor.setValue(convertedText);
@@ -444,5 +483,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     applyOptionPreset(options: MonacoEditorOptionPreset): void {
         options.apply(this._editor);
+    }
+
+    public getCustomBackspaceCommandId(): string | undefined {
+        return this.customBackspaceCommandId;
     }
 }

@@ -1,8 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -14,17 +13,16 @@ import { DomainDependentService } from 'app/exercises/programming/shared/code-ed
  */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
+    private submissionService = inject(ProgrammingSubmissionService);
+    private alertService = inject(AlertService);
+
     private participationId?: number;
     private exerciseId?: number;
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(
-        domainService: DomainService,
-        private submissionService: ProgrammingSubmissionService,
-        private alertService: AlertService,
-    ) {
-        super(domainService);
+    constructor() {
+        super();
         this.initDomainSubscription();
     }
 

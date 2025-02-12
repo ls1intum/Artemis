@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -15,13 +15,15 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
+
     public resourceUrl = 'api/modeling-exercises';
     public adminResourceUrl = 'api/admin/modeling-exercises';
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {
+    constructor() {
+        const exerciseService = this.exerciseService;
+
         this.exerciseService = exerciseService;
     }
 

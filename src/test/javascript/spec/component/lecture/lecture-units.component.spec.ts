@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -28,29 +27,19 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
-
-@Component({ selector: 'jhi-video-unit-form', template: '' })
-class VideoUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-}
-
-@Component({ selector: 'jhi-unit-creation-card', template: '' })
-class UnitCreationCardStubComponent {
-    @Input() emitEvents = true;
-    @Output() onUnitCreationCardClicked: EventEmitter<LectureUnitType> = new EventEmitter<LectureUnitType>();
-}
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [
-                VideoUnitFormStubComponent,
-                UnitCreationCardStubComponent,
+                MockComponent(VideoUnitFormComponent),
+                MockComponent(UnitCreationCardComponent),
                 LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
@@ -69,14 +58,12 @@ describe('LectureUpdateUnitsComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
-                wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
-                wizardUnitComponent.lecture = new Lecture();
-                wizardUnitComponent.lecture.id = 1;
-            });
+        }).compileComponents();
+
+        wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
+        wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
+        wizardUnitComponent.lecture = new Lecture();
+        wizardUnitComponent.lecture.id = 1;
     });
 
     afterEach(() => {
@@ -91,7 +78,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should open video form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        const unitCreationCard: UnitCreationCardStubComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
+        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.VIDEO);
 
         wizardUnitComponentFixture.whenStable().then(() => {
@@ -102,7 +89,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should open online form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        const unitCreationCard: UnitCreationCardStubComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
+        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ONLINE);
 
         wizardUnitComponentFixture.whenStable().then(() => {
@@ -113,7 +100,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should open attachment form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        const unitCreationCard: UnitCreationCardStubComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
+        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
@@ -124,7 +111,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should open text form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        const unitCreationCard: UnitCreationCardStubComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
+        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.TEXT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
@@ -135,7 +122,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should open exercise form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        const unitCreationCard: UnitCreationCardStubComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
+        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.EXERCISE);
 
         wizardUnitComponentFixture.whenStable().then(() => {

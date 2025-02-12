@@ -1,13 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
     providedIn: 'root',
 })
 export class LocaleConversionService {
-    locale = LocaleConversionService.getLang(); // default value, will be overridden by the current language of Artemis
+    private translateService = inject(TranslateService);
 
-    constructor(private translateService: TranslateService) {
+    locale = LocaleConversionService.getLang();
+    // default value, will be overridden by the current language of Artemis
+
+    constructor() {
         this.locale = this.translateService.currentLang;
     }
 

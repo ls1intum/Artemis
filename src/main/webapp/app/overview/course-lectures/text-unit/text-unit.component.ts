@@ -8,7 +8,6 @@ import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/
 
 @Component({
     selector: 'jhi-text-unit',
-    standalone: true,
     imports: [LectureUnitComponent],
     templateUrl: './text-unit.component.html',
 })

@@ -66,14 +66,14 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zipped file with the exported submissions
+     * @return the path to the zipped file with the exported submissions
      */
-    public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
+    public Path exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         var zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions);
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
-        return zippedSubmissionsPaths.getFirst().toFile();
+        return zippedSubmissionsPaths.getFirst();
 
     }
 

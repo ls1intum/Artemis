@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/entities/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -6,17 +6,25 @@ import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgClass, FaIconComponent, NgbTooltip],
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private websocketService = inject(WebsocketService);
+
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
@@ -31,11 +39,6 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     // Icons
     faCircle = faCircle;
     faHistory = faHistory;
-
-    constructor(
-        private accountService: AccountService,
-        private jhiWebsocketService: JhiWebsocketService,
-    ) {}
 
     /**
      * Subscribes to the websocket topic "team" for the given participation
@@ -53,8 +56,8 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupOnlineTeamStudentsReceiver() {
         this.websocketTopic = this.buildWebsocketTopic();
-        this.jhiWebsocketService.subscribe(this.websocketTopic);
-        this.jhiWebsocketService
+        this.websocketService.subscribe(this.websocketTopic);
+        this.websocketService
             .receive(this.websocketTopic)
             .pipe(map(this.convertOnlineTeamStudentsFromServer))
             .subscribe({
@@ -62,18 +65,18 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                     this.onlineTeamStudents = students;
                     this.computeTypingTeamStudents();
                 },
-                error: (error) => console.error(error),
+                error: (error) => captureException(error),
             });
         setTimeout(() => {
-            this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
         }, 700);
     }
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
             this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
-                error: (error) => console.error(error),
+                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                error: (error) => captureException(error),
             });
         }
     }
@@ -82,7 +85,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component destruction is done
      */
     ngOnDestroy(): void {
-        this.jhiWebsocketService.unsubscribe(this.websocketTopic);
+        this.websocketService.unsubscribe(this.websocketTopic);
     }
 
     get team(): Team {

@@ -1,15 +1,16 @@
 import { Component, effect, input, output, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { Subject } from 'rxjs';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
-    standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+    imports: [HelpIconComponent, TranslateDirective, FormsModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../../manage/programming-exercise-form.scss'],
 })
@@ -25,11 +26,11 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     testCheckoutPath: string;
     solutionCheckoutPath: string;
 
-    isAssigmentRepositoryEditable: boolean = false;
-    isTestRepositoryEditable: boolean = false;
-    isSolutionRepositoryEditable: boolean = false;
+    isAssigmentRepositoryEditable = false;
+    isTestRepositoryEditable = false;
+    isSolutionRepositoryEditable = false;
 
-    formValid: boolean = true;
+    formValid = true;
     formValidChanges = new Subject();
 
     field_assignmentRepositoryCheckoutPath = viewChild<NgModel>('field_assignmentRepositoryCheckoutPath');

@@ -1,7 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Response } from 'app/iris/iris-chat-http.service';
 import { IrisStatusDTO } from 'app/entities/iris/iris-health.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
@@ -14,6 +14,9 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
  */
 @Injectable({ providedIn: 'root' })
 export class IrisStatusService implements OnDestroy {
+    private websocketService = inject(WebsocketService);
+    private httpClient = inject(HttpClient);
+
     intervalId: ReturnType<typeof setInterval> | undefined;
     websocketStatusSubscription: Subscription;
     disconnected = false;
@@ -28,10 +31,7 @@ export class IrisStatusService implements OnDestroy {
      * @param websocketService The JhiWebsocketService for managing the websocket connection.
      * @param httpSessionService The IrisHttpChatSessionService for HTTP operations related to sessions.
      */
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private httpClient: HttpClient,
-    ) {
+    constructor() {
         this.checkHeartbeat();
         this.intervalId = setInterval(() => {
             this.checkHeartbeat();

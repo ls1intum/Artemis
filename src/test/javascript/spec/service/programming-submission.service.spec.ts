@@ -19,14 +19,14 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from '../../../../main/webapp/app/entities/programming/submission-processing-dto';
 
 describe('ProgrammingSubmissionService', () => {
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;
     let participationService: ProgrammingExerciseParticipationService;
@@ -88,7 +88,7 @@ describe('ProgrammingSubmissionService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -97,7 +97,7 @@ describe('ProgrammingSubmissionService', () => {
             .compileComponents()
             .then(() => {
                 submissionService = TestBed.inject(ProgrammingSubmissionService);
-                websocketService = TestBed.inject(JhiWebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
                 httpService = TestBed.inject(HttpClient);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 participationService = TestBed.inject(ProgrammingExerciseParticipationService);

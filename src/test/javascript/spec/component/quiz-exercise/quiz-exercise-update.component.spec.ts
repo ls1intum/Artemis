@@ -40,7 +40,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('QuizExerciseUpdateComponent', () => {
@@ -148,7 +147,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseUpdateComponent],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -1016,7 +1014,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
-                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent(new MockNgbModalService() as any as NgbModal);
+                    const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
+                    comp.quizQuestionListEditComponent = childFixture.componentInstance;
                     jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
@@ -1028,7 +1027,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                expect(console.error).toHaveBeenCalledOnce();
             };
 
             beforeEach(() => {

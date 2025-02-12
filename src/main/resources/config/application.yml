@@ -65,11 +65,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-21"
+                    default: "ls1tum/artemis-maven-template:java17-22"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-21"
+                    default: "ls1tum/artemis-maven-template:java17-22"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -95,6 +95,8 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 r:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
+                bash:
+                    default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
                 c_sharp:
@@ -103,6 +105,10 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 go:
                     default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
+                matlab:
+                    default: "mathworks/matlab:r2024b"
+                ruby:
+                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.1"
 
         # The following properties are used to configure the Artemis build agent.
         # The build agent is responsible for executing the buildJob to test student submissions.
@@ -209,7 +215,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this to true (even if we would want, because then LocalCI does not process build results correctly)
+        lazy-initialization: false # cannot set this because of static inject in FilePathService
     task:
         execution:
             thread-name-prefix: artemis-task-

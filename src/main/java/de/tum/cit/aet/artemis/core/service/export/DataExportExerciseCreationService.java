@@ -387,7 +387,7 @@ public class DataExportExerciseCreationService {
             headers.add("accepted");
             dataStreamBuilder.add(complaint.isAccepted());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).get();
         var prefix = complaint.getComplaintType() == ComplaintType.COMPLAINT ? "complaint_" : "more_feedback_";
 
         try (final var printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve(prefix + complaint.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -432,7 +432,7 @@ public class DataExportExerciseCreationService {
         else if (plagiarismCase.getVerdict() == PlagiarismVerdict.WARNING) {
             dataStreamBuilder.add(plagiarismCase.getVerdictMessage());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)),
                 csvFormat)) {
@@ -486,7 +486,7 @@ public class DataExportExerciseCreationService {
         if (submission instanceof ProgrammingSubmission) {
             headers.add("commitHash");
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).get();
 
         try (final CSVPrinter printer = new CSVPrinter(
                 Files.newBufferedWriter(outputPath.resolve("participation_" + submission.getParticipation().getId() + "_submission_" + submission.getId() + CSV_FILE_EXTENSION)),

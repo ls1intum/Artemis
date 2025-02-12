@@ -17,7 +17,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
 export class LearningPathStudentPageComponent {
@@ -35,13 +34,10 @@ export class LearningPathStudentPageComponent {
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPath(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPath(courseId));
+        });
     }
 
     private async loadLearningPath(courseId: number): Promise<void> {

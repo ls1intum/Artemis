@@ -4,10 +4,6 @@ import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-s
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { User } from 'app/core/user/user.model';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgModel } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
@@ -20,8 +16,7 @@ describe('Team Owner Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTypeahead)],
-            declarations: [TeamOwnerSearchComponent, MockDirective(NgModel), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
             providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }],
         }).compileComponents();
 

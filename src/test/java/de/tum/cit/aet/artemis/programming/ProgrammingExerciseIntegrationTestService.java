@@ -425,13 +425,13 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = new File(projectFilePath.toString());
+        File projectFile = Path.of(projectFilePath.toString()).toFile();
         String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = new File(pomPath.toString());
+        File pomFile = Path.of(pomPath.toString()).toFile();
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
         FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
 
@@ -466,14 +466,14 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = new File(projectFilePath.toString());
+        File projectFile = Path.of(projectFilePath.toString()).toFile();
         if (!projectFile.exists()) {
             Files.createFile(projectFilePath);
         }
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = new File(pomPath.toString());
+        File pomFile = Path.of(pomPath.toString()).toFile();
         if (!pomFile.exists()) {
             Files.createFile(pomPath);
         }
@@ -2088,6 +2088,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), templateBuildPlanName);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), solutionBuildPlanName);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
@@ -2261,8 +2263,31 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
+        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                programmingUtilTestService.setupSolution(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup solution threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
+    }
+
+    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+
+        // We expect an URL which is the endpoint, with which the file contents can be retrieved
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
+                "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
+    }
+
+    void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
+        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             try {
                 programmingUtilTestService.setupTemplate(files, exercise, localRepository);
@@ -2271,7 +2296,26 @@ public class ProgrammingExerciseIntegrationTestService {
                 fail("Setup template threw unexpected exception: " + e.getMessage());
             }
             return localRepository;
-        });
+        };
+
+        test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(redirectFnc);
+
+    }
+
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                programmingUtilTestService.setupTemplate(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup template threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        };
+
+        test_redirectGetTemplateRepositoryFilesWithContent(redirectFnc);
+
     }
 
     private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2281,6 +2325,16 @@ public class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    private void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock)
+            throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.jar", "binaryContent")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        var queryParams = "?omitBinaries=true";
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content" + queryParams, HttpStatus.OK,
+                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content" + queryParams);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {

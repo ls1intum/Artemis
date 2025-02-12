@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static java.util.Map.entry;
+
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 public class StaticCodeAnalysisConfigurer {
 
     // @formatter:off
-    private static final List<String> CATEGORY_NAMES_PYTHON = List.of(
+    private static final List<String> CATEGORY_NAMES_RUFF = List.of(
         "Pyflakes",
         "pycodestyle",
         "mccabe",
@@ -78,9 +80,17 @@ public class StaticCodeAnalysisConfigurer {
     );
     // @formatter:on
 
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,
-            createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(), ProgrammingLanguage.C, createDefaultCategoriesForC(),
-            ProgrammingLanguage.PYTHON, createDefaultCategoriesForPython());
+    private static final List<String> CATEGORY_NAMES_RUBOCOP = List.of("Bundler", "Gemspec", "Layout", "Lint", "Metrics", "Migration", "Naming", "Security", "Style");
+
+    // @formatter:off
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
+            entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
+            entry(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava()),
+            entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
+            entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
+            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
+    );
+    // @formatter:on
 
     /**
      * Create an unmodifiable List of default static code analysis categories for Java
@@ -151,9 +161,8 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.2D, 2D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Misc"))));
     }
 
-    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForPython() {
-        return CATEGORY_NAMES_PYTHON.stream()
-                .map(name -> new StaticCodeAnalysisDefaultCategory(name, 0.0, 1.0, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.RUFF, name)))).toList();
+    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesSingleTool(List<String> categories, StaticCodeAnalysisTool tool) {
+        return categories.stream().map(name -> new StaticCodeAnalysisDefaultCategory(name, 0.0, 1.0, CategoryState.FEEDBACK, List.of(createMapping(tool, name)))).toList();
     }
 
     public static Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisConfiguration() {

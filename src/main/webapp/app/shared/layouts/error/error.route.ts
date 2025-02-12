@@ -1,12 +1,9 @@
 import { Routes } from '@angular/router';
 
-import { ErrorComponent } from './error.component';
-import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
-
 export const errorRoute: Routes = [
     {
         path: 'error',
-        component: ErrorComponent,
+        loadComponent: () => import('./error.component').then((m) => m.ErrorComponent),
         data: {
             authorities: [],
             pageTitle: 'error.title',
@@ -14,7 +11,7 @@ export const errorRoute: Routes = [
     },
     {
         path: 'accessdenied',
-        component: ErrorComponent,
+        loadComponent: () => import('./error.component').then((m) => m.ErrorComponent),
         data: {
             authorities: [],
             pageTitle: 'error.title',
@@ -23,7 +20,7 @@ export const errorRoute: Routes = [
     },
     {
         path: 'orion-outdated',
-        component: OrionOutdatedComponent,
+        loadComponent: () => import('app/shared/orion/outdated-plugin-warning/orion-outdated.component').then((m) => m.OrionOutdatedComponent),
         data: {
             authorities: [],
             pageTitle: 'Outdated Orion Version',

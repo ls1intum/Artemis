@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    public resourceUrl = 'api/users';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/users';
 
     /**
      * Search for a user on the server by login or name.

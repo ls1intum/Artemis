@@ -1,24 +1,24 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',
     templateUrl: './one-to-one-chat-create-dialog.component.html',
+    imports: [TranslateDirective, CourseUsersSelectorComponent, FormsModule, ArtemisTranslatePipe],
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
-    @Input()
-    course: Course;
+    @Input() course: Course;
 
     isInitialized = false;
     selectedUsers: UserPublicInfoDTO[] = [];
     userToChatWith?: UserPublicInfoDTO;
 
-    constructor(activeModal: NgbActiveModal) {
-        super(activeModal);
-    }
     initialize() {
         super.initialize(['course']);
     }

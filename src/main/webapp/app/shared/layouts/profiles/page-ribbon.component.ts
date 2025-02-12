@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../language/translate.directive';
 
 @Component({
     selector: 'jhi-page-ribbon',
@@ -13,11 +14,12 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],
+    imports: [TranslateDirective],
 })
 export class PageRibbonComponent implements OnInit {
-    ribbonEnv: string;
+    private profileService = inject(ProfileService);
 
-    constructor(private profileService: ProfileService) {}
+    ribbonEnv: string;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

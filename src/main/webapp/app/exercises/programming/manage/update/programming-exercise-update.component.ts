@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -48,6 +48,12 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { FormsModule } from '@angular/forms';
+import { ProgrammingExerciseProblemComponent } from './update-components/problem/programming-exercise-problem.component';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -55,8 +61,36 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        FormsModule,
+        ProgrammingExerciseInformationComponent,
+        ProgrammingExerciseModeComponent,
+        ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseProblemComponent,
+        ProgrammingExerciseGradingComponent,
+        ExerciseUpdatePlagiarismComponent,
+        FormFooterComponent,
+    ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
+    private activatedRoute = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private aeolusService = inject(AeolusService);
+
     protected readonly documentationType: DocumentationType = 'Programming';
     protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
     protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
@@ -163,29 +197,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private fileService: FileService,
-        private activatedRoute: ActivatedRoute,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private exerciseGroupService: ExerciseGroupService,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private aeolusService: AeolusService,
-    ) {
+    constructor() {
         effect(
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {
                     this.calculateFormStatusSections();
                 }
             }.bind(this),
-            { allowSignalWrites: true },
         );
 
         effect(
@@ -198,7 +216,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
                 }
             }.bind(this),
-            { allowSignalWrites: true },
         );
     }
 
@@ -272,7 +289,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const languageChanged = this.selectedProgrammingLanguageValue !== language;
         this.selectedProgrammingLanguageValue = language;
 
-        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
+        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language)!;
         this.packageNameRequired = programmingLanguageFeature?.packageNameRequired;
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
@@ -360,7 +377,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
-            const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
+            const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(ProgrammingLanguage.JAVA)!;
             if (type == ProjectType.MAVEN_BLACKBOX) {
                 this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
                 this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;

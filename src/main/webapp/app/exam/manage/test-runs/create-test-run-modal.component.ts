@@ -1,27 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
 })
 export class CreateTestRunModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     exam: Exam;
     workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-    ) {}
 
     ngOnInit(): void {
         this.initWorkingTimeForm();
@@ -60,15 +60,6 @@ export class CreateTestRunModalComponent implements OnInit {
      */
     onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
         this.testRunConfiguration[exerciseGroup.id!] = exercise;
-    }
-
-    /**
-     * Track the items by id on the exercise Tables.
-     * @param index {number}
-     * @param item {Exercise}
-     */
-    trackId(index: number, item: Exercise) {
-        return item.id;
     }
 
     /**

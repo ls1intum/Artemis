@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-emoji-picker',
     templateUrl: './emoji-picker.component.html',
     imports: [PickerModule, ArtemisTranslatePipe],
-    standalone: true,
 })
 export class EmojiPickerComponent {
     private themeService = inject(ThemeService);

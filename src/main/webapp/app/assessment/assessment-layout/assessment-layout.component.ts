@@ -5,6 +5,10 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { AssessmentHeaderComponent } from '../assessment-header/assessment-header.component';
+import { AssessmentComplaintAlertComponent } from '../assessment-complaint-alert/assessment-complaint-alert.component';
+import { AssessmentNoteComponent } from '../assessment-note/assessment-note.component';
+import { ComplaintsForTutorComponent } from '../../complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -16,6 +20,7 @@ import { AssessmentNote } from 'app/entities/assessment-note.model';
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
+    imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
 })
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;

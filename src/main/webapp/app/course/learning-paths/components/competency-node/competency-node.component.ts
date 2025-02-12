@@ -12,7 +12,6 @@ export interface SizeUpdate {
 
 @Component({
     selector: 'jhi-learning-path-competency-node',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbDropdownModule, FontAwesomeModule, NgbAccordionModule, CommonModule],
     templateUrl: './competency-node.component.html',

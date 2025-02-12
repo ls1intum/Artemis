@@ -1,16 +1,36 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { Observable } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-standardized-competency-edit',
     templateUrl: './standardized-competency-edit.component.html',
+    imports: [
+        TranslateDirective,
+        ButtonComponent,
+        DeleteButtonDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        MarkdownEditorMonacoComponent,
+        TaxonomySelectComponent,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class StandardizedCompetencyEditComponent {
+    private formBuilder = inject(FormBuilder);
+
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     // values for the source select
@@ -73,8 +93,6 @@ export class StandardizedCompetencyEditComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = StandardizedCompetencyValidators;
-
-    constructor(private formBuilder: FormBuilder) {}
 
     save() {
         const updatedValues = this.form.getRawValue();

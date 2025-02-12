@@ -1,15 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { TestexamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/testexam-working-time.component';
+import { TestExamWorkingTimeComponent } from '../../../../../../main/webapp/app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import { round } from 'app/shared/util/utils';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('TestExamWorkingTimeComponent', () => {
-    let fixture: ComponentFixture<TestexamWorkingTimeComponent>;
-    let comp: TestexamWorkingTimeComponent;
+    let fixture: ComponentFixture<TestExamWorkingTimeComponent>;
+    let comp: TestExamWorkingTimeComponent;
 
     let exam: Exam;
     let studentExam: StudentExam;
@@ -17,13 +16,12 @@ describe('TestExamWorkingTimeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [TestexamWorkingTimeComponent, MockPipe(ArtemisDurationFromSecondsPipe)],
+            imports: [ArtemisTestModule],
             providers: [],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TestexamWorkingTimeComponent);
+                fixture = TestBed.createComponent(TestExamWorkingTimeComponent);
                 comp = fixture.componentInstance;
 
                 exam = new Exam();

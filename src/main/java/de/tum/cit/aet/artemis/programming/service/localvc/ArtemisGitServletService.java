@@ -58,6 +58,7 @@ public class ArtemisGitServletService extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
+            // the user inside the request is always null here
             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
@@ -72,4 +73,5 @@ public class ArtemisGitServletService extends GitServlet {
             return uploadPack;
         });
     }
+
 }

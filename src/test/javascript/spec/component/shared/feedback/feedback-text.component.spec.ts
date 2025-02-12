@@ -18,7 +18,6 @@ describe('FeedbackTextComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FeedbackTextComponent],
             providers: [MockProvider(LongFeedbackTextService)],
         })
             .compileComponents()
@@ -71,7 +70,7 @@ describe('FeedbackTextComponent', () => {
         comp.ngOnInit();
         tick();
 
-        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(1, 2);
+        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(2);
         expect(comp.text).toBe(longFeedbackText);
         expect(comp.downloadText).toBeUndefined();
         expect(comp.downloadFilename).toBeUndefined();

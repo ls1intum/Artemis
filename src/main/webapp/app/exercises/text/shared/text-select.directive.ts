@@ -28,9 +28,7 @@ enum EventType {
     MouseDown = 'mousedown',
 }
 
-@Directive({
-    selector: '[jhiTextSelect]',
-})
+@Directive({ selector: '[jhiTextSelect]' })
 export class TextSelectDirective implements OnInit, OnDestroy {
     private elementRef = inject(ElementRef);
     private zone = inject(NgZone);

@@ -13,6 +13,7 @@ import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTestModule } from '../../../test.module';
 
 @Component({
     template: '',
@@ -28,6 +29,7 @@ describe('CourseLectureRow', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
+                ArtemisTestModule,
                 MockDirective(NgbTooltip),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/lectures', component: DummyComponent },

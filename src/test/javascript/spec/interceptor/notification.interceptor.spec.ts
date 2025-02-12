@@ -2,6 +2,7 @@ import { HttpHandler, HttpHeaders, HttpRequest, HttpResponse } from '@angular/co
 import { of } from 'rxjs';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { AlertService } from 'app/core/util/alert.service';
+import { TestBed } from '@angular/core/testing';
 
 describe(`NotificationInterceptor`, () => {
     let notificationInterceptor: NotificationInterceptor;
@@ -13,7 +14,11 @@ describe(`NotificationInterceptor`, () => {
             success: jest.fn(),
         } as any as AlertService;
 
-        notificationInterceptor = new NotificationInterceptor(alertServiceMock);
+        TestBed.configureTestingModule({
+            providers: [NotificationInterceptor, { provide: AlertService, useValue: alertServiceMock }],
+        });
+
+        notificationInterceptor = TestBed.inject(NotificationInterceptor);
     });
 
     afterEach(() => {

@@ -30,11 +30,14 @@ import { Attachment } from 'app/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/entities/faq.model';
+import { FileService } from 'app/shared/http/file.service';
+import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let metisService: MetisService;
+    let fileService: FileService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
     let lectureService: LectureService;
@@ -46,34 +49,34 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     let exerciseReferenceAction: ExerciseReferenceAction;
     let faqReferenceAction: FaqReferenceAction;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
-                courseManagementService = TestBed.inject(CourseManagementService);
-                lectureService = TestBed.inject(LectureService);
-                channelService = TestBed.inject(ChannelService);
-                channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
-                userMentionAction = new UserMentionAction(courseManagementService, metisService);
-                exerciseReferenceAction = new ExerciseReferenceAction(metisService);
-                faqReferenceAction = new FaqReferenceAction(metisService);
-            });
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
+        metisService = TestBed.inject(MetisService);
+        fileService = TestBed.inject(FileService);
+        courseManagementService = TestBed.inject(CourseManagementService);
+        lectureService = TestBed.inject(LectureService);
+        channelService = TestBed.inject(ChannelService);
+        channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
+        userMentionAction = new UserMentionAction(courseManagementService, metisService);
+        exerciseReferenceAction = new ExerciseReferenceAction(metisService);
+        faqReferenceAction = new FaqReferenceAction(metisService);
     });
 
     afterEach(() => {
@@ -280,7 +283,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         beforeEach(() => {
             lectures = metisService.getCourse().lectures!;
             jest.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
-            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService);
+            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService, fileService);
         });
 
         afterEach(() => {
@@ -295,7 +298,10 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 id: lecture.id!,
                 title: lecture.title!,
                 attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
-                attachments: lecture.attachments,
+                attachments: lecture.attachments?.map((attachment) => ({
+                    ...attachment,
+                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
+                })),
             }));
 
             expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import java.net.URI;
@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -62,7 +61,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
         telemetryServiceSpy = spy(telemetryService);
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andExpect(request -> assertThat(request.getBody().toString()).contains("adminName"))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
+                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
 
         await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
@@ -74,7 +73,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
         telemetryServiceSpy = spy(telemetryService);
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andExpect(request -> assertThat(request.getBody().toString()).doesNotContain("adminName"))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
+                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
 
         await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
@@ -86,7 +85,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
         telemetryServiceSpy = spy(telemetryService);
 
         mockServer.expect(ExpectedCount.never(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
+                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
         await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
     }

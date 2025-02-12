@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -13,7 +13,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -22,14 +22,44 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardiz
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
+import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        StandardizedCompetencyFilterComponent,
+        ButtonComponent,
+        KnowledgeAreaTreeComponent,
+        NgbTooltip,
+        StandardizedCompetencyEditComponent,
+        KnowledgeAreaEditComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private standardizedCompetencyService = inject(StandardizedCompetencyService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     protected isLoading = false;
     // true if a competency is getting edited in the detail component
     protected isEditing = false;
@@ -57,17 +87,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
-
-    constructor(
-        private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
-        private standardizedCompetencyService: StandardizedCompetencyService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {
-        super();
-    }
 
     ngOnInit() {
         this.isLoading = true;
@@ -575,5 +594,19 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

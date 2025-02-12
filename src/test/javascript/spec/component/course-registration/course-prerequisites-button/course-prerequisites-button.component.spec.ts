@@ -19,7 +19,6 @@ describe('CoursePrerequisitesButtonComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CoursePrerequisitesButtonComponent],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()

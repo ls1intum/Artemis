@@ -1,4 +1,18 @@
-import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+    Component,
+    ContentChild,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    TemplateRef,
+    ViewChild,
+    ViewEncapsulation,
+    inject,
+} from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@siemens/ngx-datatable';
@@ -7,6 +21,11 @@ import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 /**
  * Enum for ascending and descending order.
@@ -46,8 +65,23 @@ type PagingValue = number | 'all';
     templateUrl: './data-table.component.html',
     styleUrls: ['data-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgbTypeahead,
+        FaIconComponent,
+        TranslateDirective,
+        NgTemplateOutlet,
+        ArtemisTranslatePipe,
+    ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
+    private sortService = inject(SortService);
+    private localStorage = inject(LocalStorageService);
+
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
      */
@@ -145,10 +179,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
 
-    constructor(
-        private sortService: SortService,
-        private localStorage: LocalStorageService,
-    ) {
+    constructor() {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],

@@ -63,17 +63,6 @@ public class TextExerciseFeedbackService {
         this.textBlockService = textBlockService;
     }
 
-    private void checkRateLimitOrThrow(StudentParticipation participation) {
-
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-
-        long countOfAthenaResults = athenaResults.size();
-
-        if (countOfAthenaResults >= 10) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
-        }
-    }
-
     /**
      * Handles the request for generating feedback for a text exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
@@ -84,8 +73,21 @@ public class TextExerciseFeedbackService {
      */
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, TextExercise textExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
-            this.checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, textExercise));
+            this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
+
+            var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+            if (submissionOptional.isEmpty()) {
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
+            }
+            TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
+
+            this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
+
+            if (textSubmission.isEmpty()) {
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
+            }
+
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
         }
         return participation;
     }
@@ -94,20 +96,14 @@ public class TextExerciseFeedbackService {
      * Generates automatic non-graded feedback for a text exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation the student participation associated with the exercise.
-     * @param textExercise  the text exercise object.
+     * @param textSubmission the text submission associated with the student participation.
+     * @param participation  the student participation associated with the exercise.
+     * @param textExercise   the text exercise object.
      */
-    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, TextExercise textExercise) {
+    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
-
-        if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
-        }
-        TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
-
         Result automaticResult = new Result();
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
@@ -121,7 +117,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getTextFeedbackSuggestions(textExercise, textSubmission, true);
+            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getTextFeedbackSuggestions(textExercise, textSubmission, false);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

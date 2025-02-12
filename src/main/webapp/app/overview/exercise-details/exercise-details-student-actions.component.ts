@@ -1,5 +1,5 @@
-import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -11,9 +11,8 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faDesktop, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faDesktop, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -21,14 +20,47 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-exercise-details-student-actions',
-    templateUrl: './exercise-details-student-actions.component.html',
-    styleUrls: ['../course-overview.scss'],
+    imports: [
+        NgTemplateOutlet,
+        ExerciseActionButtonComponent,
+        RouterLink,
+        NgbTooltip,
+        FeatureToggleDirective,
+        StartPracticeModeButtonComponent,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+        OpenCodeEditorButtonComponent,
+        CodeButtonComponent,
+        FaIconComponent,
+        TranslateDirective,
+        RequestFeedbackButtonComponent,
+        ArtemisTranslatePipe,
+    ],
     providers: [ExternalCloningService],
+    selector: 'jhi-exercise-details-student-actions',
+    styleUrls: ['../course-overview.scss'],
+    templateUrl: './exercise-details-student-actions.component.html',
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private router = inject(Router);
+    private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
@@ -46,7 +78,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
 
     uninitializedQuiz: boolean;
     quizNotStarted: boolean;
@@ -62,7 +95,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     routerLink: string;
     repositoryLink: string;
 
-    theiaEnabled: boolean = false;
+    theiaEnabled = false;
     theiaPortalURL: string;
 
     // Icons
@@ -71,20 +104,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faEye = faEye;
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
-    readonly faCodeBranch = faCodeBranch;
     readonly faDesktop = faDesktop;
-    readonly faPenSquare = faPenSquare;
-
-    private feedbackSent = false;
-
-    constructor(
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private router: Router,
-        private translateService: TranslateService,
-        private participationService: ParticipationService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         this.repositoryLink = this.router.url;
@@ -307,9 +327,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 }

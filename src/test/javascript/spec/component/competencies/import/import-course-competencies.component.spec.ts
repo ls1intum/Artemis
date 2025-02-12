@@ -1,18 +1,13 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
-import { FormsModule } from 'app/forms/forms.module';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 @Component({ template: '' })
@@ -31,8 +26,7 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            declarations: [ImportCourseCompetenciesComponent],
+            imports: [ArtemisTestModule],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -40,9 +34,6 @@ describe('ImportCourseCompetenciesComponent', () => {
                         snapshot: { paramMap: convertToParamMap({ courseId: 1 }) },
                     } as ActivatedRoute,
                 },
-                { provide: Router, useClass: MockRouter },
-                MockProvider(CompetencyService),
-                MockProvider(PrerequisiteService),
             ],
         })
             .compileComponents()

@@ -39,7 +39,10 @@
                                 <ngb-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
                             </td>
                             <td>
-                                <span [id]="'open-competency-graph-button-' + learningPath.id" class="clickable link-primary" (click)="openCompetencyGraph(learningPath.id)"
+                                <span
+                                    [id]="'open-competency-graph-button-' + learningPath.id"
+                                    class="clickable link-primary"
+                                    (click)="openCompetencyGraph(learningPath.id, learningPath.user.name)"
                                     ><u>{{ learningPath.progress }} %</u></span
                                 >
                             </td>

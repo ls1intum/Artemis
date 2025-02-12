@@ -1,6 +1,6 @@
 @if (!isLoading) {
     <div class="instructions__content border-0">
-        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResult" [tasks]="tasks" />
+        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResultValue" [tasks]="tasks" />
         <!-- problem statement update & difference highlighter -->
         @if (exercise && exercise.exerciseGroup) {
             <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />

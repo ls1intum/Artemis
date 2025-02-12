@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, provideRouter } from '@angular/router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
+import { ActivatedRoute } from '@angular/router';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -15,20 +13,13 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
 import { CourseStatisticsComponent, NgxExercise } from 'app/overview/course-statistics/course-statistics.component';
-import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { ArtemisTestModule } from '../../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -328,20 +319,8 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
-            declarations: [
-                CourseStatisticsComponent,
-                MockComponent(CourseCompetenciesComponent),
-                MockComponent(ExerciseScoresChartComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockTranslateValuesDirective,
-                ArtemisTranslatePipe,
-                TranslateDirective,
-            ],
+            imports: [ArtemisTestModule, NoopAnimationsModule],
             providers: [
-                provideRouter([]),
-                MockProvider(ArtemisNavigationUtilService),
-                MockProvider(ChartCategoryFilter),
                 {
                     provide: ActivatedRoute,
                     useValue: { parent: { params: of(1) } },

@@ -8,7 +8,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { programmingExerciseCreationConfigMock } from '../programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
-import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 
 describe('ProgrammingExerciseTheiaComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTheiaComponent>;
@@ -21,7 +20,7 @@ describe('ProgrammingExerciseTheiaComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseTheiaComponent, ArtemisSharedLibsModule],
+            imports: [ProgrammingExerciseTheiaComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe)],
             providers: [
                 {

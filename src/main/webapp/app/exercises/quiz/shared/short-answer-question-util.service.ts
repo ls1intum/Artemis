@@ -8,8 +8,6 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
-    constructor() {}
-
     /**
      * Validate that no mapping exists that makes it impossible to solve the question.
      * We iterate through all spots and remove all possible mappings (solutions) for that spot.

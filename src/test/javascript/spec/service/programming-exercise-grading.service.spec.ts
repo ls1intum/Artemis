@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
@@ -10,7 +10,7 @@ import { Result } from 'app/entities/result.model';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseGradingService', () => {
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let httpService: HttpClient;
     let exercise1TestCaseSubject: Subject<Result>;
     let exercise2TestCaseSubject: Subject<Result>;
@@ -40,12 +40,12 @@ describe('ProgrammingExerciseGradingService', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
             .then(() => {
-                websocketService = TestBed.inject(JhiWebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
                 httpService = TestBed.inject(HttpClient);
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 

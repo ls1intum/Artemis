@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -6,13 +6,22 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { NgForm } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
+import { TranslateDirective } from '../language/translate.directive';
+import { ConfirmEntityNameComponent } from '../confirm-entity-name/confirm-entity-name.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
+    imports: [FormsModule, TranslateDirective, ConfirmEntityNameComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class DeleteDialogComponent implements OnInit, OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     readonly actionTypes = ActionType;
     private dialogErrorSubscription: Subscription;
     dialogError: Observable<string>;
@@ -46,11 +55,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faCheck = faCheck;
     faUndo = faUndo;
     warningTextColor: string;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

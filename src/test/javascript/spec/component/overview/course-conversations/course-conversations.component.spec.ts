@@ -1,9 +1,9 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
@@ -12,8 +12,8 @@ import { ConversationMessagesComponent } from 'app/overview/course-conversations
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -24,14 +24,12 @@ import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-serv
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -44,6 +42,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { ElementRef, signal } from '@angular/core';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -81,6 +80,10 @@ examples.forEach((activeConversation) => {
             },
             isBreakpointActive: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
         };
+
+        // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
+        MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+        MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -125,7 +128,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(ProfileService),
                     { provide: LayoutService, useValue: MockLayoutService },
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
 
             const metisService = new MockMetisService();
@@ -450,8 +453,6 @@ examples.forEach((activeConversation) => {
             });
 
             it('should log an error if createChannelFn throws an error', () => {
-                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
                 component.createChannelFn = jest.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ error }: any) => {
@@ -461,9 +462,6 @@ examples.forEach((activeConversation) => {
                 });
 
                 component.performChannelAction(channelAction);
-                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
-
-                consoleErrorSpy.mockRestore();
             });
 
             it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {

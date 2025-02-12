@@ -9,6 +9,4 @@ export class ProgrammingExerciseGitDiffEntry implements BaseEntity {
     public startLine?: number;
     public previousLineCount?: number;
     public lineCount?: number;
-
-    constructor() {}
 }

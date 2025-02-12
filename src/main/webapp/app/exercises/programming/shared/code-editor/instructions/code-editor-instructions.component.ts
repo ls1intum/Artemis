@@ -3,11 +3,15 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
+    imports: [NgStyle, FaIconComponent, TranslateDirective],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()
@@ -26,8 +30,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     farListAlt = faListAlt;
-
-    constructor() {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,

@@ -1,0 +1,49 @@
+# Grading Statistics
+
+In this exercise, you will analyze student performance based on a matrix of
+grades. Each row in the matrix represents a student, and each column represents
+an assignment.
+
+Your task is to implement three functions that compute statistical measures for
+this data. Each function has a specific purpose, described below:
+
+## Task 1: Median Grade by Assignment
+Compute the median grade for each assignment across all students. The result
+should be a row vector where each element corresponds to the median of a
+specific assignment (column).
+
+- **Function to Implement**: `medianGradeByAssignment()`
+- **Input**: A matrix `grades` where rows are students and columns are assignments.
+- **Output**: A row vector of medians, one for each assignment.
+
+[task][Median Grade by Assignment](testMedianGradeByAssignment)
+
+---
+
+## Task 2: Average Grade by Student
+Calculate the arithmetic mean grade for each student across all their assignments.
+The result should be a row vector where each element corresponds to a student's
+arithmetic mean grade.
+
+- **Function to Implement**: `averageGradeByStudent()`
+- **Input**: A matrix `grades` where rows are students and columns are assignments.
+- **Output**: A row vector of averages, one for each student.
+
+[task][Average Grade by Student](testAverageGradeByStudent)
+
+---
+
+## Task 3: Final Grade
+Determine the weighted final grade for each student. In addition to the
+`grades` matrix, you are provided with a row vector `weights` (summing to 1)
+that represents the weight of each assignment. Compute the weighted average for
+each student and round the result to 1 decimal place. The result should be a
+row vector where each element corresponds to a student’s final grade.
+
+- **Function to Implement**: `finalGrade()`
+- **Input**:
+    1. A matrix `grades` where rows are students and columns are assignments.
+    2. A row vector `weights` with the same number of elements as columns in the `grades` matrix.
+- **Output**: A row vector of weighted final grades, rounded to 1 decimal place.
+
+[task][Final Grade](testFinalGrade)
