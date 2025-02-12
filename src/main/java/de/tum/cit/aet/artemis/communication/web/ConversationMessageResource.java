@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -217,10 +216,24 @@ public class ConversationMessageResource {
     @GetMapping("communication/courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, postIds.size());
+        long start = System.nanoTime();
+
+        if (postIds == null || postIds.isEmpty()) {
+            throw new BadRequestAlertException("Post IDs cannot be null or empty", conversationMessagingService.getEntityName(), "invalidPostIds");
+        }
 
         List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
+
+        if (posts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
+            throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");
+        }
+
+        log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().body(posts);
     }
 }

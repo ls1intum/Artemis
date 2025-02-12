@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
 import { PostingType } from 'app/entities/metis/posting.model';
 
@@ -27,10 +27,16 @@ export class ForwardedMessageService {
             params = params.set('courseId', courseId.toString());
         }
 
-        return this.http.post<ForwardedMessageDTO>(`${this.resourceUrl}`, dto, {
-            params,
-            observe: 'response',
-        });
+        return this.http
+            .post<ForwardedMessageDTO>(`${this.resourceUrl}`, dto, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                catchError((error) => {
+                    return throwError(() => new Error('Failed to create forwarded message'));
+                }),
+            );
     }
 
     /**

@@ -23,9 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -110,10 +109,24 @@ public class AnswerMessageResource {
     @GetMapping("communication/courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds.size());
+        long start = System.nanoTime();
+
+        if (answerPostIds == null || answerPostIds.isEmpty()) {
+            throw new BadRequestAlertException("AnswerPost IDs cannot be null or empty", answerMessageService.getEntityName(), "invalidAnswerPostIds");
+        }
 
         List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
+
+        if (answerPosts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
+            throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");
+        }
+
+        log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().body(answerPosts);
     }
 }

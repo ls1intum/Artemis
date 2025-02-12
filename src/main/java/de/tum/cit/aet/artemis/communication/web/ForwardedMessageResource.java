@@ -24,10 +24,8 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -68,9 +66,8 @@ public class ForwardedMessageResource {
     @PostMapping("forwarded-messages")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestParam Long courseId, @RequestBody ForwardedMessageDTO forwardedMessageDTO) throws URISyntaxException {
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        log.debug("POST createForwardedMessage invoked with forwardedMessageDTO: {}", forwardedMessageDTO.toString());
+        long start = System.nanoTime();
 
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
@@ -79,6 +76,7 @@ public class ForwardedMessageResource {
         ForwardedMessage forwardedMessage = forwardedMessageDTO.toEntity();
         ForwardedMessage savedMessage = forwardedMessageRepository.save(forwardedMessage);
 
+        log.info("createForwardedMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/communication/forwarded-messages/" + savedMessage.getId())).body(new ForwardedMessageDTO(savedMessage));
     }
 
@@ -97,9 +95,6 @@ public class ForwardedMessageResource {
     public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Long courseId, @RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
         log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         if (type != PostingType.POST && type != PostingType.ANSWER) {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
