@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -8,20 +8,38 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    providers: [],
+    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
+    providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
+    complaintService = inject(ComplaintService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private sortService = inject(SortService);
+    private translateService = inject(TranslateService);
+    private artemisDatePipe = inject(ArtemisDatePipe);
+    private courseManagementService = inject(CourseManagementService);
+
     readonly ComplaintType = ComplaintType;
 
     public complaints: Complaint[] = [];
@@ -48,18 +66,6 @@ export class ListOfComplaintsComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     readonly FILTER_OPTION_ADDRESSED_COMPLAINTS = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
-
-    constructor(
-        public complaintService: ComplaintService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private translateService: TranslateService,
-        private artemisDatePipe: ArtemisDatePipe,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     ngOnInit(): void {
         this.route.params.pipe(combineLatestWith(this.route.queryParams, this.route.data)).subscribe((result) => {

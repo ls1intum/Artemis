@@ -36,8 +36,10 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
+import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import monaco from 'monaco-editor';
+import { FileService } from 'app/shared/http/file.service';
+import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -45,6 +47,7 @@ describe('PostingsMarkdownEditor', () => {
     let debugElement: DebugElement;
     let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
     let metisService: MetisService;
+    let fileService: FileService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
 
@@ -81,6 +84,7 @@ describe('PostingsMarkdownEditor', () => {
         revealRange: jest.fn(),
         addCompleter: jest.fn(),
         addPasteListener: jest.fn(),
+        getFullText: jest.fn(),
     };
 
     const mockPositionStrategy = {
@@ -120,6 +124,7 @@ describe('PostingsMarkdownEditor', () => {
         return TestBed.configureTestingModule({
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: FileService, useClass: MockFileService },
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
@@ -134,6 +139,7 @@ describe('PostingsMarkdownEditor', () => {
                 fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                fileService = TestBed.inject(FileService);
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
 
@@ -154,14 +160,14 @@ describe('PostingsMarkdownEditor', () => {
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
 
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     function containDefaultActions(defaultActions: TextEditorAction[]) {
@@ -186,7 +192,7 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     it('should have set the correct default commands on init if faq is disabled', () => {
@@ -194,7 +200,7 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.not.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {
@@ -576,5 +582,62 @@ describe('PostingsMarkdownEditor', () => {
 
         (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
         expect(handleActionClickSpy).not.toHaveBeenCalled();
+    });
+
+    it('should keep the cursor position intact when editing text in a list item', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 5,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('- First line');
+        mockEditor.getTextAtRange.mockReturnValue('');
+
+        const replaceTextSpy = jest.spyOn(mockEditor, 'replaceTextAtRange');
+        bulletedListAction.run(mockEditor);
+
+        expect(replaceTextSpy).not.toHaveBeenCalled();
+
+        const cursorPosition = mockEditor.getPosition();
+        expect(cursorPosition).toEqual({
+            getLineNumber: expect.any(Function),
+            getColumn: expect.any(Function),
+        });
+        expect(cursorPosition?.getColumn()).toBe(5);
+    });
+
+    it('should insert emoji at the cursor position', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+        const mockCursorPosition = new TextEditorPosition(1, 5);
+        mockEditor.getPosition.mockReturnValue(mockCursorPosition);
+
+        emojiAction.insertEmojiAtCursor(mockEditor, '😀');
+
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(1, 7));
+        expect(mockEditor.focus).toHaveBeenCalled();
+    });
+
+    it('should close the emoji picker and insert emoji on selection event', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+        emojiAction.setPoint({ x: 100, y: 200 });
+        mockEditor.getPosition.mockReturnValue(new TextEditorPosition(1, 1));
+
+        const emojiSelectSubject = new Subject<{ emoji: any; event: PointerEvent }>();
+        const componentRef = {
+            instance: {
+                emojiSelect: emojiSelectSubject.asObservable(),
+            },
+            location: { nativeElement: document.createElement('div') },
+        };
+
+        mockOverlayRef.attach.mockReturnValue(componentRef);
+        emojiAction.run(mockEditor);
+
+        const selectionEvent = { emoji: { native: '😀' }, event: new PointerEvent('click') };
+        emojiSelectSubject.next(selectionEvent);
+
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockOverlayRef.dispose).toHaveBeenCalled();
     });
 });

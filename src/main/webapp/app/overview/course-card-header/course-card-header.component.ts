@@ -1,14 +1,14 @@
 import { Component, OnInit, input } from '@angular/core';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { RouterModule } from '@angular/router';
+import { CommonModule, SlicePipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',
     styleUrls: ['./course-card-header.component.scss'],
-    standalone: true,
-    imports: [ArtemisSharedModule],
+    imports: [SecuredImageComponent, RouterModule, SlicePipe, CommonModule],
 })
 export class CourseCardHeaderComponent implements OnInit {
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

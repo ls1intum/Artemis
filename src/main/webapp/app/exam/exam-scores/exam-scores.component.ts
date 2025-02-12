@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import {
@@ -58,6 +58,17 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
 
 export enum MedianType {
     PASSED,
@@ -70,8 +81,32 @@ export enum MedianType {
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
+    imports: [
+        RouterLink,
+        ExamScoresAverageScoresGraphComponent,
+        ParticipantScoresDistributionComponent,
+        ExportButtonComponent,
+        HelpIconComponent,
+        SortByDirective,
+        SortDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        CommonModule,
+    ],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examService = inject(ExamManagementService);
+    private sortService = inject(SortService);
+    private alertService = inject(AlertService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private languageHelper = inject(JhiLanguageHelper);
+    private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
+    private gradingSystemService = inject(GradingSystemService);
+    private courseManagementService = inject(CourseManagementService);
+
     public examScoreDTO: ExamScoreDTO;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
@@ -130,18 +165,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
 
     private languageChangeSubscription?: Subscription;
-    constructor(
-        private route: ActivatedRoute,
-        private examService: ExamManagementService,
-        private sortService: SortService,
-        private alertService: AlertService,
-        private changeDetector: ChangeDetectorRef,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private participantScoresService: ParticipantScoresService,
-        private gradingSystemService: GradingSystemService,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -676,7 +699,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Localizes a number, e.g. switching the decimal separator
      */
     localize(numberToLocalize: number): string {
-        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course?.accuracyOfScores);
     }
 
     /**

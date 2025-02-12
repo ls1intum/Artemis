@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
@@ -17,7 +15,7 @@ import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../h
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { Injector, input, runInInjectionContext } from '@angular/core';
+import { Injector, input, runInInjectionContext, signal } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { Post } from 'app/entities/metis/post.model';
@@ -36,7 +34,6 @@ describe('PostingFooterComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisCoursesRoutingModule)],
             providers: [
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
@@ -46,7 +43,6 @@ describe('PostingFooterComponent', () => {
                 PostingFooterComponent,
                 TranslatePipeMock,
                 MockComponent(FaIconComponent),
-                MockComponent(PostReactionsBarComponent),
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
@@ -78,29 +74,41 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should group answer posts correctly', () => {
-        runInInjectionContext(injector, () => {
-            component.sortedAnswerPosts = input<AnswerPost[]>(unsortedAnswerArray);
-            component.groupAnswerPosts();
-            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-            expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
-        });
+        fixture.componentRef.setInput('sortedAnswerPosts', unsortedAnswerArray);
+        const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
+        fixture.detectChanges();
+
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
+        component.groupAnswerPosts();
+        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
-        runInInjectionContext(injector, () => {
-            component.sortedAnswerPosts = input<AnswerPost[]>(unsortedAnswerArray);
-            const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
-            component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
-            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-            expect(changeDetectorSpy).toHaveBeenCalled();
-        });
+        fixture.componentRef.setInput('sortedAnswerPosts', unsortedAnswerArray);
+        const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
+        fixture.detectChanges();
+
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
+        const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
+        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+        expect(changeDetectorSpy).toHaveBeenCalled();
     });
 
     it('should clear answerPostCreateEditModal container on destroy', () => {
         const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
+
         component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockContainerRef,
-        } as AnswerPostCreateEditModalComponent;
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
 
         const clearSpy = jest.spyOn(mockContainerRef, 'clear');
         component.ngOnDestroy();
@@ -158,25 +166,33 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should open create answer post modal', () => {
-        runInInjectionContext(injector, () => {
-            component.posting = input<Posting>(metisPostExerciseUser1);
-            component.ngOnInit();
-            fixture.detectChanges();
-            const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
-            component.openCreateAnswerPostModal();
-            expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
-        });
+        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
+
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
+        const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
+        component.openCreateAnswerPostModal();
+        expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
     });
 
     it('should close create answer post modal', () => {
-        runInInjectionContext(injector, () => {
-            component.posting = input<Posting>(metisPostExerciseUser1);
-            component.ngOnInit();
-            fixture.detectChanges();
-            const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
-            component.closeCreateAnswerPostModal();
-            expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
-        });
+        fixture.componentRef.setInput('posting', metisPostExerciseUser1);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
+
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
+        const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
+        component.closeCreateAnswerPostModal();
+        expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
     });
 
     it('should group answer posts correctly based on author and time difference', () => {
@@ -190,29 +206,34 @@ describe('PostingFooterComponent', () => {
         const post3: AnswerPost = { id: 3, author: authorA, creationDate: baseTime.add(10, 'minute').toDate() } as unknown as AnswerPost;
         const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute').toDate() } as unknown as AnswerPost;
         const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute').toDate() } as unknown as AnswerPost;
-        runInInjectionContext(injector, () => {
-            component.sortedAnswerPosts = input<AnswerPost[]>([post3, post1, post5, post2, post4]);
+        fixture.componentRef.setInput('sortedAnswerPosts', [post3, post1, post5, post2, post4]);
+        fixture.detectChanges();
+        const mockContainerRef = { clear: jest.fn() } as any;
+        const mockSignal = signal(mockContainerRef);
 
-            component.groupAnswerPosts();
-            expect(component.groupedAnswerPosts).toHaveLength(3);
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockSignal,
+        } as unknown as AnswerPostCreateEditModalComponent;
 
-            const group1 = component.groupedAnswerPosts[0];
-            expect(group1.author).toEqual(authorA);
-            expect(group1.posts).toHaveLength(2);
-            expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
-            expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
+        component.groupAnswerPosts();
+        expect(component.groupedAnswerPosts).toHaveLength(3);
 
-            const group2 = component.groupedAnswerPosts[1];
-            expect(group2.author).toEqual(authorA);
-            expect(group2.posts).toHaveLength(1);
-            expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
+        const group1 = component.groupedAnswerPosts[0];
+        expect(group1.author).toEqual(authorA);
+        expect(group1.posts).toHaveLength(2);
+        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
+        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
 
-            const group3 = component.groupedAnswerPosts[2];
-            expect(group3.author).toEqual(authorB);
-            expect(group3.posts).toHaveLength(2);
-            expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
-            expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
-        });
+        const group2 = component.groupedAnswerPosts[1];
+        expect(group2.author).toEqual(authorA);
+        expect(group2.posts).toHaveLength(1);
+        expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
+
+        const group3 = component.groupedAnswerPosts[2];
+        expect(group3.author).toEqual(authorB);
+        expect(group3.posts).toHaveLength(2);
+        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
+        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
     });
 
     it('should handle empty answer posts array', () => {

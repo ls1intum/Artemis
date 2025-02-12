@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormsModule } from '@angular/forms';
@@ -10,13 +10,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
-    standalone: true,
-    imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe],
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     private passwordResetInitService = inject(PasswordResetInitService);

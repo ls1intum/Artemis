@@ -1,16 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
-import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
@@ -23,18 +19,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                ProgrammingExerciseLanguageComponent,
-                ProgrammingExerciseTheiaComponent,
-                CheckboxControlValueAccessor,
-                DefaultValueAccessor,
-                SelectControlValueAccessor,
-                NumberValueAccessor,
-                NgModel,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-            ],
+            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 {

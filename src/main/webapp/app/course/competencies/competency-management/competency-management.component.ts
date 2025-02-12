@@ -18,7 +18,7 @@ import { CourseCompetencyApiService } from 'app/course/competencies/services/cou
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/course/competencies/components/course-competency-explanation-modal/course-competency-explanation-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -26,8 +26,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    standalone: true,
-    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule, ArtemisSharedComponentModule],
+    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule],
 })
 export class CompetencyManagementComponent implements OnInit {
     protected readonly faEdit = faEdit;

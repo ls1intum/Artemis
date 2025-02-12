@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -9,6 +9,11 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-log
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -36,10 +41,19 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
             transition('visible => hidden', animate('300ms ease-in')),
         ]),
     ],
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
+    dialog = inject(MatDialog);
+    protected overlay = inject(Overlay);
+    protected readonly chatService = inject(IrisChatService);
+    private route = inject(ActivatedRoute);
+
     @Input()
     mode: ChatServiceMode;
+
+    @Input()
+    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
@@ -63,20 +77,13 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
     protected readonly IrisLogoSize = IrisLogoSize;
 
-    constructor(
-        public dialog: MatDialog,
-        protected overlay: Overlay,
-        protected readonly chatService: IrisChatService,
-        private route: ActivatedRoute,
-    ) {}
-
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params['exerciseId'], 10);
-            this.chatService.switchTo(this.mode, exerciseId);
+            const rawId = this.mode == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
+            const id = parseInt(rawId, 10);
+            this.chatService.switchTo(this.mode, id);
         });
-
         // Subscribes to check for new messages
         this.numNewMessagesSubscription = this.chatService.numNewMessages.subscribe((num) => {
             this.hasNewMessages = num > 0;
@@ -149,6 +156,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
+            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -464,7 +463,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildLogs).isNotNull();
             assertThat(buildLogs.getFile().exists()).isTrue();
 
-            String content = new String(Files.readAllBytes(Paths.get(buildLogs.getFile().getAbsolutePath())));
+            String content = new String(Files.readAllBytes(Path.of(buildLogs.getFile().getAbsolutePath())));
 
             // Assert that the content contains the expected log entry
             assertThat(content).contains("Dummy log entry");
@@ -472,7 +471,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         finally {
             // Delete log file
             if (buildLogs != null && buildLogs.getFile().exists()) {
-                Files.deleteIfExists(Paths.get(buildLogs.getFile().getAbsolutePath()));
+                Files.deleteIfExists(Path.of(buildLogs.getFile().getAbsolutePath()));
             }
         }
     }
@@ -548,15 +547,15 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
-        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
         sharedQueueProcessingService.init();
 
         await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
                 && buildJobQueueItem.participationId() == studentParticipation.getId()));
         item = processingJobs.values().stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
-        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
-        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(24), within(500, ChronoUnit.MILLIS));
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(22), within(500, ChronoUnit.MILLIS));
     }
 
     @Test

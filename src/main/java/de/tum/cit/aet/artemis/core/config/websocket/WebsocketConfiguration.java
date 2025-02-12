@@ -35,6 +35,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -141,6 +142,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         }
     }
 
+    @Override
+    protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
+        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
+        messageConverters.add(gzipMessageConverter);
+        return false;
+    }
+
     /**
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
@@ -181,12 +189,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @NotNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
-        // NOTE: We need to adapt the default messageConverter for WebSocket messages
-        // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.
-        // This gives us consistency in how specific data types are serialized (e.g. timestamps)
-        MappingJackson2MessageConverter converter = super.createJacksonConverter();
-        converter.setObjectMapper(objectMapper);
-        return converter;
+        return new GzipMessageConverter(objectMapper);
     }
 
     /**
@@ -280,6 +283,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(@Nullable Principal principal, String destination) {
+            log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
             /*
              * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
              * is an instructor in a course)
@@ -308,7 +312,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
+                final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {

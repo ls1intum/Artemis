@@ -20,22 +20,30 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
-
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
-    standalone: true,
-    imports: [TranslateDirective, ArtemisSharedComponentModule, ExerciseSaveButtonComponent, NgbTooltip, NgClass, ArtemisQuizQuestionTypesModule, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        NgbTooltip,
+        NgClass,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private quizService = inject(ArtemisQuizService);
@@ -68,12 +76,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor() {
-        super();
-        smoothscroll.polyfill();
-    }
-
     ngOnInit(): void {
+        smoothscroll.polyfill();
         this.initQuiz();
         this.updateViewFromSubmission();
     }
@@ -122,7 +126,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -202,7 +206,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         }
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -243,7 +247,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
@@ -260,7 +264,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
@@ -276,7 +280,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object

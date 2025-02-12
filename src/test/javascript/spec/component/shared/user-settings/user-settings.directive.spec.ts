@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -25,27 +25,16 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-user-settings-mock',
     template: '',
 })
-class UserSettingsMockComponent extends UserSettingsDirective {
-    changeDetector: ChangeDetectorRef;
-    alertService: AlertService;
-
-    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
-        super(userSettingsService, alertService, changeDetector);
-        this.changeDetector = changeDetector;
-        this.alertService = alertService;
-    }
-}
+class UserSettingsMockComponent extends UserSettingsDirective {}
 
 describe('User Settings Directive', () => {
+    let alertService: AlertService;
     let comp: UserSettingsMockComponent;
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
-    let alertService: AlertService;
     let changeDetector: ChangeDetectorRef;
-
-    let changeDetectorDetectChangesSpy: jest.SpyInstance;
 
     const router = new MockRouter();
 
@@ -63,12 +52,11 @@ describe('User Settings Directive', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateTestingModule],
-            declarations: [UserSettingsMockComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(ChangeDetectorRef),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserSettingsService, useClass: MockUserSettingsService },
                 { provide: Router, useValue: router },
@@ -81,12 +69,9 @@ describe('User Settings Directive', () => {
                 // can be any other category, it does not change the logic
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
+                alertService = TestBed.inject(AlertService);
                 httpMock = TestBed.inject(HttpTestingController);
-                comp.alertService = TestBed.inject(AlertService);
-                alertService = comp.alertService;
-                comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-                changeDetector = comp.changeDetector;
-                changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
     });
 
@@ -102,6 +87,7 @@ describe('User Settings Directive', () => {
                 jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
                 const loadSettingsSuccessAsSettingsStructureSpy = jest.spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
                 const extractIndividualSettingsFromSettingsStructureSpy = jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                const changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
                 comp.ngOnInit();
 
@@ -111,7 +97,7 @@ describe('User Settings Directive', () => {
             });
 
             it('should handle error correctly when loading fails', () => {
-                const alertServiceSpy = jest.spyOn(comp.alertService, 'error');
+                const alertServiceSpy = jest.spyOn(alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
                 jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(() => errorResponse));
 

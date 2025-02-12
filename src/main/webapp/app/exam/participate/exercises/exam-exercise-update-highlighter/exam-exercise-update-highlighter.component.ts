@@ -10,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
-    standalone: true,
     imports: [ArtemisTranslatePipe],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {

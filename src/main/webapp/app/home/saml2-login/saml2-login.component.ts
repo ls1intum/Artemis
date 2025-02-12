@@ -4,14 +4,11 @@ import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-saml2-login',
     templateUrl: './saml2-login.component.html',
-    styles: [],
-    standalone: true,
-    imports: [ArtemisSharedModule],
+    imports: [],
 })
 export class Saml2LoginComponent implements OnInit {
     private loginService = inject(LoginService);

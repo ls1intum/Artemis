@@ -10,7 +10,7 @@ import {
 } from 'app/entities/competency/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -34,8 +34,17 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
     competencies?: StandardizedCompetencyForImport[];
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class CourseImportStandardizedCourseCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
+    protected router = inject(Router);
+    protected activatedRoute = inject(ActivatedRoute);
+    protected standardizedCompetencyService = inject(StandardizedCompetencyService);
+    protected alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
+    protected sortService = inject(SortService);
+
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
@@ -56,17 +65,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faTrash = faTrash;
     protected readonly faSort = faSort;
-
-    constructor(
-        protected router: Router,
-        protected activatedRoute: ActivatedRoute,
-        protected standardizedCompetencyService: StandardizedCompetencyService,
-        protected alertService: AlertService,
-        protected translateService: TranslateService,
-        protected sortService: SortService,
-    ) {
-        super();
-    }
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -179,5 +177,19 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     private convertToStandardizedCompetencyForImport(competencyDTO: StandardizedCompetencyDTO, knowledgeAreaTitle?: string, isVisible = true, selected = false) {
         const competencyForTree: StandardizedCompetencyForImport = { ...competencyDTO, isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected };
         return competencyForTree;
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

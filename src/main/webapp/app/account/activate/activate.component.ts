@@ -1,6 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { mergeMap } from 'rxjs/operators';
@@ -9,8 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
-    standalone: true,
-    imports: [TranslateDirective, RouterLink, ArtemisSharedModule],
+    imports: [TranslateDirective, RouterLink],
 })
 export class ActivateComponent implements OnInit {
     private activateService = inject(ActivateService);

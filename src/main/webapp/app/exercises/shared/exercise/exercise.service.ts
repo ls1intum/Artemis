@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -56,16 +56,14 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private entityTitleService = inject(EntityTitleService);
+
     public resourceUrl = 'api/exercises';
     public adminResourceUrl = 'api/admin/exercises';
     public courseResourceUrl = 'api/courses';
-
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private entityTitleService: EntityTitleService,
-    ) {}
 
     /**
      * Persist a new exercise
@@ -149,7 +147,7 @@ export class ExerciseService {
 
     /**
      * Get exercise with exerciseId from server
-     * @param { number } exerciseId - Exercise that should be loaded
+     * @param exerciseId - Exercise that should be loaded
      */
     find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
@@ -159,7 +157,7 @@ export class ExerciseService {
 
     /**
      * Get exercise details including all results for the currently logged-in user
-     * @param { number } exerciseId - Id of the exercise to get the repos from
+     * @param exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityDetailsResponseType> {
         return this.http.get<ExerciseDetailsType>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
@@ -182,7 +180,7 @@ export class ExerciseService {
     /**
      * Get basic exercise information for the purpose of displaying its example solution. If the example solution is not yet
      * published, returns error.
-     * @param { number } exerciseId - Id of the exercise to get the example solution
+     * @param exerciseId - Id of the exercise to get the example solution
      */
     getExerciseForExampleSolution(exerciseId: number): Observable<EntityResponseType> {
         return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/example-solution`, { observe: 'response' }).pipe(
@@ -194,7 +192,7 @@ export class ExerciseService {
 
     /**
      * Resets an exercise with exerciseId by deleting all its participations.
-     * @param { number } exerciseId - Id of exercise that should be reset
+     * @param exerciseId - Id of exercise that should be reset
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
@@ -220,7 +218,7 @@ export class ExerciseService {
      * The returned exercises are sorted by due date, with the earliest due date being sorted first, and no due date sorted last
      *
      * @param { Exercise[] } exercises - The exercises to filter and sort
-     * @param { number } delayInDays - The amount of days an exercise can be due into the future, defaults to seven
+     * @param delayInDays - The amount of days an exercise can be due into the future, defaults to seven
      */
     getNextExercisesForDays(exercises: Exercise[], delayInDays: number = 7): Exercise[] {
         return exercises
@@ -392,7 +390,7 @@ export class ExerciseService {
 
     /**
      * Create Array of exercise categories from array of strings
-     * @param { string[] } categories that are converted to categories
+     * @param categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
         return categories.map((category) => JSON.parse(category));
@@ -400,7 +398,7 @@ export class ExerciseService {
 
     /**
      * Prepare client-exercise to be uploaded to the server
-     * @param { Exercise } exercise - Exercise that will be modified
+     * @param exercise - Exercise that will be modified
      */
     static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
@@ -416,7 +414,7 @@ export class ExerciseService {
 
     /**
      * Get the "exerciseId" exercise with data useful for tutors.
-     * @param { number } exerciseId - Id of exercise to retrieve
+     * @param exerciseId - Id of exercise to retrieve
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
         return this.http
@@ -426,7 +424,7 @@ export class ExerciseService {
 
     /**
      * Retrieve a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
-     * @param { number } exerciseId - Id of exercise to retrieve the stats for
+     * @param exerciseId - Id of exercise to retrieve the stats for
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });

@@ -3,10 +3,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 
 describe('ImageCropperModalComponent', () => {
     let component: ImageCropperModalComponent;
@@ -15,7 +15,7 @@ describe('ImageCropperModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisSharedCommonModule, ImageCropperModule, ImageCropperModalComponent],
+            imports: [ImageCropperComponent, ImageCropperModalComponent],
             providers: [NgbActiveModal, MockProvider(TranslateService)],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
         })

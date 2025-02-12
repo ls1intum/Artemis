@@ -127,4 +127,32 @@ public class IrisResource {
         }
     }
 
+    /**
+     * Retrieves the ingestion state of a specific FAQ in a course by communicating with Pyris.
+     *
+     * <p>
+     * This method sends a GET request to the external Pyris service to fetch the current ingestion
+     * state of a FAQ, identified by its ID. It constructs a request using the provided
+     * `courseId` and `faqId` and returns the state of the ingestion process (e.g., NOT_STARTED,
+     * IN_PROGRESS, DONE, ERROR).
+     * </p>
+     *
+     * @param courseId the ID of the course the FAQ belongs to
+     * @param faqId    the ID of the FAQ for which the ingestion state is being requested
+     * @return a {@link ResponseEntity} containing a map with the {@link IngestionState} of the FAQ,
+     */
+    @GetMapping("courses/{courseId}/faqs/{faqId}/ingestion-state")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Map<Long, IngestionState>> getStatusOfFaqIngestion(@PathVariable long courseId, @PathVariable long faqId) {
+        try {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            Map<Long, IngestionState> responseMap = Map.of(faqId, pyrisWebhookService.getFaqIngestionState(courseId, faqId));
+            return ResponseEntity.ok(responseMap);
+        }
+        catch (PyrisConnectorException e) {
+            log.error("Error fetching ingestion state for faq {}", faqId, e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+    }
+
 }

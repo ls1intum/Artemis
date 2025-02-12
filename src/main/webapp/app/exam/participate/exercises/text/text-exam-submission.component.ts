@@ -10,26 +10,26 @@ import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { onTextEditorTab } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
-    standalone: true,
     imports: [
         TranslateDirective,
-        ArtemisSharedComponentModule,
+        IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
-        ArtemisSharedModule,
+        ResizeableContainerComponent,
         FormsModule,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
@@ -58,6 +58,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // Icons
     protected readonly faListAlt = faListAlt;
+
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
 
     ngOnInit(): void {
         // show submission answers in UI
@@ -101,16 +104,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     get characterCount(): number {
         return this.stringCountService.countCharacters(this.answer);
-    }
-
-    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
     }
 
     onTextEditorInput(event: Event) {

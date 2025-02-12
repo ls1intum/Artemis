@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { MockHttpService } from '../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
     let comp: ProgrammingExerciseStudentRepoDownloadComponent;
@@ -16,8 +14,10 @@ describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
-            declarations: [ProgrammingExerciseInstructorRepoDownloadComponent, MockComponent(ButtonComponent)],
-            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
+            providers: [
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: HttpClient, useClass: MockHttpService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseStudentRepoDownloadComponent);

@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, inject, input } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,23 +11,40 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-discussion-section',
     templateUrl: './discussion-section.component.html',
     styleUrls: ['./discussion-section.component.scss'],
-    imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollModule],
-    standalone: true,
+    imports: [
+        FontAwesomeModule,
+        InfiniteScrollDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        PostingThreadComponent,
+        MessageInlineInputComponent,
+        ArtemisTranslatePipe,
+        NgbTooltipModule,
+        ButtonComponent,
+    ],
     providers: [MetisService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
+    private channelService = inject(ChannelService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+
     exercise = input<Exercise>();
     lecture = input<Lecture>();
 
@@ -59,14 +76,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 
-    constructor(
-        protected metisService: MetisService,
-        private channelService: ChannelService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-    ) {
-        super(metisService);
+    constructor() {
+        super();
         effect(() => this.loadData(this.exercise(), this.lecture()));
     }
 
@@ -91,7 +102,18 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.content) {
                 this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
             }
-            this.posts = posts.slice().reverse();
+            this.posts = posts
+                .slice()
+                .sort((a, b) => {
+                    if (a.displayPriority === DisplayPriority.PINNED && b.displayPriority !== DisplayPriority.PINNED) {
+                        return 1;
+                    }
+                    if (a.displayPriority !== DisplayPriority.PINNED && b.displayPriority === DisplayPriority.PINNED) {
+                        return -1;
+                    }
+                    return 0;
+                })
+                .reverse();
             this.isLoading = false;
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);

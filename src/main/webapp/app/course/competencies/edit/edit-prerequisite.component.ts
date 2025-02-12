@@ -1,12 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
@@ -16,22 +13,13 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-edit-prerequisite',
     templateUrl: './edit-prerequisite.component.html',
-    standalone: true,
-    imports: [ArtemisSharedModule, PrerequisiteFormComponent],
+    imports: [PrerequisiteFormComponent],
 })
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
+    private prerequisiteService = inject(PrerequisiteService);
+
     prerequisite: Prerequisite;
     formData: CourseCompetencyFormData;
-
-    constructor(
-        activatedRoute: ActivatedRoute,
-        lectureService: LectureService,
-        router: Router,
-        alertService: AlertService,
-        private prerequisiteService: PrerequisiteService,
-    ) {
-        super(activatedRoute, lectureService, router, alertService);
-    }
 
     ngOnInit(): void {
         super.ngOnInit();

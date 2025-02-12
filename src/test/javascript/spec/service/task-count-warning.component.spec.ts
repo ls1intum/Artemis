@@ -9,7 +9,6 @@ describe('TaskCountWarningComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TaskCountWarningComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TaskCountWarningComponent);

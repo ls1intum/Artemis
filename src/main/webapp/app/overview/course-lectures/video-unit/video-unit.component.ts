@@ -2,14 +2,13 @@ import { Component, computed } from '@angular/core';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @Component({
     selector: 'jhi-video-unit',
-    standalone: true,
-    imports: [ArtemisSharedPipesModule, LectureUnitComponent],
+    imports: [LectureUnitComponent, SafeResourceUrlPipe],
     templateUrl: './video-unit.component.html',
 })
 export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {

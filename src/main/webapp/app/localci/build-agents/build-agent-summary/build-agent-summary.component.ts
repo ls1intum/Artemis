@@ -1,27 +1,28 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
+import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 @Component({
     selector: 'jhi-build-agents',
-    standalone: true,
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],
+    imports: [NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
-    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildQueueService);
     private readonly router = inject(Router);
@@ -40,6 +41,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
     protected readonly faPlay = faPlay;
+    protected readonly faTrash = faTrash;
 
     ngOnInit() {
         this.routerLink = this.router.url;
@@ -98,11 +100,25 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         }
     }
 
-    displayPauseBuildAgentModal(modal: any) {
-        this.modalService.open(modal);
+    displayPauseBuildAgentModal() {
+        const modalRef: NgbModalRef = this.modalService.open(BuildAgentPauseAllModalComponent as Component);
+        modalRef.result.then((result) => {
+            if (result) {
+                this.pauseAllBuildAgents();
+            }
+        });
     }
 
-    pauseAllBuildAgents(modal?: any) {
+    displayClearDistributedDataModal() {
+        const modalRef: NgbModalRef = this.modalService.open(BuildAgentClearDistributedDataComponent as Component, { size: 'lg' });
+        modalRef.result.then((result) => {
+            if (result) {
+                this.clearDistributedData();
+            }
+        });
+    }
+
+    pauseAllBuildAgents() {
         this.buildAgentsService.pauseAllBuildAgents().subscribe({
             next: () => {
                 this.load();
@@ -118,9 +134,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
                 });
             },
         });
-        if (modal) {
-            modal.close();
-        }
     }
 
     resumeAllBuildAgents() {
@@ -136,6 +149,23 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                });
+            },
+        });
+    }
+
+    clearDistributedData() {
+        this.buildAgentsService.clearDistributedData().subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.buildAgents.alerts.distributedDataCleared',
+                });
+            },
+            error: () => {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
                 });
             },
         });

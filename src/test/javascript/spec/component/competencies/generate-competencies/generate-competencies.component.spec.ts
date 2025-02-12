@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
@@ -12,7 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseDescriptionFormStubComponent } from './course-description-form-stub.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -21,13 +21,10 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('GenerateCompetenciesComponent', () => {
@@ -39,7 +36,7 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+            imports: [ArtemisTestModule, GenerateCompetenciesComponent],
             declarations: [
                 CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),
@@ -57,7 +54,7 @@ describe('GenerateCompetenciesComponent', () => {
                 },
                 { provide: Router, useClass: MockRouter },
                 {
-                    provide: JhiWebsocketService,
+                    provide: WebsocketService,
                     useValue: {
                         subscribe: jest.fn(),
                         receive: jest.fn(() => mockWebSocketSubject.asObservable()),

@@ -1,16 +1,19 @@
 import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule],
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',
+    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule],
 })
 export class CourseCompetencyRelationFormComponent {
     protected readonly faSpinner = faSpinner;
@@ -44,7 +47,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
 
     constructor() {
-        effect(() => this.selectRelation(this.selectedRelationId()), { allowSignalWrites: true });
+        effect(() => this.selectRelation(this.selectedRelationId()));
     }
 
     protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {

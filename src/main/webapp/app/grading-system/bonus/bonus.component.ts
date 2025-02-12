@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -9,10 +10,20 @@ import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
+
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -28,8 +39,27 @@ export enum BonusStrategyDiscreteness {
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
+    imports: [
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        ModePickerComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        DeleteButtonDirective,
+        FontAwesomeModule,
+        NgbTooltipModule,
+        FormsModule,
+        CommonModule,
+        HelpIconComponent,
+    ],
 })
 export class BonusComponent implements OnInit {
+    private bonusService = inject(BonusService);
+    private gradingSystemService = inject(GradingSystemService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+
     readonly CALCULATION_PLUS = 1;
     readonly CALCULATION_MINUS = -1;
 
@@ -97,15 +127,6 @@ export class BonusComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: 'ID',
     };
-
-    constructor(
-        private bonusService: BonusService,
-        private gradingSystemService: GradingSystemService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -7,38 +7,29 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
     templateUrl: './programming-exercise-instructor-repo-download.component.html',
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorRepoDownloadComponent {
+    protected programmingExerciseService = inject(ProgrammingExerciseService);
+    protected alertService = inject(AlertService);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    exerciseId: number;
-
-    @Input()
-    repositoryType: ProgrammingExerciseInstructorRepositoryType;
-
-    @Input()
-    auxiliaryRepositoryId: number;
-
-    @Input()
-    buttonSize: ButtonSize = ButtonSize.SMALL;
-
-    @Input()
-    title = 'artemisApp.programmingExercise.export.downloadRepo';
+    @Input() exerciseId: number;
+    @Input() repositoryType: ProgrammingExerciseInstructorRepositoryType;
+    @Input() auxiliaryRepositoryId: number;
+    @Input() buttonSize = ButtonSize.SMALL;
+    @Input() title = 'artemisApp.programmingExercise.export.downloadRepo';
 
     // Icons
     faDownload = faDownload;
-
-    constructor(
-        protected programmingExerciseService: ProgrammingExerciseService,
-        protected alertService: AlertService,
-    ) {}
 
     exportRepository() {
         if (this.exerciseId && this.repositoryType) {

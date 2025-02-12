@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -56,7 +55,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         final var gitCommand = args[0];
-        final var localVCRepositoryUri = new LocalVCRepositoryUri(Paths.get(repositoryPath), localVCBaseUrl);
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(Path.of(repositoryPath), localVCBaseUrl);
         final var projectKey = localVCRepositoryUri.getProjectKey();
         final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;
@@ -71,14 +70,16 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         // git-upload-pack means fetch (read operation), git-receive-pack means push (write operation)
         final var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
         final var user = session.getAttribute(SshConstants.USER_KEY);
+        session.setAttribute(SshConstants.REPOSITORY_EXERCISE_KEY, exercise);
 
         if (session.getAttribute(SshConstants.IS_BUILD_AGENT_KEY) && repositoryAction == RepositoryActionType.READ) {
             // We already checked for build agent authenticity
         }
         else {
             try {
-                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
-                        localVCRepositoryUri);
+                var participation = localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, true);
+                localVCServletService.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
+                        localVCRepositoryUri, session);
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);

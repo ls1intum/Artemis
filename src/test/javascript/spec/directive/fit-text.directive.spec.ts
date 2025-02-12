@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.directive';
 
 @Component({
     template: ` <div style="align-content: center;">
@@ -15,9 +14,7 @@ describe('FitTextDirective', () => {
     let fixture: ComponentFixture<TestFitTextComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TestFitTextComponent, FitTextDirective],
-        });
+        TestBed.configureTestingModule({});
         fixture = TestBed.createComponent(TestFitTextComponent);
     });
 

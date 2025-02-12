@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationMemberRowComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
@@ -21,9 +21,9 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
-import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { input, runInInjectionContext } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const memberTemplate = {
     id: 1,
@@ -60,8 +60,14 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbTooltipModule, NgbDropdownMocksModule],
-                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent)],
+                imports: [NgbTooltipModule],
+                declarations: [
+                    ConversationMemberRowComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(FaIconComponent),
+                    MockComponent(ProfilePictureComponent),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [
                     MockProvider(AccountService),
                     MockProvider(NgbModal),

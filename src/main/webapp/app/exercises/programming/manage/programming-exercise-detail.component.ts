@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -13,7 +14,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -58,14 +59,59 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        OrionFilterDirective,
+        FeatureToggleLinkDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructorExerciseDownloadComponent,
+        FeatureToggleDirective,
+        ProgrammingExerciseResetButtonDirective,
+        DeleteButtonDirective,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    exerciseService = inject(ExerciseService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private eventManager = inject(EventManager);
+    modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private statisticsService = inject(StatisticsService);
+    private router = inject(Router);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private aeolusService = inject(AeolusService);
+
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
@@ -131,26 +177,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     exerciseDetailSections: DetailOverviewSection[];
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        public exerciseService: ExerciseService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private eventManager: EventManager,
-        public modalService: NgbModal,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private statisticsService: StatisticsService,
-        private router: Router,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private consistencyCheckService: ConsistencyCheckService,
-        private irisSettingsService: IrisSettingsService,
-        private aeolusService: AeolusService,
-    ) {}
-
     ngOnInit() {
         this.checkBuildPlanEditable();
 
@@ -204,7 +230,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 );
                             }
                             this.supportsAuxiliaryRepositories =
-                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
                                 false;
                             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
@@ -243,9 +269,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.checkAndAlertInconsistencies();
-                        this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                            programmingExercise.programmingLanguage,
-                        ).plagiarismCheckSupported;
+                        this.plagiarismCheckSupported =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
 
                         /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();

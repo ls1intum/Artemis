@@ -1,16 +1,13 @@
 import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
 import { Location, UpperCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -20,27 +17,31 @@ import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
     templateUrl: './file-upload-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
-    standalone: true,
-    imports: [TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedModule, FaIconComponent, ExamExerciseUpdateHighlighterComponent, UpperCasePipe, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ResizeableContainerComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
-    private route = inject(ActivatedRoute);
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
-    private fileUploaderService = inject(FileUploaderService);
-    private resultService = inject(ResultService);
     private alertService = inject(AlertService);
-    private location = inject(Location);
     private translateService = inject(TranslateService);
     private fileService = inject(FileService);
 

@@ -20,13 +20,12 @@ import {
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
-import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/programming/participate/programming-submission-policy-status.module';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ProgrammingSubmissionPolicyStatusComponent } from 'app/exercises/programming/participate/programming-submission-policy-status';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -40,16 +39,16 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
         CodeEditorRepositoryService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
-    standalone: true,
     imports: [
         TranslateDirective,
-        ArtemisSharedComponentModule,
-        ArtemisCodeEditorModule,
-        ArtemisProgrammingSubmissionPolicyStatusModule,
-        ArtemisExerciseButtonsModule,
-        SubmissionResultStatusModule,
-        ArtemisProgrammingExerciseActionsModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
+        IncludedInScoreBadgeComponent,
+        CodeEditorContainerComponent,
+        ProgrammingSubmissionPolicyStatusComponent,
+        ExerciseDetailsStudentActionsComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        UpdatingResultComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructionComponent,
     ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
@@ -104,7 +103,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setSubmissionCountAndLockIfNeeded();
     }
 

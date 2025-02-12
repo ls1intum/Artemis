@@ -1,8 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
-import { TutorialGroupDetailStubComponent } from '../../../stubs/tutorial-group-detail-stub.component';
-import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,6 +10,8 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupManagementDetailComponent', () => {
     let fixture: ComponentFixture<TutorialGroupManagementDetailComponent>;
@@ -20,10 +19,10 @@ describe('TutorialGroupManagementDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupManagementDetailComponent, TutorialGroupRowButtonsStubComponent, TutorialGroupDetailStubComponent, LoadingIndicatorContainerStubComponent],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 mockedActivatedRoute(
                     {

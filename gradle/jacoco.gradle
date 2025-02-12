@@ -1,0 +1,263 @@
+ext {
+    // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 69]
+    // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
+    ModuleCoverageThresholds = [
+        "assessment"    :          ["INSTRUCTION": 0.928, "CLASS": 0 ],
+        "athena"        :          ["INSTRUCTION": 0.872, "CLASS": 2 ],
+        "atlas"         :          ["INSTRUCTION": 0.908, "CLASS": 5 ],
+        "buildagent"    :          ["INSTRUCTION": 0.788, "CLASS": 0 ],
+        "communication" :          ["INSTRUCTION": 0.925, "CLASS": 1 ],
+        "core"          :          ["INSTRUCTION": 0.861, "CLASS": 17],
+        "exam"          :          ["INSTRUCTION": 0.938, "CLASS": 0 ],
+        "exercise"      :          ["INSTRUCTION": 0.929, "CLASS": 0 ],
+        "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS": 1 ],
+        "iris"          :          ["INSTRUCTION": 0.753, "CLASS": 26],
+        "lecture"       :          ["INSTRUCTION": 0.910, "CLASS": 0 ],
+        "lti"           :          ["INSTRUCTION": 0.894, "CLASS": 2 ],
+        "modeling"      :          ["INSTRUCTION": 0.913, "CLASS": 2 ],
+        "plagiarism"    :          ["INSTRUCTION": 0.910, "CLASS": 0 ],
+        "programming"   :          ["INSTRUCTION": 0.865, "CLASS": 9 ],
+        "quiz"          :          ["INSTRUCTION": 0.904, "CLASS": 4 ],
+        "text"          :          ["INSTRUCTION": 0.954, "CLASS": 0 ],
+        "tutorialgroup" :          ["INSTRUCTION": 0.923, "CLASS": 0 ],
+    ]
+    // If no explicit modules defined -> generate reports and validate for each module
+    reportedModules = includedModules.size() == 0
+        ? ModuleCoverageThresholds.collect {element -> element.key} + ["aggregated"]
+        : includedModules as ArrayList
+
+    ignoredDirectories = [
+        "$BasePath/**/domain/**/*_*",
+        "$BasePath/core/config/migration/entries/**",
+        "org/gradle/**",
+        "**/gradle-wrapper.jar/**"
+    ]
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+jacocoTestReport {
+    // For the aggregated report
+    reports {
+        xml.required = true
+        xml.outputLocation = file("build/reports/jacoco/aggregated/jacocoTestReport.xml")
+        html.required = true
+        html.outputLocation = file("build/reports/jacoco/aggregated/html")
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+            files(classDirectories.files.collect { classDir ->
+                project.fileTree(classDir) {
+                    includes=["$BasePath/**/*.class"]
+                    excludes=ignoredDirectories
+                }
+            })
+        )
+    }
+
+    def sortedTasks = reportedModules
+        .sort()
+        .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
+        .findAll { task -> task != null}
+    sortedTasks.eachWithIndex { task, index ->
+        if (index > 0) {
+            task.mustRunAfter(sortedTasks[index - 1])
+        }
+    }
+    finalizedBy sortedTasks
+}
+
+jacocoTestCoverageVerification {
+    // Handled by each task itself
+    enabled = false
+
+    def verifyCoverage = reportedModules.size() == 0 || reportedModules.size() == (ModuleCoverageThresholds.size() + 1) // +1 for aggregated
+    if (verifyCoverage) {
+        def sortedTasks = reportedModules
+            .sort()
+            .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
+            .findAll { task -> task != null}
+        sortedTasks.eachWithIndex { task, index ->
+            if (index > 0) {
+                task.mustRunAfter(sortedTasks[index - 1])
+            }
+        }
+        finalizedBy sortedTasks
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
+
+/**
+ * Registers a JacocoReport task based on the provided parameters.
+ *
+ * @param moduleName The module name to include in the report.
+ * @param rootTask The root JacocoReport root task.
+ * @return The configured JacocoReport task.
+ */
+private JacocoReport registerJacocoReportTask(String moduleName, JacocoReport rootTask) {
+    def taskName = "jacocoCoverageReport-$moduleName"
+
+    JacocoReport task = project.tasks.register(taskName, JacocoReport).get()
+    task.description = "Generates JaCoCo coverage report for $moduleName"
+
+    prepareJacocoReportTask(task, moduleName, rootTask)
+
+    task.reports {
+        xml.required = true
+        xml.outputLocation = file("build/reports/jacoco/$moduleName/jacocoTestReport.xml")
+        html.required = true
+        html.outputLocation = file("build/reports/jacoco/$moduleName/html")
+    }
+
+    return task
+}
+
+/**
+ * Registers a JacocoCoverageVerification task based on the provided parameters.
+ *
+ * @param moduleName The module name to validate rules for.
+ * @param rootTask The root JacocoCoverageVerification task.
+ * @return The configured JacocoCoverageVerification task.
+ */
+private JacocoCoverageVerification registerJacocoTestCoverageVerification(String moduleName, JacocoCoverageVerification rootTask) {
+    def taskName = "jacocoTestCoverageVerification-$moduleName"
+
+    def thresholds
+    if (moduleName == "aggregated") {
+        thresholds = AggregatedCoverageThresholds
+    } else {
+        thresholds = ModuleCoverageThresholds[moduleName]
+        if (thresholds == null) {
+            println "No coverage thresholds defined for module '$moduleName'. Skipping verification for this module..."
+            return null
+        }
+    }
+    def minInstructionCoveredRatio = thresholds["INSTRUCTION"] as double
+    def maxNumberUncoveredClasses = thresholds["CLASS"] as int
+
+    JacocoCoverageVerification task = project.tasks.register(taskName, JacocoCoverageVerification).get()
+    task.description = "Validates JaCoCo coverage for vioalations for $moduleName"
+
+    prepareJacocoReportTask(task, moduleName, rootTask)
+    applyVerificationRule(task, minInstructionCoveredRatio, maxNumberUncoveredClasses)
+
+    return task
+}
+
+/**
+ * Prepares a Jacoco report task (report & verification) to match a specific module.
+ * @param task that is modified
+ * @param moduleName of the module.
+ * @param rootTask the JacocoReportBase root task
+ */
+private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
+    task.group = "Reporting"
+    task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
+        include "test.exec"
+    }
+
+    def sourcePath;
+    if (moduleName == "aggregated") {
+        sourcePath = "$BasePath/**/*.class"
+    } else {
+        sourcePath = "$BasePath/$moduleName/**/*.class"
+    }
+    task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
+    task.classDirectories.setFrom(
+        files(rootTask.classDirectories.files.collect { classDir ->
+            project.fileTree(classDir) {
+                includes=[sourcePath]
+                excludes=ignoredDirectories
+            }
+        })
+    )
+}
+
+import javax.xml.parsers.DocumentBuilderFactory
+
+private static void applyVerificationRule(JacocoCoverageVerification task, double minInstructionCoveredRatio, int maxNumberUncoveredClasses) {
+    task.violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = minInstructionCoveredRatio
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                maximum = maxNumberUncoveredClasses
+            }
+        }
+    }
+
+    task.doLast {
+        def moduleName = task.name.replace('jacocoTestCoverageVerification-', '')
+
+        // Handle aggregated total coverage
+        if (moduleName == "aggregated") {
+            moduleName = "Aggregated Code Coverage"
+        }
+
+        def reportsFile = project.file("${task.project.layout.buildDirectory.get().asFile}/reports/jacoco/${task.name.replace('jacocoTestCoverageVerification-', '')}/jacocoTestReport.xml")
+
+        if (!reportsFile.exists()) {
+            println "⚠️ Jacoco report not found for ${task.name.replace('jacocoTestCoverageVerification-', '')}"
+            return
+        }
+
+        try {
+            // Read file as text and remove DOCTYPE
+            def xmlContent = reportsFile.text.replaceAll(/<!DOCTYPE[^>]*>/, "")
+
+            // Secure XML parsing without DOCTYPE
+            def factory = DocumentBuilderFactory.newInstance()
+
+            def builder = factory.newDocumentBuilder()
+            def document = builder.parse(new ByteArrayInputStream(xmlContent.getBytes("UTF-8")))
+
+            def counters = document.getElementsByTagName("counter")
+
+            def missedInstructions = 0
+            def coveredInstructions = 0
+            def missedClasses = 0
+
+            for (int i = 0; i < counters.getLength(); i++) {
+                def node = counters.item(i)
+                def type = node.getAttributes().getNamedItem("type").getTextContent()
+                def missed = node.getAttributes().getNamedItem("missed").getTextContent().toInteger()
+                def covered = node.getAttributes().getNamedItem("covered").getTextContent().toInteger()
+
+                if (type == "INSTRUCTION") {
+                    missedInstructions = missed
+                    coveredInstructions = covered
+                } else if (type == "CLASS") {
+                    missedClasses = missed
+                }
+            }
+
+            def totalInstructions = missedInstructions + coveredInstructions
+            def actualInstructionCoverage = totalInstructions == 0 ? 1.0 : (coveredInstructions / totalInstructions)
+
+            println ""
+            println "📊 Module: ${moduleName}"
+            println "   🔍 Measured Instruction Coverage: ${String.format('%.2f', actualInstructionCoverage * 100)}% (Required: ${String.format('%.2f', minInstructionCoveredRatio * 100)}%)"
+            println "   🏛️ Uncovered Classes: ${missedClasses} (Allowed: ${maxNumberUncoveredClasses})"
+
+            if (actualInstructionCoverage < minInstructionCoveredRatio || missedClasses > maxNumberUncoveredClasses) {
+                println "❌ Coverage requirements not met!"
+                throw new GradleException("❌ Build failed: Coverage requirements for ${moduleName} not met!")
+            } else {
+                println "✅ Coverage requirements met."
+            }
+
+        } catch (Exception e) {
+            println "⚠️ Error parsing Jacoco XML: ${e.message}"
+            throw new GradleException("❌ Build failed: Error parsing Jacoco XML for ${task.name.replace('jacocoTestCoverageVerification-', '')}")
+        }
+    }
+}

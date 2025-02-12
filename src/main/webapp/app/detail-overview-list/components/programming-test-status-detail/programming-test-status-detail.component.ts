@@ -1,17 +1,16 @@
 import { Component, Input } from '@angular/core';
 import type { ProgrammingTestStatusDetail } from 'app/detail-overview-list/detail.model';
 import { RouterModule } from '@angular/router';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
 
 @Component({
     selector: 'jhi-programming-test-status-detail',
     templateUrl: 'programming-test-status-detail.component.html',
-    standalone: true,
-    imports: [RouterModule, ArtemisProgrammingExerciseActionsModule, SubmissionResultStatusModule, ArtemisProgrammingExerciseStatusModule, TranslateDirective],
+    imports: [RouterModule, TranslateDirective, UpdatingResultComponent, ProgrammingExerciseInstructorTriggerBuildButtonComponent, ProgrammingExerciseInstructorStatusComponent],
 })
 export class ProgrammingTestStatusDetailComponent {
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;

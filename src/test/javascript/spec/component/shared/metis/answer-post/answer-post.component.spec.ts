@@ -4,19 +4,18 @@ import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisPostExerciseUser1, metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
-import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/reaction.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -27,9 +26,12 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { AccountService } from '../../../../../../../main/webapp/app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -50,7 +52,6 @@ describe('AnswerPostComponent', () => {
                 MockComponent(PostingContentComponent),
                 MockComponent(PostingHeaderComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
-                MockComponent(AnswerPostReactionsBarComponent),
                 ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
@@ -63,6 +64,8 @@ describe('AnswerPostComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -118,7 +121,7 @@ describe('AnswerPostComponent', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
         fixture.detectChanges();
-        const reactionsBar = debugElement.query(By.css('jhi-answer-post-reactions-bar'));
+        const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
         expect(reactionsBar).not.toBeNull();
     });
 

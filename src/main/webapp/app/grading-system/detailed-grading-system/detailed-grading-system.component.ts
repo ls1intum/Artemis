@@ -1,11 +1,20 @@
 import { Component } from '@angular/core';
 import { BaseGradingSystemComponent, CsvGradeStep } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-detailed-grading-system',
     templateUrl: './detailed-grading-system.component.html',
     styleUrls: ['./detailed-grading-system.component.scss'],
+    imports: [TranslateDirective, FormsModule, FaIconComponent, ArtemisTranslatePipe, DeleteButtonDirective, HelpIconComponent],
 })
 export class DetailedGradingSystemComponent extends BaseGradingSystemComponent {
     /**

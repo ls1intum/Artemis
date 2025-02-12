@@ -10,18 +10,29 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateDirective } from '../shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from '../shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
-    standalone: true,
-    imports: [ArtemisSharedModule, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedCommonModule, FaIconComponent, FormsModule],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        SortByDirective,
+        SortDirective,
+        ArtemisDatePipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+    ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     route = inject(ActivatedRoute);

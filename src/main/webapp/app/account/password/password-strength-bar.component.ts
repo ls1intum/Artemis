@@ -1,6 +1,5 @@
 import { Component, ElementRef, Input, Renderer2, inject } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-password-strength-bar',
@@ -15,8 +14,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
         </ul>
     </div>`,
     styleUrls: ['password-strength-bar.scss'],
-    standalone: true,
-    imports: [TranslateDirective, ArtemisSharedModule],
+    imports: [TranslateDirective],
 })
 export class PasswordStrengthBarComponent {
     private renderer = inject(Renderer2);

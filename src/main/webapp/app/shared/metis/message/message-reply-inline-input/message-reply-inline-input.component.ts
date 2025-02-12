@@ -1,10 +1,12 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, input } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
@@ -13,23 +15,16 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     templateUrl: './message-reply-inline-input.component.html',
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
+    private localStorageService = inject(LocalStorageService);
+
     warningDismissed = false;
 
     readonly activeConversation = input<ConversationDTO>();
 
-    @Output()
-    valueChange = new EventEmitter<void>();
-
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected localStorageService: LocalStorageService,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
+    @Output() valueChange = new EventEmitter<void>();
 
     ngOnInit(): void {
         super.ngOnInit();

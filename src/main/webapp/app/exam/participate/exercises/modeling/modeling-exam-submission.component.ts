@@ -10,16 +10,13 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -29,14 +26,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./modeling-exam-submission.component.scss'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [
         TranslateDirective,
-        ArtemisSharedComponentModule,
+        IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
-        ArtemisSharedModule,
-        ArtemisFullscreenModule,
-        ArtemisModelingEditorModule,
+        ResizeableContainerComponent,
+        FullscreenComponent,
+        ModelingEditorComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
         ArtemisTranslatePipe,
@@ -137,8 +133,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    modelChanged(model: UMLModel) {
+    modelChanged(_model: UMLModel) {
         this.studentSubmission()!.isSynced = false;
     }
 

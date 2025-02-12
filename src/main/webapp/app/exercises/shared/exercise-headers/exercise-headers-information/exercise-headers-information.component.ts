@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -10,20 +10,21 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { CommonModule } from '@angular/common';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    standalone: true,
-    imports: [SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule],
+    imports: [SubmissionResultStatusComponent, InformationBoxComponent, DifficultyLevelComponent, ExerciseCategoriesComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, CommonModule],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
@@ -31,6 +32,9 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     preserveWhitespaces: false,
 })
 export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
+    private sortService = inject(SortService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
@@ -46,11 +50,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     achievedPoints: number = 0;
     numberOfSubmissions: number;
     informationBoxItems: InformationBox[] = [];
-
-    constructor(
-        private sortService: SortService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnInit() {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
@@ -79,6 +78,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
+                this.updatePointsItem();
             }
         }
     }
@@ -91,6 +91,13 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addSubmissionPolicyItem();
         this.addDifficultyItem();
         this.addCategoryItems();
+    }
+
+    updatePointsItem() {
+        const pointsItemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.points');
+        if (pointsItemIndex !== -1) {
+            this.informationBoxItems[pointsItemIndex] = this.getPointsItem('points', this.exercise.maxPoints!, this.achievedPoints);
+        }
     }
 
     addPointsItems() {

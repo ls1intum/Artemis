@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.net.URLDecoder.decode;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -28,7 +28,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -37,7 +40,7 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Profile(PROFILE_CORE)
 @Configuration
-public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
+public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory>, WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
@@ -45,9 +48,12 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
+    private final ToolsInterceptor toolsInterceptor;
+
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
+        this.toolsInterceptor = toolsInterceptor;
     }
 
     @Override
@@ -90,9 +96,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
-            File root = new File(prefixPath + "build/resources/main/static/");
-            if (root.exists() && root.isDirectory()) {
-                servletWebServer.setDocumentRoot(root);
+            Path root = Path.of(prefixPath + "build/resources/main/static/");
+            if (Files.exists(root) && Files.isDirectory(root)) {
+                servletWebServer.setDocumentRoot(root.toFile());
             }
         }
     }
@@ -125,5 +131,11 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             source.registerCorsConfiguration("/v3/api-docs", config);
         }
         return new CorsFilter(source);
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/public/**");
+        ;
     }
 }
