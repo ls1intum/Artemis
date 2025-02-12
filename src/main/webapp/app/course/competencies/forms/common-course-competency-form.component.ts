@@ -5,11 +5,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
@@ -18,12 +19,14 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
-        ArtemisSharedModule,
         NgbDropdownModule,
         ReactiveFormsModule,
-        ArtemisSharedComponentModule,
         FormDateTimePickerComponent,
         TaxonomySelectComponent,
+        MarkdownEditorMonacoComponent,
+        HelpIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
         MarkdownEditorMonacoComponent,
     ],
 })

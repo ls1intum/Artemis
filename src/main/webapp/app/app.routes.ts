@@ -16,6 +16,10 @@ const routes: Routes = [
         },
     },
     {
+        path: '',
+        loadChildren: () => import('./shared/user-settings/user-settings.route').then((m) => m.routes),
+    },
+    {
         path: 'admin',
         data: {
             authorities: [Authority.ADMIN],

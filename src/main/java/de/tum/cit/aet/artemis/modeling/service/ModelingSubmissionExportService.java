@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
             }
         }
