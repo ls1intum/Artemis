@@ -5,11 +5,10 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -1239,7 +1238,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/download-archive")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws FileNotFoundException {
+    public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws IOException {
         log.info("REST request to download archive of exam : {}", examId);
         final Exam exam = examRepository.findByIdElseThrow(examId);
 
@@ -1256,7 +1255,7 @@ public class ExamResource {
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(contentDisposition);
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(archive));
         return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
                 .body(resource);
     }
