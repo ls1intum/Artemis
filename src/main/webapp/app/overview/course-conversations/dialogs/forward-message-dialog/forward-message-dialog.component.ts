@@ -18,10 +18,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 interface CombinedOption {
     id: number;
@@ -34,7 +35,7 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, ArtemisSharedModule],
+    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective],
     providers: [MetisService, LinkPreviewService, LinkifyService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {

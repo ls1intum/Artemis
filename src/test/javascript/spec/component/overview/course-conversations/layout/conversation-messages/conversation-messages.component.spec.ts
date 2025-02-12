@@ -1,5 +1,5 @@
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -24,6 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { PostingType } from '../../../../../../../../main/webapp/app/entities/metis/posting.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -284,7 +285,7 @@ examples.forEach((activeConversation) => {
 
             jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
 
-            metisService.getForwardedMessagesByIds([1], 'post')?.subscribe((response) => {
+            metisService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
                 expect(response.body).toEqual(mockResponse.body);
             });
         });
