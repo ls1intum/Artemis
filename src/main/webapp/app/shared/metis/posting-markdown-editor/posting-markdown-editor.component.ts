@@ -46,7 +46,6 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
 import { NgStyle } from '@angular/common';
-import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -65,7 +64,6 @@ import { FileService } from 'app/shared/http/file.service';
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     private cdref = inject(ChangeDetectorRef);
     private metisService = inject(MetisService);
-    private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private lectureService = inject(LectureService);
     private channelService = inject(ChannelService);
@@ -121,7 +119,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ...faqAction,
         ];
 
-        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);
+        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);
     }
 
     ngAfterViewInit(): void {
