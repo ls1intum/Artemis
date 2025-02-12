@@ -76,19 +76,19 @@ examples.forEach((activeConversation) => {
             expect(fixture.nativeElement.querySelector('.leave-conversation')).toBeFalsy();
 
             if (isChannelDTO(activeConversation)) {
-                expect(fixture.nativeElement.querySelector('.archive')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('.archive-toggle')).toBeTruthy();
                 expect(fixture.nativeElement.querySelector('.delete')).toBeTruthy();
 
                 canChangeArchivalState.mockReturnValue(false);
                 component.ngOnInit();
                 fixture.detectChanges();
-                expect(fixture.nativeElement.querySelector('.archive')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('.archive-toggle')).toBeFalsy();
                 canDeleteChannel.mockReturnValue(false);
                 component.ngOnInit();
                 fixture.detectChanges();
                 expect(fixture.nativeElement.querySelector('.delete')).toBeFalsy();
             } else {
-                expect(fixture.nativeElement.querySelector('.archive')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('.archive-toggle')).toBeFalsy();
                 expect(fixture.nativeElement.querySelector('.delete')).toBeFalsy();
             }
         });
@@ -121,7 +121,7 @@ examples.forEach((activeConversation) => {
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const archiveSpy = jest.spyOn(channelService, 'archive').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-                const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive');
+                const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive-toggle');
 
                 genericConfirmationDialogTest(archiveButton);
                 fixture.whenStable().then(() => {
@@ -141,7 +141,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 const channelService = TestBed.inject(ChannelService);
                 const unarchivespy = jest.spyOn(channelService, 'unarchive').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-                const archiveButton = fixture.debugElement.nativeElement.querySelector('.unarchive');
+                const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive-toggle');
 
                 genericConfirmationDialogTest(archiveButton);
                 fixture.whenStable().then(() => {
@@ -160,6 +160,25 @@ examples.forEach((activeConversation) => {
                     expect(deleteSpy).toHaveBeenCalledOnce();
                     expect(deleteSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
                 });
+            }
+        }));
+
+        it('should toggle channel privacy, update conversationAsChannel, and emit channelPrivacyChange', fakeAsync(() => {
+            if (isChannelDTO(activeConversation)) {
+                const channelService = TestBed.inject(ChannelService);
+                const toggleSpy = jest
+                    .spyOn(channelService, 'toggleChannelPrivacy')
+                    .mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: false } })));
+
+                const privacyChangeSpy = jest.spyOn(component.channelPrivacyChange, 'emit');
+                component.toggleChannelPrivacy();
+                tick();
+
+                expect(toggleSpy).toHaveBeenCalledOnce();
+                expect(toggleSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
+
+                expect(component.conversationAsChannel!.isPublic).toBeFalse();
+                expect(privacyChangeSpy).toHaveBeenCalledOnce();
             }
         }));
 
