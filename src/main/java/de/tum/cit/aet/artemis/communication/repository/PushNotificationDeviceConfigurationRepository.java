@@ -38,6 +38,8 @@ public interface PushNotificationDeviceConfigurationRepository extends ArtemisJp
             """)
     List<PushNotificationDeviceConfiguration> findByUserIn(@Param("users") Set<User> users, @Param("deviceType") PushNotificationDeviceType deviceType);
 
+    List<PushNotificationDeviceConfiguration> findPushNotificationDeviceConfigurationsByOwner(User owner);
+
     /**
      * Cleans up the old/expired push notifications device configurations
      */

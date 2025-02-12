@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 import jakarta.validation.Valid;
 
@@ -15,10 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfigurationId;
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
+import de.tum.cit.aet.artemis.communication.dto.PushNotificationDeviceConfigurationDTO;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterBody;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationUnregisterRequest;
@@ -132,6 +138,27 @@ public class PushNotificationResource {
         pushNotificationDeviceConfigurationRepository.deleteById(deviceId);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * API endpoint to view user tokens
+     *
+     * @return the users push tokens
+     */
+    @GetMapping(value = "push-tokens", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<PushNotificationDeviceConfigurationDTO>> userTokens() {
+        var user = userRepository.getUser();
+
+        var tokens = pushNotificationDeviceConfigurationRepository.findPushNotificationDeviceConfigurationsByOwner(user);
+
+        List<PushNotificationDeviceConfigurationDTO> ret = tokens.stream()
+                .map(token -> new PushNotificationDeviceConfigurationDTO(token.getDeviceType() == PushNotificationDeviceType.APNS ? "APNS" : "Firebase", token.getToken(),
+                        Arrays.toString(token.getSecretKey()), token.getExpirationDate(), token.getApiType() == PushNotificationApiType.DEFAULT ? "DEFAULT" : "V2",
+                        user.getLogin()))
+                .toList();
+
+        return ResponseEntity.ok(ret);
     }
 
     private String getToken() {
