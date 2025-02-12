@@ -27,12 +27,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/:exerciseId',
-        loadComponent: () => import('app/exercises/quiz/manage/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        loadChildren: () => import('./quiz-management-detail.route').then((m) => m.quizManagementDetailRoute),
     },
     {
         path: 'quiz-exercises/:exerciseId/re-evaluate',

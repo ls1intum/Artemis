@@ -5,10 +5,14 @@ import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -22,7 +26,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [ArtemisSharedCommonModule, NgbPagination],
+    imports: [NgbPagination, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })

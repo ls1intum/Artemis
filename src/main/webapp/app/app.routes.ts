@@ -16,6 +16,10 @@ const routes: Routes = [
         },
     },
     {
+        path: '',
+        loadChildren: () => import('./shared/user-settings/user-settings.route').then((m) => m.routes),
+    },
+    {
         path: 'admin',
         data: {
             authorities: [Authority.ADMIN],
@@ -139,7 +143,7 @@ const routes: Routes = [
 
     {
         path: 'courses',
-        loadChildren: () => import('./overview/courses.module').then((m) => m.ArtemisCoursesModule),
+        loadChildren: () => import('./overview/courses.route').then((m) => m.coursesState),
     },
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
@@ -179,7 +183,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
-        loadChildren: () => import('./exercises/programming/participate/programming-repository-routing.module').then((m) => m.ArtemisProgrammingRepositoryRoutingModule),
+        loadChildren: () => import('./exercises/programming/participate/programming-repository.route').then((m) => m.routes),
     },
     {
         path: 'features',
@@ -187,7 +191,7 @@ const routes: Routes = [
     },
     {
         path: 'lti',
-        loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
+        loadChildren: () => import('./lti/lti.route').then((m) => m.ltiLaunchRoutes),
     },
     {
         path: 'about-iris',

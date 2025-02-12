@@ -316,7 +316,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(any(Result.class));
+        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(result);
         verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
