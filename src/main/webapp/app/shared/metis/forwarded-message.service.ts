@@ -12,6 +12,13 @@ export class ForwardedMessageService {
 
     private http = inject(HttpClient);
 
+    /**
+     * Sends a request to create a new forwarded message.
+     *
+     * @param forwardedMessage The message to be forwarded.
+     * @param courseId The ID of the course associated with the forwarded message.
+     * @returns An observable containing the HTTP response with the created forwarded message.
+     */
     createForwardedMessage(forwardedMessage: ForwardedMessage, courseId: number): Observable<EntityResponseType> {
         const dto: ForwardedMessageDTO = forwardedMessage.toDTO();
 
