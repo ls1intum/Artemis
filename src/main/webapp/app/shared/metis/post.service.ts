@@ -129,7 +129,7 @@ export class PostService extends PostingService<Post> {
      */
     getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
         const params = new HttpParams().set('postIds', postIds.join(','));
-        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/messages/source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+        return this.http.get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     /**

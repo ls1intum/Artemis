@@ -34,7 +34,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
 import { throwError } from 'rxjs';
 
 @Injectable()
@@ -720,13 +720,13 @@ export class MetisService implements OnDestroy {
     /**
      * Retrieves forwarded messages for a given set of IDs and message type.
      *
-     * @param ids - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param postingIds - An array of numeric IDs for which forwarded messages should be retrieved.
      * @param type - The type of messages to retrieve ('post' or 'answer').
-     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages, wrapped in an HttpResponse, or undefined if the IDs are invalid.
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages (as DTOs), wrapped in an HttpResponse, or undefined if the IDs are invalid.
      */
-    getForwardedMessagesByIds(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> | undefined {
-        if (ids && ids.length > 0) {
-            return this.forwardedMessageService.getForwardedMessages(ids, type);
+    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<{ id: number; messages: ForwardedMessageDTO[] }[]>> | undefined {
+        if (postingIds && postingIds.length > 0) {
+            return this.forwardedMessageService.getForwardedMessages(postingIds, type, this.courseId);
         } else {
             return undefined;
         }
@@ -789,7 +789,7 @@ export class MetisService implements OnDestroy {
                 );
 
                 const createForwardedMessageObservables = forwardedMessages.map((fm) =>
-                    this.forwardedMessageService.createForwardedMessage(fm).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                    this.forwardedMessageService.createForwardedMessage(fm, this.courseId).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(

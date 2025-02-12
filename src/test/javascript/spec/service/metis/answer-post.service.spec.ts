@@ -75,7 +75,7 @@ describe('AnswerPost Service', () => {
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: `api/courses/1/answer-messages/source-answer-posts?answerPostIds=${answerPostIds.join(',')}`,
+                url: `api/communication/courses/1/answer-messages-source-posts?answerPostIds=${answerPostIds.join(',')}`,
             });
             req.flush(returnedFromService);
             tick();

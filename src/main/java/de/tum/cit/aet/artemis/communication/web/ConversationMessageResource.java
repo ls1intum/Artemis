@@ -33,11 +33,13 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.web.util.PaginationUtil;
@@ -212,9 +214,12 @@ public class ConversationMessageResource {
      * @return ResponseEntity with status 200 (OK) containing the list of posts in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @GetMapping("courses/{courseId}/messages/source-posts")
-    @EnforceAtLeastStudent
+    @GetMapping("communication/courses/{courseId}/messages-source-posts")
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
         List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
         return ResponseEntity.ok().body(posts);
     }

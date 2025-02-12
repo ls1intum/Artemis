@@ -3,6 +3,15 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingType } from 'app/entities/metis/posting.model';
 
+export interface ForwardedMessageDTO {
+    id?: number;
+    sourceId?: number;
+    sourceType?: PostingType;
+    destinationPostId?: number;
+    destinationAnswerPostId?: number;
+    content?: string;
+}
+
 export class ForwardedMessage implements BaseEntity {
     public id?: number;
     public sourceId?: number;
@@ -27,5 +36,16 @@ export class ForwardedMessage implements BaseEntity {
         if (!this.validateDestinations()) {
             throw new Error('A ForwardedMessage must have exactly one destination');
         }
+    }
+
+    public toDTO(): ForwardedMessageDTO {
+        return {
+            id: this.id,
+            sourceId: this.sourceId,
+            sourceType: this.sourceType,
+            destinationPostId: this.destinationPost ? this.destinationPost.id : undefined,
+            destinationAnswerPostId: this.destinationAnswerPost ? this.destinationAnswerPost.id : undefined,
+            content: this.content,
+        };
     }
 }

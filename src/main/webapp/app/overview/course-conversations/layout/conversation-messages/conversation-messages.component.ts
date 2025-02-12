@@ -33,7 +33,6 @@ import { canCreateNewMessageInConversation } from 'app/shared/metis/conversation
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -43,9 +42,10 @@ import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import dayjs from 'dayjs/esm';
 
 interface PostGroup {
     author: User | undefined;
@@ -329,11 +329,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const postIdsWithForwardedMessages = this.posts.filter((post) => post.hasForwardedMessages && post.id !== undefined).map((post) => post.id) as number[];
 
         if (postIdsWithForwardedMessages.length > 0) {
-            this.metisService.getForwardedMessagesByIds(postIdsWithForwardedMessages, 'post')?.subscribe((response) => {
+            this.metisService.getForwardedMessagesByIds(postIdsWithForwardedMessages, PostingType.POST)?.subscribe((response) => {
                 const forwardedMessagesGroups = response.body;
 
                 if (forwardedMessagesGroups) {
-                    const map = new Map<number, ForwardedMessage[]>(forwardedMessagesGroups.map((group) => [group.id, group.messages]));
+                    const map = new Map<number, ForwardedMessageDTO[]>(forwardedMessagesGroups.map((group) => [group.id, group.messages]));
 
                     const sourcePostIds: number[] = [];
                     const sourceAnswerIds: number[] = [];

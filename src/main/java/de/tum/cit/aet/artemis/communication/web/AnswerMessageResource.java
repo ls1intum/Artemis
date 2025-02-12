@@ -23,7 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
@@ -35,8 +40,14 @@ public class AnswerMessageResource {
 
     private final AnswerMessageService answerMessageService;
 
-    public AnswerMessageResource(AnswerMessageService answerMessageService) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    public AnswerMessageResource(AnswerMessageService answerMessageService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.answerMessageService = answerMessageService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -96,9 +107,12 @@ public class AnswerMessageResource {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("courses/{courseId}/answer-messages/source-answer-posts")
-    @EnforceAtLeastStudent
+    @GetMapping("communication/courses/{courseId}/answer-messages-source-posts")
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
         List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
         return ResponseEntity.ok().body(answerPosts);
     }

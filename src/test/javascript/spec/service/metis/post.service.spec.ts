@@ -132,7 +132,7 @@ describe('Post Service', () => {
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: `${service.resourceUrl}${metisCourse.id}/messages/source-posts?postIds=${postIds.join(',')}`,
+                url: `api/communication/courses/${metisCourse.id}/messages-source-posts?postIds=${postIds.join(',')}`,
             });
             req.flush(returnedFromService);
             tick();

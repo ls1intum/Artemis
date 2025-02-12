@@ -1,65 +1,48 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
+import { PostingType } from 'app/entities/metis/posting.model';
 
-type EntityResponseType = HttpResponse<ForwardedMessage>;
+type EntityResponseType = HttpResponse<ForwardedMessageDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class ForwardedMessageService {
-    public resourceUrl = 'api/forwarded-messages';
+    public resourceUrl = 'api/communication/forwarded-messages';
 
     private http = inject(HttpClient);
 
-    /**
-     * Creates a new ForwardedMessage.
-     * @param forwardedMessage The ForwardedMessage to create.
-     * @returns An observable containing the created ForwardedMessage wrapped in an HttpResponse.
-     */
-    createForwardedMessage(forwardedMessage: ForwardedMessage): Observable<EntityResponseType> {
-        const copy = this.convertForwardedMessage(forwardedMessage);
-        return this.http.post<ForwardedMessage>(`${this.resourceUrl}`, copy, { observe: 'response' }).pipe(map((res: HttpResponse<ForwardedMessage>) => this.convertResponse(res)));
+    createForwardedMessage(forwardedMessage: ForwardedMessage, courseId: number): Observable<EntityResponseType> {
+        const dto: ForwardedMessageDTO = forwardedMessage.toDTO();
+
+        let params = new HttpParams();
+        if (courseId) {
+            params = params.set('courseId', courseId.toString());
+        }
+
+        return this.http.post<ForwardedMessageDTO>(`${this.resourceUrl}`, dto, {
+            params,
+            observe: 'response',
+        });
     }
 
     /**
      * Retrieves forwarded messages for a given set of IDs and message type.
      *
-     * @param ids - An array of numeric IDs for which forwarded messages should be retrieved.
-     * @param type - The type of messages to retrieve ('post' or 'answer').
-     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages, wrapped in an HttpResponse.
+     * @param postingIds - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param type - The type of messages to retrieve (PostingType.POST or PostingType.ANSWER).
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages (as DTOs), wrapped in an HttpResponse.
      */
-    getForwardedMessages(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> {
-        if (!ids || ids.length === 0) {
+    getForwardedMessages(postingIds: number[], type: PostingType, courseId: number): Observable<HttpResponse<{ id: number; messages: ForwardedMessageDTO[] }[]>> {
+        if (!postingIds || postingIds.length === 0) {
             return throwError(() => new Error('IDs cannot be empty'));
         }
+        const typeKey = PostingType[type];
+        const params = new HttpParams().set('postingIds', postingIds.join(',')).set('type', typeKey).set('courseId', courseId.toString());
 
-        const params = new HttpParams().set('ids', ids.join(',')).set('type', type);
-
-        return this.http
-            .get<{ id: number; messages: ForwardedMessage[] }[]>('api/forwarded-messages', {
-                params,
-                observe: 'response',
-            })
-            .pipe();
-    }
-
-    /**
-     * Converts the response to a client-compatible ForwardedMessage object.
-     *
-     * @param res - The HttpResponse object containing a ForwardedMessage from the backend.
-     * @returns A cloned HttpResponse with the body converted to a ForwardedMessage object.
-     */
-    private convertResponse(res: HttpResponse<ForwardedMessage>): HttpResponse<ForwardedMessage> {
-        const body: ForwardedMessage = this.convertItemFromServer(res.body!);
-        return res.clone({ body });
-    }
-
-    private convertItemFromServer(forwardedMessage: ForwardedMessage): ForwardedMessage {
-        return Object.assign({}, forwardedMessage);
-    }
-
-    private convertForwardedMessage(forwardedMessage: ForwardedMessage): ForwardedMessage {
-        return Object.assign({}, forwardedMessage);
+        return this.http.get<{ id: number; messages: ForwardedMessageDTO[] }[]>(this.resourceUrl, {
+            params,
+            observe: 'response',
+        });
     }
 }

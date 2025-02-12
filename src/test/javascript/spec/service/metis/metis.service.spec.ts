@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
@@ -23,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { Subject, of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
     metisChannel,
     metisCourse,
@@ -47,12 +47,11 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
-import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import 'jest-extended';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { Posting } from 'app/entities/metis/posting.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -662,28 +661,29 @@ describe('Metis Service', () => {
     });
 
     it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', fakeAsync(() => {
+        metisService.setCourse(course);
         const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
         const postIds = [1, 2, 3];
 
-        metisService.getForwardedMessagesByIds(postIds, 'post');
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, 'post');
+        metisService.getForwardedMessagesByIds(postIds, PostingType.POST);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST, course.id);
         forwardedMessageServiceSpy.mockClear();
 
-        metisService.getForwardedMessagesByIds(postIds, 'answer');
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, 'answer');
+        metisService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER, course.id);
         tick();
     }));
 
     it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', fakeAsync(() => {
         const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
 
-        metisService.getForwardedMessagesByIds([], 'post');
+        metisService.getForwardedMessagesByIds([], PostingType.POST);
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
 
-        metisService.getForwardedMessagesByIds([], 'answer');
+        metisService.getForwardedMessagesByIds([], PostingType.ANSWER);
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
 
-        metisService.getForwardedMessagesByIds(undefined as any, 'post');
+        metisService.getForwardedMessagesByIds(undefined as any, PostingType.POST);
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
         tick();
     }));

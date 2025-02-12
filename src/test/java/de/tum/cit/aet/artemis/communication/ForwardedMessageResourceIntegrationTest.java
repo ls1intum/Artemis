@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.communication;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,14 +22,16 @@ import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ForwardedMessageTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
-    private static final String TEST_PREFIX = "sptest";
+    private static final String TEST_PREFIX = "fwtest";
 
     @Autowired
     private ForwardedMessageTestRepository forwardedMessageRepository;
@@ -49,12 +53,18 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     private ForwardedMessage forwardedMessageForAnswer;
 
     @BeforeEach
-    void setUp() {
-        testUser = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
+    void setUp() throws IOException {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 0);
+
+        exampleCourse = courses.get(0);
+        exampleCourseId = exampleCourse.getId();
+
+        testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         ConversationFactory factory = new ConversationFactory();
         Conversation conversation = factory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
-        conversation = conversationRepository.save(conversation);
+        conversationRepository.save(conversation);
 
         testPost = ConversationFactory.createBasicPost(1, testUser);
         testPost.setConversation(conversation);
@@ -63,7 +73,6 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         testAnswerPost = new AnswerPost();
         testAnswerPost.setContent("Test Answer Post Content");
         testAnswerPost.setPost(testPost);
-        testAnswerPost.setAuthor(testUser);
         testAnswerPost = answerPostRepository.save(testAnswerPost);
 
         testForwardedMessage = new ForwardedMessage();
@@ -89,12 +98,14 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         newForwardedMessage.setDestinationPost(testPost);
         newForwardedMessage.setSourceId(testPost.getId());
         newForwardedMessage.setSourceType(PostingType.POST);
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(newForwardedMessage);
 
-        URI uri = new URI("/api/forwarded-messages");
+        URI uri = new URI("/api/communication/forwarded-messages");
 
-        request.performMvcRequest(MockMvcRequestBuilders.post(uri).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(newForwardedMessage)))
-                .andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber()).andExpect(jsonPath("$.destinationPostId").value(testPost.getId()))
-                .andExpect(jsonPath("$.sourceId").value(testPost.getId())).andExpect(jsonPath("$.sourceType").value("POST"));
+        request.performMvcRequest(MockMvcRequestBuilders.post(uri).param("courseId", exampleCourseId.toString()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))).andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.destinationPostId").value(testPost.getId())).andExpect(jsonPath("$.sourceId").value(testPost.getId()))
+                .andExpect(jsonPath("$.sourceType").value("POST"));
     }
 
     /**
@@ -103,9 +114,10 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForwardedMessagesForPosts() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testPost.getId())).param("type", "post"))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testPost.getId()))
-                .andExpect(jsonPath("$[0].messages", hasSize(1))).andExpect(jsonPath("$[0].messages[0].id").value(testForwardedMessage.getId()))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString())
+                .param("postingIds", String.valueOf(testPost.getId())).param("type", PostingType.POST.toString())).andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testPost.getId())).andExpect(jsonPath("$[0].messages", hasSize(1)))
+                .andExpect(jsonPath("$[0].messages[0].id").value(testForwardedMessage.getId()))
                 .andExpect(jsonPath("$[0].messages[0].sourceId").value(testForwardedMessage.getSourceId())).andExpect(jsonPath("$[0].messages[0].sourceType").value("POST"));
     }
 
@@ -115,9 +127,10 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForwardedMessagesForAnswers() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testAnswerPost.getId())).param("type", "answer"))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testAnswerPost.getId()))
-                .andExpect(jsonPath("$[0].messages", hasSize(1))).andExpect(jsonPath("$[0].messages[0].id").value(forwardedMessageForAnswer.getId()))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString())
+                .param("postingIds", String.valueOf(testAnswerPost.getId())).param("type", PostingType.ANSWER.toString())).andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testAnswerPost.getId())).andExpect(jsonPath("$[0].messages", hasSize(1)))
+                .andExpect(jsonPath("$[0].messages[0].id").value(forwardedMessageForAnswer.getId()))
                 .andExpect(jsonPath("$[0].messages[0].sourceId").value(forwardedMessageForAnswer.getSourceId())).andExpect(jsonPath("$[0].messages[0].sourceType").value("POST"));
     }
 
@@ -127,8 +140,8 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyWhenNoForwardedMessagesExist() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", "9999").param("type", "post")).andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString()).param("postingIds", "9999")
+                .param("type", PostingType.POST.toString())).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(0));
     }
 
     /**
@@ -137,8 +150,8 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestForInvalidType() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testPost.getId())).param("type", "invalidType"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString())
+                .param("postingIds", String.valueOf(testPost.getId())).param("type", "invalidType")).andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
     /**
@@ -147,15 +160,16 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateForwardedMessageForAnswerPost() throws Exception {
-        ForwardedMessage newForwardedMessage = new ForwardedMessage();
-        newForwardedMessage.setDestinationAnswerPost(testAnswerPost);
-        newForwardedMessage.setSourceId(testPost.getId());
-        newForwardedMessage.setSourceType(PostingType.POST);
+        ForwardedMessage entity = new ForwardedMessage();
+        entity.setDestinationAnswerPost(testAnswerPost);
+        entity.setSourceId(testPost.getId());
+        entity.setSourceType(PostingType.POST);
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(entity);
 
-        URI uri = new URI("/api/forwarded-messages");
+        URI uri = new URI("/api/communication/forwarded-messages");
 
-        request.performMvcRequest(MockMvcRequestBuilders.post(uri).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(newForwardedMessage)))
-                .andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber())
+        request.performMvcRequest(MockMvcRequestBuilders.post(uri).param("courseId", exampleCourseId.toString()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))).andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.destinationAnswerPostId").value(testAnswerPost.getId())).andExpect(jsonPath("$.sourceId").value(testPost.getId()))
                 .andExpect(jsonPath("$.sourceType").value("POST"));
     }

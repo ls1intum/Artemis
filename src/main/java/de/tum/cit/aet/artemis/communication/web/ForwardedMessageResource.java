@@ -20,11 +20,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -32,7 +37,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(value = "api/")
+@RequestMapping(value = "api/communication")
 public class ForwardedMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ForwardedMessageResource.class);
@@ -41,59 +46,75 @@ public class ForwardedMessageResource {
 
     private final ForwardedMessageRepository forwardedMessageRepository;
 
-    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository) {
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
         this.forwardedMessageRepository = forwardedMessageRepository;
+        this.courseRepository = courseRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
      * POST /forwarded-messages : Create a new forwarded message.
      *
-     * @param forwardedMessage the forwarded message to create.
+     * @param courseId            the ID of the course in which the forwarded message is being created.
+     * @param forwardedMessageDTO the forwarded message to create.
      * @return the ResponseEntity with status 201 (Created) and with the body containing the new forwarded message,
      *         or with status 400 (Bad Request) if the forwarded message already has an ID.
      * @throws BadRequestAlertException if the forwarded message already has an ID.
      */
     @PostMapping("forwarded-messages")
-    @EnforceAtLeastStudent
-    public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
-        if (forwardedMessage.getId() != null) {
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestParam Long courseId, @RequestBody ForwardedMessageDTO forwardedMessageDTO) throws URISyntaxException {
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
+
+        ForwardedMessage forwardedMessage = forwardedMessageDTO.toEntity();
         ForwardedMessage savedMessage = forwardedMessageRepository.save(forwardedMessage);
-        ForwardedMessageDTO dto = new ForwardedMessageDTO(savedMessage);
-        return ResponseEntity.created(new URI("/api/forwarded-messages/" + savedMessage.getId())).body(dto);
+
+        return ResponseEntity.created(new URI("/api/communication/forwarded-messages/" + savedMessage.getId())).body(new ForwardedMessageDTO(savedMessage));
     }
 
     /**
      * GET /forwarded-messages : Retrieve forwarded messages grouped by their destination IDs.
      *
-     * @param ids  a set of destination IDs (either post or answer IDs) for which forwarded messages should be retrieved.
-     * @param type the type of destination ('post' or 'answer') to specify whether the IDs belong to posts or answers.
+     * @param courseId   the ID of the course in which the forwarded message is being created.
+     * @param postingIds a set of destination IDs (either post or answer IDs) for which forwarded messages should be retrieved.
+     * @param type       the type of destination ('post' or 'answer') to specify whether the IDs belong to posts or answers.
      * @return the ResponseEntity with status 200 (OK) and a list of ForwardedMessagesGroupDTO objects,
      *         where each object contains a destination ID and the associated forwarded messages.
      * @throws BadRequestAlertException if the type parameter is invalid or unsupported.
      */
     @GetMapping("forwarded-messages")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> ids, @RequestParam String type) {
-
-        log.debug("GET getForwardedMessages invoked with ids {} and type {}", ids, type);
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Long courseId, @RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
+        log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
 
-        if (!"post".equalsIgnoreCase(type) && !"answer".equalsIgnoreCase(type)) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        if (type != PostingType.POST && type != PostingType.ANSWER) {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
 
         Set<ForwardedMessage> forwardedMessages;
-        if ("post".equalsIgnoreCase(type)) {
-            forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(ids);
+        if (type == PostingType.POST) {
+            forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(postingIds);
         }
-        else {
-            forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(ids);
+        else { // type == PostingType.ANSWER
+            forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(postingIds);
         }
 
         List<ForwardedMessagesGroupDTO> result = forwardedMessages.stream()
-                .collect(Collectors.groupingBy(fm -> "post".equalsIgnoreCase(type) ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
+                .collect(Collectors.groupingBy(fm -> type == PostingType.POST ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
                         Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())))
                 .entrySet().stream().map(entry -> new ForwardedMessagesGroupDTO(entry.getKey(), entry.getValue())).toList();
 

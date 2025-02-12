@@ -62,7 +62,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      */
     getSourceAnswerPostsByIds(courseId: number, answerPostIds: number[]): Observable<AnswerPost[]> {
         const params = new HttpParams().set('answerPostIds', answerPostIds.join(','));
-        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/answer-messages/source-answer-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+        return this.http.get<Post[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     private static getResourceEndpoint(param: AnswerPost): string {
