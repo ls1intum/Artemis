@@ -74,7 +74,7 @@ export class ProgrammingExerciseOverviewPage {
 }
 
 export enum GitCloneMethod {
-    https,
-    httpsWithToken,
-    ssh,
+    https = 'https',
+    httpsWithToken = 'https with token',
+    ssh = 'ssh',
 }
