@@ -215,7 +215,7 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    @NotificationPlaceholderCreator(values = { NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY })
+    @NotificationPlaceholderCreator(values = { NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT })
     public static String[] createPlaceholdersPlagiarism(String courseTitle, String exerciseType, String exerciseTitle) {
         return new String[] { courseTitle, exerciseType, exerciseTitle };
     }
