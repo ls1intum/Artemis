@@ -7,6 +7,8 @@ import { NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAcc
 import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
 import { GitDiffFilePanelTitleComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
 import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('GitDiffFilePanelComponent', () => {
     let comp: GitDiffFilePanelComponent;
@@ -27,7 +29,7 @@ describe('GitDiffFilePanelComponent', () => {
                 MockDirective(NgbAccordionButton),
                 MockDirective(NgbAccordionCollapse),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelComponent);
         comp = fixture.componentInstance;
