@@ -12,8 +12,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
@@ -26,7 +25,7 @@ describe('CreatePrerequisite', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreatePrerequisiteComponent, ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
+            imports: [CreatePrerequisiteComponent, PrerequisiteFormComponent],
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DocumentationButtonComponent),

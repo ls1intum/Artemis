@@ -425,13 +425,13 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = new File(projectFilePath.toString());
+        File projectFile = Path.of(projectFilePath.toString()).toFile();
         String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = new File(pomPath.toString());
+        File pomFile = Path.of(pomPath.toString()).toFile();
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
         FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
 
@@ -466,14 +466,14 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = new File(projectFilePath.toString());
+        File projectFile = Path.of(projectFilePath.toString()).toFile();
         if (!projectFile.exists()) {
             Files.createFile(projectFilePath);
         }
 
         // Create the maven .pom file
         Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = new File(pomPath.toString());
+        File pomFile = Path.of(pomPath.toString()).toFile();
         if (!pomFile.exists()) {
             Files.createFile(pomPath);
         }

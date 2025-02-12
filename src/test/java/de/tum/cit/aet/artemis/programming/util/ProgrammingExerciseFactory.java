@@ -344,6 +344,7 @@ public class ProgrammingExerciseFactory {
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
             case RUFF -> "Pylint";
+            case RUBOCOP -> "Lint";
             case OTHER -> "Other";
         };
 
