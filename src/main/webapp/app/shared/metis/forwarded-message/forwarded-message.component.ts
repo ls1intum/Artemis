@@ -3,7 +3,7 @@ import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
