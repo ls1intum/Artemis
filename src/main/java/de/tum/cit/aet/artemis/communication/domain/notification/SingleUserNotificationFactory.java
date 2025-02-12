@@ -20,7 +20,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
