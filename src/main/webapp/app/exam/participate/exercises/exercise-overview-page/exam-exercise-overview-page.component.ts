@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, input, OnChanges, OnInit, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
