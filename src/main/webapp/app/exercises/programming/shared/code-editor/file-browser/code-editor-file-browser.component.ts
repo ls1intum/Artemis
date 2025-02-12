@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -27,6 +27,13 @@ import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-ed
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CodeEditorFileBrowserCreateNodeComponent } from './code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFolderComponent } from './code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from './code-editor-file-browser-file.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -47,8 +54,25 @@ export interface FileTreeItem extends TreeItem<string> {
     templateUrl: './code-editor-file-browser.component.html',
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal],
+    imports: [
+        NgStyle,
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorFileBrowserCreateNodeComponent,
+        TreeviewComponent,
+        CodeEditorStatusComponent,
+        CodeEditorFileBrowserFolderComponent,
+        CodeEditorFileBrowserFileComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
+    modalService = inject(NgbModal);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private fileService = inject(CodeEditorFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
     CommitState = CommitState;
     FileType = FileType;
 
@@ -141,14 +165,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
-
-    constructor(
-        public modalService: NgbModal,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private repositoryService: CodeEditorRepositoryService,
-        private fileService: CodeEditorFileService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     ngOnInit(): void {
         this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {

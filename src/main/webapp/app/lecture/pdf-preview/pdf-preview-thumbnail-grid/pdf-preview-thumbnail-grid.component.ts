@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnChanges, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
@@ -16,8 +16,7 @@ import { Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    standalone: true,
-    imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent, PdfPreviewDateBoxComponent],
+    imports: [PdfPreviewEnlargedCanvasComponent, PdfPreviewDateBoxComponent],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');

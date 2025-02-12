@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
@@ -9,13 +9,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { AsyncPipe, NgClass } from '@angular/common';
+import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail',
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
+    imports: [LoadingIndicatorContainerComponent, NgClass, TutorialGroupDetailComponent, AsyncPipe],
 })
 export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private courseManagementService = inject(CourseManagementService);
+    private profileService = inject(ProfileService);
+
     isLoading$ = new BehaviorSubject<boolean>(false);
     tutorialGroup?: TutorialGroup;
     course?: Course;
@@ -23,14 +33,6 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         const courseIdParams$ = this.route.parent?.parent?.params;

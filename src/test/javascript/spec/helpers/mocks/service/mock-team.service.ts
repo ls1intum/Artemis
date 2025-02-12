@@ -1,6 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Injectable } from '@angular/core';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
@@ -10,7 +9,6 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs/esm';
 
 export const mockTeamStudents = [

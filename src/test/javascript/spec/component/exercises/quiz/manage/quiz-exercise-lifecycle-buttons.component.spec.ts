@@ -32,7 +32,6 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseLifecycleButtonsComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

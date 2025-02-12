@@ -6,7 +6,6 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 @Component({
     selector: 'jhi-dynamic-registration',
     templateUrl: './lti13-dynamic-registration.component.html',
-    standalone: true,
     imports: [TranslateDirective],
 })
 export class Lti13DynamicRegistrationComponent implements OnInit {

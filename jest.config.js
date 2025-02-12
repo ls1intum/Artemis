@@ -78,37 +78,23 @@ module.exports = {
             },
         ],
     ],
-    collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
+    collectCoverageFrom: [
+        'src/main/webapp/**/*.ts',
+        '!src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
+        '!src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
+        '!src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!**/node_modules/**',
+    ],
     coveragePathIgnorePatterns: [
-        '/node_modules/',
-        'src/main/webapp/app/account/account.route.ts',
-        'src/main/webapp/app/admin/admin.route.ts',
-        'src/main/webapp/app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.route.ts',
-        'src/main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route.ts',
-        'src/main/webapp/app/exercises/quiz/manage/quiz-management.route.ts',
-        'src/main/webapp/app/admin/organization-management/organization-management.route.ts',
-        'src/main/webapp/app/admin/system-notification-management/system-notification-management.route.ts',
-        'src/main/webapp/app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route.ts',
-        'src/main/webapp/app/admin/user-management/user-management.route.ts',
-        'src/main/webapp/app/assessment/assessment-locks/assessment-locks.route.ts',
-        'src/main/webapp/app/complaints/list-of-complaints/list-of-complaints.route.ts',
-        'src/main/webapp/app/course/dashboards/assessment-dashboard/assessment-dashboard.route.ts',
-        'src/main/webapp/app/course/manage/course-management.route.ts',
-        'src/main/webapp/app/exam/exam-scores/exam-scores.route.ts',
-        'src/main/webapp/app/exam/participate/exam-participation.route.ts',
-        'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
-        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
-        'src/main/webapp/app/exam/manage/exam-management.route.ts',
-        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
         'src/main/webapp/app/core/config/prod.config.ts',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.81,
-            branches: 73.97,
-            functions: 82.50,
-            lines: 87.86,
+            statements: 88.66,
+            branches: 74.34,
+            functions: 82.84,
+            lines: 88.72,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],

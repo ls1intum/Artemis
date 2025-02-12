@@ -2,7 +2,9 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleCh
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     FileType = FileType;
 

@@ -1,5 +1,5 @@
 <button id="save-exam" type="submit" [disabled]="submission()?.isSynced" class="btn btn-primary" (click)="onSave()">
-    <fa-icon class="saved" [fixedWidth]="true" [icon]="submission()?.submitted && submission()?.isSynced ? facSaveSuccess : faFloppyDisk"> </fa-icon>
+    <fa-icon class="saved" [fixedWidth]="true" [icon]="submission()?.submitted && submission()?.isSynced ? facSaveSuccess : faFloppyDisk" />
     <span
         class="d-none d-sm-inline"
         [jhiTranslate]="submission()?.submitted && submission()?.isSynced ? 'artemisApp.examParticipation.exerciseSaved' : 'artemisApp.examParticipation.saveExercise'"

@@ -26,8 +26,7 @@ describe('IrisEnabledComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [IrisEnabledComponent, TranslatePipeMock],
+            imports: [ArtemisTestModule, IrisEnabledComponent, TranslatePipeMock],
             providers: [provideRouter([]), MockProvider(IrisSettingsService)],
         })
             .compileComponents()

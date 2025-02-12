@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
@@ -8,6 +8,11 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { DatePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -19,8 +24,11 @@ interface SimilarityRangeComparisonStateDTO {
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
+    imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
+    private inspectorService = inject(PlagiarismInspectorService);
+
     /**
      * Result of the automated plagiarism detection
      */
@@ -37,7 +45,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     readonly round = round;
 
-    constructor(private inspectorService: PlagiarismInspectorService) {
+    constructor() {
         super();
         /**
          * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -64,6 +64,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
 };
 
@@ -71,11 +72,9 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     providedIn: 'root',
 })
 export class CourseOverviewService {
-    constructor(
-        private participationService: ParticipationService,
-        private translate: TranslateService,
-        private conversationService: ConversationService,
-    ) {}
+    private participationService = inject(ParticipationService);
+    private translate = inject(TranslateService);
+    private conversationService = inject(ConversationService);
 
     readonly faBullhorn = faBullhorn;
     readonly faHashtag = faHashtag;
@@ -201,6 +200,7 @@ export class CourseOverviewService {
             [ChannelSubType.GENERAL]: 'generalChannels',
             [ChannelSubType.LECTURE]: 'lectureChannels',
             [ChannelSubType.EXAM]: 'examChannels',
+            [ChannelSubType.FEEDBACK_DISCUSSION]: 'feedbackDiscussion',
         };
         return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
     }
@@ -358,14 +358,14 @@ export class CourseOverviewService {
         return examCardItem;
     }
 
-    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+    getChannelIcon(conversation: ConversationDTO): IconDefinition {
         const channelDTO = getAsChannelDTO(conversation);
-        if (channelDTO?.isPublic === false) {
-            return this.faLock;
-        } else if (channelDTO?.name === 'announcement') {
+        if (channelDTO?.isAnnouncementChannel) {
             return this.faBullhorn;
-        } else {
+        } else if (channelDTO?.isPublic) {
             return this.faHashtag;
+        } else {
+            return this.faLock;
         }
     }
 

@@ -1,15 +1,18 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
+
+import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    standalone: true,
-    imports: [FontAwesomeModule, ArtemisSharedCommonModule, NgbCollapseModule],
+    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule],
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })

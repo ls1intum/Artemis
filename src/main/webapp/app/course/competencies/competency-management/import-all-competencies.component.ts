@@ -1,13 +1,18 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/entities/course.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetencyType } from 'app/entities/competency.model';
+import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -38,8 +43,18 @@ export type ImportAllFromCourseResult = {
 @Component({
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [
+        NgbPagination,
+        ButtonComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        SortByDirective,
+        SortDirective,
+        FontAwesomeModule,
+        FormsModule,
+        CommonModule,
+        NgbTypeaheadModule,
+    ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default
@@ -47,8 +62,9 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
 
     @Input() public competencyType: CourseCompetencyType | 'courseCompetency' = CourseCompetencyType.COMPETENCY;
 
-    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
-        super(router, sortService, activeModal, pagingService);
+    constructor() {
+        const pagingService = inject(CourseForImportDTOPagingService);
+        super(pagingService);
         this.columns = tableColumns;
     }
 

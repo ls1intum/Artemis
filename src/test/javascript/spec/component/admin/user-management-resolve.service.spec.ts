@@ -3,14 +3,19 @@ import { UserManagementResolve } from 'app/admin/user-management/user-management
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { TestBed } from '@angular/core/testing';
 
 describe('UserManagementResolve', () => {
     let adminUserService: AdminUserService;
     let resolve: UserManagementResolve;
 
     beforeEach(() => {
-        adminUserService = { findUser: jest.fn() } as any as AdminUserService;
-        resolve = new UserManagementResolve(adminUserService);
+        TestBed.configureTestingModule({
+            providers: [UserManagementResolve, { provide: AdminUserService, useValue: { findUser: jest.fn() } }],
+        });
+
+        adminUserService = TestBed.inject(AdminUserService);
+        resolve = TestBed.inject(UserManagementResolve);
     });
 
     it('should findUser the user', () => {

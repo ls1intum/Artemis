@@ -1,12 +1,17 @@
 import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -32,6 +37,7 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
 export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -74,7 +80,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig() && this.datePickerComponent()?.isValid();
     });
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.isEditMode() && this.formData()) {
             this.setFormValues(this.formData()!);
         }

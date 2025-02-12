@@ -12,14 +12,24 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faBook, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
+    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService);
-    protected fileUploadExerciseService = inject(FileUploadExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected fileUploadExerciseService = inject(FileUploadExerciseService); // needed in html code
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -69,10 +79,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a file upload exercise in the collection
+     * @param _index of a file upload exercise in the collection
      * @param item current file upload exercise
      */
-    trackId(index: number, item: FileUploadExercise) {
+    trackId(_index: number, item: FileUploadExercise) {
         return item.id;
     }
 

@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
@@ -13,9 +12,10 @@ interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
-    protected translateService = inject(TranslateService);
     protected eventManager = inject(EventManager);
     private courseService = inject(CourseManagementService);
     private route = inject(ActivatedRoute);
@@ -29,7 +29,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     showHeading: boolean;
     courseId: number;
     predicate: string = 'id';
-    reverse: boolean = true;
+    reverse = true;
 
     selectedExercises: Exercise[] = [];
     allChecked = false;

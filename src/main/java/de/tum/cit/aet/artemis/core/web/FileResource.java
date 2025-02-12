@@ -64,9 +64,11 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -123,10 +125,13 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final FileUploadService fileUploadService;
+
     public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
+            FileUploadService fileUploadService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -141,6 +146,7 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
+        this.fileUploadService = fileUploadService;
     }
 
     /**
@@ -181,7 +187,11 @@ public class FileResource {
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
-        String responsePath = fileService.handleSaveFileInConversation(file, courseId, conversationId).toString();
+        var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
+        String responsePath = filePathInformation.publicPath().toString();
+
+        fileUploadService.createFileUpload(responsePath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+                FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -203,7 +213,16 @@ public class FileResource {
         // TODO: Improve the access check
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename, true);
+
+        var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+
+        var fileUpload = fileUploadService.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+
+        if (fileUpload.isPresent()) {
+            return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+        }
+
+        return buildFileResponse(path, filename, true);
     }
 
     /**
@@ -645,7 +664,8 @@ public class FileResource {
             String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
                     ? "attachment"
                     : "inline";
-            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(replaceFilename.orElse(filename)).build());
+            String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
+            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {

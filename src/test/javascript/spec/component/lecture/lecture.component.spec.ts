@@ -43,7 +43,6 @@ describe('Lecture', () => {
     let futureLecture2: Lecture;
     let unspecifiedLecture: Lecture;
     let lectureToIngest: Lecture;
-    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
         const lastWeek = dayjs().subtract(1, 'week');
@@ -98,7 +97,6 @@ describe('Lecture', () => {
         lectureToIngest.title = 'machine Learning';
         lectureToIngest.course = new Course();
         lectureToIngest.course.id = 99;
-        consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         const profileInfo = {
             activeProfiles: [],
@@ -140,7 +138,7 @@ describe('Lecture', () => {
                             }),
                         );
                     },
-                    import: (courseId, lectureId) => {
+                    import: (_courseId, lectureId) => {
                         return of(
                             new HttpResponse({
                                 body: { id: lectureId } as Lecture,
@@ -299,10 +297,10 @@ describe('Lecture', () => {
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).not.toHaveBeenCalled();
     });
-    it('should log error when error occurs', () => {
+
+    it('should do nothing when error occurs', () => {
         lectureComponent.lectures = [lectureToIngest];
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to send Lectures Ingestion request', expect.any(Error));
     });
 });

@@ -11,7 +11,7 @@ export class MockHasAnyAuthorityDirective {
     ) {}
 
     @Input()
-    set jhiHasAnyAuthority(value: string | string[]) {
+    set jhiHasAnyAuthority(_value: string | string[]) {
         this.updateView();
     }
 

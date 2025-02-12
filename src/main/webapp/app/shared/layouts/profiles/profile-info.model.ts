@@ -30,8 +30,7 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public versionControlName?: string;
-    public useVersionControlAccessToken?: boolean;
-    public showCloneUrlWithoutToken?: boolean;
+    public repositoryAuthenticationMechanisms?: string[];
     public continuousIntegrationName?: string;
     public buildTimeoutMin?: number;
     public buildTimeoutMax?: number;

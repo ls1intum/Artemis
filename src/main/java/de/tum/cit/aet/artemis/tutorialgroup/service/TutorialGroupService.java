@@ -683,7 +683,7 @@ public class TutorialGroupService {
             fields.add("Last Name");
         }
 
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(fields.toArray(new String[0])).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(fields.toArray(new String[0])).get();
         try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
             for (TutorialGroup tutorialGroup : tutorialGroups) {
                 writeTutorialGroupRow(printer, tutorialGroup, fields, null);

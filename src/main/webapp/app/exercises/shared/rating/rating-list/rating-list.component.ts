@@ -1,17 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StarRatingComponent } from '../star-rating/star-rating.component';
 
 @Component({
     selector: 'jhi-rating-list',
     templateUrl: './rating-list.component.html',
     styleUrls: [],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, StarRatingComponent],
 })
 export class RatingListComponent implements OnInit {
+    private ratingService = inject(RatingService);
+    private route = inject(ActivatedRoute);
+    private sortService = inject(SortService);
+    private router = inject(Router);
+
     public ratings: Rating[] = [];
 
     private courseId: number;
@@ -22,13 +33,6 @@ export class RatingListComponent implements OnInit {
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
-
-    constructor(
-        private ratingService: RatingService,
-        private route: ActivatedRoute,
-        private sortService: SortService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {

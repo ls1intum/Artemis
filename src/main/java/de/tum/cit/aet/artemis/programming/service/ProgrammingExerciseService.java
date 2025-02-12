@@ -999,7 +999,7 @@ public class ProgrammingExerciseService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase();
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);
@@ -1102,7 +1102,7 @@ public class ProgrammingExerciseService {
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.createDockerRunConfig(dockerFlagsDTO.network(), dockerFlagsDTO.env());
 
         if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
             throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");

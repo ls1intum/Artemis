@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Exercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
@@ -8,13 +8,34 @@ import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GroupedPlagiarismCases } from 'app/exercises/shared/plagiarism/types/GroupedPlagiarismCase';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { PlagiarismCaseVerdictComponent } from '../shared/verdict/plagiarism-case-verdict.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
     styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FaIconComponent,
+        RouterLink,
+        ProgressBarComponent,
+        PlagiarismCaseVerdictComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+
     courseId: number;
     examId?: number;
     plagiarismCases: PlagiarismCase[] = [];
@@ -27,12 +48,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
-
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

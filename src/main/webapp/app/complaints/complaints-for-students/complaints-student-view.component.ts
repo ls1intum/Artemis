@@ -25,7 +25,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
-    standalone: true,
     imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {

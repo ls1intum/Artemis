@@ -9,8 +9,7 @@
                 [authorId]="userId"
                 [authorName]="userName"
                 [imageUrl]="userImageUrl"
-            >
-            </jhi-profile-picture>
+            />
             @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }

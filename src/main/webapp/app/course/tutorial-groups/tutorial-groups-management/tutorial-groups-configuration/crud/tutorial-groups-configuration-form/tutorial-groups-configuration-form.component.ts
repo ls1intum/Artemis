@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -14,8 +18,11 @@ export interface TutorialGroupsConfigurationFormData {
     templateUrl: './tutorial-groups-configuration-form.component.html',
     styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
@@ -36,8 +43,6 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     form: FormGroup;
 
-    constructor(private fb: FormBuilder) {}
-
     get periodControl() {
         return this.form.get('period');
     }
@@ -57,7 +62,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     ngOnInit(): void {
         this.initializeForm();
     }
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

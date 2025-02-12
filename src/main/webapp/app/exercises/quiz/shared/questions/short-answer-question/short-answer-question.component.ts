@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
@@ -8,6 +8,12 @@ import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { NgClass } from '@angular/common';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -15,8 +21,12 @@ import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.co
     providers: [ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionComponent {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+
     shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
 
@@ -64,11 +74,6 @@ export class ShortAnswerQuestionComponent {
     // Icons
     faExclamationCircle = faExclamationCircle;
     farQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-    ) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

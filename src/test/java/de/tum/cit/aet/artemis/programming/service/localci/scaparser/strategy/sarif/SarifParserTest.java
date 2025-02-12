@@ -2,6 +2,12 @@ package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sa
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
@@ -472,5 +478,61 @@ class SarifParserTest {
         StaticCodeAnalysisReportDTO parsedReport = parser.parse(report);
 
         assertThat(parsedReport.issues()).singleElement().matches(issue -> issue.rule().equals("A001"));
+    }
+
+    @Test
+    void testMessageProcessor() {
+        String report = """
+                {
+                    "runs": [
+                        {
+                            "tool": {
+                                "driver": {
+                                    "rules": [
+                                        {
+                                            "fullDescription": {
+                                                "text": "DESCRIPTION"
+                                            },
+                                            "id": "RULE_ID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "results": [
+                                {
+                                    "level": "error",
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "ORIGINAL_MESSAGE"
+                                    },
+                                    "ruleId": "RULE_ID",
+                                    "ruleIndex": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+                """;
+
+        MessageProcessor messageProcessor = mock(MessageProcessor.class);
+        when(messageProcessor.processMessage(anyString(), any())).thenReturn("REPLACED_MESSAGE");
+
+        SarifParser parser = new SarifParser(StaticCodeAnalysisTool.OTHER, new IdCategorizer(), messageProcessor);
+        StaticCodeAnalysisReportDTO parsedReport = parser.parse(report);
+
+        assertThat(parsedReport.issues()).singleElement().extracting(StaticCodeAnalysisIssue::message).isEqualTo("REPLACED_MESSAGE");
+
+        verify(messageProcessor).processMessage(eq("ORIGINAL_MESSAGE"), any());
     }
 }

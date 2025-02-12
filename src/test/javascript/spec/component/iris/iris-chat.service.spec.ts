@@ -24,6 +24,7 @@ import {
     mockWebsocketStatusMessage,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import 'app/shared/util/array.extension';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;

@@ -17,7 +17,12 @@
         }
     </div>
     <div class="chatbot-button">
-        <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
+        @if (isChatGptWrapper) {
+            <!-- TODO TW: This "feature" is only temporary for a paper. -->
+            <img src="public/images/chatgpt-temp/ChatGPT_logo.svg" alt="Iris Logo" style="height: 70px" class="iris-logo" (click)="handleButtonClick()" />
+        } @else {
+            <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
+        }
         @if (hasNewMessages) {
             <fa-icon [icon]="faCircle" size="xl" class="unread-indicator" />
         }

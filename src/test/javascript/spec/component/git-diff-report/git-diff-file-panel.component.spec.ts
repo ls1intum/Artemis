@@ -4,7 +4,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { GitDiffFilePanelComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel.component';
-import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
 import { GitDiffFilePanelTitleComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
 import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
@@ -27,7 +27,6 @@ describe('GitDiffFilePanelComponent', () => {
                 MockDirective(NgbAccordionHeader),
                 MockDirective(NgbAccordionButton),
                 MockDirective(NgbAccordionCollapse),
-                MockDirective(NgbAccordionBody),
             ],
             providers: [],
         }).compileComponents();

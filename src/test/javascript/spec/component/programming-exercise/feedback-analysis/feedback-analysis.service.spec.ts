@@ -18,6 +18,7 @@ describe('FeedbackAnalysisService', () => {
             relativeCount: 25.0,
             taskName: '1',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
         {
             feedbackIds: [2],
@@ -27,6 +28,7 @@ describe('FeedbackAnalysisService', () => {
             relativeCount: 15.0,
             taskName: '2',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
     ];
 

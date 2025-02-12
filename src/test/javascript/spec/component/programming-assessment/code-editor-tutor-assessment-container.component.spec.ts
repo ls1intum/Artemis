@@ -11,10 +11,9 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -38,29 +37,9 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
-import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
-import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
-import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
-import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
-import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -175,33 +154,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, CodeEditorMonacoComponent],
-            declarations: [
-                CodeEditorTutorAssessmentContainerComponent,
-                MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
-                AssessmentLayoutComponent,
-                MockComponent(AssessmentComplaintAlertComponent),
-                MockComponent(AssessmentHeaderComponent),
-                MockComponent(ComplaintsForTutorComponent),
-                CodeEditorContainerComponent,
-                CodeEditorFileBrowserComponent,
-                MockPipe(KeysPipe),
-                TreeviewComponent,
-                MockComponent(CodeEditorStatusComponent),
-                MockComponent(CodeEditorFileBrowserCreateNodeComponent),
-                MockComponent(CodeEditorFileBrowserFolderComponent),
-                MockComponent(CodeEditorFileBrowserFileComponent),
-                MockComponent(CodeEditorBuildOutputComponent),
-                MockComponent(CodeEditorGridComponent),
-                MockComponent(CodeEditorActionsComponent),
-                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                MockComponent(CodeEditorInstructionsComponent),
-                MockComponent(ResultComponent),
-                MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(AssessmentInstructionsComponent),
-                MockComponent(UnreferencedFeedbackComponent),
-                MockPipe(ArtemisTranslatePipe),
-                ExtensionPointDirective,
-            ],
             providers: [
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },

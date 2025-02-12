@@ -44,6 +44,9 @@ import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { NgStyle } from '@angular/common';
+import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -57,8 +60,18 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+    private cdref = inject(ChangeDetectorRef);
+    private metisService = inject(MetisService);
+    private fileService = inject(FileService);
+    private courseManagementService = inject(CourseManagementService);
+    private lectureService = inject(LectureService);
+    private channelService = inject(ChannelService);
+    viewContainerRef = inject(ViewContainerRef);
+    private positionBuilder = inject(OverlayPositionBuilder);
+
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() maxContentLength: number;
@@ -79,16 +92,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     private overlay = inject(Overlay);
-
-    constructor(
-        private cdref: ChangeDetectorRef,
-        private metisService: MetisService,
-        private courseManagementService: CourseManagementService,
-        private lectureService: LectureService,
-        private channelService: ChannelService,
-        public viewContainerRef: ViewContainerRef,
-        private positionBuilder: OverlayPositionBuilder,
-    ) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -118,7 +121,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ...faqAction,
         ];
 
-        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);
+        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);
     }
 
     ngAfterViewInit(): void {
@@ -171,8 +174,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     /**
      * the callback function to register on UI change
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onChange = (val: string) => {};
+    onChange = (_val: string) => {};
 
     /**
      * emits the value change from component

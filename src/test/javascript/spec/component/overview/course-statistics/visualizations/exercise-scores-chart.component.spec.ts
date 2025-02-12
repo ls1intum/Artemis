@@ -1,18 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { ChartNode, ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisTestModule } from '../../../../test.module';
@@ -42,8 +39,7 @@ describe('ExerciseScoresChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(LineChartModule), MockModule(BrowserAnimationsModule)],
-            declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [ArtemisTestModule, MockModule(BrowserAnimationsModule)],
             providers: [
                 provideRouter([]),
                 MockProvider(AlertService),

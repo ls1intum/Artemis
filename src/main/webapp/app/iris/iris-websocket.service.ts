@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> };
@@ -9,13 +9,9 @@ type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> }
  */
 @Injectable({ providedIn: 'root' })
 export class IrisWebsocketService implements OnDestroy {
-    private subscribedChannels: Map<number, SubscribedChannel> = new Map();
+    protected websocketService = inject(WebsocketService);
 
-    /**
-     * Creates an instance of IrisWebsocketService.
-     * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
-     */
-    protected constructor(protected jhiWebsocketService: JhiWebsocketService) {}
+    private subscribedChannels: Map<number, SubscribedChannel> = new Map();
 
     /**
      * Cleans up resources before the service is destroyed.
@@ -23,7 +19,7 @@ export class IrisWebsocketService implements OnDestroy {
     ngOnDestroy(): void {
         this.subscribedChannels.forEach((subscription, sessionId) => {
             subscription.wsSubscription.unsubscribe();
-            this.jhiWebsocketService.unsubscribe(this.getChannelFromSessionId(sessionId));
+            this.websocketService.unsubscribe(this.getChannelFromSessionId(sessionId));
         });
     }
 
@@ -39,7 +35,7 @@ export class IrisWebsocketService implements OnDestroy {
         const subscribedChannel = this.subscribedChannels.computeIfAbsent(sessionId, () => {
             const channel = this.getChannelFromSessionId(sessionId);
             const subject = new Subject<any>();
-            const wsSubscription = this.jhiWebsocketService
+            const wsSubscription = this.websocketService
                 .subscribe(channel)
                 .receive(channel)
                 .subscribe((response: any) => {
@@ -63,7 +59,7 @@ export class IrisWebsocketService implements OnDestroy {
             this.subscribedChannels.delete(sessionId);
 
             const channel = this.getChannelFromSessionId(sessionId);
-            this.jhiWebsocketService.unsubscribe(channel);
+            this.websocketService.unsubscribe(channel);
             return true;
         }
         return false;

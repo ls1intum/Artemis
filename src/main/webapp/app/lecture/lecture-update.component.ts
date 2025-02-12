@@ -20,11 +20,33 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../shared/components/documentation-button/documentation-button.component';
+import { MarkdownEditorMonacoComponent } from '../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        LectureTitleChannelNameComponent,
+        MarkdownEditorMonacoComponent,
+        LectureUpdatePeriodComponent,
+        FaIconComponent,
+        LectureAttachmentsComponent,
+        LectureUpdateUnitsComponent,
+        NgbTooltip,
+        ArtemisTranslatePipe,
+    ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly documentationType: DocumentationType = 'Lecture';
@@ -273,7 +295,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.isSaving = false;
 
         if (!lecture.course?.id) {
-            console.error('Lecture has no course id', lecture);
+            captureException('Lecture has no course id: ' + lecture);
             return;
         }
 

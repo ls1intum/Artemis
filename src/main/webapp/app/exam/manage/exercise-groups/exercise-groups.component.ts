@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -13,7 +13,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -34,14 +33,48 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { LowerCasePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
     styleUrls: ['./exercise-groups.component.scss'],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        HelpIconComponent,
+        DeleteButtonDirective,
+        ProgrammingExerciseGroupCellComponent,
+        QuizExerciseGroupCellComponent,
+        ModelingExerciseGroupCellComponent,
+        FileUploadExerciseGroupCellComponent,
+        ExamExerciseRowButtonsComponent,
+        LowerCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseGroupsComponent implements OnInit {
-    participationType = ProgrammingExerciseParticipationType;
+    private route = inject(ActivatedRoute);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    exerciseService = inject(ExerciseService);
+    private examManagementService = inject(ExamManagementService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+
     courseId: number;
     course: Course;
     examId: number;
@@ -68,18 +101,6 @@ export class ExerciseGroupsComponent implements OnInit {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
     faFileImport = faFileImport;
-
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseGroupService: ExerciseGroupService,
-        public exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private eventManager: EventManager,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private router: Router,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.

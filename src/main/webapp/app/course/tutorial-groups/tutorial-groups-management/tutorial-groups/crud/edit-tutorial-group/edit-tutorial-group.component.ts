@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormComponent, TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest } from 'rxjs';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
@@ -11,13 +11,22 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
     templateUrl: './edit-tutorial-group.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFormComponent],
 })
 export class EditTutorialGroupComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
@@ -26,14 +35,6 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     formData: TutorialGroupFormData;
     tutorialGroupId: number;
     course: Course;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

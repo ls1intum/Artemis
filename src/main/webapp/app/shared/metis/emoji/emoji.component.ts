@@ -8,7 +8,6 @@ import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
     templateUrl: './emoji.component.html',
     styleUrls: ['./emoji.component.scss'],
     imports: [EmojiModule],
-    standalone: true,
 })
 export class EmojiComponent {
     private themeService = inject(ThemeService);

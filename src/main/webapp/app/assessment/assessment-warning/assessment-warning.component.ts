@@ -3,6 +3,8 @@ import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Submission } from 'app/entities/submission.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * Displays a warning for instructors on submission page, team page and the assessment page.
@@ -26,6 +28,7 @@ import { Submission } from 'app/entities/submission.model';
             }
         </h6>
     `,
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class AssessmentWarningComponent implements OnChanges {
     @Input() exercise: Exercise;
@@ -40,7 +43,7 @@ export class AssessmentWarningComponent implements OnChanges {
     /**
      * Checks if the due date of the exercise is over
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.exercise.dueDate) {
             const now = dayjs();
             this.isBeforeExerciseDueDate = now.isBefore(this.exercise.dueDate);

@@ -48,14 +48,6 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             return;
         }
 
-        // We need to extract the content of the request here as it is garbage collected before it can be used asynchronously
-        String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
-        String method = servletRequest.getMethod();
-        LocalVCRepositoryUri localVCRepositoryUri = localVCServletService.parseRepositoryUri(servletRequest);
-
-        this.localVCServletService.updateVCSAccessLogForPushHTTPS(method, authorizationHeader, localVCRepositoryUri);
-
         filterChain.doFilter(servletRequest, servletResponse);
-
     }
 }

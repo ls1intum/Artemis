@@ -8,6 +8,4 @@ import { Component, Input } from '@angular/core';
 export class SidePanelComponent {
     @Input() panelHeader: string;
     @Input() panelDescriptionHeader?: string;
-
-    constructor() {}
 }

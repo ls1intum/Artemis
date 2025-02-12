@@ -221,6 +221,14 @@ public class ChannelResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(course);
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
+        var channelToCreate = new Channel();
+        channelToCreate.setName(channelDTO.getName());
+        channelToCreate.setIsPublic(channelDTO.getIsPublic());
+        channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(channelDTO.getDescription());
+        channelToCreate.setIsCourseWide(channelDTO.getIsCourseWide());
+
         if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
@@ -481,7 +489,6 @@ public class ChannelResource extends ConversationManagementResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
-
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 

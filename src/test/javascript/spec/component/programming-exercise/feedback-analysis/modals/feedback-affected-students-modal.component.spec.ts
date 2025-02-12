@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,14 +19,13 @@ describe('AffectedStudentsModalComponent', () => {
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',
+        hasLongFeedbackText: false,
     };
 
     const participationMock: FeedbackAffectedStudentDTO[] = [
         { participationId: 101, firstName: 'A', lastName: 'Z', login: 'AZ', repositoryURI: 'repo1' },
         { participationId: 102, firstName: 'I', lastName: 'B', login: 'IB', repositoryURI: 'repo2' },
     ];
-
-    const groupFeedback = false;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -50,21 +49,18 @@ describe('AffectedStudentsModalComponent', () => {
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
-        fixture.componentRef.setInput('groupFeedback', groupFeedback);
         fixture.detectChanges();
     });
 
     it('should handle error when loadAffected fails', async () => {
         jest.spyOn(feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
         const alertServiceSpy = jest.spyOn(component.alertService, 'error');
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        await component['loadAffected']();
+        // @ts-ignore
+        await component.loadAffected();
 
         expect(component.participation()).toEqual([]);
         expect(alertServiceSpy).toHaveBeenCalled();
-        expect(consoleErrorSpy).toHaveBeenCalled();
-
-        consoleErrorSpy.mockRestore();
     });
 });

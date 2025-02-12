@@ -4,14 +4,19 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 import { SystemNotificationManagementResolve } from 'app/admin/system-notification-management/system-notification-management-resolve.service';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { HttpResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 
 describe('SystemNotificationManagementResolveService', () => {
     let systemNotificationService: SystemNotificationService;
     let systemNotificationManagementResolve: SystemNotificationManagementResolve;
 
     beforeEach(() => {
-        systemNotificationService = { find: jest.fn() } as any as SystemNotificationService;
-        systemNotificationManagementResolve = new SystemNotificationManagementResolve(systemNotificationService);
+        TestBed.configureTestingModule({
+            providers: [SystemNotificationManagementResolve, { provide: SystemNotificationService, useValue: { find: jest.fn() } }],
+        });
+
+        systemNotificationService = TestBed.inject(SystemNotificationService);
+        systemNotificationManagementResolve = TestBed.inject(SystemNotificationManagementResolve);
     });
 
     it('should search for notification by id', () => {

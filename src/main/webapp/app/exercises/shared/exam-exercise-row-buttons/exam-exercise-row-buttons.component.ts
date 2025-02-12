@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -16,12 +16,27 @@ import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, fa
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
+    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class ExamExerciseRowButtonsComponent implements OnInit {
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private eventManager = inject(EventManager);
+    private profileService = inject(ProfileService);
+
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() exam: Exam;
@@ -48,16 +63,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
 
     localVCEnabled = false;
     localCIEnabled = false;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
-        private quizExerciseService: QuizExerciseService,
-        private eventManager: EventManager,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

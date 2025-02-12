@@ -6,7 +6,6 @@ import { RouterModule } from '@angular/router';
 @Component({
     selector: 'jhi-link-detail',
     templateUrl: 'link-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent, RouterModule],
 })
 export class LinkDetailComponent {

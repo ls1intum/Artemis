@@ -33,7 +33,7 @@
     <div>
         @for (faq of this.filteredFaqs; track faq) {
             <div #faqElement id="faq-{{ faq.id }}">
-                <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+                <jhi-course-faq-accordion [faq]="faq" />
             </div>
         }
     </div>

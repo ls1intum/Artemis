@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -11,12 +11,18 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CommitsInfoComponent } from '../../exercises/programming/shared/commits-info/commits-info.component';
 
 @Component({
     selector: 'jhi-commit-history',
     templateUrl: './commit-history.component.html',
+    imports: [CommitsInfoComponent],
 })
 export class CommitHistoryComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
@@ -33,12 +39,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     exercise: ProgrammingExercise;
 
     isTestRepository = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
-    ) {}
 
     ngOnDestroy() {
         this.paramSub?.unsubscribe();

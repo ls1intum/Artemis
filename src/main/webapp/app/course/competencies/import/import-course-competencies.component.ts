@@ -4,7 +4,7 @@ import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,12 +16,14 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
  * An abstract component used to import course competencies. Its concrete implementations are
  * {@link ImportCompetenciesComponent} and {@link ImportPrerequisitesComponent}
  */
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;
     // set this attribute to hide the options to import relation
-    allowRelationImport: boolean = false;
+    allowRelationImport = false;
 
     courseId: number;
     isLoading = false;
@@ -203,5 +205,19 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

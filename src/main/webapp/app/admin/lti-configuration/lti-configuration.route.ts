@@ -1,13 +1,12 @@
 import { Routes } from '@angular/router';
-import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const ltiConfigurationRoute: Routes = [
     {
         path: 'lti-configuration',
-        component: LtiConfigurationComponent,
+        loadComponent: () => import('app/admin/lti-configuration/lti-configuration.component').then((m) => m.LtiConfigurationComponent),
         data: {
             pageTitle: 'global.menu.admin.lti',
             defaultSort: 'id,desc',
@@ -21,7 +20,7 @@ export const ltiConfigurationRoute: Routes = [
         children: [
             {
                 path: 'new',
-                component: EditLtiConfigurationComponent,
+                loadComponent: () => import('app/admin/lti-configuration/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                 data: {
                     authorities: [Authority.ADMIN],
                     pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',
@@ -36,7 +35,7 @@ export const ltiConfigurationRoute: Routes = [
                 children: [
                     {
                         path: 'edit',
-                        component: EditLtiConfigurationComponent,
+                        loadComponent: () => import('app/admin/lti-configuration/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                         data: {
                             authorities: [Authority.ADMIN],
                             pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',

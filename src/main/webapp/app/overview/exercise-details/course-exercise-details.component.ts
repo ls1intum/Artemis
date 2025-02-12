@@ -1,6 +1,6 @@
-import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -17,13 +17,11 @@ import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/e
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
@@ -37,11 +35,31 @@ import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseDetailsStudentActionsComponent } from './exercise-details-student-actions.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { ResultHistoryComponent } from '../result-history/result-history.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
+import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
+import { LtiInitializerComponent } from './lti-initializer.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -53,8 +71,50 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        RouterLink,
+        TranslateDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+        ExerciseDetailsStudentActionsComponent,
+        ExerciseHeadersInformationComponent,
+        ResultHistoryComponent,
+        ResultComponent,
+        ProblemStatementComponent,
+        ResetRepoButtonComponent,
+        ModelingEditorComponent,
+        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
+        NgbTooltip,
+        ExerciseInfoComponent,
+        ComplaintsStudentViewComponent,
+        RatingComponent,
+        IrisExerciseChatbotButtonComponent,
+        DiscussionSectionComponent,
+        LtiInitializerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private guidedTourService = inject(GuidedTourService);
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private complaintService = inject(ComplaintService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private accountService = inject(AccountService); // TODO TW: This "feature" is only temporary for a paper.
+
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
@@ -71,16 +131,16 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
+    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
     public learningPathMode = false;
     public exerciseId: number;
     public courseId: number;
     public exercise: Exercise;
-    public resultWithComplaint?: Result;
-    public latestRatedResult?: Result;
-    public complaint?: Complaint;
-    public showMoreResults = false;
+    resultWithComplaint?: Result;
+    latestRatedResult?: Result;
+    complaint?: Complaint;
+    showMoreResults = false;
     public sortedHistoryResults: Result[];
-    public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private submissionSubscription: Subscription;
@@ -89,9 +149,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     practiceStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
-    public gradingCriteria: GradingCriterion[];
     baseResource: string;
-    isExamExercise: boolean;
     submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -100,14 +158,15 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
-    isGeneratingFeedback: boolean = false;
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
+
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -117,21 +176,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private guidedTourService: GuidedTourService,
-        private alertService: AlertService,
-        private teamService: TeamService,
-        private quizExerciseService: QuizExerciseService,
-        private complaintService: ComplaintService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        scienceService: ScienceService,
-    ) {
-        super(scienceService, ScienceEventType.EXERCISE__OPEN);
+    constructor() {
+        super(ScienceEventType.EXERCISE__OPEN);
     }
 
     ngOnInit() {
@@ -179,10 +225,16 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
 
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
+            this.accountService.identity().then((user) => {
+                this.isChatGptWrapper = user && user.id ? user.id % 3 == 0 : false;
+            });
+        }
+
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -295,7 +347,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
                         (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
                     ) {
-                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
@@ -304,7 +355,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()?.successful !== undefined
                     ) {
-                        this.isGeneratingFeedback = false;
                         if (changedParticipation.results?.last()?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                         } else {

@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.assessment.util;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,11 +13,11 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
-
-import com.opencsv.CSVReader;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
@@ -106,13 +107,12 @@ public class GradingScaleUtilService {
      * @param firstPassingIndex     The index of the first passing grade step.
      * @param gradeNames            The names of the grade steps.
      * @param exam                  The exam to which the grading scale belongs.
-     * @return The generated and saved grading scale.
      */
-    public GradingScale generateAndSaveGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
+    public void generateAndSaveGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
             Exam exam) {
         GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);
         gradingScale.setExam(exam);
-        return gradingScaleRepository.save(gradingScale);
+        gradingScaleRepository.save(gradingScale);
     }
 
     /**
@@ -201,16 +201,18 @@ public class GradingScaleUtilService {
      *
      * @param path The path to the csv file.
      * @return The list of String arrays.
-     * @throws Exception if an error occurs while reading the csv file.
+     * @throws IOException if an error occurs while reading the csv file.
      */
-    public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
-        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
-            List<String[]> rows = reader.readAll();
-            // delete first row with column headers
-            rows.remove(0);
+    public List<String[]> loadPercentagesAndGrades(String path) throws IOException {
+
+        try (var reader = Files.newBufferedReader(ResourceUtils.getFile("classpath:" + path).toPath(), StandardCharsets.UTF_8);
+                var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT)) {
+            var rows = csvParser.getRecords();
+            rows.removeFirst(); // remove header
+
             List<String[]> percentagesAndGrades = new ArrayList<>();
             // copy only percentages, whether the student has submitted, and their grade
-            rows.forEach(row -> percentagesAndGrades.add(new String[] { row[2], row[3], row[4] }));
+            rows.forEach(row -> percentagesAndGrades.add(new String[] { row.values()[2], row.values()[3], row.values()[4] }));
             return percentagesAndGrades;
         }
     }

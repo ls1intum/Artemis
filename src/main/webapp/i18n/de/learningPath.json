@@ -15,7 +15,8 @@
                 "recapLabel": "Lerneinheiten wiederholen"
             },
             "competencyGraphModal": {
-                "title": "Abhängigkeiten der Lernpfadkompetenzen"
+                "title": "Abhängigkeiten der Lernpfadkompetenzen",
+                "titleWithName": "Abhängigkeiten der Lernpfadkompetenzen für {{ name }}"
             },
             "generation": {
                 "title": "Willkommen bei deinem Lernpfad!",

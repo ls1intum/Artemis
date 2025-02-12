@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { MockProvider } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -24,7 +24,7 @@ import { SubmissionPatch } from 'app/entities/submission-patch.model';
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
     let component: TeamSubmissionSyncComponent;
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let textSubmissionWithParticipation: Submission;
     let submissionObservableWithParticipation: Observable<Submission>;
     let submissionSyncPayload: SubmissionSyncPayload;
@@ -35,7 +35,7 @@ describe('Team Submission Sync Component', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SessionStorageService),
-                MockProvider(JhiWebsocketService),
+                MockProvider(WebsocketService),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: HttpClient, useClass: MockHttpService },
@@ -46,7 +46,7 @@ describe('Team Submission Sync Component', () => {
                 fixture = TestBed.createComponent(TeamSubmissionSyncComponent);
                 component = fixture.componentInstance;
 
-                websocketService = TestBed.inject(JhiWebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
 
                 component.exerciseType = ExerciseType.TEXT;
                 const participation = new StudentParticipation(ParticipationType.STUDENT);

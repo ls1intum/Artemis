@@ -3,21 +3,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
 
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDeleteButton [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
+    imports: [DeleteButtonDirective],
 })
 class TestComponent {
     actionType = ActionType.Delete;
@@ -33,9 +26,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, NgbModule],
-            declarations: [TestComponent, DeleteButtonDirective, MockComponent(DeleteDialogComponent), TranslatePipeMock, MockDirective(TranslateDirective)],
-            providers: [JhiLanguageHelper, AlertService],
+            imports: [ArtemisTestModule, TestComponent],
         })
             .compileComponents()
             .then(() => {

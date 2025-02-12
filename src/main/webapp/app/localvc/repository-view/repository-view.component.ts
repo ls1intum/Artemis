@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -18,12 +18,40 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
+    imports: [
+        CodeEditorContainerComponent,
+        TranslateDirective,
+        ButtonComponent,
+        ResultComponent,
+        RouterLink,
+        FaIconComponent,
+        CodeButtonComponent,
+        ProgrammingExerciseStudentRepoDownloadComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    domainService = inject(DomainService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private router = inject(Router);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -46,6 +74,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
     enableVcsAccessLog = false;
+    isInCourseManagement = false;
     allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;
@@ -55,16 +84,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
     differentParticipationSub: Subscription;
-
-    constructor(
-        private accountService: AccountService,
-        public domainService: DomainService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private router: Router,
-    ) {}
 
     /**
      * Unsubscribe from all subscriptions when the component is destroyed

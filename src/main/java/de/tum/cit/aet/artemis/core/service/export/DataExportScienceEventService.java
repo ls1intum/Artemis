@@ -57,7 +57,7 @@ public class DataExportScienceEventService {
         }
 
         String[] header = { "timestamp", "event_type", "resource_id" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("science_events" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var scienceEvent : scienceEvents) {

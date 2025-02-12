@@ -4,11 +4,15 @@ import { FileBadge, FileType } from 'app/exercises/programming/shared/code-edito
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorFileBrowserBadgeComponent } from './code-editor-file-browser-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',
     templateUrl: './code-editor-file-browser-folder.component.html',
     providers: [NgbModal],
+    imports: [FaIconComponent, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
     @Input() onCollapseExpand: () => void;
