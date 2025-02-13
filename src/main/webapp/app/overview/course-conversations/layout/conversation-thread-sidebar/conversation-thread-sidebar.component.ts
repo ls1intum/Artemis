@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
-import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -11,15 +11,17 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
+    expandTooltip = viewChild<NgbTooltip>('expandTooltip');
 
     @Input()
     readOnlyMode = false;
@@ -47,6 +49,10 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
+    readonly faExpand = faExpand;
+    readonly faCompress = faCompress;
+
+    isExpanded = false;
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -57,6 +63,11 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         answerPost.content = '';
         answerPost.post = this.post;
         return answerPost;
+    }
+
+    toggleExpand(): void {
+        this.isExpanded = !this.isExpanded;
+        this.expandTooltip()?.close();
     }
 
     /**
