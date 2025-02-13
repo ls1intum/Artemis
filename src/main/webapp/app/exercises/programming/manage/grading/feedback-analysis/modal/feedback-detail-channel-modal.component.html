@@ -48,9 +48,9 @@
         <div class="form-group">
             <label [jhiTranslate]="TRANSLATION_BASE + '.channelVisibility'"></label>
             <div class="btn-group" role="group">
-                <input type="radio" class="btn-check" id="public" formControlName="isPublic" [value]="true" />
+                <input type="radio" class="btn-check" id="public" formControlName="isPrivate" [value]="false" />
                 <label for="public" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPublic'"></label>
-                <input type="radio" class="btn-check" id="private" formControlName="isPublic" [value]="false" />
+                <input type="radio" class="btn-check" id="private" formControlName="isPrivate" [value]="true" />
                 <label for="private" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPrivate'"></label>
             </div>
         </div>
