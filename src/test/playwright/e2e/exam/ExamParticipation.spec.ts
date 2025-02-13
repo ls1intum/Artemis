@@ -264,25 +264,25 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Programming exam with Git submissions', { tag: '@sequential' }, () => {
-        let exam: Exam;
-        let programmingExercise: ProgrammingExercise;
+    for (const cloneMethod of [GitCloneMethod.https, GitCloneMethod.httpsWithToken, GitCloneMethod.ssh]) {
+        test.describe('Programming exam with Git submissions', { tag: '@sequential' }, () => {
+            let exam: Exam;
+            let programmingExercise: ProgrammingExercise;
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
-            await login(admin);
-            exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
-            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                submission: javaAllSuccessfulSubmission,
-                progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,
+            test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+                await login(admin);
+                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
+                const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                    submission: javaAllSuccessfulSubmission,
+                    progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,
+                });
+                programmingExercise = exercise as ProgrammingExercise;
+
+                await examAPIRequests.registerStudentForExam(exam, studentTwo);
+                await examAPIRequests.generateMissingIndividualExams(exam);
+                await examAPIRequests.prepareExerciseStartForExam(exam);
             });
-            programmingExercise = exercise as ProgrammingExercise;
 
-            await examAPIRequests.registerStudentForExam(exam, studentTwo);
-            await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
-        });
-
-        for (const cloneMethod of [GitCloneMethod.https, GitCloneMethod.httpsWithToken, GitCloneMethod.ssh]) {
             if (cloneMethod === GitCloneMethod.ssh) {
                 test.beforeEach('Setup SSH credentials', async ({ page, login }) => {
                     await login(studentTwo);
@@ -315,8 +315,8 @@ test.describe('Exam participation', () => {
                     await accountManagementAPIRequests.deleteSshPublicKey();
                 });
             }
-        }
-    });
+        });
+    }
 
     test.describe('Exam announcements', () => {
         let exam: Exam;
