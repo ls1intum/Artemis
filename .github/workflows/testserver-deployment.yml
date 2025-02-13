@@ -121,10 +121,6 @@ jobs:
           echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-          # Test SSH connection
-          echo "Testing SSH connection..."
-          ssh -v -i ~/.ssh/id_rsa $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "test"'
-
       - name: Phase 1 - Stop Secondary Nodes
         run: |
           HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
