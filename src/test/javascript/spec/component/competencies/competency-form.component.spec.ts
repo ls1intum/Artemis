@@ -15,6 +15,7 @@ import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('CompetencyFormComponent', () => {
@@ -30,6 +31,9 @@ describe('CompetencyFormComponent', () => {
             providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
         }).compileComponents();
 
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
         competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
         competencyFormComponent = competencyFormComponentFixture.componentInstance;
 

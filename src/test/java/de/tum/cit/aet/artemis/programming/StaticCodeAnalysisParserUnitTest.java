@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +21,9 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.Un
  */
 class StaticCodeAnalysisParserUnitTest {
 
-    private static final Path EXPECTED_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "expected");
+    private static final Path EXPECTED_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "expected");
 
-    private static final Path REPORTS_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports");
+    private static final Path REPORTS_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
     private final ObjectMapper mapper = new ObjectMapper();
 

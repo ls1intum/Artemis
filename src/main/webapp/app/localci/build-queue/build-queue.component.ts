@@ -19,7 +19,6 @@ import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstra
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,12 +28,13 @@ import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -204,8 +204,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
-    rawBuildLogs: BuildLogLines[] = [];
     displayedBuildJobId?: string;
+    rawBuildLogsString: string = '';
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
@@ -429,15 +429,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @param buildJobId The id of the build job
      */
     viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+        this.rawBuildLogsString = '';
+        this.displayedBuildJobId = undefined;
         if (buildJobId) {
             this.openModal(modal, true);
             this.displayedBuildJobId = buildJobId;
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
-                next: (buildLogs: BuildLogEntry[]) => {
-                    this.rawBuildLogs = buildLogs.map((entry) => {
-                        const logLines = entry.log ? entry.log.split('\n') : [];
-                        return { time: entry.time, logLines: logLines };
-                    });
+                next: (buildLogs: string) => {
+                    this.rawBuildLogsString = buildLogs;
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res, false);
@@ -445,14 +444,17 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             });
         }
     }
-
     /**
      * Download the build logs of a specific build job
      */
     downloadBuildLogs(): void {
-        if (this.displayedBuildJobId) {
-            const url = `/api/build-log/${this.displayedBuildJobId}`;
-            window.open(url, '_blank');
+        if (this.displayedBuildJobId && this.rawBuildLogsString) {
+            const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
+            try {
+                downloadFile(blob, `${this.displayedBuildJobId}.log`);
+            } catch (error) {
+                this.alertService.error('artemisApp.buildQueue.logs.downloadError');
+            }
         }
     }
 

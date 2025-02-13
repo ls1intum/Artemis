@@ -1,15 +1,16 @@
 import { Component, OnChanges, OnInit, input } from '@angular/core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { getInitialsFromString } from 'app/utils/text.utils';
 import { getBackgroundColorHue } from 'app/utils/color.utils';
 import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-profile-picture',
     templateUrl: './profile-picture.component.html',
     styleUrls: ['./profile-picture.component.scss'],
-    imports: [ArtemisSharedCommonModule, RouterLink],
+    imports: [RouterLink, CommonModule, FontAwesomeModule],
 })
 export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly imageSizeInRem = input<string>('2.15');
