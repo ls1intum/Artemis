@@ -19,6 +19,7 @@ describe('AffectedStudentsModalComponent', () => {
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',
+        hasLongFeedbackText: false,
     };
 
     const participationMock: FeedbackAffectedStudentDTO[] = [
