@@ -12,6 +12,9 @@ on:
       environment_name:
         description: 'Environment to deploy to'
         required: true
+        type: choice
+        options: 
+          - artemis-staging-localci.artemis.cit.tum.de
 
 concurrency: ${{ github.event.inputs.environment_name }}
 
@@ -121,10 +124,6 @@ jobs:
           echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-          # Test SSH connection
-          echo "Testing SSH connection..."
-          ssh -v -i ~/.ssh/id_rsa $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY 'echo "test"'
-
       - name: Phase 1 - Stop Secondary Nodes
         run: |
           HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
@@ -171,7 +170,12 @@ jobs:
           
           # Verify the file was copied successfully
           echo "[INFO] Verify new WAR file..."
-          $SSH "if [ ! -f /opt/artemis/artemis.war.new ]; then echo 'Error: WAR file not found after copy'; exit 1; fi"
+          $SSH '
+            if [ ! -f /opt/artemis/artemis.war.new ]; then
+              echo "Error: No WAR file found at /opt/artemis/artemis.war.new"
+              exit 1
+            fi
+          '
           
           # Stop Artemis-Service on node
           echo "[INFO] Stop artemis.service ..."
