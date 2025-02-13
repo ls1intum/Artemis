@@ -256,4 +256,3 @@ jobs:
             echo "[INFO] Start artemis.service ..."
             $SSH "sudo systemctl start artemis"
           done
-      
