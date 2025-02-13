@@ -8,14 +8,14 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { TranslateService } from '@ngx-translate/core';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-register',
     templateUrl: './register.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
     private translateService = inject(TranslateService);

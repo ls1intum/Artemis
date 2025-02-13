@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
@@ -119,8 +118,8 @@ public abstract class AbstractGitService {
         return new SshdSessionFactoryBuilder()
             .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
             .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
-            .setSshDirectory(new File(gitSshPrivateKeyPath.orElseThrow()))
-            .setHomeDirectory(new java.io.File(System.getProperty("user.home")));
+            .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
+            .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
             // @formatter:on
     }
 

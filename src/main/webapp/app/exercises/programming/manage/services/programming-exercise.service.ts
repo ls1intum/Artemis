@@ -598,7 +598,7 @@ export class ProgrammingExerciseService {
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -611,7 +611,7 @@ export class ProgrammingExerciseService {
      * Gets all files from the last commit in the template participation repository
      */
     getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content`).pipe(
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

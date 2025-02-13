@@ -139,7 +139,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/tutor-effort-statistics',
-        loadChildren: () => import('../../exercises/text/manage/tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
+        loadChildren: () => import('../../exercises/text/manage/tutor-effort/tutor-effort-statistics.route').then((m) => m.tutorEffortStatisticsRoute),
     },
     {
         path: ':examId/students',

@@ -6,7 +6,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { CourseOverviewRoutePath } from 'app/overview/courses-routing.module';
+import { CourseOverviewRoutePath } from 'app/overview/courses.route';
 
 @Injectable({
     providedIn: 'root',
