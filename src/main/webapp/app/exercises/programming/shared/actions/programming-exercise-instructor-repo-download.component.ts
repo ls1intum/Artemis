@@ -22,20 +22,11 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    exerciseId: number;
-
-    @Input()
-    repositoryType: ProgrammingExerciseInstructorRepositoryType;
-
-    @Input()
-    auxiliaryRepositoryId: number;
-
-    @Input()
-    buttonSize: ButtonSize = ButtonSize.SMALL;
-
-    @Input()
-    title = 'artemisApp.programmingExercise.export.downloadRepo';
+    @Input() exerciseId: number;
+    @Input() repositoryType: ProgrammingExerciseInstructorRepositoryType;
+    @Input() auxiliaryRepositoryId: number;
+    @Input() buttonSize = ButtonSize.SMALL;
+    @Input() title = 'artemisApp.programmingExercise.export.downloadRepo';
 
     // Icons
     faDownload = faDownload;

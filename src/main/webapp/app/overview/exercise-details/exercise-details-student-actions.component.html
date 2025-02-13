@@ -127,9 +127,9 @@
                             [smallButtons]="smallButtons"
                             [participations]="exercise.studentParticipations!"
                             [exercise]="exercise"
-                            [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
+                            [routerLinkForRepositoryView]="[repositoryLink, 'repository', exercise.studentParticipations![0].id!]"
                             [hideLabelMobile]="true"
-                            [useParticipationVcsAccessToken]="true"
+                            [repositoryUri]="''"
                         />
                     }
                     @if (theiaEnabled) {

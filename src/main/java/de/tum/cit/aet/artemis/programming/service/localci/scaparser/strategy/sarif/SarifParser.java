@@ -19,10 +19,12 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ArtifactLocation;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.GlobalMessageStrings;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Level;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Location;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.MessageStrings;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.PhysicalLocation;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Region;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingConfiguration;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptor;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptorReference;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Result;
@@ -63,9 +65,16 @@ public class SarifParser implements ParserStrategy {
 
     private final RuleCategorizer ruleCategorizer;
 
+    private final MessageProcessor messageProcessor;
+
     public SarifParser(StaticCodeAnalysisTool tool, RuleCategorizer ruleCategorizer) {
+        this(tool, ruleCategorizer, null);
+    }
+
+    public SarifParser(StaticCodeAnalysisTool tool, RuleCategorizer ruleCategorizer, MessageProcessor messageProcessor) {
         this.tool = tool;
         this.ruleCategorizer = ruleCategorizer;
+        this.messageProcessor = messageProcessor;
     }
 
     @Override
@@ -120,9 +129,10 @@ public class SarifParser implements ParserStrategy {
         // Fallback to the rule identifier for the category
         String category = rule.map(ruleCategorizer::categorizeRule).orElse(ruleId);
 
-        Result.Level level = result.getOptionalLevel().orElse(Result.Level.WARNING);
+        Level level = result.getOptionalLevel().orElseGet(() -> getDefaultLevel(rule));
 
-        String message = findMessage(result, driver, rule);
+        String rawMessage = findMessage(result, driver, rule);
+        String message = messageProcessor != null ? messageProcessor.processMessage(rawMessage, rule.orElse(null)) : rawMessage;
 
         return new StaticCodeAnalysisIssue(fileLocation.path(), fileLocation.startLine(), fileLocation.endLine(), fileLocation.startColumn(), fileLocation.endColumn(), ruleId,
                 category, message, level.toString(), null);
@@ -182,4 +192,8 @@ public class SarifParser implements ParserStrategy {
         return Optional.of(baseRuleId);
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static Level getDefaultLevel(Optional<ReportingDescriptor> rule) {
+        return rule.flatMap(ReportingDescriptor::getOptionalDefaultConfiguration).flatMap(ReportingConfiguration::getOptionalLevel).orElse(Level.WARNING);
+    }
 }

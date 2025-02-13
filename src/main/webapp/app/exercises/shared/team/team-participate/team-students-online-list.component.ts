@@ -23,7 +23,7 @@ import { captureException } from '@sentry/angular';
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
 
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
@@ -56,8 +56,8 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupOnlineTeamStudentsReceiver() {
         this.websocketTopic = this.buildWebsocketTopic();
-        this.jhiWebsocketService.subscribe(this.websocketTopic);
-        this.jhiWebsocketService
+        this.websocketService.subscribe(this.websocketTopic);
+        this.websocketService
             .receive(this.websocketTopic)
             .pipe(map(this.convertOnlineTeamStudentsFromServer))
             .subscribe({
@@ -68,14 +68,14 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error) => captureException(error),
             });
         setTimeout(() => {
-            this.jhiWebsocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
         }, 700);
     }
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
             this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.jhiWebsocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
                 error: (error) => captureException(error),
             });
         }
@@ -85,7 +85,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component destruction is done
      */
     ngOnDestroy(): void {
-        this.jhiWebsocketService.unsubscribe(this.websocketTopic);
+        this.websocketService.unsubscribe(this.websocketTopic);
     }
 
     get team(): Team {

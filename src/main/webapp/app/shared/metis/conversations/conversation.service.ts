@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -34,9 +33,8 @@ export enum ConversationMemberSearchFilter {
 export class ConversationService {
     public resourceUrl = '/api/courses/';
 
-    protected http = inject(HttpClient);
-    protected translationService = inject(TranslateService);
-    protected accountService = inject(AccountService);
+    private http = inject(HttpClient);
+    private translationService = inject(TranslateService);
 
     getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {

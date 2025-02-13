@@ -102,7 +102,7 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService, OnDestroy {
-    protected http = inject(HttpClient);
+    private http = inject(HttpClient);
     private websocketService = inject(WebsocketService);
     private accountService = inject(AccountService);
 
