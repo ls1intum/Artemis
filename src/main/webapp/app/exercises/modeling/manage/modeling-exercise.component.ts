@@ -27,8 +27,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService);
-    protected modelingExerciseService = inject(ModelingExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected modelingExerciseService = inject(ModelingExerciseService); // needed in html code
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -75,10 +75,10 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a modeling exercise in the collection
+     * @param _index of a modeling exercise in the collection
      * @param item current modeling exercise
      */
-    trackId(index: number, item: ModelingExercise) {
+    trackId(_index: number, item: ModelingExercise) {
         return item.id;
     }
 

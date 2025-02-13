@@ -3,9 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 
 describe('CompetencySearchComponent', () => {
@@ -14,7 +12,7 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule, NgbCollapseMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
             providers: [],
         })

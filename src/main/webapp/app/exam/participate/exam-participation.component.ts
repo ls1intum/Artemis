@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -15,7 +15,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -210,8 +210,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+        combineLatest({
+            parentParams: this.route.parent?.parent?.params ?? of({ courseId: undefined }),
+            currentParams: this.route.params,
+        }).subscribe(({ parentParams, currentParams }) => {
+            const courseId = currentParams['courseId'] || parentParams['courseId'];
+            this.courseId = parseInt(courseId, 10);
         });
         this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
@@ -258,6 +262,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
+    }
+
+    /**
+     * Make sure to warn the user before leaving (or reloading) the page in exam mode
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    beforeUnloadHandler(event: BeforeUnloadEvent) {
+        if (this.examStartConfirmed && !this.isOver()) {
+            event.preventDefault();
+            return this.translateService.instant('artemisApp.examParticipation.reloadWarning');
+        }
+        return true;
     }
 
     loadAndDisplaySummary() {

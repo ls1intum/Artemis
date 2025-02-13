@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.buildagent.service.TestResultXmlParser.processTestResultFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
@@ -12,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -44,6 +42,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
+import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -406,20 +406,25 @@ public class BuildJobExecutionService {
             }
 
             // Read the contents of the tar entry as a string.
-            String fileString = readTarEntryContent(testResultsTarInputStream);
+            String fileContent = readTarEntryContent(testResultsTarInputStream);
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
 
             try {
                 // Check if the file is a static code analysis report file
                 if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                    processStaticCodeAnalysisReportFile(fileName, fileString, staticCodeAnalysisReports, buildJobId);
+                    processStaticCodeAnalysisReportFile(fileName, fileContent, staticCodeAnalysisReports, buildJobId);
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
-                    var testResultFileString = fileString.replace("\n\t", "");
+                    var testResultFileString = fileContent.replace("\n\t", "");
                     if (!testResultFileString.isBlank()) {
-                        processTestResultFile(testResultFileString, failedTests, successfulTests);
+                        if (fileName.endsWith(".xml")) {
+                            TestResultXmlParser.processTestResultFile(testResultFileString, failedTests, successfulTests);
+                        }
+                        else if (fileName.endsWith(".json")) {
+                            CustomFeedbackParser.processTestResultFile(fileName, testResultFileString, failedTests, successfulTests);
+                        }
                     }
                     else {
                         String msg = "The file " + fileName + " does not contain any testcases.";
@@ -446,7 +451,7 @@ public class BuildJobExecutionService {
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") && !result.equals("pom.xml") || result.endsWith(".sarif"));
+        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") && !result.equals("pom.xml") || result.endsWith(".json") || result.endsWith(".sarif"));
     }
 
     /**
@@ -572,7 +577,7 @@ public class BuildJobExecutionService {
     private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            Path repositoryPathForDeletion = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            Path repositoryPathForDeletion = commitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";

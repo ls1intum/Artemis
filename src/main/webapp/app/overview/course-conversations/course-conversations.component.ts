@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -14,6 +14,7 @@ import {
     faHeart,
     faList,
     faMessage,
+    faPersonChalkboard,
     faPlus,
     faSearch,
     faTimes,
@@ -54,6 +55,8 @@ import { ConversationMessagesComponent } from './layout/conversation-messages/co
 import { ConversationThreadSidebarComponent } from './layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { SavedPostsComponent } from './saved-posts/saved-posts.component';
 import { captureException } from '@sentry/angular';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -62,6 +65,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
     savedPosts: { entityData: [] },
 };
@@ -75,6 +79,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     favoriteChannels: faHeart,
     lectureChannels: faFile,
     hiddenChannels: faBan,
+    feedbackDiscussion: faPersonChalkboard,
     savedPosts: faBookmark,
     recents: faClock,
 };
@@ -88,6 +93,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
+    feedbackDiscussion: true,
     savedPosts: true,
     recents: true,
 };
@@ -101,6 +107,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     favoriteChannels: true,
     lectureChannels: false,
     hiddenChannels: false,
+    feedbackDiscussion: false,
     savedPosts: true,
     recents: true,
 };
@@ -110,7 +117,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     templateUrl: './course-conversations.component.html',
     styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [MetisService],
+    providers: [MetisService, LinkifyService, LinkPreviewService],
     imports: [
         LoadingIndicatorContainerComponent,
         FormsModule,
@@ -171,10 +178,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented = false;
 
-    @ViewChild(CourseWideSearchComponent)
-    courseWideSearch: CourseWideSearchComponent;
-    @ViewChild('courseWideSearchInput')
-    searchElement: ElementRef;
+    courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
+    searchElement = viewChild<ElementRef>('courseWideSearchInput');
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -420,7 +425,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
-        this.courseWideSearch?.onSearch();
+        this.courseWideSearch()?.onSearch();
     }
 
     prepareSidebarData() {
@@ -597,7 +602,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     handleSearchShortcut(event: KeyboardEvent) {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
-            this.searchElement.nativeElement.focus();
+            this.searchElement()!.nativeElement.focus();
         }
     }
 }

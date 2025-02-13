@@ -3,10 +3,10 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -37,7 +37,7 @@ export class AssessmentDashboardInformationEntry {
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
-    imports: [TranslateDirective, PieChartModule, ArtemisSidePanelModule, RouterLink, ArtemisTranslatePipe],
+    imports: [TranslateDirective, PieChartModule, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     private translateService = inject(TranslateService);

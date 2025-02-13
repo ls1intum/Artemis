@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -7,9 +8,16 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { SortService } from 'app/shared/service/sort.service';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -33,16 +41,32 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExamImportComponent, ExamExerciseImportComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, FormsModule],
+            declarations: [
+                ExamImportComponent,
+                ExamExerciseImportComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
+                MockComponent(ButtonComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(DifficultyBadgeComponent),
+            ],
+            providers: [
+                MockProvider(SortService),
+                MockProvider(ExamImportPagingService),
+                MockProvider(NgbActiveModal),
+                MockProvider(ExamManagementService),
+                MockProvider(AlertService),
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                examManagementService = TestBed.inject(ExamManagementService);
-                alertService = TestBed.inject(AlertService);
+                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
     });
 

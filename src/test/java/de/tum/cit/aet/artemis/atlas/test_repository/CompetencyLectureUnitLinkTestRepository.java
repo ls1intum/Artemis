@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 public interface CompetencyLectureUnitLinkTestRepository extends CompetencyLectureUnitLinkRepository {
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteAllByLectureUnitId(long lectureUnitId);
 
 }

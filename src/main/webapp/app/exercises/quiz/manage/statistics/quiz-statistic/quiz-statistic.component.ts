@@ -26,7 +26,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private changeDetector = inject(ChangeDetectorRef);
 
     quizExercise: QuizExercise;
@@ -58,10 +58,10 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.jhiWebsocketService.subscribe(this.websocketChannelForData);
+            this.websocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
+            this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
@@ -73,7 +73,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     }
 
     ngOnDestroy() {
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**
