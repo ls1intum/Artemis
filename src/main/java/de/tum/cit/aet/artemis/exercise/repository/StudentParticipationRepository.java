@@ -1261,7 +1261,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
                         WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                         ELSE 'Student Error'
-                    END
+                    END,
+                    f.hasLongFeedbackText
                 )
                 FROM ProgrammingExerciseStudentParticipation p
                 INNER JOIN p.results r ON r.id = (
@@ -1286,7 +1287,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                                 ELSE 'Student Error'
                             END IN (:filterErrorCategories))
-                GROUP BY f.detailText, f.testCase.testName
+                GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
                 HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,

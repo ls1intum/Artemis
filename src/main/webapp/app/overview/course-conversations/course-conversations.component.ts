@@ -14,6 +14,7 @@ import {
     faHeart,
     faList,
     faMessage,
+    faPersonChalkboard,
     faPlus,
     faSearch,
     faTimes,
@@ -64,6 +65,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
     savedPosts: { entityData: [] },
 };
@@ -77,6 +79,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     favoriteChannels: faHeart,
     lectureChannels: faFile,
     hiddenChannels: faBan,
+    feedbackDiscussion: faPersonChalkboard,
     savedPosts: faBookmark,
     recents: faClock,
 };
@@ -90,6 +93,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
+    feedbackDiscussion: true,
     savedPosts: true,
     recents: true,
 };
@@ -103,6 +107,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     favoriteChannels: true,
     lectureChannels: false,
     hiddenChannels: false,
+    feedbackDiscussion: false,
     savedPosts: true,
     recents: true,
 };
