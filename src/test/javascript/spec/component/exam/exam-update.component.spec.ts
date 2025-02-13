@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
@@ -729,8 +729,9 @@ describe('ExamUpdateComponent', () => {
             examWithError.exerciseGroups = [exerciseGroup2];
 
             component.exam = examWithError;
-            const examExerciseImportComponent = TestBed.createComponent(ExamExerciseImportComponent);
-            examExerciseImportComponent.componentRef.setInput('exam', examWithError);
+            TestBed.runInInjectionContext(() => {
+                component.examExerciseImportComponent.exam = input(examWithError);
+            });
             component.examExerciseImportComponent.ngOnInit();
 
             fixture.detectChanges();
