@@ -192,6 +192,9 @@ public class ChannelDTO extends ConversationDTO {
             this.subType = ChannelSubType.EXAM;
             this.subTypeReferenceId = channel.getExam().getId();
         }
+        else if (channel.getTopic() != null && channel.getTopic().contains("FeedbackDiscussion")) {
+            this.subType = ChannelSubType.FEEDBACK_DISCUSSION;
+        }
         else {
             this.subType = ChannelSubType.GENERAL;
         }

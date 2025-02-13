@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -18,10 +18,12 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
+    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {

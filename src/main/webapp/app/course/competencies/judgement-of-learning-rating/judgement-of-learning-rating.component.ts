@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, StarRatingComponent],
+    imports: [StarRatingComponent, HelpIconComponent],
     templateUrl: './judgement-of-learning-rating.component.html',
 })
 export class JudgementOfLearningRatingComponent {

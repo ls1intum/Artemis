@@ -5,13 +5,12 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
-import { Subscription, of } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
@@ -61,7 +60,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
-            imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+            imports: [],
             providers: [
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: TranslateService, useClass: MockTranslateService },

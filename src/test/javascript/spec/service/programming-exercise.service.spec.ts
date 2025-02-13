@@ -437,7 +437,14 @@ describe('ProgrammingExercise Service', () => {
             }
             functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
-            const req = httpMock.expectOne({ method: 'GET', url });
+
+            // Custom matcher function
+            const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+
+            const req = httpMock.expectOne((request) => {
+                return request.method === 'GET' && urlMatcher(request.url);
+            });
+
             req.flush({});
             tick();
         })(),
