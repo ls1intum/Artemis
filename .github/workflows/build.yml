@@ -11,7 +11,7 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
-    - '!.github/workflows/testserver.yml'
+    - '!.github/workflows/testserver-deployment.yml'
   push:
     branches:
     - develop
