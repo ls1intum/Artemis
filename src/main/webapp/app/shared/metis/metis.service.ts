@@ -21,7 +21,6 @@ import {
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
@@ -36,12 +35,11 @@ import { cloneDeep } from 'lodash-es';
 
 @Injectable()
 export class MetisService implements OnDestroy {
-    protected postService = inject(PostService);
-    protected answerPostService = inject(AnswerPostService);
-    protected reactionService = inject(ReactionService);
-    protected accountService = inject(AccountService);
-    protected exerciseService = inject(ExerciseService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private postService = inject(PostService);
+    private answerPostService = inject(AnswerPostService);
+    private reactionService = inject(ReactionService);
+    private accountService = inject(AccountService);
+    private websocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
@@ -118,7 +116,7 @@ export class MetisService implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
         }
         this.courseWideTopicSubscription.unsubscribe();
     }
@@ -292,9 +290,9 @@ export class MetisService implements OnDestroy {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param {number} postId id of the post for which the displayPriority is changed
-     * @param {DisplayPriority} displayPriority new displayPriority
-     * @return {Observable<Post>} updated post
+     * @param postId id of the post for which the displayPriority is changed
+     * @param displayPriority new displayPriority
+     * @return updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
@@ -551,14 +549,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
             this.subscriptionChannel = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.websocketService.subscribe(this.subscriptionChannel);
+        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -708,7 +706,7 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+                this.websocketService.unsubscribe(this.subscriptionChannel);
                 this.subscriptionChannel = undefined;
             }
             return;

@@ -28,7 +28,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
@@ -52,7 +52,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,

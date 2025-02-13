@@ -14,7 +14,7 @@ export class ArtemisIntelligenceService {
     public resourceUrl = 'api';
 
     private http = inject(HttpClient);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
 
     private isLoadingRewrite = signal<boolean>(false);
@@ -39,21 +39,21 @@ export class ArtemisIntelligenceService {
                 .subscribe({
                     next: () => {
                         const websocketTopic = `/user/topic/iris/rewriting/${courseId}`;
-                        this.jhiWebsocketService.subscribe(websocketTopic);
-                        this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                        this.websocketService.subscribe(websocketTopic);
+                        this.websocketService.receive(websocketTopic).subscribe({
                             next: (update: any) => {
                                 if (update.result) {
                                     observer.next(update.result);
                                     observer.complete();
                                     this.isLoadingRewrite.set(false);
-                                    this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                    this.websocketService.unsubscribe(websocketTopic);
                                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                                 }
                             },
                             error: (error) => {
                                 observer.error(error);
                                 this.isLoadingRewrite.set(false);
-                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.websocketService.unsubscribe(websocketTopic);
                             },
                         });
                     },
@@ -77,20 +77,20 @@ export class ArtemisIntelligenceService {
             this.http.post(`${this.resourceUrl}/iris/consistency-check/exercises/${exerciseId}`, null).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/consistency-check/exercises/${exerciseId}`;
-                    this.jhiWebsocketService.subscribe(websocketTopic);
-                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                    this.websocketService.subscribe(websocketTopic);
+                    this.websocketService.receive(websocketTopic).subscribe({
                         next: (update: any) => {
                             if (update.result) {
                                 observer.next(update.result);
                                 observer.complete();
                                 this.isLoadingConsistencyCheck.set(false);
-                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.websocketService.unsubscribe(websocketTopic);
                             }
                         },
                         error: (error) => {
                             observer.error(error);
                             this.isLoadingConsistencyCheck.set(false);
-                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            this.websocketService.unsubscribe(websocketTopic);
                         },
                     });
                 },

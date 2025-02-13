@@ -6,7 +6,6 @@ import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercis
 import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { GitDiffFilePanelComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel.component';
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
@@ -15,7 +14,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffFilePanelComponent), MockComponent(GitDiffLineStatComponent)],
             providers: [],
         }).compileComponents();

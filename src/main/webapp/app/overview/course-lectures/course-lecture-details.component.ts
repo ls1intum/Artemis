@@ -140,7 +140,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                 ).length > 0;
                         }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
-                        this.irisSettingsService.getCombinedCourseSettings(this.lecture?.course?.id!).subscribe((irisSettings) => {
+                        this.irisSettingsService.getCombinedCourseSettings(this.lecture!.course!.id!).subscribe((irisSettings) => {
                             this.irisSettings = irisSettings;
                         });
                     },

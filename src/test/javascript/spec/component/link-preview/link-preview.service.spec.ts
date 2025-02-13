@@ -33,9 +33,9 @@ describe('LinkPreviewService', () => {
             expect(preview).toEqual(mockPreview);
         });
 
-        const req = httpMock.expectOne('api/link-preview');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toBe(mockUrl);
+        const req = httpMock.expectOne('api/link-preview?url=https%253A%252F%252Fexample.com');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.body).toBeNull();
 
         req.flush(mockPreview);
         tick();
@@ -55,7 +55,7 @@ describe('LinkPreviewService', () => {
             expect(preview).toEqual(mockPreview);
         });
 
-        const req = httpMock.expectOne('api/link-preview');
+        const req = httpMock.expectOne('api/link-preview?url=https%253A%252F%252Fexample.com');
         req.flush(mockPreview);
         tick();
 

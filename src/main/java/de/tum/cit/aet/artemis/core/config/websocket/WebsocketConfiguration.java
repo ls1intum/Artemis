@@ -283,6 +283,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(@Nullable Principal principal, String destination) {
+            log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
             /*
              * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
              * is an instructor in a course)

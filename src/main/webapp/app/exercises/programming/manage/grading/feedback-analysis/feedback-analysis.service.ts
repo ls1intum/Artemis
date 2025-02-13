@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
-import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export interface FeedbackAnalysisResponse {
@@ -21,6 +21,7 @@ export interface FeedbackDetail {
     testCaseName: string;
     taskName: string;
     errorCategory: string;
+    hasLongFeedbackText: boolean;
 }
 export interface FeedbackAffectedStudentDTO {
     participationId: number;

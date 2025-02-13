@@ -65,7 +65,7 @@ const MESSAGING_NOTIFICATION_TEXTS = [
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private router = inject(Router);
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -151,7 +151,7 @@ export class NotificationService {
             this.totalNotificationsSubject.next(0);
             clearTimeout(this.loadTimeout);
 
-            this.subscribedTopics.forEach((topic) => this.jhiWebsocketService.unsubscribe(topic));
+            this.subscribedTopics.forEach((topic) => this.websocketService.unsubscribe(topic));
             this.wsSubscriptions.forEach((subscription) => subscription.unsubscribe());
             this.subscribedTopics = [];
             this.wsSubscriptions = [];
@@ -413,8 +413,8 @@ export class NotificationService {
         const userTopic = `/topic/user/${user.id}/notifications`;
         if (!this.subscribedTopics.includes(userTopic)) {
             this.subscribedTopics.push(userTopic);
-            this.jhiWebsocketService.subscribe(userTopic);
-            const subscription = this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+            this.websocketService.subscribe(userTopic);
+            const subscription = this.websocketService.receive(userTopic).subscribe((notification: Notification) => {
                 // Do not add notification to observer if it is a one-to-one conversation creation notification
                 // and if the author is the current user
                 if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
@@ -445,8 +445,8 @@ export class NotificationService {
             }
             if (!this.subscribedTopics.includes(courseTopic)) {
                 this.subscribedTopics.push(courseTopic);
-                this.jhiWebsocketService.subscribe(courseTopic);
-                const subscription = this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
+                this.websocketService.subscribe(courseTopic);
+                const subscription = this.websocketService.receive(courseTopic).subscribe((notification: Notification) => {
                     this.addNotification(notification);
                 });
                 this.wsSubscriptions.push(subscription);
@@ -458,8 +458,8 @@ export class NotificationService {
         const tutorialGroupTopic = `/topic/user/${user.id}/notifications/tutorial-groups`;
         if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
             this.subscribedTopics.push(tutorialGroupTopic);
-            this.jhiWebsocketService.subscribe(tutorialGroupTopic);
-            const subscription = this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
+            this.websocketService.subscribe(tutorialGroupTopic);
+            const subscription = this.websocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
                 this.addNotification(notification);
             });
             this.wsSubscriptions.push(subscription);
@@ -470,8 +470,8 @@ export class NotificationService {
         const conversationTopic = `/topic/user/${user.id}/notifications/conversations`;
         if (!this.subscribedTopics.includes(conversationTopic)) {
             this.subscribedTopics.push(conversationTopic);
-            this.jhiWebsocketService.subscribe(conversationTopic);
-            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe(this.handleNewPostDTO);
+            this.websocketService.subscribe(conversationTopic);
+            const subscription = this.websocketService.receive(conversationTopic).subscribe(this.handleNewPostDTO);
             this.wsSubscriptions.push(subscription);
         }
     }
@@ -487,10 +487,10 @@ export class NotificationService {
             this.clearCourseWideChannelSubscription();
         }
 
-        this.jhiWebsocketService.subscribe(courseWideTopic);
+        this.websocketService.subscribe(courseWideTopic);
         this.subscribedCourseWideChannelTopic = courseWideTopic;
 
-        this.courseWideChannelSubscription = this.jhiWebsocketService.receive(courseWideTopic).subscribe(this.handleNewPostDTO);
+        this.courseWideChannelSubscription = this.websocketService.receive(courseWideTopic).subscribe(this.handleNewPostDTO);
     }
 
     private handleNewPostDTO = (postDTO: MetisPostDTO): void => {
@@ -584,8 +584,8 @@ export class NotificationService {
             const quizExerciseTopic = '/topic/courses/' + course.id + '/quizExercises';
             if (!this.subscribedTopics.includes(quizExerciseTopic)) {
                 this.subscribedTopics.push(quizExerciseTopic);
-                this.jhiWebsocketService.subscribe(quizExerciseTopic);
-                const subscription = this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
+                this.websocketService.subscribe(quizExerciseTopic);
+                const subscription = this.websocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
                     if (
                         quizExercise.visibleToStudents &&
                         quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
@@ -637,7 +637,7 @@ export class NotificationService {
 
     private clearCourseWideChannelSubscription() {
         if (this.subscribedCourseWideChannelTopic) {
-            this.jhiWebsocketService.unsubscribe(this.subscribedCourseWideChannelTopic);
+            this.websocketService.unsubscribe(this.subscribedCourseWideChannelTopic);
         }
         this.subscribedCourseWideChannelTopic = undefined;
         this.courseWideChannelSubscription?.unsubscribe();
