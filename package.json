@@ -162,7 +162,7 @@
         "@typescript-eslint/eslint-plugin": "8.23.0",
         "@typescript-eslint/parser": "8.23.0",
         "angular-eslint": "19.0.2",
-        "cross-env": "^7.0.3",
+        "cross-env": "7.0.3",
         "eslint": "9.19.0",
         "eslint-config-prettier": "10.0.1",
         "eslint-plugin-deprecation": "3.0.0",
