@@ -98,8 +98,6 @@ jobs:
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
       HEALTH_CHECK_URL: "${{ vars.DEPLOYMENT_URL }}/management/health"
       WORKFLOW_RUN_ID: ${{ needs.check-build-status.outputs.build_workflow_run_id }}
-
-    timeout-minutes: 10
     
     steps:
       - name: Clean workspace
@@ -201,6 +199,7 @@ jobs:
 
       - name: Verify Primary Node Deployment
         id: verify_deployment
+        timeout-minutes: 10
         run: |
           while true; do
             echo "Performing health check..."
