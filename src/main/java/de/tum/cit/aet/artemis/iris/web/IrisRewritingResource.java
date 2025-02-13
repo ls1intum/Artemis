@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Optional;
 
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextReques
 /**
  * REST controller for managing Markdown Rewritings.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
 public class IrisRewritingResource {
