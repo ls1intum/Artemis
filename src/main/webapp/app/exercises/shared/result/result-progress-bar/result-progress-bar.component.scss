@@ -2,7 +2,13 @@
     transition: opacity 0.5s !important;
 }
 
+.progress-bar-status-text {
+    font-size: 13px;
+}
+
 .mw-custom {
     max-width: fit-content;
     min-width: 230px;
+    max-height: 35.5px;
+    overflow: hidden;
 }
