@@ -127,7 +127,8 @@
                     "archiveChannel": "Archive channel for everyone",
                     "unarchiveChannel": "Unarchive channel for everyone",
                     "publicChannel": "Change to a public channel",
-                    "privateChannel": "Change to a private channel"
+                    "privateChannel": "Change to a private channel",
+                    "deleteChannel": "Delete channel"
                 }
             },
             "conversationDetail": {

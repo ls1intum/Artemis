@@ -127,7 +127,8 @@
                     "archiveChannel": "Kanal für alle archivieren",
                     "unarchiveChannel": "Kanal für alle dearchivieren",
                     "publicChannel": "In einen öffentlichen Kanal umwandeln",
-                    "privateChannel": "In einen privaten Kanal umwandeln"
+                    "privateChannel": "In einen privaten Kanal umwandeln",
+                    "deleteChannel": "Kanal löschen"
                 }
             },
             "conversationDetail": {

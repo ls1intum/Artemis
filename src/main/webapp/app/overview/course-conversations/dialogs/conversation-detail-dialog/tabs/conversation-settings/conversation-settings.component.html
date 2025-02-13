@@ -48,6 +48,7 @@
                                 [id]="'delete-' + channel.id"
                                 jhiDeleteButton
                                 [renderButtonStyle]="false"
+                                [renderButtonText]="false"
                                 [entityTitle]="channel.name || ''"
                                 deleteQuestion="artemisApp.dialogs.deleteChannel.question"
                                 deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
@@ -55,6 +56,7 @@
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="faTrash" />
+                                <span class="ms-2" jhiTranslate="artemisApp.dialogs.conversationSettings.actions.deleteChannel"></span>
                             </button>
                         </div>
                     }
