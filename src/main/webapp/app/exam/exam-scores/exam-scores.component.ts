@@ -59,10 +59,16 @@ import {
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
-import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/participant-scores.module';
-import { ExportModule } from 'app/shared/export/export.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
 
 export enum MedianType {
     PASSED,
@@ -75,7 +81,19 @@ export enum MedianType {
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
-    imports: [RouterLink, ArtemisSharedComponentModule, ArtemisSharedCommonModule, ExamScoresAverageScoresGraphComponent, ArtemisParticipantScoresModule, ExportModule],
+    imports: [
+        RouterLink,
+        ExamScoresAverageScoresGraphComponent,
+        ParticipantScoresDistributionComponent,
+        ExportButtonComponent,
+        HelpIconComponent,
+        SortByDirective,
+        SortDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        CommonModule,
+    ],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

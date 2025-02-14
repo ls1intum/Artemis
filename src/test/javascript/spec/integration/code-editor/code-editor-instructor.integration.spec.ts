@@ -41,7 +41,7 @@ import { MockParticipationService } from '../../helpers/mocks/service/mock-parti
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -67,6 +67,8 @@ import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -89,6 +91,8 @@ describe('CodeEditorInstructorIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
+
+    const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
 
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
@@ -138,6 +142,9 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ProfileService, {
+                    getProfileInfo: () => of(mockProfileInfo),
+                }),
             ],
         })
             .compileComponents()

@@ -53,12 +53,3 @@ export const examParticipationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-
-const EXAM_PARTICIPATION_ROUTES = [...examParticipationRoute];
-
-export const examParticipationState: Routes = [
-    {
-        path: '',
-        children: EXAM_PARTICIPATION_ROUTES,
-    },
-];

@@ -74,6 +74,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
     enableVcsAccessLog = false;
+    isInCourseManagement = false;
     allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;

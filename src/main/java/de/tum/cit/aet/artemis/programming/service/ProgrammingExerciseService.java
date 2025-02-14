@@ -1102,7 +1102,7 @@ public class ProgrammingExerciseService {
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.createDockerRunConfig(dockerFlagsDTO.network(), dockerFlagsDTO.env());
 
         if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
             throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");

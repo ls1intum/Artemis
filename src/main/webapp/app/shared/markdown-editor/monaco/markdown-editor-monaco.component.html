@@ -201,6 +201,30 @@
                                 }
                             </mat-menu>
                         }
+                        <!-- AI Assistance -->
+                        @if (displayedActions.artemisIntelligence.length > 0) {
+                            <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                                @if (artemisIntelligenceService.isLoading()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <button
+                                        class="btn btn-sm px-2 py-0"
+                                        type="button"
+                                        ngbDropdownToggle
+                                        ngbTooltip="{{ 'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate }}"
+                                    >
+                                        <fa-icon [icon]="facArtemisIntelligence" />
+                                    </button>
+                                    <div class="dropdown-menu" ngbDropdownMenu>
+                                        @for (action of displayedActions.artemisIntelligence; track action.id) {
+                                            <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
+                                                <span [jhiTranslate]="action.translationKey"></span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
                         <!-- Meta -->
                         @for (action of displayedActions.meta; track action.id) {
                             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
