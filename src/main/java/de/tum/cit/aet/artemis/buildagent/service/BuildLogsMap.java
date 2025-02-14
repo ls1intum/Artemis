@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
+import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
 
-@Profile(PROFILE_BUILDAGENT)
+@Conditional(BuildAgentCondition.class)
 @Component
 public class BuildLogsMap {
 

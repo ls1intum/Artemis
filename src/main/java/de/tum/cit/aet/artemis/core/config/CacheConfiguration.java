@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentEnabled;
 
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -31,8 +30,8 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -50,12 +49,14 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper;
+import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Conditional(BuildAgentOrCoreCondition.class)
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
@@ -255,13 +256,13 @@ public class CacheConfiguration {
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
+        if (activeProfiles.contains(PROFILE_LOCALCI) || isBuildAgentEnabled(env)) {
             // add queue config for local ci shared queue
             configureQueueCluster(config, jHipsterProperties);
         }
 
         // build agents should not hold partitions and only be a lite member
-        if (!activeProfiles.contains(PROFILE_CORE) && activeProfiles.contains(PROFILE_BUILDAGENT)) {
+        if (PropertyConfigHelper.isBuildAgentOnlyMode(env)) {
             log.info("Joining cluster as lite member");
             config.setLiteMember(true);
         }

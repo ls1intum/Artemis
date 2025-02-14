@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.core.config.builder.properties;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentOnlyMode;
 
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.builder.ConflictingOverrideProperty;
 
@@ -22,6 +20,6 @@ public class CloudLoadBalancerCacheProperty implements ConflictingOverrideProper
 
     @Override
     public boolean enabled(ConfigurableEnvironment environment) {
-        return environment.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !environment.acceptsProfiles(Profiles.of(PROFILE_CORE));
+        return isBuildAgentOnlyMode(environment);
     }
 }

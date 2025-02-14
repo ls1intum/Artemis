@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
@@ -11,6 +10,8 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+
+import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
 
 /**
  * Custom condition that checks for the presence of the 'buildagent' profile and the absence of the 'core' profile.
@@ -29,7 +30,7 @@ public class BuildAgentWithoutCoreCondition extends AllNestedConditions {
     /**
      * Inner class representing the condition that the 'buildagent' profile is active.
      */
-    @Conditional(BuildAgentProfileCondition.class)
+    @Conditional(BuildAgentCondition.class)
     @SuppressWarnings("unused")
     static class OnBuildAgentProfile {
     }
@@ -40,25 +41,6 @@ public class BuildAgentWithoutCoreCondition extends AllNestedConditions {
     @Conditional(NotCoreProfileCondition.class)
     @SuppressWarnings("unused")
     static class OnNotCoreProfile {
-    }
-
-    /**
-     * Condition implementation that checks if the 'buildagent' profile is active.
-     */
-    static class BuildAgentProfileCondition implements Condition {
-
-        /**
-         * Evaluates whether the 'buildagent' profile is active.
-         *
-         * @param context  the condition context
-         * @param metadata the metadata of the {@link Conditional} annotation
-         * @return true if 'buildagent' profile is active, false otherwise
-         */
-        @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-            final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
-            return activeProfiles.contains(PROFILE_BUILDAGENT);
-        }
     }
 
     /**

@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.core.config.builder.properties;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentEnabled;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.builder.ConflictingOverrideProperty;
 
@@ -36,7 +35,7 @@ public class AutoConfigurationExclusionProperty implements ConflictingOverridePr
         List<String> exclusions = new ArrayList<>();
         autoConfigurationExclusions.forEach(exclusion -> exclusions.add(toFQDN(exclusion)));
 
-        if (environment.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT))) {
+        if (isBuildAgentEnabled(environment)) {
             autoConfigurationExclusionsBuildagentOnly.forEach(exclusion -> exclusions.add(toFQDN(exclusion)));
         }
 

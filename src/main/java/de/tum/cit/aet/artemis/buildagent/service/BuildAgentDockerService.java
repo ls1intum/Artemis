@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,6 +38,7 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -47,7 +46,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  * Service for Docker related operations in local CI
  */
 @Service
-@Profile(PROFILE_BUILDAGENT)
+@Conditional(BuildAgentCondition.class)
 public class BuildAgentDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();
