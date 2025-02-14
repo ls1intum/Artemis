@@ -30,14 +30,18 @@ export class GitExerciseParticipation {
         const urlParts = repoUrl.split('/');
         const repoName = urlParts[urlParts.length - 1];
         let exerciseRepo;
-        if (cloneMethod == GitCloneMethod.ssh) {
-            exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, SSH_KEY_NAMES[sshAlgorithm]);
-        } else {
-            exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+        try {
+            if (cloneMethod == GitCloneMethod.ssh) {
+                exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, SSH_KEY_NAMES[sshAlgorithm]);
+            } else {
+                exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+            }
+            console.log(`Cloned repository successfully. Pushing files...`);
+            await GitExerciseParticipation.pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
+        } finally {
+            // Remove the local directory even if cloning or pushing fails at some stage
+            await fs.rm(`./test-exercise-repos/${repoName}`, { recursive: true, force: true });
         }
-        console.log(`Cloned repository successfully. Pushing files...`);
-        await GitExerciseParticipation.pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
-        await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
     }
 
     static async setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEncryptionAlgorithm) {
