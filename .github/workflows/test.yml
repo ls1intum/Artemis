@@ -16,6 +16,7 @@ on:
     - develop
     - main
     - release/*
+    - chore/test-artifact-helios
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
     - 'README.md'
@@ -93,6 +94,12 @@ jobs:
       run: |
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+    - name: Upload JUnit Test Results
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: JUnit Test Results
+        path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
