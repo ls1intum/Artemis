@@ -28,6 +28,10 @@ public class PropertyConfigHelper {
         return environment.acceptsProfiles(Profiles.of(PROFILE_JENKINS));
     }
 
+    public static boolean isGitLabEnabled(Environment environment) {
+        return environment.acceptsProfiles(Profiles.of("gitlab"));
+    }
+
     public static boolean isGitLabCIEnabled(Environment environment) {
         return environment.acceptsProfiles(Profiles.of("gitlabci"));
     }
