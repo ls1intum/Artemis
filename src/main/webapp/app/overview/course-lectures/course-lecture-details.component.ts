@@ -19,6 +19,9 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from './exercise-unit/exercise-unit.component';
@@ -32,6 +35,7 @@ import { DiscussionSectionComponent } from '../discussion-section/discussion-sec
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -57,6 +61,7 @@ export interface LectureUnitCompletionEvent {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        IrisExerciseChatbotButtonComponent,
     ],
 })
 export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
@@ -67,6 +72,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     private fileService = inject(FileService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
 
     lectureId?: number;
     courseId?: number;
@@ -75,7 +81,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     hasPdfLectureUnit: boolean;
-
+    irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
     profileSubscription?: Subscription;
     isProduction = true;
@@ -85,6 +91,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
+    readonly ChatServiceMode = ChatServiceMode;
 
     // Icons
     faSpinner = faSpinner;
@@ -133,6 +140,9 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                 ).length > 0;
                         }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
+                        this.irisSettingsService.getCombinedCourseSettings(this.lecture!.course!.id!).subscribe((irisSettings) => {
+                            this.irisSettings = irisSettings;
+                        });
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });

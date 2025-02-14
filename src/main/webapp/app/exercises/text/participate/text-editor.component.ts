@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,7 +18,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
@@ -37,7 +37,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -52,6 +51,7 @@ import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { onTextEditorTab } from 'app/utils/text.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -90,6 +90,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private accountService = inject(AccountService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private translateService = inject(TranslateService);
 
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
@@ -286,6 +287,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
             if (this.submission?.text) {
                 this.answer = this.submission.text;
+            } else {
+                // handles the case when a submission is empty
+                this.answer = '';
             }
         }
         // check whether the student looks at the result
@@ -372,6 +376,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             return true;
         }
         return this.submission.text === this.answer;
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
     }
 
     submit() {

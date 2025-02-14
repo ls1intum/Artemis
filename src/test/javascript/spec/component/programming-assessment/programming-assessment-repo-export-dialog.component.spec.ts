@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -13,7 +13,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FormDateTimePickerModule } from '../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.module';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 const createBlobHttpResponse = () => {
     const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
@@ -40,7 +41,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormDateTimePickerModule],
+            imports: [ArtemisTestModule, FormDateTimePickerComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

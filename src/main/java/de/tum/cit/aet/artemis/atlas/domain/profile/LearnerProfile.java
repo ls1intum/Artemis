@@ -31,7 +31,6 @@ public class LearnerProfile extends DomainObject {
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 

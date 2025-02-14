@@ -82,11 +82,18 @@ artemis:
                     default: "~~invalid~~"
                 go:
                     default: "~~invalid~~"
+                matlab:
+                    default: "~~invalid~~"
+                ruby:
+                    default: "~~invalid~~"
         build-agent:
             short-name: "artemis-build-agent-test"
     telemetry:
         enabled: false  # setting this to false will disable sending any information to the telemetry service
-        
+    licenses:
+        matlab:
+            license-server: "1234@license-server"
+
 spring:
     application:
         name: Artemis

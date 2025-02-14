@@ -41,53 +41,57 @@
             </div>
         </div>
     </div>
-    <table class="table table-striped mb-3">
-        <thead>
-            <tr>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }" />
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }" />
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }" />
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }" />
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }" />
-            </tr>
-        </thead>
-        @if (isLoading()) {
-            <div class="row justify-content-center p-2">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only"></span>
+    <div style="overflow-x: auto">
+        <table class="table table-striped mb-3">
+            <thead>
+                <tr>
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }" />
+                </tr>
+            </thead>
+            @if (isLoading()) {
+                <div class="row justify-content-center p-2">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only"></span>
+                    </div>
                 </div>
-            </div>
-        } @else {
-            <tbody class="table-group-divider">
-                @if (!content().resultsOnPage) {
-                    <tr>
-                        <td colspan="6">
-                            <ng-container *ngTemplateOutlet="emptyTableTemplate" />
-                        </td>
-                    </tr>
-                } @else {
-                    @for (item of content().resultsOnPage; track item) {
+            } @else {
+                <tbody class="table-group-divider">
+                    @if (!content().resultsOnPage) {
                         <tr>
-                            <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                            <td>
-                                {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
-                            </td>
-                            <td>{{ item.taskName }}</td>
-                            <td>{{ item.testCaseName }}</td>
-                            <td>{{ item.errorCategory }}</td>
-                            <td class="text-center">
-                                <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)" />
-                                <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)" />
-                                @if (isCommunicationEnabled()) {
-                                    <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)" />
-                                }
+                            <td colspan="6">
+                                <ng-container *ngTemplateOutlet="emptyTableTemplate" />
                             </td>
                         </tr>
+                    } @else {
+                        @for (item of content().resultsOnPage; track item) {
+                            <tr>
+                                <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                                <td>
+                                    {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
+                                </td>
+                                <td>{{ item.taskName }}</td>
+                                <td>{{ item.testCaseName }}</td>
+                                <td>{{ item.errorCategory }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <fa-icon [icon]="facDetails" class="ms-2 clickable text-primary" (click)="openFeedbackModal(item)" />
+                                        <fa-icon [icon]="faUsers" class="ms-2 clickable text-primary" (click)="openAffectedStudentsModal(item)" />
+                                        @if (isCommunicationEnabled()) {
+                                            <fa-icon [icon]="faMessage" class="ms-2 clickable text-primary" (click)="openFeedbackDetailChannelModal(item)" />
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
-                }
-            </tbody>
-        }
-    </table>
+                </tbody>
+            }
+        </table>
+    </div>
     <div class="d-flex flex-column align-items-end mt-2">
         <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5" />
         <div class="text-muted text-end">

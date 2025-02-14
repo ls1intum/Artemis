@@ -49,6 +49,10 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------+---------+
   | Bash                 | yes      | yes     |
   +----------------------+----------+---------+
+  | MATLAB               | yes      | no      |
+  +----------------------+----------+---------+
+  | Ruby                 | yes      | yes     |
+  +----------------------+----------+---------+
 
 - Not all ``templates`` support the same feature set and supported features can also change depending on the continuous integration system setup.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
@@ -94,6 +98,10 @@ Instructors can still use those templates to generate programming exercises and 
   | Go                   | no                   | no                   | yes                 | yes          | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
   | Bash                 | no                   | no                   | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
+  +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
+  | MATLAB               | no                   | no                   | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
+  +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
+  | Ruby                 | no                   | L: yes; J: no        | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.

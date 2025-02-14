@@ -41,7 +41,7 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -70,6 +70,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { facArtemisIntelligence } from 'app/icons/icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -89,6 +91,8 @@ interface MarkdownActionsByGroup {
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: LectureAttachmentReferenceAction;
+    // AI assistance in the editor
+    artemisIntelligence: TextEditorAction[];
     meta: TextEditorAction[];
 }
 
@@ -140,6 +144,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -229,6 +234,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     domainActions: TextEditorDomainAction[] = [];
 
     @Input()
+    artemisIntelligenceActions: TextEditorAction[] = [];
+
+    @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
@@ -271,6 +279,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         color: undefined,
         domain: { withoutOptions: [], withOptions: [] },
         lecture: undefined,
+        artemisIntelligence: [],
         meta: [],
     };
 
@@ -295,8 +304,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSpinner = faSpinner;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
@@ -325,6 +336,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
             meta: this.filterDisplayedActions(this.metaActions),
         };
     }
@@ -368,6 +380,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.domainActions,
             ...(this.colorAction ? [this.colorAction] : []),
             ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
+            ...this.artemisIntelligenceActions,
             this.metaActions,
         ]
             .flat()

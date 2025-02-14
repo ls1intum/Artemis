@@ -96,8 +96,6 @@ services:
             artemis-app-node-3:
                 condition: service_started
         restart: always
-        command:
-          - rm -rf /var/log/nginx
         volumes:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
             - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
