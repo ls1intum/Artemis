@@ -3,6 +3,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
+
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+
     // a collection to track failedTests
     ext.failedTests = []
 
