@@ -28,13 +28,19 @@
         border-bottom: var(--border-color) 1px solid;
     }
 
+    .markdown-editor-wrapper .nav {
+        position: sticky;
+        top: 0;
+        background-color: var(--module-bg);
+    }
+
     .instructions__content__markdown {
-        background-color: var(--markdown-preview-editor-background);
+        background-color: var(--module-bg);
     }
 
     .card-second-header {
         padding: 10px 15px;
-        background-color: var(--markdown-preview-editor-background);
+        background-color: var(--module-bg);
     }
 
     &__save {
