@@ -31,16 +31,16 @@
     .markdown-editor-wrapper .nav {
         position: sticky;
         top: 0;
-        background-color: var(--module-bg);
+        background-color: var(--markdown-preview-editor-background);
     }
 
     .instructions__content__markdown {
-        background-color: var(--module-bg);
+        background-color: var(--markdown-preview-editor-background);
     }
 
     .card-second-header {
         padding: 10px 15px;
-        background-color: var(--module-bg);
+        background-color: var(--markdown-preview-editor-background);
     }
 
     &__save {
