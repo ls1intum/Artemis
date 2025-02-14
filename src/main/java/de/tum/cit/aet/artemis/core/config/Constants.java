@@ -332,11 +332,6 @@ public final class Constants {
     /**
      * The name of the Spring profile used for Athena functionality.
      */
-    public static final String PROFILE_ATHENA = "athena";
-
-    /**
-     * The name of the Spring profile used for Athena functionality.
-     */
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
