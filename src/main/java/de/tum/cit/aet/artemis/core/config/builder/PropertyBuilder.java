@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.config.builder;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentOnlyMode;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isGitLabCIEnabled;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isJenkinsEnabled;
 import static org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME;
 
 import java.util.List;
@@ -58,6 +60,9 @@ public class PropertyBuilder {
             }
         }
 
+        if (isJenkinsEnabled(environment) && isGitLabCIEnabled(environment)) {
+            throw new IllegalStateException("The jenkins and gitlab profiles cannot be active at the same time.");
+        }
         // further checks can be added here
     }
 
