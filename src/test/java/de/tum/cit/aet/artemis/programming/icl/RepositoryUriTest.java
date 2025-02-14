@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +60,7 @@ class RepositoryUriTest {
 
     @Test
     void testLocalRepositoryPath() throws Exception {
-        Path repositoryPath = Paths.get("/local/path/projectX/projectX-repo/.git");
+        Path repositoryPath = Path.of("/local/path/projectX/projectX-repo/.git");
         URL localVCServerUrl = new URI("https://artemis.tum.de").toURL();
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(repositoryPath, localVCServerUrl);
 
@@ -74,7 +73,7 @@ class RepositoryUriTest {
 
     @Test
     void testRemoteRepositoryPath() throws Exception {
-        Path repositoryPath = Paths.get("/remote/path/projectY/projectY-repo");
+        Path repositoryPath = Path.of("/remote/path/projectY/projectY-repo");
         URL localVCServerUrl = new URI("https://artemis.tum.de").toURL();
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(repositoryPath, localVCServerUrl);
 
@@ -87,7 +86,7 @@ class RepositoryUriTest {
 
     @Test
     void testInvalidRepositoryPath() {
-        Path repositoryPath = Paths.get("/invalid/path");
+        Path repositoryPath = Path.of("/invalid/path");
         URL localVCServerUrl;
         try {
             localVCServerUrl = new URI("https://artemis.tum.de").toURL();
@@ -166,7 +165,7 @@ class RepositoryUriTest {
 
     @Test
     void testConstructorWithFile() {
-        File file = new File("/path/to/repo");
+        File file = Path.of("/path/to/repo").toFile();
         VcsRepositoryUri uri = new VcsRepositoryUri(file);
         assertThat(uri.getURI().toString()).isEqualTo(file.toURI().toString());
     }
