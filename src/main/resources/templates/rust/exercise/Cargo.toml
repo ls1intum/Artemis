@@ -9,7 +9,8 @@ rand = "0.8.5"
 # %static-code-analysis-start%
 
 [lints.rust]
+unsafe_code = "warn"
 
 [lints.clippy]
-pedantic = "deny"
+pedantic = "warn"
 # %static-code-analysis-stop%
