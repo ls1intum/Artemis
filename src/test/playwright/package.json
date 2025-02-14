@@ -17,7 +17,7 @@
     "scripts": {
         "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-reports",
         "playwright:test:parallel": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-parallel.xml playwright test e2e --project=fast-tests --project=slow-tests",
-        "playwright:test:sequential": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-sequential.xml DEBUG=pw:api playwright test e2e --project=sequential-tests --workers 1",
+        "playwright:test:sequential": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-sequential.xml playwright test e2e --project=sequential-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
         "playwright:setup-local": "npx playwright install --with-deps chromium",
