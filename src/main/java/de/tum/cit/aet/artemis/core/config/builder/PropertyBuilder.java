@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.core.config.builder;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentOnlyMode;
 import static org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
@@ -37,12 +40,25 @@ public class PropertyBuilder {
     public void attachPostProcessor(SpringApplication app) {
         app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
             ConfigurableEnvironment environment = event.getEnvironment();
+            validateConfig(environment);
+
             var activatedProperties = properties.stream().filter(s -> s.enabled(environment)).toList();
 
             for (ConflictingOverrideProperty property : activatedProperties) {
                 appendProperty(property, environment);
             }
         });
+    }
+
+    private void validateConfig(ConfigurableEnvironment environment) {
+        Set<String> activeProfiles = Set.of(environment.getActiveProfiles());
+        if (isBuildAgentOnlyMode(environment)) {
+            if (activeProfiles.contains("gitlab") || activeProfiles.contains(PROFILE_JENKINS)) {
+                throw new IllegalStateException("The build agent only mode is not allowed with the gitlab or jenkins profile.");
+            }
+        }
+
+        // further checks can be added here
     }
 
     /**
