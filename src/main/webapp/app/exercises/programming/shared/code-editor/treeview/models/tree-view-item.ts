@@ -9,10 +9,10 @@ export interface TreeItem<T> {
     children: TreeItem<T>[];
 }
 
-export class TreeviewItem<T> {
+export class TreeViewItem<T> {
     private internalDisabled = false;
     private internalCollapsed = false;
-    private internalChildren: TreeviewItem<T>[] = [];
+    private internalChildren: TreeViewItem<T>[] = [];
     checked = false;
     text: string;
     value: T;
@@ -42,7 +42,7 @@ export class TreeviewItem<T> {
                     child.disabled = true;
                 }
 
-                return new TreeviewItem(child);
+                return new TreeViewItem(child);
             });
         }
     }
@@ -77,11 +77,11 @@ export class TreeviewItem<T> {
         }
     }
 
-    get children(): TreeviewItem<T>[] {
+    get children(): TreeViewItem<T>[] {
         return this.internalChildren;
     }
 
-    set children(value: TreeviewItem<T>[]) {
+    set children(value: TreeViewItem<T>[]) {
         if (this.internalChildren !== value) {
             this.internalChildren = value;
         }

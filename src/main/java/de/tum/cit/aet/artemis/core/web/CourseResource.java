@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -933,7 +933,7 @@ public class CourseResource {
      */
     @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/download-archive")
-    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
+    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws IOException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -943,9 +943,8 @@ public class CourseResource {
 
         // The path is stored in the course table
         Path archive = Path.of(courseArchivesDirPath, course.getCourseArchivePath());
-
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(archive));
         File zipFile = archive.toFile();
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(contentDisposition);

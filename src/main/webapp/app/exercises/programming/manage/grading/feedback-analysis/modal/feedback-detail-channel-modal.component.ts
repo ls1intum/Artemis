@@ -30,7 +30,7 @@ export class FeedbackDetailChannelModalComponent {
     form: FormGroup = this.formBuilder.group({
         name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
         description: ['', [Validators.required, Validators.maxLength(250)]],
-        isPublic: [true, Validators.required],
+        isPrivate: [true, Validators.required],
         isAnnouncementChannel: [false, Validators.required],
     });
 
@@ -42,7 +42,8 @@ export class FeedbackDetailChannelModalComponent {
                 const channelDTO = new ChannelDTO();
                 channelDTO.name = this.form.get('name')?.value;
                 channelDTO.description = this.form.get('description')?.value;
-                channelDTO.isPublic = this.form.get('isPublic')?.value || false;
+                channelDTO.topic = 'FeedbackDiscussion';
+                channelDTO.isPublic = !this.form.get('isPrivate')?.value || false;
                 channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value || false;
 
                 this.formSubmitted.emit({ channelDto: channelDTO, navigate });

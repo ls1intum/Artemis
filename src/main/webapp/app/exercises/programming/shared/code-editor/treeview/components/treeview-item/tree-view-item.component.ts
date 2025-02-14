@@ -1,17 +1,17 @@
 import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import { TreeviewItem } from '../../models/treeview-item';
-import { TreeviewItemTemplateContext } from '../../models/treeview-item-template-context';
+import { TreeViewItem } from '../../models/tree-view-item';
+import { TreeViewItemTemplateContext } from '../../models/tree-view-item-template-context';
 import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'treeview-item',
-    templateUrl: './treeview-item.component.html',
-    styleUrls: ['./treeview-item.component.scss'],
+    templateUrl: './tree-view-item.component.html',
+    styleUrls: ['./tree-view-item.component.scss'],
     imports: [NgTemplateOutlet],
 })
-export class TreeviewItemComponent<T> {
-    @Input() template: TemplateRef<TreeviewItemTemplateContext<T>>;
-    @Input() item: TreeviewItem<T>;
+export class TreeViewItemComponent<T> {
+    @Input() template: TemplateRef<TreeViewItemTemplateContext<T>>;
+    @Input() item: TreeViewItem<T>;
     @Output() checkedChange = new EventEmitter<boolean>();
 
     onCollapseExpand = () => {
@@ -23,7 +23,7 @@ export class TreeviewItemComponent<T> {
         this.checkedChange.emit(checked);
     };
 
-    onChildCheckedChange(child: TreeviewItem<T>, checked: boolean): void {
+    onChildCheckedChange(child: TreeViewItem<T>, checked: boolean): void {
         let itemChecked: boolean | undefined = undefined;
         for (const childItem of this.item.children) {
             if (itemChecked == undefined) {
