@@ -40,6 +40,8 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String FAKE_FIREBASE_TOKEN = "FakeFirebaseToken";
 
+    private static final String FAKE_SECRET_SUGGESTION = "Q0JvzjqHxURADNTKAeiLfXXEWRDpLfVZIk+XycrMxFk=";
+
     private User user;
 
     @BeforeEach
@@ -55,7 +57,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
-    void testRegister() throws Exception {
+    void shouldCreateNewConfigurationWhenRegisterIsCalled() throws Exception {
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
 
@@ -72,8 +74,27 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldRespondWithSuggestionWhenRegisterIsCalledWithSuggestedSecret() throws Exception {
+        PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, null, FAKE_SECRET_SUGGESTION);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
+
+        assertThat(response.secretKey()).isEqualTo(FAKE_SECRET_SUGGESTION);
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldNotRespondWithSuggestionWhenRegisterIsCalledWithInvalidSuggestedSecret() throws Exception {
+        PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, null, "invalid");
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
+
+        assertThat(response.secretKey()).isNotEmpty();
+        assertThat(response.secretKey()).isNotEqualTo("invalid");
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void testUnregister() throws Exception {
-        testRegister();
+        shouldCreateNewConfigurationWhenRegisterIsCalled();
 
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         request.delete("/api/push_notification/unregister", HttpStatus.OK, body);

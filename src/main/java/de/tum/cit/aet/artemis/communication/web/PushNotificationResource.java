@@ -10,6 +10,7 @@ import java.util.Date;
 import jakarta.validation.Valid;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,26 @@ public class PushNotificationResource {
     @PostMapping("register")
     @EnforceAtLeastStudent
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
-        var newKey = aesKeyGenerator.generateKey();
+        byte[] secret;
+
+        try {
+            if (pushNotificationRegisterBody.suggestedSecret() == null) {
+                throw new IllegalArgumentException();
+            }
+
+            byte[] decodedKey = Base64.getDecoder().decode(pushNotificationRegisterBody.suggestedSecret());
+
+            if (decodedKey.length != 16 && decodedKey.length != 24 && decodedKey.length != 32) {
+                throw new IllegalArgumentException();
+            }
+
+            // We initialize this to check if the suggestion is a valid key, this will throw if not (caught by try/catch)
+            new SecretKeySpec(decodedKey, "AES");
+            secret = decodedKey;
+        }
+        catch (IllegalArgumentException e) {
+            secret = aesKeyGenerator.generateKey().getEncoded();
+        }
 
         String token = getToken();
 
@@ -106,10 +126,10 @@ public class PushNotificationResource {
         User user = userRepository.getUser();
 
         PushNotificationDeviceConfiguration deviceConfiguration = new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(),
-                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user, apiType);
+                pushNotificationRegisterBody.deviceType(), expirationDate, secret, user, apiType);
         pushNotificationDeviceConfigurationRepository.save(deviceConfiguration);
 
-        var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
+        var encodedKey = Base64.getEncoder().encodeToString(secret);
 
         return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM));
     }
