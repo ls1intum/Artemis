@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -29,7 +29,7 @@ describe('CleanupOperationModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CleanupOperationModalComponent, ArtemisSharedModule],
+            imports: [CleanupOperationModalComponent],
             declarations: [MockDirective(TranslateDirective)],
             providers: [
                 { provide: DataCleanupService, useValue: mockCleanupService },

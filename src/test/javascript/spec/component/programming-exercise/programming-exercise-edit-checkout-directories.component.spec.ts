@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -57,7 +56,7 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         programmingExercise.buildConfig!.windfile = windFile;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+            imports: [],
             declarations: [ProgrammingExerciseEditCheckoutDirectoriesComponent, MockComponent(HelpIconComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

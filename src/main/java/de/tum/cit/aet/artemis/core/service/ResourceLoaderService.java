@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -216,7 +215,7 @@ public class ResourceLoaderService {
 
         if ("file".equals(resourceUrl.getProtocol())) {
             // Resource is in the file system.
-            return Paths.get(resourceUrl.toURI());
+            return Path.of(resourceUrl.toURI());
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
