@@ -299,8 +299,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
-    implementation "org.springframework.data:spring-data-ldap:3.4.2"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
+    implementation "org.springframework.data:spring-data-ldap:3.4.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
