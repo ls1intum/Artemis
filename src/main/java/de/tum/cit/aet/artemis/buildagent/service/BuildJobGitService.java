@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;

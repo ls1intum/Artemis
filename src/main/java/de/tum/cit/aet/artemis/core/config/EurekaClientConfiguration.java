@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
 
 /**
  * This class is necessary to avoid using Jersey (which has an issue deserializing Eureka responses) after the spring boot upgrade.

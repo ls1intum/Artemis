@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.core.config.conditions;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
 
 /**
  * Custom condition that checks for the presence of the 'buildagent' profile and the absence of the 'core' profile.

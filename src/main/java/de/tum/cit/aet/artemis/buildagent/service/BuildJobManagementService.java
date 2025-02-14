@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
 /**

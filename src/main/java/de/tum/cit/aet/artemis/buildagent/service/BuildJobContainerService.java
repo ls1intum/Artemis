@@ -41,7 +41,7 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;

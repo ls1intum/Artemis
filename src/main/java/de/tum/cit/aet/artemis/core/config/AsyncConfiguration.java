@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
 import tech.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
 
 @Conditional(BuildAgentOrCoreCondition.class)

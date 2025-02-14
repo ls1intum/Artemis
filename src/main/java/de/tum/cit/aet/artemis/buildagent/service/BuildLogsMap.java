@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 
 @Conditional(BuildAgentCondition.class)
 @Component

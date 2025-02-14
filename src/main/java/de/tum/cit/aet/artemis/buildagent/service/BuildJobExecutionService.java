@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;

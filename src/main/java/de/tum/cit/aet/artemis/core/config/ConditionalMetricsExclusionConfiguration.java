@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentWithoutCoreCondition;
+
 /**
  * Conditional configuration class that excludes {@link MetricsAutoConfiguration}
  * when the application is running with the 'buildagent' profile active and the 'core' profile inactive.

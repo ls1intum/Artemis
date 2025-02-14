@@ -26,7 +26,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
 
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).

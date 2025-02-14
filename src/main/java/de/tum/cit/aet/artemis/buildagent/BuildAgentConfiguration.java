@@ -28,7 +28,7 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
 /**

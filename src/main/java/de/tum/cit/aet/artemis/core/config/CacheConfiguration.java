@@ -50,7 +50,7 @@ import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper;
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import tech.jhipster.config.JHipsterProperties;

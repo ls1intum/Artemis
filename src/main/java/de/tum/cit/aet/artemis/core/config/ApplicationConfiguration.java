@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentWithoutCoreCondition;
+
 @Configuration
 public class ApplicationConfiguration {
 

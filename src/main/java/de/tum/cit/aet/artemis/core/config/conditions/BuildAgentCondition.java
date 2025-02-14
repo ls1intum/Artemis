@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.builder.profilematchestodo;
+package de.tum.cit.aet.artemis.core.config.conditions;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;

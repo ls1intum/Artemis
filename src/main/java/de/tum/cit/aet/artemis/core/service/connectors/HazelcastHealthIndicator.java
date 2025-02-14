@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.core.config.builder.profilematchestodo.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
 
 @Conditional(BuildAgentOrCoreCondition.class)
 @Component
