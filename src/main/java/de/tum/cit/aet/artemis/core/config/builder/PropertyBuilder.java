@@ -59,14 +59,18 @@ public class PropertyBuilder {
             ConfigurableEnvironment environment = event.getEnvironment();
             validateConfig(environment);
 
-            var activatedProperties = properties.stream().filter(s -> s.enabled(environment)).toList();
-
-            for (CustomProperty property : activatedProperties) {
+            var enabledProperties = properties.stream().filter(s -> s.enabled(environment)).toList();
+            for (CustomProperty property : enabledProperties) {
                 appendProperty(property, environment);
             }
         });
     }
 
+    /**
+     * Custom logic to validate configurations.
+     * For instance, running BUILDAGENT on a node with a dedicated CI like Jenkins or GitLabCI enabled make little sense.
+     * Note: We might want to move this to a different class.
+     */
     private void validateConfig(ConfigurableEnvironment environment) {
         if (isBuildAgentOnlyMode(environment)) {
             if (isGitLabEnabled(environment) || isJenkinsEnabled(environment)) {
