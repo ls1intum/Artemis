@@ -23,7 +23,13 @@ export class GitExerciseParticipation {
         let repoUrl = await programmingExerciseOverview.copyCloneUrl();
         await programmingExerciseOverview.getCodeButton().click();
 
-        if (cloneMethod == GitCloneMethod.https) {
+        console.log('Argument cloneMethod:', cloneMethod);
+        console.log('GitCloneMethod.https:', GitCloneMethod.https);
+        console.log('Equality check:', cloneMethod === GitCloneMethod.https);
+        // This will fail compilation if the type is incorrect
+        console.log(`Resolution of clone method: ${cloneMethod as GitCloneMethod}`);
+
+        if (cloneMethod === GitCloneMethod.https) {
             repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
         }
         console.log(`Cloning repository from ${repoUrl}`);
