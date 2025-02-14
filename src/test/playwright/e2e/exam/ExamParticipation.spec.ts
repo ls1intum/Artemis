@@ -301,7 +301,7 @@ test.describe('Exam participation', () => {
             }) => {
                 await examParticipation.startParticipation(studentTwo, course, exam);
                 await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
-                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'Solution', cloneMethod);
+                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, javaAllSuccessfulSubmission, 'Solution', cloneMethod);
                 await examParticipation.checkExerciseScore(javaAllSuccessfulSubmission.expectedResult);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
