@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.builder;
+package de.tum.cit.aet.artemis.core.config.conditions;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -8,7 +8,7 @@ import org.springframework.core.env.Profiles;
 /**
  * Helper class for property configuration.
  */
-public class PropertyConfigHelper {
+public class ConditionHelper {
 
     public static boolean isBuildAgentOnlyMode(Environment environment) {
         String artemisMode = environment.getProperty("artemis.mode", String.class);
@@ -34,6 +34,10 @@ public class PropertyConfigHelper {
 
     public static boolean isGitLabCIEnabled(Environment environment) {
         return environment.acceptsProfiles(Profiles.of("gitlabci"));
+    }
+
+    public static boolean isAthenaEnabled(Environment environment) {
+        return environment.getProperty("artemis.athena.enabled", Boolean.class, false);
     }
 
     // This provides room for future extension

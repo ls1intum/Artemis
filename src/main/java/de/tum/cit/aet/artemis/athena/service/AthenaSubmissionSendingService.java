@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +8,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
  * so that Athena can later give feedback suggestions on new submissions.
  */
 @Service
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaCondition.class)
 public class AthenaSubmissionSendingService {
 
     private static final int SUBMISSIONS_PER_REQUEST = 100;

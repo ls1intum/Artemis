@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.builder.properties;
 
-import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentOnlyMode;
+import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isBuildAgentOnlyMode;
 
 import org.springframework.core.env.ConfigurableEnvironment;
 

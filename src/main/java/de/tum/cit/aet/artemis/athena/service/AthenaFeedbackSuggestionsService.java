@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -9,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,6 +21,7 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -45,7 +44,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
  */
 @Service
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaCondition.class)
 public class AthenaFeedbackSuggestionsService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);

@@ -82,7 +82,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 @Import(TestRepositoryConfiguration.class)
-@TestPropertySource(properties = { "artemis.mode=core-only" })
+@TestPropertySource(properties = { "artemis.mode=core-only", "artemis.athena.enabled=false" })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

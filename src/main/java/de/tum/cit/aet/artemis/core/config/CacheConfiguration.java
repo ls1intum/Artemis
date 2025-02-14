@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
-import static de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper.isBuildAgentEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isBuildAgentEnabled;
 
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -49,8 +49,8 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
-import de.tum.cit.aet.artemis.core.config.builder.PropertyConfigHelper;
 import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentOrCoreCondition;
+import de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import tech.jhipster.config.JHipsterProperties;
@@ -262,7 +262,7 @@ public class CacheConfiguration {
         }
 
         // build agents should not hold partitions and only be a lite member
-        if (PropertyConfigHelper.isBuildAgentOnlyMode(env)) {
+        if (ConditionHelper.isBuildAgentOnlyMode(env)) {
             log.info("Joining cluster as lite member");
             config.setLiteMember(true);
         }

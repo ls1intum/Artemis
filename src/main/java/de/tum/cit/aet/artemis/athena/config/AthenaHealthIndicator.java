@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,19 +7,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 /**
  * Service determining the health of the Athena service and its assessment modules.
  */
 @Component
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaCondition.class)
 public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢

@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.athena.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.io.IOException;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -15,8 +13,10 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
+
 @Component
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaCondition.class)
 public class AthenaAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.athena.secret}")
