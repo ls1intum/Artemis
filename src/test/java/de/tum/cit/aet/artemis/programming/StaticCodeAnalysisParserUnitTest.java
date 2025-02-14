@@ -84,6 +84,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testClippyParser() throws IOException {
+        testParserWithFile("clippy.sarif", "clippy.json");
+    }
+
+    @Test
     void testParseInvalidXML() {
         assertThatCode(() -> testParserWithFileNamed("invalid_xml.xml", "pmd.xml", "invalid_xml.txt")).isInstanceOf(RuntimeException.class);
     }

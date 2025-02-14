@@ -1,0 +1,126 @@
+{
+  "tool": "CLIPPY",
+  "issues": [
+    {
+      "filePath": "src/main.rs",
+      "startLine": 20,
+      "endLine": 22,
+      "startColumn": 5,
+      "endColumn": 6,
+      "rule": "unsafe_code",
+      "category": "unsafe_code",
+      "message": "usage of an `unsafe` block",
+      "priority": "error"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 36,
+      "endLine": 36,
+      "startColumn": 13,
+      "endColumn": 21,
+      "rule": "clippy::almost_complete_range",
+      "category": "suspicious",
+      "message": "almost complete ascii range",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 14,
+      "endLine": 14,
+      "startColumn": 4,
+      "endColumn": 10,
+      "rule": "dead_code",
+      "category": "unused",
+      "message": "function `unused` is never used",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 32,
+      "endLine": 32,
+      "startColumn": 13,
+      "endColumn": 18,
+      "rule": "clippy::erasing_op",
+      "category": "correctness",
+      "message": "this operation will always return zero. This is likely not the intended outcome",
+      "priority": "error"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 40,
+      "endLine": 40,
+      "startColumn": 5,
+      "endColumn": 13,
+      "rule": "clippy::needless_return",
+      "category": "style",
+      "message": "unneeded `return` statement",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 43,
+      "endLine": 43,
+      "startColumn": 1,
+      "endColumn": 86,
+      "rule": "clippy::too_many_arguments",
+      "category": "complexity",
+      "message": "this function has too many arguments (8/7)",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 47,
+      "endLine": 47,
+      "startColumn": 5,
+      "endColumn": 48,
+      "rule": "clippy::large_const_arrays",
+      "category": "perf",
+      "message": "large array defined as const",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 52,
+      "endLine": 53,
+      "startColumn": 5,
+      "endColumn": 8,
+      "rule": "clippy::needless_for_each",
+      "category": "pedantic",
+      "message": "needless use of `for_each`",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 57,
+      "endLine": 57,
+      "startColumn": 5,
+      "endColumn": 12,
+      "rule": "clippy::todo",
+      "category": "restriction",
+      "message": "`todo` should not be present in production code",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 16,
+      "endLine": 16,
+      "startColumn": 4,
+      "endColumn": 20,
+      "rule": "non_snake_case",
+      "category": "nonstandard_style",
+      "message": "function `nonStandardStyle` should have a snake case name",
+      "priority": "warning"
+    },
+    {
+      "filePath": "src/main.rs",
+      "startLine": 27,
+      "endLine": 27,
+      "startColumn": 10,
+      "endColumn": 12,
+      "rule": "dropping_references",
+      "category": "rust_other",
+      "message": "calls to `std::mem::drop` with a reference instead of an owned value does nothing",
+      "priority": "warning"
+    }
+  ]
+}

@@ -1,0 +1,530 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 34,
+                  "byteOffset": 310,
+                  "endColumn": 6,
+                  "endLine": 22,
+                  "startColumn": 5,
+                  "startLine": 20
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "usage of an `unsafe` block"
+          },
+          "relatedLocations": [],
+          "ruleId": "unsafe_code",
+          "ruleIndex": 0
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 8,
+                  "byteOffset": 484,
+                  "endColumn": 21,
+                  "endLine": 36,
+                  "startColumn": 13,
+                  "startLine": 36
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "almost complete ascii range"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "use an inclusive range \"..=\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 2,
+                  "byteOffset": 487,
+                  "endColumn": 18,
+                  "endLine": 36,
+                  "startColumn": 16,
+                  "startLine": 36
+                }
+              }
+            }
+          ],
+          "ruleId": "clippy::almost_complete_range",
+          "ruleIndex": 1
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 6,
+                  "byteOffset": 217,
+                  "endColumn": 10,
+                  "endLine": 14,
+                  "startColumn": 4,
+                  "startLine": 14
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "function `unused` is never used"
+          },
+          "relatedLocations": [],
+          "ruleId": "dead_code",
+          "ruleIndex": 2
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 5,
+                  "byteOffset": 444,
+                  "endColumn": 18,
+                  "endLine": 32,
+                  "startColumn": 13,
+                  "startLine": 32
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "this operation will always return zero. This is likely not the intended outcome"
+          },
+          "relatedLocations": [],
+          "ruleId": "clippy::erasing_op",
+          "ruleIndex": 3
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 8,
+                  "byteOffset": 521,
+                  "endColumn": 13,
+                  "endLine": 40,
+                  "startColumn": 5,
+                  "startLine": 40
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "unneeded `return` statement"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "remove `return` \"1\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 8,
+                  "byteOffset": 521,
+                  "endColumn": 13,
+                  "endLine": 40,
+                  "startColumn": 5,
+                  "startLine": 40
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "remove `return` \"1\" \"\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 1,
+                  "byteOffset": 529,
+                  "endColumn": 14,
+                  "endLine": 40,
+                  "startColumn": 13,
+                  "startLine": 40
+                }
+              }
+            }
+          ],
+          "ruleId": "clippy::needless_return",
+          "ruleIndex": 4
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 85,
+                  "byteOffset": 534,
+                  "endColumn": 86,
+                  "endLine": 43,
+                  "startColumn": 1,
+                  "startLine": 43
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "this function has too many arguments (8/7)"
+          },
+          "relatedLocations": [],
+          "ruleId": "clippy::too_many_arguments",
+          "ruleIndex": 5
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 43,
+                  "byteOffset": 641,
+                  "endColumn": 48,
+                  "endLine": 47,
+                  "startColumn": 5,
+                  "startLine": 47
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "large array defined as const"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "make this a static item \"static\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 5,
+                  "byteOffset": 641,
+                  "endColumn": 10,
+                  "endLine": 47,
+                  "startColumn": 5,
+                  "startLine": 47
+                }
+              }
+            }
+          ],
+          "ruleId": "clippy::large_const_arrays",
+          "ruleIndex": 6
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 32,
+                  "byteOffset": 731,
+                  "endColumn": 8,
+                  "endLine": 53,
+                  "startColumn": 5,
+                  "startLine": 52
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "needless use of `for_each`"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "try \"for _x in v.iter() {\n    }\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 32,
+                  "byteOffset": 731,
+                  "endColumn": 8,
+                  "endLine": 53,
+                  "startColumn": 5,
+                  "startLine": 52
+                }
+              }
+            }
+          ],
+          "ruleId": "clippy::needless_for_each",
+          "ruleIndex": 7
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 7,
+                  "byteOffset": 790,
+                  "endColumn": 12,
+                  "endLine": 57,
+                  "startColumn": 5,
+                  "startLine": 57
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`todo` should not be present in production code"
+          },
+          "relatedLocations": [],
+          "ruleId": "clippy::todo",
+          "ruleIndex": 8
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 16,
+                  "byteOffset": 233,
+                  "endColumn": 20,
+                  "endLine": 16,
+                  "startColumn": 4,
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "function `nonStandardStyle` should have a snake case name"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "convert the identifier to snake case \"non_standard_style\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 16,
+                  "byteOffset": 233,
+                  "endColumn": 20,
+                  "endLine": 16,
+                  "startColumn": 4,
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "ruleId": "non_snake_case",
+          "ruleIndex": 9
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "message": {
+                "text": "argument has type `&i32`"
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 2,
+                  "byteOffset": 390,
+                  "endColumn": 12,
+                  "endLine": 27,
+                  "startColumn": 10,
+                  "startLine": 27
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "calls to `std::mem::drop` with a reference instead of an owned value does nothing"
+          },
+          "relatedLocations": [
+            {
+              "message": {
+                "text": "use `let _ = ...` to ignore the expression or result \"let _ = \""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 5,
+                  "byteOffset": 385,
+                  "endColumn": 10,
+                  "endLine": 27,
+                  "startColumn": 5,
+                  "startLine": 27
+                }
+              }
+            },
+            {
+              "message": {
+                "text": "use `let _ = ...` to ignore the expression or result \"let _ = \" \"\""
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
+                  "byteLength": 1,
+                  "byteOffset": 392,
+                  "endColumn": 13,
+                  "endLine": 27,
+                  "startColumn": 12,
+                  "startLine": 27
+                }
+              }
+            }
+          ],
+          "ruleId": "dropping_references",
+          "ruleIndex": 10
+        }
+      ],
+      "tool": {
+        "driver": {
+          "informationUri": "https://rust-lang.github.io/rust-clippy/",
+          "name": "clippy",
+          "rules": [
+            {
+              "fullDescription": {
+                "text": "requested on the command line with `-F unsafe-code`\n"
+              },
+              "id": "unsafe_code"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#almost_complete_range\n`#[warn(clippy::almost_complete_range)]` on by default\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#almost_complete_range",
+              "id": "clippy::almost_complete_range"
+            },
+            {
+              "fullDescription": {
+                "text": "`#[warn(dead_code)]` on by default\n"
+              },
+              "id": "dead_code"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#erasing_op\n`#[deny(clippy::erasing_op)]` on by default\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#erasing_op",
+              "id": "clippy::erasing_op"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_return\n`#[warn(clippy::needless_return)]` on by default\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_return",
+              "id": "clippy::needless_return"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#too_many_arguments\n`#[warn(clippy::too_many_arguments)]` on by default\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#too_many_arguments",
+              "id": "clippy::too_many_arguments"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#large_const_arrays\n`#[warn(clippy::large_const_arrays)]` on by default\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#large_const_arrays",
+              "id": "clippy::large_const_arrays"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_for_each\n`-W clippy::needless-for-each` implied by `-W clippy::pedantic`\nto override `-W clippy::pedantic` add `#[allow(clippy::needless_for_each)]`\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_for_each",
+              "id": "clippy::needless_for_each"
+            },
+            {
+              "fullDescription": {
+                "text": "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#todo\nrequested on the command line with `-W clippy::todo`\n"
+              },
+              "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#todo",
+              "id": "clippy::todo"
+            },
+            {
+              "fullDescription": {
+                "text": "`#[warn(non_snake_case)]` on by default\n"
+              },
+              "id": "non_snake_case"
+            },
+            {
+              "fullDescription": {
+                "text": "`#[warn(dropping_references)]` on by default\n"
+              },
+              "id": "dropping_references"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
