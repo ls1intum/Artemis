@@ -4,14 +4,15 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation-modal.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
-    imports: [ArtemisSharedCommonModule, FormsModule, ReactiveFormsModule],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
@@ -29,7 +30,7 @@ export class FeedbackDetailChannelModalComponent {
     form: FormGroup = this.formBuilder.group({
         name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
         description: ['', [Validators.required, Validators.maxLength(250)]],
-        isPublic: [true, Validators.required],
+        isPrivate: [true, Validators.required],
         isAnnouncementChannel: [false, Validators.required],
     });
 
@@ -41,7 +42,8 @@ export class FeedbackDetailChannelModalComponent {
                 const channelDTO = new ChannelDTO();
                 channelDTO.name = this.form.get('name')?.value;
                 channelDTO.description = this.form.get('description')?.value;
-                channelDTO.isPublic = this.form.get('isPublic')?.value || false;
+                channelDTO.topic = 'FeedbackDiscussion';
+                channelDTO.isPublic = !this.form.get('isPrivate')?.value || false;
                 channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value || false;
 
                 this.formSubmitted.emit({ channelDto: channelDTO, navigate });

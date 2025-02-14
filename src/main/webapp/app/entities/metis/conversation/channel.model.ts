@@ -10,6 +10,7 @@ export enum ChannelSubType {
     EXERCISE = 'exercise',
     LECTURE = 'lecture',
     EXAM = 'exam',
+    FEEDBACK_DISCUSSION = 'feedbackDiscussion',
 }
 
 /**

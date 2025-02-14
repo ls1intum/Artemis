@@ -8,5 +8,8 @@ ICL combines version control, secure communication, and continuous integration t
 Understanding these components is crucial for effectively using Artemis, especially if you're new to concepts like SSH and Git. The key components of ICL are:
 
 - :ref:`Local Version Control<local-vc>`:         Use the Local Version Control to interact with the repositories of programming exercises.
+- :ref:`Repository Authentication Mechanisms<authentication-mechanisms>`:    The different available and configurable repository authentication mechanisms.
+- :ref:`Tokens<token-authentication>`             Use VCS access tokens to perform Git operations on repositories.
 - :ref:`SSH<basic SSH introduction>`:             Use SSH to perform Git operations on repositories.
 - :ref:`Local Continuous Integration<local-ci>`:  Exercise submissions are built and tested by the Local CI system.
+
