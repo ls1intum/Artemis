@@ -11,18 +11,59 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif
 /**
  * Categorizes a rule via its lint group.
  *
+ * @see <a href="https://doc.rust-lang.org/rustc/lints/groups.html">Rust Lint Groups</a>
  * @see <a href="https://rust-lang.github.io/rust-clippy/stable/index.html">Clippy Lints</a>
  */
 public class ClippyCategorizer implements RuleCategorizer {
 
     private enum Category {
-        CARGO, COMPLEXITY, CORRECTNESS, NURSERY, PEDANTIC, PERF, RESTRICTION, STYLE, SUSPICIOUS, UNKNOWN,
+        NONSTANDARD_STYLE, UNSAFE_CODE, UNUSED, RUST_OTHER, CARGO, COMPLEXITY, CORRECTNESS, NURSERY, PEDANTIC, PERF, RESTRICTION, STYLE, SUSPICIOUS, CLIPPY_OTHER,
     }
 
     public static final List<String> CATEGORY_NAMES = Arrays.stream(Category.values()).map(Enum::name).map(String::toLowerCase).toList();
 
+    @Override
+    public String categorizeRule(ReportingDescriptor rule) {
+        if (rule.id().startsWith("clippy::")) {
+            return CLIPPY_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.CLIPPY_OTHER).name().toLowerCase();
+        }
+
+        return RUST_CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.RUST_OTHER).name().toLowerCase();
+    }
+
     // @formatter:off
-    private static final Map<String, Category> CATEGORY_BY_NAME = Map.ofEntries(
+    private static final Map<String, Category> RUST_CATEGORY_BY_NAME = Map.ofEntries(
+        entry("non_camel_case_types", Category.NONSTANDARD_STYLE),
+        entry("non_snake_case", Category.NONSTANDARD_STYLE),
+        entry("non_upper_case_globals", Category.NONSTANDARD_STYLE),
+        entry("dead_code", Category.UNUSED),
+        entry("map_unit_fn", Category.UNUSED),
+        entry("path_statements", Category.UNUSED),
+        entry("redundant_semicolons", Category.UNUSED),
+        entry("unreachable_code", Category.UNUSED),
+        entry("unreachable_patterns", Category.UNUSED),
+        entry("unused_allocation", Category.UNUSED),
+        entry("unused_assignments", Category.UNUSED),
+        entry("unused_attributes", Category.UNUSED),
+        entry("unused_braces", Category.UNUSED),
+        entry("unused_doc_comments", Category.UNUSED),
+        entry("unused_extern_crates", Category.UNUSED),
+        entry("unused_features", Category.UNUSED),
+        entry("unused_imports", Category.UNUSED),
+        entry("unused_labels", Category.UNUSED),
+        entry("unused_macro_rules", Category.UNUSED),
+        entry("unused_macros", Category.UNUSED),
+        entry("unused_must_use", Category.UNUSED),
+        entry("unused_mut", Category.UNUSED),
+        entry("unused_parens", Category.UNUSED),
+        entry("unused_unsafe", Category.UNUSED),
+        entry("unused_variables", Category.UNUSED),
+        entry("unsafe_code", Category.UNSAFE_CODE)
+    );
+    // @formatter:on
+
+    // @formatter:off
+    private static final Map<String, Category> CLIPPY_CATEGORY_BY_NAME = Map.ofEntries(
         entry("clippy::absolute_paths", Category.RESTRICTION),
         entry("clippy::almost_complete_range", Category.SUSPICIOUS),
         entry("clippy::approx_constant", Category.CORRECTNESS),
@@ -795,9 +836,4 @@ public class ClippyCategorizer implements RuleCategorizer {
         entry("clippy::zombie_processes", Category.SUSPICIOUS)
     );
     // @formatter:on
-
-    @Override
-    public String categorizeRule(ReportingDescriptor rule) {
-        return CATEGORY_BY_NAME.getOrDefault(rule.id(), Category.UNKNOWN).name().toLowerCase();
-    }
 }
