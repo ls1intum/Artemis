@@ -117,7 +117,9 @@ artemis:
             short-name: "artemis-build-agent-1"
             display-name: "Artemis Build Agent 1"
 
-
+    version-control:
+      build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc.
+      build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc. You can also use an ssh key
 
 management:
     endpoints:
@@ -273,6 +275,7 @@ springdoc:
         operationsSorter: method
 
 server:
+    port: 8080
     servlet:
         session:
             cookie:
