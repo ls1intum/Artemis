@@ -212,7 +212,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.ngOnInit();
         tick(1000);
 
-        expect(accountServiceMock.identity).toHaveBeenCalled();
+        expect(accountServiceMock.identity).toHaveBeenCalledOnce();
         expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(course.id);
         expect(component.course).toEqual(extendedCourse);
         expect(component.lectures).toEqual([lecture1, lecture2]);
@@ -232,7 +232,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.ngOnInit();
         tick(1000);
 
-        expect(accountServiceMock.identity).toHaveBeenCalled();
+        expect(accountServiceMock.identity).toHaveBeenCalledOnce();
         expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(course.id);
         expect(component.course).toEqual(emptyCourse);
         expect(component.lectures).toEqual([]);

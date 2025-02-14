@@ -54,7 +54,6 @@ public class PublicLtiResource {
     @EnforceNothing
     public ResponseEntity<Void> lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
-
         if (state == null) {
             errorOnMissingParameter(response, "state");
             return ResponseEntity.ok().build();

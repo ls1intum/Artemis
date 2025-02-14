@@ -9,15 +9,15 @@
                 "lectures": "Vorlesungen",
                 "competencies": {
                     "header": "Kompetenzen hinzufügen",
-                    "selector": "Bestätigen sie, ob sie eine Verknüpfung zu den Kompetenzen ihres Kurses hinzufügen wollen"
+                    "selector": "Bestätige, ob du eine Verknüpfung zu den Kompetenzen deines Kurses hinzufügen willst"
                 },
                 "learningPaths": {
                     "header": "Lernpfade hinzufügen",
-                    "selector": "Bestätigen sie, ob sie eine Verknüpfung zu den Lernpfaden ihres Kurses hinzufügen wollen"
+                    "selector": "Bestätige, ob du eine Verknüpfung zu den Lernpfaden deines Kurses hinzufügen willst"
                 },
                 "iris": {
                     "header": "Iris hinzufügen",
-                    "selector": "Bestätigen sie, ob sie eine Verknüpfung zu Iris hinzufügen wollen"
+                    "selector": "Bestätige, ob du eine Verknüpfung zu Iris hinzufügen willst"
                 }
             },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",

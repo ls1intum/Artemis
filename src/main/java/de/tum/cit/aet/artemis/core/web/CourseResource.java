@@ -792,7 +792,7 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/with-exercises-lectures-competencies")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
         Optional<Course> courseOptional = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId);
@@ -800,7 +800,6 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         Course course = courseOptional.get();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok(course);
     }
 
