@@ -9,10 +9,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
+import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
  * Service for exporting programming exercise repositories for Athena.
  */
 @Service
-@Conditional(AthenaCondition.class)
+@ConditionalOnBean(AthenaConfiguration.class)
 public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);

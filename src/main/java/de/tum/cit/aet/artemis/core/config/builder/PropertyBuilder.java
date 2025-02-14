@@ -25,12 +25,28 @@ import de.tum.cit.aet.artemis.core.config.builder.properties.ManagementMetricsEn
 
 /**
  * This class is responsible for attaching the conflicting properties to the Spring application.
+ * On a high-level, this could be understood as part of dependency injection as we literally define the components
+ * that will be autowired.
  */
 public class PropertyBuilder {
 
-    private static final List<ConflictingOverrideProperty> properties = List.of(new AutoConfigurationExclusionProperty(), new LiquibaseEnabledProperty(),
-            new CloudLoadBalancerCacheProperty(), new ManagementEndpointHealthDetailsProperty(), new EurekaClientEnabledProperty(),
-            new ManagementEndpointJhiMetricsEnabledProperty(), new ManagementEndpointProbesEnabledProperty(), new ManagementMetricsEnableProperty());
+    /**
+     * Note: One could also think about creating another layer of abstraction for the properties.
+     * It could be useful to group ManagementEndpointOverrides together.
+     * Contrary, the current approach is more flexible and - despite boilerplate - easier to understand and maintain.
+     */
+    private static final List<CustomProperty> properties = List.of(
+    // @formatter:off
+        new AutoConfigurationExclusionProperty(),
+        new LiquibaseEnabledProperty(),
+        new CloudLoadBalancerCacheProperty(),
+        new ManagementEndpointHealthDetailsProperty(),
+        new EurekaClientEnabledProperty(),
+        new ManagementEndpointJhiMetricsEnabledProperty(),
+        new ManagementEndpointProbesEnabledProperty(),
+        new ManagementMetricsEnableProperty()
+        // @formatter:on
+    );
 
     /**
      * Attaches the conflicting properties to the Spring application.
@@ -45,7 +61,7 @@ public class PropertyBuilder {
 
             var activatedProperties = properties.stream().filter(s -> s.enabled(environment)).toList();
 
-            for (ConflictingOverrideProperty property : activatedProperties) {
+            for (CustomProperty property : activatedProperties) {
                 appendProperty(property, environment);
             }
         });
@@ -70,8 +86,11 @@ public class PropertyBuilder {
      * @param property    the property to append
      * @param environment the environment to append the property to
      */
-    private void appendProperty(ConflictingOverrideProperty property, ConfigurableEnvironment environment) {
+    private void appendProperty(CustomProperty property, ConfigurableEnvironment environment) {
         var result = new MapPropertySource(property.getPropertySourceName(), Map.of(property.getPropertyName(), property.getPropertyValue(environment)));
+        // Order of overrides (last-named wins) and order of property source (packaged application.yml -> application.yml next to JAR -> system environment)
+        // Using SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME, this injects directly after system environment vars (highest priority).
+        // this is required to also allow properties to be passed as env-vars instead of only via application.yml-files
         environment.getPropertySources().addAfter(SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME, result);
     }
 }

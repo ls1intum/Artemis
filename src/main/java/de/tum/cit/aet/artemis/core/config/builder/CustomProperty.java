@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.config.builder;
 
 import org.springframework.core.env.ConfigurableEnvironment;
 
-public interface ConflictingOverrideProperty {
+public interface CustomProperty {
 
     /**
      * @return the property name to override
@@ -29,6 +29,8 @@ public interface ConflictingOverrideProperty {
     /**
      * Returns the property source name for the property to override.
      * This name is arbitrary and should be unique.
+     * When such a property is read from an application.yml, this property would include the file name.
+     * While you can override this value, there is currently no good reason to do so.
      *
      * @return the property source name
      */

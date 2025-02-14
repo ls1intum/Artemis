@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.springframework.core.env.ConfigurableEnvironment;
 
-import de.tum.cit.aet.artemis.core.config.builder.ConflictingOverrideProperty;
+import de.tum.cit.aet.artemis.core.config.builder.CustomProperty;
 
-public class AutoConfigurationExclusionProperty implements ConflictingOverrideProperty {
+public class AutoConfigurationExclusionProperty implements CustomProperty {
 
     private static final List<Class<?>> autoConfigurationExclusions = List.of(org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration.class,
             org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration.class,
@@ -19,11 +19,6 @@ public class AutoConfigurationExclusionProperty implements ConflictingOverridePr
 
     private static final List<Class<?>> autoConfigurationExclusionsBuildagentOnly = List.of(org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
             org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class);
-
-    @Override
-    public String getPropertySourceName() {
-        return "conflicting-properties-autoconfig-exclusions";
-    }
 
     @Override
     public String getPropertyName() {

@@ -6,7 +6,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 /**
- * Helper class for property configuration.
+ * Helper class for property configuration, in particular for determining conditions
+ * whether services should be enabled or not.
+ * This bridges the gap between the condition classes and the actual property values.
  */
 public class ConditionHelper {
 

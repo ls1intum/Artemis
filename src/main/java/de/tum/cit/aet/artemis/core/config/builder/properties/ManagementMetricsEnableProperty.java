@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isBu
 
 import org.springframework.core.env.ConfigurableEnvironment;
 
-import de.tum.cit.aet.artemis.core.config.builder.ConflictingOverrideProperty;
+import de.tum.cit.aet.artemis.core.config.builder.CustomProperty;
 
-public class ManagementMetricsEnableProperty implements ConflictingOverrideProperty {
+public class ManagementMetricsEnableProperty implements CustomProperty {
 
     @Override
     public String getPropertyName() {

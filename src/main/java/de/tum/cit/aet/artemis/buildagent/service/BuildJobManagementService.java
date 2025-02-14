@@ -23,17 +23,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
-import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.config.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
-import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
 /**
@@ -41,7 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
 @Service
-@Conditional(BuildAgentCondition.class)
+@ConditionalOnBean(BuildAgentConfiguration.class)
 public class BuildJobManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);

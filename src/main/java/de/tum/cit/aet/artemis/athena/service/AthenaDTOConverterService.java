@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.athena.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.FeedbackBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.ModelingExerciseDTO;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextExerciseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextSubmissionDTO;
-import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
  */
-@Conditional(AthenaCondition.class)
+@ConditionalOnBean(AthenaConfiguration.class)
 @Service
 public class AthenaDTOConverterService {
 

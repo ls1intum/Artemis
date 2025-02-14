@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -22,7 +22,7 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
+import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
@@ -56,7 +56,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Conditional(AthenaCondition.class)
+    @ConditionalOnBean(AthenaConfiguration.class)
     public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
@@ -100,7 +100,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Conditional(AthenaCondition.class)
+    @ConditionalOnBean(AthenaConfiguration.class)
     public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
@@ -119,7 +119,7 @@ public class RestTemplateConfiguration {
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
     @Bean
-    @Conditional(AthenaCondition.class)
+    @ConditionalOnBean(AthenaConfiguration.class)
     public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createVeryShortTimeoutRestTemplate());
     }

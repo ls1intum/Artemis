@@ -18,15 +18,15 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
+import de.tum.cit.aet.artemis.buildagent.config.BuildAgentConfiguration;
 
 @Service
-@Conditional(BuildAgentCondition.class)
+@ConditionalOnBean(BuildAgentConfiguration.class)
 public class BuildAgentSshKeyService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentSshKeyService.class);

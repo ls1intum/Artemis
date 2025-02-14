@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,10 +13,10 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.FeedbackBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
-import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
  * so that Athena can later give feedback suggestions on new submissions.
  */
 @Service
-@Conditional(AthenaCondition.class)
+@ConditionalOnBean(AthenaConfiguration.class)
 public class AthenaFeedbackSendingService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);

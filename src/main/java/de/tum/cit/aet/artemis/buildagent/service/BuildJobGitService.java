@@ -23,16 +23,16 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
+import de.tum.cit.aet.artemis.buildagent.config.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
 
-@Conditional(BuildAgentCondition.class)
+@ConditionalOnBean(BuildAgentConfiguration.class)
 @Service
 public class BuildJobGitService extends AbstractGitService {
 

@@ -13,7 +13,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,10 +27,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.tum.cit.aet.artemis.core.config.conditions.AthenaCondition;
+import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 
 @Component
-@Conditional(AthenaCondition.class)
+@ConditionalOnBean(AthenaConfiguration.class)
 public class AthenaRequestMockProvider {
 
     private final RestTemplate restTemplate;
