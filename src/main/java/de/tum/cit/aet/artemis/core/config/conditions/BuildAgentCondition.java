@@ -8,6 +8,6 @@ public class BuildAgentCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        return ConditionHelper.isBuildAgentEnabled(context.getEnvironment());
+        return ArtemisConfigHelper.isBuildAgentEnabled(context.getEnvironment());
     }
 }

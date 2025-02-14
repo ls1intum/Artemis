@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.builder.properties;
 
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isBuildAgentEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isBuildAgentEnabled;
 
 import java.util.ArrayList;
 import java.util.List;

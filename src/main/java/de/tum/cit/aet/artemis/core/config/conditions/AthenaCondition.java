@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.conditions;
 
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isAthenaEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isAthenaEnabled;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;

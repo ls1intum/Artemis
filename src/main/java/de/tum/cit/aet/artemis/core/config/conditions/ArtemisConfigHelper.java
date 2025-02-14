@@ -10,7 +10,7 @@ import org.springframework.core.env.Profiles;
  * whether services should be enabled or not.
  * This bridges the gap between the condition classes and the actual property values.
  */
-public class ConditionHelper {
+public class ArtemisConfigHelper {
 
     public static boolean isBuildAgentOnlyMode(Environment environment) {
         String artemisMode = environment.getProperty("artemis.mode", String.class);

@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.core.config.builder;
 
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isBuildAgentOnlyMode;
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isGitLabCIEnabled;
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isGitLabEnabled;
-import static de.tum.cit.aet.artemis.core.config.conditions.ConditionHelper.isJenkinsEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isBuildAgentOnlyMode;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isGitLabCIEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isGitLabEnabled;
+import static de.tum.cit.aet.artemis.core.config.conditions.ArtemisConfigHelper.isJenkinsEnabled;
 import static org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME;
 
 import java.util.List;
