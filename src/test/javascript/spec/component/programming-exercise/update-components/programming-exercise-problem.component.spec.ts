@@ -6,6 +6,10 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -18,10 +22,13 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();
