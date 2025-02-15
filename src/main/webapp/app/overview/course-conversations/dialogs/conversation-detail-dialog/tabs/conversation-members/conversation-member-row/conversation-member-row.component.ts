@@ -24,6 +24,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -40,6 +41,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbDropdownItem,
         TranslateDirective,
         ArtemisTranslatePipe,
+        NgClass,
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
@@ -49,6 +51,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     course = input<Course>();
     changePerformed = output<void>();
     conversationMember = input<ConversationUserDTO>();
+    readonly onUserNameClicked = output<number>();
 
     idOfLoggedInUser: number;
 
@@ -295,6 +298,13 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         } else {
             this.userIcon = faUser;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');
+        }
+    }
+
+    userNameClicked() {
+        const memberId = this.conversationMember()?.id;
+        if (memberId) {
+            this.onUserNameClicked.emit(memberId);
         }
     }
 }
