@@ -7,6 +7,16 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextBlockRefGroup } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('ManualTextSelectionComponent', () => {
     let component: ManualTextSelectionComponent;
@@ -32,7 +42,12 @@ describe('ManualTextSelectionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(TextAssessmentAnalytics),
+            ],
         })
             .compileComponents()
             .then(() => {
