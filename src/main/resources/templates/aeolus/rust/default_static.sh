@@ -4,7 +4,9 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 static_code_analysis () {
   echo '⚙️ executing static_code_analysis'
   cd assignment
-  cargo clippy --message-format=json | clippy-sarif --output ../clippy.sarif
+  # clippy-sarif creates a result object for every span, but we want one result per message.
+  # Select the first primary span and replace macro expansions with their original invocation.
+  cargo clippy --message-format=json | jq -c '.message.spans[]? |= first(select(.is_primary) | if .expansion then .expansion.span else . end)' | clippy-sarif --output ../clippy.sarif
 }
 
 build () {
