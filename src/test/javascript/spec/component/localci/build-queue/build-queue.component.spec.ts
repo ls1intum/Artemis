@@ -15,6 +15,10 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -279,7 +283,6 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -287,6 +290,8 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
     }));
