@@ -8,7 +8,7 @@
         </div>
     </div>
     <div class="modal-body">
-        <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
+        <div class="dropdown-container">
             <!-- exercise dropdown -->
             <div ngbDropdown class="dropdown-section">
                 <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
@@ -25,16 +25,13 @@
                                         id
                                         <fa-icon [icon]="faSort" />
                                     </th>
-                                    <th jhiSortBy="type">
-                                        {{ 'artemisApp.exercise.type' | artemisTranslate }}
+                                    <th jhiSortBy="type" jhiTranslate="artemisApp.exercise.type">
                                         <fa-icon [icon]="faSort" />
                                     </th>
-                                    <th jhiSortBy="title">
-                                        {{ 'artemisApp.exercise.title' | artemisTranslate }}
+                                    <th jhiSortBy="title" jhiTranslate="artemisApp.exercise.title">
                                         <fa-icon [icon]="faSort" />
                                     </th>
-                                    <th jhiSortBy="includedInOverallScore">
-                                        {{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}
+                                    <th jhiSortBy="includedInOverallScore" jhiTranslate="artemisApp.exercise.includedInOverallScore">
                                         <fa-icon [icon]="faSort" />
                                     </th>
                                 </tr>
@@ -49,11 +46,11 @@
                                         <td>{{ exercise.type ? exercise.type : '' }}</td>
                                         <td>{{ exercise.title ? exercise.title : '' }}</td>
                                         <td>
-                                            {{
-                                                exercise.includedInOverallScore === 'NOT_INCLUDED'
-                                                    ? ('artemisApp.exercise.no' | artemisTranslate)
-                                                    : ('artemisApp.exercise.yes' | artemisTranslate)
-                                            }}
+                                            @if (exercise.includedInOverallScore === 'NOT_INCLUDED') {
+                                                <span jhiTranslate="artemisApp.exercise.no"></span>
+                                            } @else {
+                                                <span jhiTranslate="artemisApp.exercise.yes"></span>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -79,8 +76,7 @@
                                         id
                                         <fa-icon [icon]="faSort" />
                                     </th>
-                                    <th jhiSortBy="title">
-                                        {{ 'artemisApp.lecture.title' | artemisTranslate }}
+                                    <th jhiSortBy="title" jhiTranslate="artemisApp.lecture.title">
                                         <fa-icon [icon]="faSort" />
                                     </th>
                                 </tr>
@@ -104,19 +100,19 @@
     </div>
 
     <div class="lti-competency-selector">
-        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
+        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
         <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
     </div>
 
     <div class="lti-learning-path-selector">
-        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
+        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
         <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
     </div>
 
     <div class="lti-iris-selector">
-        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
+        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
         <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected" />
     </div>
