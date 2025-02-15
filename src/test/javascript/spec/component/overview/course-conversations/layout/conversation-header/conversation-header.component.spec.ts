@@ -10,7 +10,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import {
@@ -30,6 +30,8 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { input, runInInjectionContext, SimpleChanges } from '@angular/core';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { HttpResponse } from '@angular/common/http';
+import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -65,10 +67,10 @@ examples.forEach((activeConversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                     MockProvider(NgbModal),
-                    MockProvider(MetisConversationService),
                     MockProvider(ConversationService),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: MetisConversationService, useClass: MockMetisConversationService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                 ],
             }).compileComponents();
@@ -245,6 +247,120 @@ examples.forEach((activeConversation) => {
             );
         }
 
+        it('should dismiss modal and call createOneToOneChatWithId when userNameClicked is emitted', fakeAsync(() => {
+            const fakeUserNameClicked$ = new Subject<number>();
+            const fakeClosed$ = new Subject<void>();
+
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                    userNameClicked: fakeUserNameClicked$,
+                },
+                dismiss: jest.fn(),
+                closed: fakeClosed$,
+                result: Promise.resolve(),
+            } as any;
+
+            const modalService = TestBed.inject(NgbModal);
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            const metisConversationService = TestBed.inject(MetisConversationService);
+            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId').mockReturnValue(of(new HttpResponse({ status: 200 })) as any);
+
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+
+            const testUserId = 42;
+            fakeUserNameClicked$.next(testUserId);
+            tick();
+
+            expect(fakeModalRef.dismiss).toHaveBeenCalled();
+            expect(createChatSpy).toHaveBeenCalledWith(testUserId);
+        }));
+
+        it('should not subscribe to userNameClicked if the modal instance does not have that property', fakeAsync(() => {
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                },
+                dismiss: jest.fn(),
+                result: Promise.resolve(),
+            } as any;
+
+            const modalService = TestBed.inject(NgbModal);
+            const metisConversationService = TestBed.inject(MetisConversationService);
+            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId');
+
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+            tick();
+
+            expect(createChatSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should always open info tab when conversation is one-to-one chat', fakeAsync(() => {
+            const oneToOneChat = generateOneToOneChatDTO({});
+            component.activeConversation = oneToOneChat;
+
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: null,
+                    initialize: jest.fn(),
+                },
+                result: Promise.resolve(),
+                dismiss: jest.fn(),
+            } as any;
+
+            const modalService = TestBed.inject(NgbModal);
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.MEMBERS);
+            tick();
+
+            expect(fakeModalRef.componentInstance.selectedTab).toEqual(ConversationDetailTabs.INFO);
+        }));
+
+        it('should emit onUpdateSidebar when conversation detail dialog is closed', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+            const fakeModalRef: NgbModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    activeConversation: undefined,
+                    selectedTab: undefined,
+                    initialize: jest.fn(),
+                },
+                dismiss: jest.fn(),
+                result: Promise.resolve(),
+            } as any;
+
+            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
+
+            const onUpdateSidebarSpy = jest.spyOn(component.onUpdateSidebar, 'emit');
+
+            const event = new MouseEvent('click');
+            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+            tick();
+
+            expect(onUpdateSidebarSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should emit collapseSearch when toggleSearchBar is called', () => {
+            const collapseSearchSpy = jest.spyOn(component.collapseSearch, 'emit');
+            component.toggleSearchBar();
+
+            expect(collapseSearchSpy).toHaveBeenCalledOnce();
+        });
+
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
             expect(detailButton).toBeTruthy();
@@ -267,7 +383,9 @@ examples.forEach((activeConversation) => {
                 expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
                 expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
-                expect(mockModalRef.componentInstance.selectedTab).toEqual(tab);
+
+                const expectedTab = component.getAsOneToOneChat(activeConversation) ? ConversationDetailTabs.INFO : tab;
+                expect(mockModalRef.componentInstance.selectedTab).toEqual(expectedTab);
             });
         }
     });
