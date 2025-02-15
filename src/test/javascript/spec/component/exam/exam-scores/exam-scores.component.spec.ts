@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import {
@@ -39,6 +39,14 @@ import {
 } from 'app/shared/export/export-constants';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -276,6 +284,12 @@ describe('ExamScoresComponent', () => {
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: EMPTY }),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
