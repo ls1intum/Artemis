@@ -1,5 +1,5 @@
 import { Injector } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -20,9 +20,11 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -49,6 +51,7 @@ describe('ExerciseImportComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(TranslateDirective),
             ],
+            providers: [MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
