@@ -19,6 +19,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -60,6 +62,7 @@ describe('Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
