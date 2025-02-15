@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
@@ -26,6 +27,8 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     private alertService = inject(AlertService);
 
     participationType = ProgrammingExerciseParticipationType;
+
+    protected readonly RepositoryType = RepositoryType;
 
     localVCEnabled = false;
     onlineIdeEnabled = false;
@@ -65,7 +68,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
      *
      * @param repositoryType
      */
-    downloadRepository(repositoryType: ProgrammingExerciseInstructorRepositoryType): void {
+    downloadRepository(repositoryType: RepositoryType): void {
         const programmingExerciseId = this.exercise()?.id;
         if (programmingExerciseId) {
             // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.

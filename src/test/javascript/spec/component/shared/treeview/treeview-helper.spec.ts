@@ -1,13 +1,13 @@
-import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
-import { findItem, findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
+import { TreeItem, TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import { findItem, findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
-const rootNoChildren = new TreeviewItem<number>({
+const rootNoChildren = new TreeViewItem<number>({
     children: [],
     text: '1',
     value: 1,
     checked: false,
 });
-const rootHasChildren = new TreeviewItem<number>({
+const rootHasChildren = new TreeViewItem<number>({
     text: '1',
     value: 1,
     checked: false,

@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { RepositoryType } from '../../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -106,7 +107,7 @@ describe('Programming Exercise Group Cell Component', () => {
         const alertSuccessStub = jest.spyOn(mockAlertService, 'success');
 
         // WHEN
-        comp.downloadRepository('TEMPLATE');
+        comp.downloadRepository(RepositoryType.TEMPLATE);
 
         // THEN
         expect(exportRepositoryStub).toHaveBeenCalledOnce();

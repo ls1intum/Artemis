@@ -15,7 +15,7 @@
                             <a href="{{ exercise().templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload" /> Template </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TEMPLATE)"> <fa-icon [icon]="faDownload" /> Template </a>
                     }
                 }
                 @if (exercise().templateParticipation?.results?.length) {
@@ -33,7 +33,7 @@
                             <a href="{{ exercise().solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload" /> Solution </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.SOLUTION)"> <fa-icon [icon]="faDownload" /> Solution </a>
                     }
                 }
                 @if (exercise().solutionParticipation?.results?.length) {
@@ -51,7 +51,7 @@
                             <a href="{{ exercise().testRepositoryUri }}" target="_blank">Test</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload" /> Test </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TESTS)"> <fa-icon [icon]="faDownload" /> Test </a>
                     }
                 }
             </div>
