@@ -40,6 +40,8 @@ import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import 'jest-extended';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -78,6 +80,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: {} })
