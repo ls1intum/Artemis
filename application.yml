@@ -4,3 +4,7 @@ artemis:
 
   version-control:
     url: https://gitlab.artemis.cit.tum.de # assuming we are using GitLab and have a different URL (than localVC as default)
+
+info:
+  guided-tour:
+    courseShortName: 'artemis-tutorial'
