@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -32,6 +32,9 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { signal } from '@angular/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -90,6 +93,9 @@ describe('LectureUpdateComponent', () => {
                         },
                     },
                 },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
