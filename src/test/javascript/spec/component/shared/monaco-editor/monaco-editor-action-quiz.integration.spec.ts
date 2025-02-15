@@ -7,6 +7,10 @@ import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/
 import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorActionQuizIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -19,6 +23,10 @@ describe('MonacoEditorActionQuizIntegration', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
         })
             .compileComponents()
             .then(() => {
