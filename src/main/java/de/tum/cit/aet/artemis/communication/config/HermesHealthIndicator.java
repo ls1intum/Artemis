@@ -42,8 +42,28 @@ public class HermesHealthIndicator implements HealthIndicator {
         additionalInfo.put("url", hermesUrl);
         ConnectorHealth health;
         try {
+            ResponseEntity<HermesHealthReport> healthResponse = shortTimeoutRestTemplate.getForEntity(hermesUrl + "/api/health", HermesHealthReport.class);
+
+            var response = healthResponse.getBody();
+
+            if (response != null) {
+                additionalInfo.put("version", response.versionNumber);
+                additionalInfo.put("firebase_up", response.isFirebaseConnected ? "up" : "down");
+                additionalInfo.put("apns_up", response.isApnsConnected ? "up" : "down");
+            }
+
+            health = new ConnectorHealth(healthResponse.getStatusCode().is2xxSuccessful(), additionalInfo);
+
+            return health.asActuatorHealth();
+        }
+        catch (RestClientException e) {
+            // Older version of Hermes might be running, which does not provide the /health api
+        }
+
+        try {
             ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(hermesUrl, String.class);
             HttpStatusCode statusCode = response.getStatusCode();
+
             health = new ConnectorHealth(statusCode.is2xxSuccessful(), additionalInfo);
         }
         catch (RestClientException error) {
@@ -51,5 +71,8 @@ public class HermesHealthIndicator implements HealthIndicator {
         }
 
         return health.asActuatorHealth();
+    }
+
+    private record HermesHealthReport(boolean isApnsConnected, boolean isFirebaseConnected, String versionNumber) {
     }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -36,9 +36,9 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     private dialog = inject(MatDialog);
     private accountService = inject(AccountService);
 
-    @Input() postingContentPart: PostingContentPart;
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+    postingContentPart = input<PostingContentPart>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
 
     imageNotFound = false;
     hasClickedUserReference = false;
@@ -80,13 +80,13 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     }
 
     processContent() {
-        if (this.postingContentPart.contentBeforeReference) {
-            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart.contentBeforeReference);
+        if (this.postingContentPart()?.contentBeforeReference) {
+            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
             this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
         }
 
-        if (this.postingContentPart.contentAfterReference) {
-            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart.contentAfterReference);
+        if (this.postingContentPart()?.contentAfterReference) {
+            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
             this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
         }
     }

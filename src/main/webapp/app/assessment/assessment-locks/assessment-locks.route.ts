@@ -6,7 +6,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 
 export const assessmentLocksRoute: Routes = [
     {
-        path: ':courseId/exams/:examId/assessment-locks',
+        path: 'exams/:examId/assessment-locks',
         loadComponent: () => import('./assessment-locks.component').then((m) => m.AssessmentLocksComponent),
         resolve: {
             course: CourseManagementResolve,
@@ -18,7 +18,7 @@ export const assessmentLocksRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/assessment-locks',
+        path: 'assessment-locks',
         loadComponent: () => import('./assessment-locks.component').then((m) => m.AssessmentLocksComponent),
         resolve: {
             course: CourseManagementResolve,

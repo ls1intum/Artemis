@@ -340,7 +340,8 @@
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             },
             "saveExercise": "Aufgabe speichern",
-            "exerciseSaved": "Aufgabe gespeichert"
+            "exerciseSaved": "Aufgabe gespeichert",
+            "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

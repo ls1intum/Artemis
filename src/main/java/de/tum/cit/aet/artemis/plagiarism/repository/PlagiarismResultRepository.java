@@ -82,7 +82,7 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      * @param exerciseId ID of exercise with plagiarism results that will be deleted.
      */
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional // ok because of delete
     void deletePlagiarismResultsByExerciseId(Long exerciseId);
 
     /**
@@ -92,6 +92,6 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      * @param exerciseId         ID of exercise with plagiarism results that will be deleted.
      */
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional // ok because of delete
     void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
 }

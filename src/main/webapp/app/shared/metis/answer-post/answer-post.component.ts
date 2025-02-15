@@ -2,18 +2,16 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
     HostListener,
-    Input,
     OnChanges,
     OnDestroy,
     OnInit,
-    Output,
     Renderer2,
-    ViewChild,
     ViewContainerRef,
     inject,
     input,
+    output,
+    viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
@@ -22,7 +20,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -33,6 +30,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -52,7 +50,7 @@ import { captureException } from '@sentry/angular';
         NgbTooltip,
         PostingHeaderComponent,
         PostingContentComponent,
-        AnswerPostReactionsBarComponent,
+        PostingReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
         NgStyle,
         CdkOverlayOrigin,
@@ -66,23 +64,23 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() isLastAnswer: boolean;
-    @Output() openPostingCreateEditModal = new EventEmitter<void>();
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    isLastAnswer = input<boolean>(false);
+    isReadOnlyMode = input<boolean>(false);
+    isConsecutive = input<boolean>(false);
+
+    openPostingCreateEditModal = output<void>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
+
+    containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
+
     isAnswerPost = true;
-
-    @Input() isReadOnlyMode = false;
-
-    // ng-container to render answerPostCreateEditModalComponent
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     // Icons
     faBookmark = faBookmark;
 
-    isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
@@ -100,7 +98,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     get reactionsBar() {
-        return this.reactionsBarComponent;
+        return this.reactionsBarComponent();
     }
 
     onPostingUpdated(updatedPosting: AnswerPost) {

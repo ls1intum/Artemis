@@ -16,7 +16,7 @@ export interface IConflictStateService {
  */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorConflictStateService extends DomainDependentService implements IConflictStateService, OnDestroy {
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
 
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
     private websocketConnections: Map<string, string> = new Map();
@@ -30,7 +30,7 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
      * Unsubscribe fromm all subscriptions.
      */
     ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
+        Object.values(this.websocketConnections).forEach((channel) => this.websocketService.unsubscribe(channel));
     }
 
     /**

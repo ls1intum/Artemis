@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -106,18 +107,15 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT b
+            SELECT new de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO(
+                ROUND(AVG((b.buildCompletionDate - b.buildStartDate) BY SECOND)),
+                COUNT(b),
+                b.exerciseId
+            )
             FROM BuildJob b
-            WHERE b.exerciseId = :exerciseId AND b.buildStatus = 'SUCCESSFUL'
-            ORDER BY b.buildStartDate DESC
-            LIMIT :limit
+            WHERE b.exerciseId = :exerciseId
+                AND b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
+            GROUP BY b.exerciseId
             """)
-    List<BuildJob> fetchSuccessfulBuildJobsByExerciseIdWithLimit(@Param("exerciseId") Long exerciseId, @Param("limit") int limit);
-
-    @Query("""
-            SELECT COUNT(b)
-            FROM BuildJob b
-            WHERE b.exerciseId = :exerciseId AND b.buildStatus = 'SUCCESSFUL'
-            """)
-    long fetchSuccessfulBuildJobCountByExerciseId(@Param("exerciseId") Long exerciseId);
+    BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
 }

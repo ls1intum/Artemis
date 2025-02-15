@@ -10,7 +10,7 @@ import { inject } from '@angular/core';
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     protected restResourceUrl?: string;
     protected http = inject(HttpClient);
-    protected jhiWebsocketService = inject(WebsocketService);
+    protected websocketService = inject(WebsocketService);
 
     protected constructor() {
         super();

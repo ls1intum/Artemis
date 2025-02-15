@@ -1,7 +1,7 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -54,7 +54,6 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 const endDate1 = dayjs().add(1, 'days');
@@ -139,11 +138,11 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let jhiWebsocketService: WebsocketService;
+    let websocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
-    let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
+    let websocketServiceReceiveStub: jest.SpyInstance;
+    let websocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
@@ -166,14 +165,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [
-                RouterModule.forRoot([]),
-                ArtemisTestModule,
-                MockModule(MatSidenavModule),
-                MockModule(NgbTooltipModule),
-                MockModule(BrowserAnimationsModule),
-                NgbDropdownMocksModule,
-            ],
+            imports: [RouterModule.forRoot([]), ArtemisTestModule, MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -209,7 +201,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: NgbDropdown, useClass: NgbDropdownMocksModule },
+                { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
             ],
         })
             .compileComponents()
@@ -224,12 +216,12 @@ describe('CourseOverviewComponent', () => {
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                jhiWebsocketService = TestBed.inject(WebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 itemsDrop = component.itemsDrop;
-                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
-                jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+                websocketServiceReceiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(quizExercise));
+                websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
@@ -545,18 +537,18 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
+        expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+        expect(websocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
     it('should do ngOnDestroy', () => {
-        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
+        const websocketServiceStub = jest.spyOn(websocketService, 'unsubscribe');
 
         component.ngOnInit();
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
+        expect(websocketServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {

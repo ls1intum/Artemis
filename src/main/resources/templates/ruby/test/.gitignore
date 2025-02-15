@@ -1,0 +1,11 @@
+/report.xml
+/rubocop.sarif
+
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/

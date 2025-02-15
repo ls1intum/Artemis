@@ -2,8 +2,13 @@ package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -17,15 +22,21 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -66,6 +77,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @BeforeEach
     void initTestCase() {
@@ -343,6 +357,45 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Long attachmentUnitId = attachmentUnit.getId();
 
         request.get("/api/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
+        Path tempFile = Files.createTempFile("dummy", ".pdf");
+        byte[] dummyContent = "dummy pdf content".getBytes();
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        lectureRepo.save(lecture);
+
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentUnit.setLecture(lecture);
+
+        String unsanitizedName = "test–file"; // contains en-dash
+        Attachment attachment = attachmentUnit.getAttachment();
+        attachment.setName(unsanitizedName);
+        attachment.setLink(tempFile.toUri().toString());
+        attachmentRepo.save(attachment);
+        attachmentUnitRepo.save(attachmentUnit);
+
+        String unsanitizedFilename = unsanitizedName + ".pdf";
+        String url = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
+
+        try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
+            filePathServiceMock.when(() -> FilePathService.actualPathForPublicPathOrThrow(Mockito.any(URI.class))).thenReturn(tempFile);
+
+            MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+
+            byte[] responseContent = result.getResponse().getContentAsByteArray();
+            assertThat(responseContent).isEqualTo(dummyContent);
+
+            String contentDisposition = result.getResponse().getHeader("Content-Disposition");
+            assertThat(contentDisposition).isNotNull();
+            assertThat(contentDisposition).doesNotContain("–");
+            assertThat(contentDisposition).contains("filename=");
+        }
     }
 
 }
