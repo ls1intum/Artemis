@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.feature.AbstractFeature;
+import de.tum.cit.aet.artemis.core.service.feature.CommunicationFeature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 @Profile(PROFILE_CORE)
@@ -42,4 +44,10 @@ public class AdminFeatureToggleResource {
 
         return new ResponseEntity<>(featureToggleService.enabledFeatures(), HttpStatus.OK);
     }
+
+    @GetMapping("communication-feature")
+    public ResponseEntity<CommunicationFeature[]> getAllCommunicationFeatures() {
+        return new ResponseEntity<>(CommunicationFeature.values(), HttpStatus.OK);
+    }
+
 }
