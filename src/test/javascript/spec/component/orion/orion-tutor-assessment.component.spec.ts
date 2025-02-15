@@ -7,6 +7,8 @@ import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionTutorAssessmentComponent', () => {
     let comp: OrionTutorAssessmentComponent;
@@ -24,7 +26,12 @@ describe('OrionTutorAssessmentComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(OrionAssessmentInstructionsComponent),
             ],
-            providers: [MockProvider(OrionConnectorService), MockProvider(OrionAssessmentService), MockProvider(CodeEditorTutorAssessmentContainerComponent)],
+            providers: [
+                MockProvider(OrionConnectorService),
+                MockProvider(OrionAssessmentService),
+                MockProvider(CodeEditorTutorAssessmentContainerComponent),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
