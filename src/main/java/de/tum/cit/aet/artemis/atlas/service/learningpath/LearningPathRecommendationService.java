@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.HIGH;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.MEDIUM_HIGH;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_COMPLETELY;
 
