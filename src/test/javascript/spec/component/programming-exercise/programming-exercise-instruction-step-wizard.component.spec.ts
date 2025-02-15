@@ -12,7 +12,6 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { expect } from '@playwright/test';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
