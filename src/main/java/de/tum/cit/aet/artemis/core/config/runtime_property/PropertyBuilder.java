@@ -43,7 +43,7 @@ public class PropertyBuilder {
 
     public PropertyBuilder(ConfigurableEnvironment environment) {
         for (PropertyOverrideGroup override : overrides) {
-            override.getProperties().forEach(p -> storeProperty(p, environment));
+            override.getProperties().stream().filter(p -> p.enabled(environment)).forEach(p -> storeProperty(p, environment));
         }
     }
 

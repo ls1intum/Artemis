@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@ConditionalOnBean(BuildAgentCondition.class)
+@Conditional(BuildAgentCondition.class)
 public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
