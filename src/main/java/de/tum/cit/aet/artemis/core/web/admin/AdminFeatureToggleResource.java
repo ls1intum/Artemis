@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.AbstractFeature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 @Profile(PROFILE_CORE)
@@ -37,7 +37,7 @@ public class AdminFeatureToggleResource {
      * @see FeatureToggleService
      */
     @PutMapping("feature-toggle")
-    public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
+    public ResponseEntity<List<AbstractFeature>> toggleFeatures(@RequestBody Map<String, Boolean> features) {
         featureToggleService.updateFeatureToggles(features);
 
         return new ResponseEntity<>(featureToggleService.enabledFeatures(), HttpStatus.OK);

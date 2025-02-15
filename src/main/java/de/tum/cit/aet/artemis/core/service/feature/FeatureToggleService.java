@@ -35,14 +35,14 @@ public class FeatureToggleService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private Map<Feature, Boolean> features;
+    private Map<String, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
     }
 
-    private Optional<Map<Feature, Boolean>> getFeatures() {
+    private Optional<Map<String, Boolean>> getFeatures() {
         try {
             if (isHazelcastRunning()) {
                 return Optional.ofNullable(features);
@@ -64,14 +64,21 @@ public class FeatureToggleService {
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
+
+        for (CommunicationFeature feature : CommunicationFeature.getConfigurableFeatures()) {
+            if (!features.containsKey(feature)) {
+                features.put(feature.name(), true);
+            }
+        }
+
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science) {
-                features.put(feature, true);
+                features.put(feature.name(), true);
             }
         }
         // init science feature from config
         if (!features.containsKey(Feature.Science)) {
-            features.put(Feature.Science, scienceEnabledOnStart);
+            features.put(Feature.Science.name(), scienceEnabledOnStart);
         }
     }
 
@@ -82,7 +89,7 @@ public class FeatureToggleService {
      */
     public void enableFeature(Feature feature) {
         getFeatures().ifPresent(features -> {
-            features.put(feature, true);
+            features.put(feature.name(), true);
             sendUpdate();
         });
     }
@@ -94,7 +101,7 @@ public class FeatureToggleService {
      */
     public void disableFeature(Feature feature) {
         getFeatures().ifPresent(features -> {
-            features.put(feature, false);
+            features.put(feature.name(), false);
             sendUpdate();
         });
     }
@@ -105,7 +112,7 @@ public class FeatureToggleService {
      *
      * @param updatedFeatures A map of features (feature -> shouldBeActivated)
      */
-    public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
+    public void updateFeatureToggles(final Map<String, Boolean> updatedFeatures) {
         getFeatures().ifPresent(features -> {
             features.putAll(updatedFeatures);
             sendUpdate();
@@ -132,7 +139,7 @@ public class FeatureToggleService {
     public boolean isFeatureEnabled(Feature feature) {
         try {
             if (isHazelcastRunning()) {
-                Boolean isEnabled = features.get(feature);
+                Boolean isEnabled = features.get(feature.name());
                 return Boolean.TRUE.equals(isEnabled);
             }
         }
@@ -147,14 +154,19 @@ public class FeatureToggleService {
      *
      * @return A list of enabled features
      */
-    public List<Feature> enabledFeatures() {
+    public List<AbstractFeature> enabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return features.entrySet().stream().filter(entry -> Boolean.TRUE.equals(entry.getValue())) // Nur aktivierte Features
+                        .map(entry -> {
+                            AbstractFeature feature = getFeatureByName(entry.getKey());
+                            return feature != null ? feature : null;
+                        }).filter(feature -> feature != null) // Null-Werte vermeiden
+                        .toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve enabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+            log.error("Failed to retrieve enabled features update in FeatureToggleService as Hazelcast instance is not active anymore.");
         }
         return List.of();
     }
@@ -164,19 +176,38 @@ public class FeatureToggleService {
      *
      * @return A list of disabled features
      */
-    public List<Feature> disabledFeatures() {
+    public List<AbstractFeature> disabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return features.entrySet().stream().filter(entry -> Boolean.FALSE.equals(entry.getValue())) // Nur deaktivierte Features
+                        .map(entry -> {
+                            AbstractFeature feature = getFeatureByName(entry.getKey());
+                            return feature != null ? feature : null;
+                        }).filter(feature -> feature != null) // Null-Werte vermeiden
+                        .toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve disabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+            log.error("Failed to retrieve disabled features update in FeatureToggleService as Hazelcast instance is not active anymore.");
         }
         return List.of();
     }
 
     private boolean isHazelcastRunning() {
         return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+    }
+
+    private AbstractFeature getFeatureByName(String name) {
+        for (Feature feature : Feature.values()) {
+            if (feature.name().equals(name)) {
+                return feature;
+            }
+        }
+        for (CommunicationFeature feature : CommunicationFeature.getConfigurableFeatures()) {
+            if (feature.name().equals(name)) {
+                return feature;
+            }
+        }
+        return null;
     }
 }

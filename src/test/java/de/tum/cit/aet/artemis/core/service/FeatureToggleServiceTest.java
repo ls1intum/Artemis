@@ -37,8 +37,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void testSetFeaturesEnabled() {
-        Map<Feature, Boolean> featureStates = new HashMap<>();
-        featureStates.put(Feature.ProgrammingExercises, true);
+        Map<String, Boolean> featureStates = new HashMap<>();
+        featureStates.put(Feature.ProgrammingExercises.name(), true);
         featureToggleService.updateFeatureToggles(featureStates);
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
     }
@@ -47,8 +47,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
     void testSetFeaturesDisabled() {
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
 
-        Map<Feature, Boolean> featureStates = new HashMap<>();
-        featureStates.put(Feature.ProgrammingExercises, false);
+        Map<String, Boolean> featureStates = new HashMap<>();
+        featureStates.put(Feature.ProgrammingExercises.name(), false);
         featureToggleService.updateFeatureToggles(featureStates);
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isFalse();
 
