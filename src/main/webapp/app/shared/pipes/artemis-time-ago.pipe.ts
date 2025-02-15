@@ -2,6 +2,7 @@ import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform, inject } fro
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Pipe({
     name: 'artemisTimeAgo',
@@ -11,6 +12,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private cdRef = inject(ChangeDetectorRef);
     private ngZone = inject(NgZone);
     private translateService = inject(TranslateService);
+    private serverDateService = inject(ArtemisServerDateService);
 
     private currentTimer: number | null;
 
@@ -22,7 +24,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private formatFn: (m: dayjs.Dayjs) => string;
 
     format(date: dayjs.Dayjs) {
-        return date.locale(this.lastLocale).from(dayjs(), this.lastOmitSuffix);
+        return date.locale(this.lastLocale).from(this.serverDateService.now(), this.lastOmitSuffix);
     }
 
     transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {
