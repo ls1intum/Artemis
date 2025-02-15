@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, inject, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -22,6 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -50,9 +51,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     exercise = input<Exercise>();
     lecture = input<Lecture>();
 
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    @ViewChildren('postingThread') messages: QueryList<any>;
-    @ViewChild('itemsContainer') content: ElementRef;
+    readonly postCreateEditModal = viewChild<PostCreateEditModalComponent>(PostCreateEditModalComponent);
+    readonly messages = viewChildren<ElementRef>('postingThread');
+    readonly messages$ = toObservable(this.messages);
+    readonly content = viewChild<ElementRef>('itemsContainer');
 
     private ngUnsubscribe = new Subject<void>();
     private previousScrollDistanceFromTop: number;
@@ -61,6 +63,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private totalNumberOfPosts = 0;
     // as set for the css class '.items-container'
     private messagesContainerHeight = 700;
+    private viewChildrenInitialized = false;
     currentSortDirection = SortDirection.DESCENDING;
 
     channel: ChannelDTO;
@@ -101,8 +104,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.resetFormGroup();
         });
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
-            if (this.content) {
-                this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+            if (this.viewChildrenInitialized && this.content()) {
+                this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
             }
             this.posts = posts
                 .slice()
@@ -131,7 +134,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     ngOnDestroy(): void {
         super.onDestroy();
-        this.postCreateEditModal?.modalRef?.close();
+        this.postCreateEditModal()?.modalRef?.close();
     }
 
     /**
@@ -225,20 +228,22 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+        this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             this.handleScrollOnNewMessage();
         });
+
+        this.viewChildrenInitialized = true;
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts.length > 0 && this.content()?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
 
     scrollToBottomOfMessages() {
-        if (this.content?.nativeElement) {
-            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        if (this.viewChildrenInitialized && this.content()?.nativeElement) {
+            this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollHeight;
         }
     }
 
@@ -248,7 +253,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.page += 1;
             this.commandMetisToFetchPosts();
         }
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + this.PAGE_SIZE;
+        if (this.content()?.nativeElement) {
+            this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + this.PAGE_SIZE;
+        }
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
