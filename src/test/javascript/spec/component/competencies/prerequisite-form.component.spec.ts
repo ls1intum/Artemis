@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -21,6 +21,9 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
@@ -38,6 +41,9 @@ describe('PrerequisiteFormComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseCompetencyService, useValue: courseCompetencyServiceMock },
                 MockProvider(LectureUnitService),
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
