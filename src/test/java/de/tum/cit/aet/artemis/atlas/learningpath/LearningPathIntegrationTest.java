@@ -383,6 +383,21 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        var response = request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, LearningPathInformationDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(learningPath.getId());
+        assertThat(response.progress()).isEqualTo(learningPath.getProgress());
+        assertThat(response.user()).isNotNull();
+        assertThat(response.user().login()).isEqualTo(student.getLogin());
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var otherStudent = userTestRepository.findOneByLogin(STUDENT2_OF_COURSE).orElseThrow();
