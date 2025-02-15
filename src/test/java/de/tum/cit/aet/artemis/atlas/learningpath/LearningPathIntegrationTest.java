@@ -621,6 +621,20 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationMultipleLearningObjects() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[0], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[0], false);
+
+        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, textUnit, secondTextUnit, thirdTextUnit);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationDoesNotLeakUnreleasedLearningObjects() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
