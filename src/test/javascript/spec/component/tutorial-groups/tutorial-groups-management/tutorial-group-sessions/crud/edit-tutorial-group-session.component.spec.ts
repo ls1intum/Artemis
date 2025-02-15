@@ -19,6 +19,8 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupSessionFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
@@ -37,7 +39,12 @@ describe('EditTutorialGroupSessionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
-            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
+            providers: [
+                MockProvider(TutorialGroupSessionService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
         component = fixture.componentInstance;
