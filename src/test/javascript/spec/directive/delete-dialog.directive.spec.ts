@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-test-component',
@@ -26,6 +28,11 @@ describe('DeleteDialogDirective', () => {
     beforeEach(() =>
         TestBed.configureTestingModule({
             imports: [TestComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
+                { provide: NgbModal, useValue: null },
+            ],
         })
             .compileComponents()
             .then(() => {
