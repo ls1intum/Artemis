@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
@@ -15,6 +15,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;
@@ -45,6 +47,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 MockProvider(OrionAssessmentService),
                 MockProvider(ExerciseService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ exerciseId: 10 }) } } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
