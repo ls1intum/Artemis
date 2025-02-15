@@ -23,4 +23,5 @@ pedantic = "allow"
 restriction = "allow"
 nursery = "allow"
 cargo = "allow"
+new_without_default = { level = "allow", priority = 1 }
 # %static-code-analysis-stop%
