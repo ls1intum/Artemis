@@ -8,9 +8,10 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -29,6 +30,7 @@ describe('SidebarAccordionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
             ],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         }).compileComponents();
     });
 
