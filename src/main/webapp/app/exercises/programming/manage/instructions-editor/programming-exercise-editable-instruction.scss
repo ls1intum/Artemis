@@ -29,7 +29,8 @@
     }
 
     .markdown-editor-wrapper {
-        background-color: var(--markdown-preview-editor-background);
+        // Important needed here to override scoped styling
+        background-color: var(--markdown-preview-editor-background) !important;
     }
 
     .markdown-editor-wrapper .nav {
