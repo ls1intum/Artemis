@@ -17,6 +17,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { of } from 'rxjs';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -29,7 +33,6 @@ describe('Course Management Exercises Component', () => {
     const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseManagementExercisesComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -51,6 +54,9 @@ describe('Course Management Exercises Component', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
