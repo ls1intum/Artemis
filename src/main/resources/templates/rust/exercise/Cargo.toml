@@ -9,8 +9,18 @@ rand = "0.8.5"
 # %static-code-analysis-start%
 
 [lints.rust]
-unsafe_code = "warn"
+nonstandard_style = "warn"
+unused = "warn"
+unsafe_code = { level = "warn", priority = 1 }
 
 [lints.clippy]
-pedantic = "warn"
+correctness = "warn"
+suspicious = "warn"
+style = "warn"
+complexity = "warn"
+perf = "warn"
+pedantic = "allow"
+restriction = "allow"
+nursery = "allow"
+cargo = "allow"
 # %static-code-analysis-stop%
