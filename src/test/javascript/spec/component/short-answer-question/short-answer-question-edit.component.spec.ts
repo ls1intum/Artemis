@@ -18,6 +18,12 @@ import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.uti
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { firstValueFrom } from 'rxjs';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -56,7 +62,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
             ],
-            providers: [MockProvider(NgbModal)],
+            providers: [
+                MockProvider(NgbModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
         })
             .overrideComponent(ShortAnswerQuestionEditComponent, {
                 set: {
