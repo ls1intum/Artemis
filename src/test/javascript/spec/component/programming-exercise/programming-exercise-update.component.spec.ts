@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { of, Subject, throwError } from 'rxjs';
@@ -44,7 +44,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -74,6 +74,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
                 { provide: TranslateService, useClass: MockTranslateService },
