@@ -10,6 +10,8 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SubmissionResultStatusComponent', () => {
     let comp: SubmissionResultStatusComponent;
@@ -17,13 +19,13 @@ describe('SubmissionResultStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 SubmissionResultStatusComponent,
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
