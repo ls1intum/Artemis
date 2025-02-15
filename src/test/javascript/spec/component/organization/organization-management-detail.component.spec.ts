@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -17,6 +17,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent } from 'ng-mocks';
 import { iconsAsHTML } from 'app/utils/icons.utils';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;
@@ -41,6 +42,8 @@ describe('OrganizationManagementDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
