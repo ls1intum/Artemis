@@ -77,6 +77,9 @@ export class PostService extends PostingService<Post> {
             params = params.set('page', postContextFilter.page!);
             params = params.set('size', postContextFilter.pageSize!);
         }
+        if (postContextFilter.pinnedOnly) {
+            params = params.set('pinnedOnly', postContextFilter.pinnedOnly);
+        }
         return this.http
             .get<Post[]>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(postContextFilter, undefined)}`, {
                 params,
