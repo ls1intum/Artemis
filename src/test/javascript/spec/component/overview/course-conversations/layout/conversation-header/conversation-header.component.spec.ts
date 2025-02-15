@@ -27,6 +27,9 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { input, runInInjectionContext, SimpleChanges } from '@angular/core';
+import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
@@ -68,6 +71,7 @@ examples.forEach((activeConversation) => {
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: MetisConversationService, useClass: MockMetisConversationService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
                 ],
             }).compileComponents();
         }));
@@ -150,6 +154,83 @@ examples.forEach((activeConversation) => {
             component.getOtherUser();
 
             expect(component.otherUser).toEqual(oneToOneChat.members[1]);
+        });
+
+        it('should toggle pinned messages visibility', fakeAsync(() => {
+            const togglePinnedMessagesSpy = jest.spyOn(component, 'togglePinnedMessages');
+
+            expect(component.showPinnedMessages).toBe(false);
+
+            component.togglePinnedMessages();
+            expect(togglePinnedMessagesSpy).toHaveBeenCalled();
+            expect(component.showPinnedMessages).toBe(true);
+
+            component.togglePinnedMessages();
+            expect(component.showPinnedMessages).toBe(false);
+        }));
+
+        it('should emit togglePinnedMessage event', fakeAsync(() => {
+            const togglePinnedMessageSpy = jest.spyOn(component.togglePinnedMessage, 'emit');
+
+            component.togglePinnedMessages();
+            expect(togglePinnedMessageSpy).toHaveBeenCalled();
+        }));
+
+        it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
+            component.showPinnedMessages = true;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(3);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 0,
+                        previousValue: 3,
+                        firstChange: false,
+                        isFirstChange: () => false,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeFalse();
+            });
+        });
+
+        it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
+            component.showPinnedMessages = true;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(3);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 5,
+                        previousValue: 3,
+                        firstChange: false,
+                        isFirstChange: () => false,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeTrue();
+            });
+        });
+
+        it('should correctly handle first change of pinnedMessageCount', () => {
+            component.showPinnedMessages = false;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(2);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 2,
+                        previousValue: undefined,
+                        firstChange: true,
+                        isFirstChange: () => true,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeFalse();
+            });
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {

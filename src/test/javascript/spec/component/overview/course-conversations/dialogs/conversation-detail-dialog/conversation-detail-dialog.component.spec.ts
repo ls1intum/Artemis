@@ -127,6 +127,42 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('should mark changes and close the dialog on privacy/archival/channelDeleted/leave events', () => {
+            const activeModal = TestBed.inject(NgbActiveModal);
+            const closeSpy = jest.spyOn(activeModal, 'close');
+            const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+
+            expect(component.changesWerePerformed).toBeFalse();
+
+            component.onPrivacyChange();
+            expect(component.changesWerePerformed).toBeTrue();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
+            expect(dismissSpy).not.toHaveBeenCalled();
+
+            closeSpy.mockClear();
+            component.changesWerePerformed = false;
+
+            component.onArchivalChange();
+            expect(component.changesWerePerformed).toBeTrue();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
+            expect(dismissSpy).not.toHaveBeenCalled();
+
+            closeSpy.mockClear();
+            component.changesWerePerformed = false;
+
+            component.onChannelDeleted();
+            expect(component.changesWerePerformed).toBeTrue();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
+
+            closeSpy.mockClear();
+            component.changesWerePerformed = false;
+
+            component.onConversationLeave();
+            expect(component.changesWerePerformed).toBeTrue();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
+            expect(dismissSpy).not.toHaveBeenCalled();
+        });
+
         it('should emit userNameClicked event when onUserNameClicked is called', () => {
             const testUserId = 42;
             const spy = jest.spyOn(component.userNameClicked, 'emit');

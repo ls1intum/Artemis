@@ -84,6 +84,10 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         this.markAsChangedAndClose();
     }
 
+    onPrivacyChange() {
+        this.markAsChangedAndClose();
+    }
+
     onChannelDeleted() {
         this.markAsChangedAndClose();
     }

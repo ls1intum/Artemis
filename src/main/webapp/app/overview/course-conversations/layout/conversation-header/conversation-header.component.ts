@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input, output } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -25,18 +25,22 @@ import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.comp
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
     styleUrls: ['./conversation-header.component.scss'],
-    imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink],
+    imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink, EmojiComponent, ArtemisTranslatePipe],
 })
-export class ConversationHeaderComponent implements OnInit, OnDestroy {
+export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy {
     private modalService = inject(NgbModal);
     metisConversationService = inject(MetisConversationService);
     conversationService = inject(ConversationService);
     private metisService = inject(MetisService);
+    pinnedMessageCount = input<number>(0);
+    togglePinnedMessage = output<void>();
 
     private ngUnsubscribe = new Subject<void>();
 
@@ -59,8 +63,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
     faChevronLeft = faChevronLeft;
     readonly faPeopleGroup = faPeopleGroup;
+    showPinnedMessages: boolean = false;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+    private cdr = inject(ChangeDetectorRef);
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;
@@ -70,6 +76,22 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;
         this.subscribeToActiveConversation();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['pinnedMessageCount']) {
+            const currentCount = changes['pinnedMessageCount'].currentValue;
+            if (this.showPinnedMessages && currentCount === 0) {
+                this.showPinnedMessages = false;
+                this.cdr.detectChanges();
+            }
+        }
+    }
+
+    togglePinnedMessages(): void {
+        this.togglePinnedMessage.emit();
+        this.showPinnedMessages = !this.showPinnedMessages;
+        this.cdr.detectChanges();
     }
 
     getOtherUser() {
