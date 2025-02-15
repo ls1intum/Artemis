@@ -11,12 +11,13 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -27,7 +28,10 @@ describe('ModelingExamSubmissionComponent', () => {
 
     const resetComponent = () => {
         if (comp) {
-            mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ model: true }) } as ModelingSubmission;
+            mockSubmission = {
+                explanationText: 'Test Explanation',
+                model: JSON.stringify({ model: true }),
+            } as ModelingSubmission;
             const course = new Course();
             course.isAtLeastInstructor = true;
             mockExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -39,7 +43,6 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ModelingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
@@ -52,7 +55,7 @@ describe('ModelingExamSubmissionComponent', () => {
                 MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(ChangeDetectorRef)],
+            providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -247,7 +250,11 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     it('should update the model on submission version change', async () => {
-        jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } as unknown as ApollonEditor } as unknown as ModelingEditorComponent);
+        jest.replaceProperty(comp, 'modelingEditor', {
+            apollonEditor: {
+                nextRender: () => {},
+            } as unknown as ApollonEditor,
+        } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
                 'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
