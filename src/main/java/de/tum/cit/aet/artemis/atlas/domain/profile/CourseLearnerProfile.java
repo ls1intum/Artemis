@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CourseLearnerProfile extends DomainObject {
 
+    public static final String ENTITY_NAME = "courseLearnerProfile";
+
     @ManyToOne
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
@@ -33,19 +35,19 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
-    @Min(0)
+    @Min(1)
     @Max(5)
-    private int aimForGradeOrBonus;
+    private int aimForGradeOrBonus = 1;
 
     @Column(name = "time_investment")
-    @Min(0)
+    @Min(1)
     @Max(5)
-    private int timeInvestment;
+    private int timeInvestment = 1;
 
     @Column(name = "repetition_intensity")
-    @Min(0)
+    @Min(1)
     @Max(5)
-    private int repetitionIntensity;
+    private int repetitionIntensity = 1;
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;

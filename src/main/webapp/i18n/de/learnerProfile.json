@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "learnerProfile": {
+            "courseLearnerProfile": {
+                "title": "Kurs Lerner Profil",
+                "selectCourse": "Kurs auswählen...",
+                "description": "Hier kannst du dein kursspezifisches Lerner Profil einsehen und aktualisieren.",
+                "initialState": "Ursprünglicher Zustand",
+                "currentState": "Aktueller Zustand",
+                "aimForGradeOrBonus": "Note oder zusätzliches Wissen fokussieren",
+                "timeInvestment": "Zeit Investment",
+                "repetitionIntensity": "Wiederholungsintensität"
+            }
+        }
+    }
+}
