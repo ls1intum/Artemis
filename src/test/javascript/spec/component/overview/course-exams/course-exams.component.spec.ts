@@ -18,6 +18,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -115,6 +123,11 @@ describe('CourseExamsComponent', () => {
                 MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
