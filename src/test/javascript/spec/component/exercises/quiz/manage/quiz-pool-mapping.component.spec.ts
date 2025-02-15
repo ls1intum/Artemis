@@ -4,6 +4,8 @@ import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-ma
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('QuizPoolMappingComponent', () => {
     let fixture: ComponentFixture<QuizPoolMappingComponent>;
@@ -11,8 +13,7 @@ describe('QuizPoolMappingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
