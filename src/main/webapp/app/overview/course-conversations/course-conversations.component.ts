@@ -169,6 +169,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: null | SavedPostStatus = null;
+    showOnlyPinned = false;
+    pinnedCount: number = 0;
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -206,6 +208,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
         });
+    }
+
+    togglePinnedView(): void {
+        this.showOnlyPinned = !this.showOnlyPinned;
+    }
+
+    onPinnedCountChanged(newCount: number): void {
+        this.pinnedCount = newCount;
+        if (this.pinnedCount == 0 && this.showOnlyPinned) {
+            this.showOnlyPinned = false;
+        }
+        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {

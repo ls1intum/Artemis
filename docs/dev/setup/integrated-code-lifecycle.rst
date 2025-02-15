@@ -42,6 +42,8 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                use-external: false
            version-control:
                url: http://localhost:8080
+               # order and supported authentication mechanisms:
+               repository-authentication-mechanisms: password,token,ssh
            continuous-integration:
                # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
                # ARM-based systems include Apple M-series, Raspberry Pi, etc.
@@ -54,6 +56,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                fetch-registry: false
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
+The ``repository-authentication-mechanisms`` field configures the :ref:`Repository Authentication Mechanisms<authentication-mechanisms>`.
 
 If you are running Artemis on Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``
 with the value ``tcp://localhost:2375`` as shown above.

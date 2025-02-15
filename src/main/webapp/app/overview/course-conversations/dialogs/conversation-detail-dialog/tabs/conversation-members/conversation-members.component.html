@@ -58,6 +58,7 @@
                                 [activeConversation]="activeConversation()!"
                                 [course]="course()"
                                 (changePerformed)="onChangePerformed()"
+                                (onUserNameClicked)="userNameClicked.emit($event)"
                             ></li>
                         }
                     </ul>
