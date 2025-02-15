@@ -11,6 +11,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
@@ -21,13 +23,13 @@ describe('OrionConnectorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 OrionConnectorService,
                 Injector,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
 
