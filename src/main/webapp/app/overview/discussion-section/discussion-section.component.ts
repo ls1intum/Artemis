@@ -21,6 +21,7 @@ import { MessageInlineInputComponent } from 'app/shared/metis/message/message-in
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -34,6 +35,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
         PostingThreadComponent,
         MessageInlineInputComponent,
         ArtemisTranslatePipe,
+        TranslateDirective,
         NgbTooltipModule,
         ButtonComponent,
     ],

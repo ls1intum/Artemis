@@ -46,8 +46,8 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { LinkPreviewService } from '../../../../../../main/webapp/app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from '../../../../../../main/webapp/app/shared/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 @Directive({
     selector: '[infinite-scroll]',
