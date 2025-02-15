@@ -32,6 +32,8 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { RouterModule } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
     template: '',
@@ -76,6 +78,8 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
