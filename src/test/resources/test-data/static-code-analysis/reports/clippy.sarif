@@ -13,11 +13,11 @@
                 },
                 "region": {
                   "byteLength": 34,
-                  "byteOffset": 310,
+                  "byteOffset": 327,
                   "endColumn": 6,
-                  "endLine": 22,
+                  "endLine": 23,
                   "startColumn": 5,
-                  "startLine": 20
+                  "startLine": 21
                 }
               }
             }
@@ -39,11 +39,11 @@
                 },
                 "region": {
                   "byteLength": 8,
-                  "byteOffset": 484,
+                  "byteOffset": 557,
                   "endColumn": 21,
-                  "endLine": 36,
+                  "endLine": 42,
                   "startColumn": 13,
-                  "startLine": 36
+                  "startLine": 42
                 }
               }
             }
@@ -62,11 +62,11 @@
                 },
                 "region": {
                   "byteLength": 2,
-                  "byteOffset": 487,
+                  "byteOffset": 560,
                   "endColumn": 18,
-                  "endLine": 36,
+                  "endLine": 42,
                   "startColumn": 16,
-                  "startLine": 36
+                  "startLine": 42
                 }
               }
             }
@@ -83,12 +83,38 @@
                   "uri": "src/main.rs"
                 },
                 "region": {
+                  "byteLength": 14,
+                  "byteOffset": 402,
+                  "endColumn": 19,
+                  "endLine": 28,
+                  "startColumn": 5,
+                  "startLine": 28
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "unreachable statement"
+          },
+          "relatedLocations": [],
+          "ruleId": "unreachable_code",
+          "ruleIndex": 2
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
                   "byteLength": 6,
-                  "byteOffset": 217,
+                  "byteOffset": 235,
                   "endColumn": 10,
-                  "endLine": 14,
+                  "endLine": 15,
                   "startColumn": 4,
-                  "startLine": 14
+                  "startLine": 15
                 }
               }
             }
@@ -98,7 +124,7 @@
           },
           "relatedLocations": [],
           "ruleId": "dead_code",
-          "ruleIndex": 2
+          "ruleIndex": 3
         },
         {
           "level": "error",
@@ -110,11 +136,11 @@
                 },
                 "region": {
                   "byteLength": 5,
-                  "byteOffset": 444,
+                  "byteOffset": 517,
                   "endColumn": 18,
-                  "endLine": 32,
+                  "endLine": 38,
                   "startColumn": 13,
-                  "startLine": 32
+                  "startLine": 38
                 }
               }
             }
@@ -124,7 +150,7 @@
           },
           "relatedLocations": [],
           "ruleId": "clippy::erasing_op",
-          "ruleIndex": 3
+          "ruleIndex": 4
         },
         {
           "level": "warning",
@@ -136,11 +162,11 @@
                 },
                 "region": {
                   "byteLength": 8,
-                  "byteOffset": 521,
+                  "byteOffset": 594,
                   "endColumn": 13,
-                  "endLine": 40,
+                  "endLine": 46,
                   "startColumn": 5,
-                  "startLine": 40
+                  "startLine": 46
                 }
               }
             }
@@ -159,11 +185,11 @@
                 },
                 "region": {
                   "byteLength": 8,
-                  "byteOffset": 521,
+                  "byteOffset": 594,
                   "endColumn": 13,
-                  "endLine": 40,
+                  "endLine": 46,
                   "startColumn": 5,
-                  "startLine": 40
+                  "startLine": 46
                 }
               }
             },
@@ -177,42 +203,16 @@
                 },
                 "region": {
                   "byteLength": 1,
-                  "byteOffset": 529,
+                  "byteOffset": 602,
                   "endColumn": 14,
-                  "endLine": 40,
+                  "endLine": 46,
                   "startColumn": 13,
-                  "startLine": 40
+                  "startLine": 46
                 }
               }
             }
           ],
           "ruleId": "clippy::needless_return",
-          "ruleIndex": 4
-        },
-        {
-          "level": "warning",
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "src/main.rs"
-                },
-                "region": {
-                  "byteLength": 85,
-                  "byteOffset": 534,
-                  "endColumn": 86,
-                  "endLine": 43,
-                  "startColumn": 1,
-                  "startLine": 43
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "this function has too many arguments (8/7)"
-          },
-          "relatedLocations": [],
-          "ruleId": "clippy::too_many_arguments",
           "ruleIndex": 5
         },
         {
@@ -224,12 +224,38 @@
                   "uri": "src/main.rs"
                 },
                 "region": {
+                  "byteLength": 85,
+                  "byteOffset": 607,
+                  "endColumn": 86,
+                  "endLine": 49,
+                  "startColumn": 1,
+                  "startLine": 49
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "this function has too many arguments (8/7)"
+          },
+          "relatedLocations": [],
+          "ruleId": "clippy::too_many_arguments",
+          "ruleIndex": 6
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
                   "byteLength": 43,
-                  "byteOffset": 641,
+                  "byteOffset": 714,
                   "endColumn": 48,
-                  "endLine": 47,
+                  "endLine": 53,
                   "startColumn": 5,
-                  "startLine": 47
+                  "startLine": 53
                 }
               }
             }
@@ -248,17 +274,17 @@
                 },
                 "region": {
                   "byteLength": 5,
-                  "byteOffset": 641,
+                  "byteOffset": 714,
                   "endColumn": 10,
-                  "endLine": 47,
+                  "endLine": 53,
                   "startColumn": 5,
-                  "startLine": 47
+                  "startLine": 53
                 }
               }
             }
           ],
           "ruleId": "clippy::large_const_arrays",
-          "ruleIndex": 6
+          "ruleIndex": 7
         },
         {
           "level": "warning",
@@ -270,11 +296,11 @@
                 },
                 "region": {
                   "byteLength": 32,
-                  "byteOffset": 731,
+                  "byteOffset": 804,
                   "endColumn": 8,
-                  "endLine": 53,
+                  "endLine": 59,
                   "startColumn": 5,
-                  "startLine": 52
+                  "startLine": 58
                 }
               }
             }
@@ -293,42 +319,16 @@
                 },
                 "region": {
                   "byteLength": 32,
-                  "byteOffset": 731,
+                  "byteOffset": 804,
                   "endColumn": 8,
-                  "endLine": 53,
+                  "endLine": 59,
                   "startColumn": 5,
-                  "startLine": 52
+                  "startLine": 58
                 }
               }
             }
           ],
           "ruleId": "clippy::needless_for_each",
-          "ruleIndex": 7
-        },
-        {
-          "level": "warning",
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "src/main.rs"
-                },
-                "region": {
-                  "byteLength": 7,
-                  "byteOffset": 790,
-                  "endColumn": 12,
-                  "endLine": 57,
-                  "startColumn": 5,
-                  "startLine": 57
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "`todo` should not be present in production code"
-          },
-          "relatedLocations": [],
-          "ruleId": "clippy::todo",
           "ruleIndex": 8
         },
         {
@@ -340,12 +340,38 @@
                   "uri": "src/main.rs"
                 },
                 "region": {
+                  "byteLength": 7,
+                  "byteOffset": 863,
+                  "endColumn": 12,
+                  "endLine": 63,
+                  "startColumn": 5,
+                  "startLine": 63
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`todo` should not be present in production code"
+          },
+          "relatedLocations": [],
+          "ruleId": "clippy::todo",
+          "ruleIndex": 9
+        },
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.rs"
+                },
+                "region": {
                   "byteLength": 16,
-                  "byteOffset": 233,
+                  "byteOffset": 251,
                   "endColumn": 20,
-                  "endLine": 16,
+                  "endLine": 17,
                   "startColumn": 4,
-                  "startLine": 16
+                  "startLine": 17
                 }
               }
             }
@@ -364,36 +390,33 @@
                 },
                 "region": {
                   "byteLength": 16,
-                  "byteOffset": 233,
+                  "byteOffset": 251,
                   "endColumn": 20,
-                  "endLine": 16,
+                  "endLine": 17,
                   "startColumn": 4,
-                  "startLine": 16
+                  "startLine": 17
                 }
               }
             }
           ],
           "ruleId": "non_snake_case",
-          "ruleIndex": 9
+          "ruleIndex": 10
         },
         {
           "level": "warning",
           "locations": [
             {
-              "message": {
-                "text": "argument has type `&i32`"
-              },
               "physicalLocation": {
                 "artifactLocation": {
                   "uri": "src/main.rs"
                 },
                 "region": {
-                  "byteLength": 2,
-                  "byteOffset": 390,
-                  "endColumn": 12,
-                  "endLine": 27,
-                  "startColumn": 10,
-                  "startLine": 27
+                  "byteLength": 8,
+                  "byteOffset": 458,
+                  "endColumn": 13,
+                  "endLine": 33,
+                  "startColumn": 5,
+                  "startLine": 33
                 }
               }
             }
@@ -412,11 +435,11 @@
                 },
                 "region": {
                   "byteLength": 5,
-                  "byteOffset": 385,
+                  "byteOffset": 458,
                   "endColumn": 10,
-                  "endLine": 27,
+                  "endLine": 33,
                   "startColumn": 5,
-                  "startLine": 27
+                  "startLine": 33
                 }
               }
             },
@@ -430,17 +453,17 @@
                 },
                 "region": {
                   "byteLength": 1,
-                  "byteOffset": 392,
+                  "byteOffset": 465,
                   "endColumn": 13,
-                  "endLine": 27,
+                  "endLine": 33,
                   "startColumn": 12,
-                  "startLine": 27
+                  "startLine": 33
                 }
               }
             }
           ],
           "ruleId": "dropping_references",
-          "ruleIndex": 10
+          "ruleIndex": 11
         }
       ],
       "tool": {
@@ -460,6 +483,12 @@
               },
               "helpUri": "https://rust-lang.github.io/rust-clippy/master/index.html#almost_complete_range",
               "id": "clippy::almost_complete_range"
+            },
+            {
+              "fullDescription": {
+                "text": "`#[warn(unreachable_code)]` on by default\n"
+              },
+              "id": "unreachable_code"
             },
             {
               "fullDescription": {
