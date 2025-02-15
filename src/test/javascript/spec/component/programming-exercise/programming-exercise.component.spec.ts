@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -18,6 +18,9 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programm
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -50,6 +53,9 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
+                MockProvider(EventManager),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(ProgrammingExerciseComponent, '')
