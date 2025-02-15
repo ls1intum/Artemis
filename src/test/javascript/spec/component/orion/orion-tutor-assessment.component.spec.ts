@@ -19,7 +19,6 @@ describe('OrionTutorAssessmentComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 OrionTutorAssessmentComponent,
                 MockComponent(CodeEditorTutorAssessmentContainerComponent),
