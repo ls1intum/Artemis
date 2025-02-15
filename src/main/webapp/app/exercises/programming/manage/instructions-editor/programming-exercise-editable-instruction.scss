@@ -28,9 +28,14 @@
         border-bottom: var(--border-color) 1px solid;
     }
 
+    .markdown-editor-wrapper {
+        background-color: var(--markdown-preview-editor-background);
+    }
+
     .markdown-editor-wrapper .nav {
         position: sticky;
         top: 0;
+        z-index: 1;
         background-color: var(--markdown-preview-editor-background);
     }
 
