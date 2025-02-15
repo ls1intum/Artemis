@@ -104,6 +104,7 @@ describe('LectureDetailComponent', () => {
         expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
     });
+
     it('should log error when error occurs', () => {
         component.lecture = mockLecture;
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));

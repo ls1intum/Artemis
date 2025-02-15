@@ -316,9 +316,9 @@
                                                 } @else {
                                                     <jhi-code-button
                                                         class="me-1"
-                                                        [routerLinkForRepositoryView]="['/courses', course.id, 'exercises', exercise.id, 'repository', value.id]"
                                                         [smallButtons]="true"
                                                         [repositoryUri]="getRepositoryLink(value) || ''"
+                                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
                                                     />
                                                 }
                                             }
@@ -328,6 +328,7 @@
                                                     Build plan
                                                 </a>
                                             }
+                                            <!-- TODO This should ideally be a course management route. Used for the code editor where instructors can add commits to student repositories. -->
                                             <a
                                                 [routerLink]="['/courses', course.id, 'exercises', 'programming-exercises', exercise.id, 'code-editor', value.id]"
                                                 class="btn btn-info btn-sm me-1"

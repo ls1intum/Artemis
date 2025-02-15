@@ -13,7 +13,7 @@ export interface Link {
 // Regular expression pattern to match URLs
 export const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\])]|$)/g;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class LinkifyService {
     /**
      * Find any links in a given text as a string

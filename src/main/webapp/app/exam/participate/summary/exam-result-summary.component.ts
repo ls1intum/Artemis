@@ -185,7 +185,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
         if (!this.studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }

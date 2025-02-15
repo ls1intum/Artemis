@@ -642,7 +642,8 @@ public class FileResource {
             String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
                     ? "attachment"
                     : "inline";
-            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(replaceFilename.orElse(filename)).build());
+            String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
+            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {

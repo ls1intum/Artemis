@@ -12,8 +12,7 @@ import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqService } from 'app/faq/faq.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
@@ -51,7 +50,7 @@ describe('CourseFaqs', () => {
         faq3 = createFaq(3, 'category3', '#0ab84f');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
+            imports: [MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
             declarations: [
                 CourseFaqComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -8,7 +8,7 @@
     </span>
 } @else {
     <!-- in preview mode (showing similar posts during creation): content can be expanded and collapsed shown -->
-    @if (previewMode) {
+    @if (previewMode()) {
         <div class="pb-1">
             <span class="clickable p-0">
                 <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent" />
@@ -23,7 +23,7 @@
                             (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                         />
                     }
-                    @if (isEdited) {
+                    @if (isEdited()) {
                         <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
                     }
                 </div>
@@ -31,7 +31,7 @@
         </div>
     }
     <!-- not in preview mode: content always shown -->
-    @if (!previewMode) {
+    @if (!previewMode()) {
         <div class="pb-1">
             @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
                 <jhi-posting-content-part
@@ -40,10 +40,10 @@
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                 />
             }
-            @if (isEdited) {
+            @if (isEdited()) {
                 <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
             }
-            <jhi-link-preview-container [data]="content" [author]="author" [posting]="posting" [isEdited]="isEdited" [isReply]="isReply" />
+            <jhi-link-preview-container [data]="content()" [author]="author()" [posting]="posting()" [isEdited]="isEdited()" [isReply]="isReply()" />
         </div>
     }
 }

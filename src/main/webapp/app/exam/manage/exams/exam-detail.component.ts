@@ -14,7 +14,7 @@ import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faT
 import { AlertService } from 'app/core/util/alert.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -23,12 +23,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from './exam-checklist-component/exam-checklist.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
+    providers: [ArtemisDurationFromSecondsPipe],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
