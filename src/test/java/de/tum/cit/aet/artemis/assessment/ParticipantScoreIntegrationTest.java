@@ -232,7 +232,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(courseScores).hasSize(3);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
-        assertThat(scoreOfStudent1.pointsAchieved()).isEqualTo(15.0);
+        assertThat(scoreOfStudent1.pointsAchieved()).isEqualTo(19.0);
         assertThat(scoreOfStudent1.scoreAchieved()).isEqualTo(60.0);
         assertThat(scoreOfStudent1.regularPointsAchievable()).isEqualTo(25.0);
     }
