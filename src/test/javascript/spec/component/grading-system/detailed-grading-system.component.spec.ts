@@ -6,8 +6,8 @@ import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
@@ -16,6 +16,9 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 jest.mock('export-to-csv', () => {
     return {
@@ -71,11 +74,14 @@ describe('Detailed Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
