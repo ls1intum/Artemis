@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
@@ -11,6 +11,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardSmallComponent', () => {
     let component: SidebarCardSmallComponent;
@@ -32,6 +33,7 @@ describe('SidebarCardSmallComponent', () => {
             providers: [
                 { provide: Router, useValue: router },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
 
