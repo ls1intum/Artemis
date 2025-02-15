@@ -16,6 +16,7 @@ import { CourseCompetencyService } from '../../../../../main/webapp/app/course/c
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -27,7 +28,7 @@ describe('CompetencyFormComponent', () => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
-            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
+            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
