@@ -18,6 +18,9 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -265,6 +268,8 @@ describe('BonusComponent', () => {
                 },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
     });
