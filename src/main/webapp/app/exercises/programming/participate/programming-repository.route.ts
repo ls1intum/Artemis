@@ -6,7 +6,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 const routes: Routes = [
     {
-        path: ':participationId',
+        path: ':repositoryId',
         loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
             authorities: [Authority.USER],
@@ -15,7 +15,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
-        path: ':participationId/commit-history',
+        path: ':repositoryId/commit-history',
         loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
             authorities: [Authority.USER],
@@ -24,20 +24,11 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
-        path: ':participationId/commit-history/:commitHash',
+        path: ':repositoryId/commit-history/:commitHash',
         loadComponent: () => import('app/localvc/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
-    },
-    {
-        path: ':repositoryType',
-        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
