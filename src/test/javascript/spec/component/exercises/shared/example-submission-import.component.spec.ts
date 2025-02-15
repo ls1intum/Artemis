@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
@@ -14,9 +14,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -41,7 +43,7 @@ describe('ExampleSubmissionImportComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
