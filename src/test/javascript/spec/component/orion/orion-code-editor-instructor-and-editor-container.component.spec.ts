@@ -15,10 +15,13 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
@@ -27,7 +30,6 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CodeEditorInstructorAndEditorOrionContainerComponent,
                 MockComponent(UpdatingResultComponent),
@@ -47,6 +49,8 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
                 MockProvider(ProgrammingExerciseParticipationService),
                 MockProvider(Location),
                 MockProvider(ParticipationService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .compileComponents()
