@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SpanType } from 'app/entities/statistics.model';
@@ -7,9 +7,14 @@ import { of } from 'rxjs';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;
@@ -47,6 +52,10 @@ describe('ExerciseStatisticsComponent', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
