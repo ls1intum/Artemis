@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -16,15 +16,13 @@ import { PrerequisiteService } from 'app/course/competencies/prerequisite.servic
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
 
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [EditPrerequisiteComponent, PrerequisiteFormStubComponent, OwlNativeDateTimeModule],
-            declarations: [],
+            imports: [EditPrerequisiteComponent, MockModule(OwlNativeDateTimeModule), MockComponent(PrerequisiteFormComponent)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(PrerequisiteService),
