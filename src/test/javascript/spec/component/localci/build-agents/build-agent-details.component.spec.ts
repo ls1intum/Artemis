@@ -14,6 +14,8 @@ import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -128,6 +130,8 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(AlertService),
             ],
         }).compileComponents();
