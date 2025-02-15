@@ -1,6 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,14 +11,14 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-build-job-statistics',
     standalone: true,
-    imports: [ArtemisSharedComponentModule, TranslateDirective, ArtemisChartsModule, ArtemisSharedModule, NgxChartsModule, NgbCollapse],
+    imports: [TranslateDirective, NgxChartsModule, NgbCollapse, HelpIconComponent, FaIconComponent],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
 })
