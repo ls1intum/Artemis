@@ -98,7 +98,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo.pipe(filter((x) => x != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
+        return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
