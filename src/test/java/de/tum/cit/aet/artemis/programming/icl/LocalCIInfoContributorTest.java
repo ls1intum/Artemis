@@ -8,7 +8,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIInfoContributor;
 
-public class LocalCIInfoContributorTest {
+class LocalCIInfoContributorTest {
 
     @Test
     void testContribute() {
