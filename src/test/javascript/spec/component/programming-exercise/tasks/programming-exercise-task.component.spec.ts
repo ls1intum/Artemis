@@ -9,6 +9,8 @@ import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/mana
 import { Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { Subject } from 'rxjs';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseTaskComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTaskComponent>;
@@ -19,7 +21,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         return TestBed.configureTestingModule({
             imports: [],
             declarations: [ProgrammingExerciseTaskComponent, MockComponent(TestCasePassedBuildsChartComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
