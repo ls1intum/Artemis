@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ResultProgressBarComponent } from '../../../../../main/webapp/app/exercises/shared/result/result-progress-bar/result-progress-bar.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ResultProgressBarComponent', () => {
     let component: ResultProgressBarComponent;
@@ -9,6 +11,7 @@ describe('ResultProgressBarComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResultProgressBarComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ResultProgressBarComponent);
