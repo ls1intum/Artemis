@@ -162,6 +162,7 @@
         "@typescript-eslint/eslint-plugin": "8.24.0",
         "@typescript-eslint/parser": "8.24.0",
         "angular-eslint": "19.1.0",
+        "cross-env": "7.0.3",
         "eslint": "9.20.1",
         "eslint-config-prettier": "10.0.1",
         "eslint-plugin-deprecation": "3.0.0",
@@ -216,6 +217,6 @@
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
-        "webapp:prod": "npm run clean-www && npm run prebuild && NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"
+        "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"
     }
 }
