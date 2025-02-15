@@ -21,6 +21,12 @@ import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -94,8 +100,13 @@ describe('ProgrammingExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
