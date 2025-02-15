@@ -5,13 +5,20 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -77,10 +84,14 @@ describe('CourseManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(EventManager),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
