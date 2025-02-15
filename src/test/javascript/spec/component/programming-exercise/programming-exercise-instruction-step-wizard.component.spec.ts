@@ -10,6 +10,9 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { expect } from '@playwright/test';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
@@ -22,7 +25,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [ProgrammingExerciseInstructionService],
+            providers: [ProgrammingExerciseInstructionService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
