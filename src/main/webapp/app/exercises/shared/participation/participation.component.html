@@ -128,7 +128,7 @@
                                         <jhi-code-button
                                             class="ms-2"
                                             [smallButtons]="true"
-                                            [routerLinkForRepositoryView]="[row.id, 'repository']"
+                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, row.id]"
                                             [repositoryUri]="getRepositoryLink(row, value)!"
                                         />
                                     }
