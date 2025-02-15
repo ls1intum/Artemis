@@ -14,20 +14,27 @@ public class AutoConfigurationExclusionOverrideGroup implements PropertyOverride
 
     @Override
     public List<PropertyOverride> getProperties() {
-        return List.of(new AutoConfigurationExclusioOverride());
+        return List.of(new AutoConfigurationExclusionOverride());
     }
 
-    static class AutoConfigurationExclusioOverride implements PropertyOverride {
+    static class AutoConfigurationExclusionOverride implements PropertyOverride {
 
         private static final List<Class<?>> autoConfigurationExclusions = List.of(
+        // @formatter:off
                 org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration.class,
                 org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration.class,
                 org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration.class,
                 org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration.class,
-                org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration.class);
+                org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration.class
+                // @formatter:on
+        );
 
-        private static final List<Class<?>> autoConfigurationExclusionsBuildagentOnly = List.of(org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class);
+        private static final List<Class<?>> autoConfigurationExclusionsBuildagentOnly = List.of(
+        // @formatter:off
+            org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+            // @formatter:on
+        );
 
         @Override
         public String getPropertyName() {
@@ -50,5 +57,4 @@ public class AutoConfigurationExclusionOverrideGroup implements PropertyOverride
             return clazz.getName();
         }
     }
-
 }
