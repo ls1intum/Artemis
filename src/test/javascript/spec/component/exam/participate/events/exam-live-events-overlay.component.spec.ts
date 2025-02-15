@@ -7,6 +7,9 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockProvider } from 'ng-mocks';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     let component: ExamLiveEventsOverlayComponent;
@@ -17,10 +20,12 @@ describe('ExamLiveEventsOverlayComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(NgbActiveModal),
             ],
         }).compileComponents();
     });
