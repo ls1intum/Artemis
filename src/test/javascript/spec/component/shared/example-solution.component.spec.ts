@@ -14,6 +14,8 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Example Solution Component', () => {
     let comp: ExampleSolutionComponent;
@@ -28,7 +30,6 @@ describe('Example Solution Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ExampleSolutionComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -43,6 +44,7 @@ describe('Example Solution Component', () => {
                 },
                 MockProvider(ExerciseService),
                 MockProvider(ArtemisMarkdownService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ExampleSolutionComponent);
