@@ -13,6 +13,12 @@ import { GitDiffReportModalComponent } from '../../../../../../main/webapp/app/e
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;
@@ -36,9 +42,14 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     } as ProgrammingExerciseGitDiffReport;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
-            providers: [{ provide: NgbModal, useValue: new MockNgbModalService() }],
+            providers: [
+                { provide: NgbModal, useValue: new MockNgbModalService() },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         });
         fixture = TestBed.createComponent(ProgrammingExerciseExamDiffComponent);
         component = fixture.componentInstance;
