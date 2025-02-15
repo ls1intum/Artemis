@@ -2,10 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardMediumComponent', () => {
     let component: SidebarCardMediumComponent;
@@ -17,7 +18,10 @@ describe('SidebarCardMediumComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(RouterModule)],
             declarations: [SidebarCardMediumComponent, SidebarCardItemComponent, MockRouterLinkDirective],
-            providers: [{ provide: Router, useValue: router }],
+            providers: [
+                { provide: Router, useValue: router },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         }).compileComponents();
     });
 
