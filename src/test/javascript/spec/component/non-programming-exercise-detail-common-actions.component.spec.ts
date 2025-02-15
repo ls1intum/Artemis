@@ -18,10 +18,13 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockActivatedRoute } from '../helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -44,6 +47,8 @@ describe('Exercise detail common actions Component', () => {
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 MockProvider(ModelingExerciseService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ProfileService),
             ],
         }).compileComponents();
