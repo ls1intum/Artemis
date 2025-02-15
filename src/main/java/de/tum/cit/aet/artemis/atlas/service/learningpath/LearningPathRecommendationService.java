@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
-import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -633,9 +632,6 @@ public class LearningPathRecommendationService {
      * @return the recommended ordering of learning objects
      */
     public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence, boolean repeatedTests) {
-        var learnerProfile = user.getLearnerProfile();
-        var courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findFirst().orElse(new CourseLearnerProfile());
-
         var learnerProfile = user.getLearnerProfile();
         var courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findFirst().orElse(new CourseLearnerProfile());
 
