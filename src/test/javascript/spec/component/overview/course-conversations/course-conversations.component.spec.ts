@@ -660,6 +660,39 @@ examples.forEach((activeConversation) => {
                 expect(component.selectedSavedPostStatus).toBeNull();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
             });
+
+            it('should toggle the value of showOnlyPinned', () => {
+                expect(component.showOnlyPinned).toBe(false);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(true);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(false);
+            });
+
+            it('should update pinnedCount when onPinnedCountChanged is called', () => {
+                const newPinnedCount = 5;
+
+                component.onPinnedCountChanged(newPinnedCount);
+                expect(component.pinnedCount).toBe(newPinnedCount);
+            });
+
+            it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(0);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+
+            it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(5);
+                expect(component.showOnlyPinned).toBeTrue();
+
+                component.showOnlyPinned = false;
+                component.onPinnedCountChanged(10);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
         });
 
         describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {

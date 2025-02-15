@@ -14,6 +14,7 @@ import {
     faHeart,
     faList,
     faMessage,
+    faPersonChalkboard,
     faPlus,
     faSearch,
     faTimes,
@@ -65,6 +66,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
     savedPosts: { entityData: [] },
 };
@@ -78,6 +80,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     favoriteChannels: faHeart,
     lectureChannels: faFile,
     hiddenChannels: faBan,
+    feedbackDiscussion: faPersonChalkboard,
     savedPosts: faBookmark,
     recents: faClock,
 };
@@ -91,6 +94,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
+    feedbackDiscussion: true,
     savedPosts: true,
     recents: true,
 };
@@ -104,6 +108,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     favoriteChannels: true,
     lectureChannels: false,
     hiddenChannels: false,
+    feedbackDiscussion: false,
     savedPosts: true,
     recents: true,
 };
@@ -165,6 +170,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: null | SavedPostStatus = null;
+    showOnlyPinned = false;
+    pinnedCount: number = 0;
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -202,6 +209,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
         });
+    }
+
+    togglePinnedView(): void {
+        this.showOnlyPinned = !this.showOnlyPinned;
+    }
+
+    onPinnedCountChanged(newCount: number): void {
+        this.pinnedCount = newCount;
+        if (this.pinnedCount == 0 && this.showOnlyPinned) {
+            this.showOnlyPinned = false;
+        }
+        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {

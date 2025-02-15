@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, forkJoin, map, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,7 +10,6 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { catchError } from 'rxjs/operators';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import {
     ContextInformation,
@@ -19,6 +18,7 @@ import {
     MetisWebsocketChannelPrefix,
     PageType,
     PostContextFilter,
+    PostSortCriterion,
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
@@ -35,7 +35,6 @@ import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
-import { throwError } from 'rxjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -51,6 +50,7 @@ export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
+    private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
@@ -84,6 +84,10 @@ export class MetisService implements OnDestroy {
 
     get totalNumberOfPosts(): Observable<number> {
         return this.totalNumberOfPosts$.asObservable();
+    }
+
+    getPinnedPosts(): Observable<Post[]> {
+        return this.pinnedPosts$.asObservable();
     }
 
     getCurrentConversation(): ConversationDTO | undefined {
@@ -300,6 +304,28 @@ export class MetisService implements OnDestroy {
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
+    }
+
+    public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
+        const pinnedFilter: PostContextFilter = {
+            courseId: this.courseId,
+            conversationId: conversationId,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
+            pinnedOnly: true,
+            pagingEnabled: false,
+        };
+
+        return this.postService.getPosts(this.courseId, pinnedFilter).pipe(
+            map((res: HttpResponse<Post[]>) => res.body ?? []),
+            tap((pinnedPosts: Post[]) => {
+                this.pinnedPosts$.next(pinnedPosts);
+            }),
+            catchError((err) => {
+                this.pinnedPosts$.next([]);
+                return of([]);
+            }),
+        );
     }
 
     /**
@@ -671,12 +697,30 @@ export class MetisService implements OnDestroy {
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
+                if (postDTO.post.displayPriority === DisplayPriority.PINNED) {
+                    const currentPinnedPosts = this.pinnedPosts$.getValue();
+                    const indexPinned = currentPinnedPosts.findIndex((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                    if (indexPinned > -1) {
+                        currentPinnedPosts[indexPinned] = postDTO.post;
+                        this.pinnedPosts$.next([...currentPinnedPosts]);
+                    } else {
+                        this.pinnedPosts$.next([postDTO.post, ...currentPinnedPosts]);
+                    }
+                } else {
+                    this.removeFromPinnedPosts(postDTO.post.id!);
+                }
                 this.addTags(postDTO.post.tags);
                 break;
             case MetisPostAction.DELETE:
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
+                }
+                const currentPinnedPosts = this.pinnedPosts$.getValue();
+                const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                if (isPinned) {
+                    const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postDTO.post.id);
+                    this.pinnedPosts$.next(updatedPinnedPosts);
                 }
                 break;
             default:
@@ -839,5 +883,18 @@ export class MetisService implements OnDestroy {
         other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+    }
+
+    /**
+     * Removes a post from the pinnedPosts$ if it exists.
+     * @param postId The ID of the post to remove.
+     */
+    private removeFromPinnedPosts(postId: number): void {
+        const currentPinnedPosts = this.pinnedPosts$.getValue();
+        const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postId);
+        if (isPinned) {
+            const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
+            this.pinnedPosts$.next(updatedPinnedPosts);
+        }
     }
 }
