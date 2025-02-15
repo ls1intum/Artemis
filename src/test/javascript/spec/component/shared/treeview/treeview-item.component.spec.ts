@@ -4,8 +4,8 @@ import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { slice } from 'lodash-es';
 
-import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeViewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/tree-view-item.component';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 import { createGenericTestComponent } from './common';
 import { CommonModule } from '@angular/common';
 
@@ -26,7 +26,7 @@ const fakeItemTemplate = `
 `;
 
 interface FakeData {
-    item: TreeviewItem<number>;
+    item: TreeViewItem<number>;
     checkedChange: (checked: boolean) => void;
 }
 
@@ -41,7 +41,7 @@ const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]
 @Component({
     selector: 'test',
     template: '',
-    imports: [TreeviewItemComponent, FormsModule, CommonModule],
+    imports: [TreeViewItemComponent, FormsModule, CommonModule],
 })
 class TestComponent {
     item = fakeData.item;
@@ -53,7 +53,7 @@ const createTestComponent = (html: string) => createGenericTestComponent(html, T
 describe('TreeviewItemComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, BrowserModule, TreeviewItemComponent], // Import TreeviewItemComponent here
+            imports: [FormsModule, BrowserModule, TreeViewItemComponent], // Import TreeviewItemComponent here
         });
     });
 
@@ -66,7 +66,7 @@ describe('TreeviewItemComponent', () => {
         });
 
         it('should have element with class "treeview-item" if binding item', () => {
-            fakeData.item = new TreeviewItem<number>({ children: [], text: '1', value: 1 });
+            fakeData.item = new TreeViewItem<number>({ children: [], text: '1', value: 1 });
             const fixture = createTestComponent('<treeview-item [item]="item"></treeview-item>');
             fixture.detectChanges();
             const element = fixture.debugElement.query(By.css('.treeview-item'));
@@ -81,13 +81,13 @@ describe('TreeviewItemComponent', () => {
         let childrenCheckboxes: DebugElement[];
 
         beforeEach(() => {
-            fakeData.item = new TreeviewItem({
+            fakeData.item = new TreeViewItem({
                 text: 'Parent 1',
                 value: 1,
                 checked: true,
                 collapsed: false,
                 disabled: false,
-                children: [{ text: 'Child 1', value: 11 } as TreeviewItem<number>, { text: 'Child 2', value: 12 } as TreeviewItem<number>],
+                children: [{ text: 'Child 1', value: 11 } as TreeViewItem<number>, { text: 'Child 2', value: 12 } as TreeViewItem<number>],
             });
         });
 

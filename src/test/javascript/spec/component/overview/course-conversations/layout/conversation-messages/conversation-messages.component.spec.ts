@@ -1,5 +1,5 @@
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -11,10 +11,10 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { BehaviorSubject } from 'rxjs';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { BehaviorSubject, of } from 'rxjs';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, input, Input, Output, QueryList, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -84,6 +84,13 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
+            Object.defineProperty(metisService, 'getPinnedPosts', {
+                value: () => of([]),
+            });
+
+            Object.defineProperty(metisService, 'fetchAllPinnedPosts', {
+                value: () => of([]),
+            });
 
             fixture = TestBed.createComponent(ConversationMessagesComponent);
             component = fixture.componentInstance;
@@ -234,7 +241,8 @@ examples.forEach((activeConversation) => {
                 { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
             ];
 
-            component.setPosts(posts);
+            component.allPosts = posts;
+            component.setPosts();
 
             expect(component.posts).toHaveLength(4);
             expect(component.groupedPosts).toHaveLength(3);
@@ -261,7 +269,8 @@ examples.forEach((activeConversation) => {
                 { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
             ];
 
-            component.setPosts(posts);
+            component.allPosts = posts;
+            component.setPosts();
 
             expect(component.groupedPosts).toHaveLength(3);
             expect(component.groupedPosts[0].posts).toHaveLength(1);
@@ -294,5 +303,114 @@ examples.forEach((activeConversation) => {
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
             expect(component.canStartSaving).toBeTrue();
         });
+
+        it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
+            const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
+            const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
+            component.pinnedPosts = [pinnedPost];
+            component.allPosts = [pinnedPost, regularPost];
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.showOnlyPinned = input<boolean>(true);
+                component.applyPinnedMessageFilter();
+            });
+
+            expect(component.posts).toEqual([pinnedPost]);
+        });
+
+        it('should show all posts when showOnlyPinned is false', () => {
+            const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
+            const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
+            component.pinnedPosts = [pinnedPost];
+            component.allPosts = [pinnedPost, regularPost];
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.showOnlyPinned = input<boolean>(false);
+                component.applyPinnedMessageFilter();
+            });
+
+            expect(component.posts).toEqual([pinnedPost, regularPost]);
+        });
+
+        it('should call setPosts when showOnlyPinned input changes and it is not the first change', () => {
+            const changes = {
+                showOnlyPinned: {
+                    currentValue: true,
+                    previousValue: false,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).toHaveBeenCalled();
+        });
+
+        it('should not call setPosts when showOnlyPinned input changes for the first time', () => {
+            const changes = {
+                showOnlyPinned: {
+                    currentValue: true,
+                    previousValue: undefined,
+                    firstChange: true,
+                    isFirstChange: () => true,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call setPosts when showOnlyPinned input does not change', () => {
+            const changes = {
+                unrelatedInput: {
+                    currentValue: true,
+                    previousValue: false,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should subscribe to pinned posts on init and emit pinnedCount', fakeAsync(() => {
+            const pinnedPostsStub = [{ id: 10, displayPriority: 'PINNED' }] as Post[];
+            const pinnedPostsSubject = new BehaviorSubject<Post[]>([]);
+
+            const pinnedCountSpy = jest.spyOn(component.pinnedCount, 'emit');
+            jest.spyOn(metisService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
+
+            component.ngOnInit();
+
+            pinnedPostsSubject.next(pinnedPostsStub);
+            tick();
+
+            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
+        }));
+
+        it('should fetch pinned posts in onActiveConversationChange and emit pinnedCount', fakeAsync(() => {
+            const pinnedPostsStub = [{ id: 77, displayPriority: 'PINNED' }] as Post[];
+            const pinnedCountSpy = jest.spyOn(component.pinnedCount, 'emit');
+            jest.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
+
+            component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
+            component.course = { id: 1 } as Course;
+            component.searchInput = {
+                nativeElement: { value: '' },
+            } as ElementRef;
+
+            component['onActiveConversationChange']();
+            tick();
+
+            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
+        }));
     });
 });

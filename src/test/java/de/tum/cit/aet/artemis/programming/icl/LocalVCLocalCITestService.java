@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
@@ -313,7 +312,7 @@ public class LocalVCLocalCITestService {
     private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
         String tempDir = System.getProperty("java.io.tmpdir");
 
-        Path projectFolder = Paths.get(tempDir, projectKey);
+        Path projectFolder = Path.of(tempDir, projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {

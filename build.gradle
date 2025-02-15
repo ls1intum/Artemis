@@ -47,7 +47,6 @@ node {
 }
 
 apply from: "gradle/liquibase.gradle"
-apply from: "gradle/test.gradle"
 apply from: "gradle/spotless.gradle"
 
 if (project.hasProperty("prod")) {
@@ -80,7 +79,7 @@ modernizer {
 }
 
 configurations {
-    providedRuntime
+    mockitoAgent
 }
 
 repositories {
@@ -299,15 +298,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
-    implementation "org.springframework.data:spring-data-ldap:3.4.2"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
+    implementation "org.springframework.data:spring-data-ldap:3.4.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty:1.2.2"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.3"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -418,6 +417,10 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
+    // needed to add mockito as agent and avoid its warning
+    mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {
+        transitive = false
+    }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
     testImplementation "io.github.classgraph:classgraph:4.8.179"
@@ -427,7 +430,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
-    testImplementation "com.tngtech.archunit:archunit:1.3.0"
+    testImplementation "com.tngtech.archunit:archunit:1.4.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
     // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
@@ -440,6 +443,10 @@ dependencies {
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
+
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
+apply from: "gradle/test.gradle"
+
 
 dependencyManagement {
     imports {

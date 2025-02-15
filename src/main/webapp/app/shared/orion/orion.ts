@@ -1,4 +1,4 @@
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 export interface OrionState {
     opened: number;
@@ -84,7 +84,7 @@ export interface OrionVCSConnector {
      * Select a specific repository. See {@link OrionConnectorService} for details.
      * @param repository The repository to be selected.
      */
-    selectRepository(repository: REPOSITORY): void;
+    selectRepository(repository: RepositoryType): void;
 
     /**
      * Code to provide the submit functionality. See {@link OrionConnectorService} for details.

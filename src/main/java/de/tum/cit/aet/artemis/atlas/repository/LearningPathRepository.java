@@ -36,6 +36,13 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "course" })
+    Optional<LearningPath> findWithEagerCourseById(long learningPathId);
+
+    default LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
+        return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
     Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
 
@@ -63,11 +70,23 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnitLinks", "competencies.lectureUnitLinks.lectureUnit", "competencies.exerciseLinks",
-            "competencies.exerciseLinks.exercise" })
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
+    @Query("""
+            SELECT l
+            FROM LearningPath l
+            LEFT JOIN FETCH l.competencies c
+            LEFT JOIN FETCH c.lectureUnitLinks lul
+            LEFT JOIN FETCH lul.lectureUnit
+            LEFT JOIN FETCH c.exerciseLinks el
+            LEFT JOIN FETCH el.exercise
+            LEFT JOIN FETCH l.user u
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
+            WHERE l.id = :learningPathId
+                AND clp.course.id = l.course.id
+            """)
+    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(@Param("learningPathId") long learningPathId);
 
-    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId), learningPathId);
+    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
+        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
     }
 }

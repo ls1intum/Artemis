@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.fileupload.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -385,8 +385,8 @@ public class FileUploadExerciseResource {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        File zipFile = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
-        return ResponseUtil.ok(zipFile);
+        Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFilePath);
     }
 
     /**
