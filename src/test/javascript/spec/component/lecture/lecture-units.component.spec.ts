@@ -28,6 +28,8 @@ import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-un
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -55,6 +57,7 @@ describe('LectureUpdateUnitsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         }).compileComponents();
