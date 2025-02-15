@@ -1,5 +1,5 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
@@ -116,6 +116,8 @@ describe('CoursesComponent', () => {
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
                 MockProvider(CourseAccessStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
