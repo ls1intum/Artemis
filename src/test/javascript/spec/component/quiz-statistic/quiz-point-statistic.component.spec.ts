@@ -7,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -19,6 +19,7 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -47,7 +48,6 @@ describe('QuizExercise Point Statistic Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -55,6 +55,8 @@ describe('QuizExercise Point Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(ChangeDetectorRef),
             ],
         })
