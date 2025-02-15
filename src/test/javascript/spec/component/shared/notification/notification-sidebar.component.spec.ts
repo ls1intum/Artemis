@@ -16,7 +16,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -24,19 +24,13 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
