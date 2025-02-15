@@ -12,6 +12,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
@@ -111,7 +113,7 @@ describe('ModelingAssessmentComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule)],
             declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisTranslatePipe)],
+            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
