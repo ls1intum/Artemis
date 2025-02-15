@@ -1,8 +1,8 @@
-package de.tum.cit.aet.artemis.core.config.builder;
+package de.tum.cit.aet.artemis.core.config.runtime_property;
 
 import org.springframework.core.env.ConfigurableEnvironment;
 
-public interface CustomProperty {
+public interface PropertyOverride {
 
     /**
      * @return the property name to override
@@ -24,17 +24,5 @@ public interface CustomProperty {
      */
     default boolean enabled(ConfigurableEnvironment environment) {
         return true;
-    }
-
-    /**
-     * Returns the property source name for the property to override.
-     * This name is arbitrary and should be unique.
-     * When such a property is read from an application.yml, this property would include the file name.
-     * While you can override this value, there is currently no good reason to do so.
-     *
-     * @return the property source name
-     */
-    default String getPropertySourceName() {
-        return getPropertyName().replace(".", "_") + "_override";
     }
 }

@@ -28,6 +28,7 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.config.conditions.BuildAgentCondition;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
 /**
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@ConditionalOnBean(BuildAgentConfiguration.class)
+@ConditionalOnBean(BuildAgentCondition.class)
 public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;

@@ -21,7 +21,8 @@ import org.springframework.core.env.Environment;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
-import de.tum.cit.aet.artemis.core.config.builder.PropertyBuilder;
+import de.tum.cit.aet.artemis.core.config.runtime_property.ConfigValidationPostProcessor;
+import de.tum.cit.aet.artemis.core.config.runtime_property.PropertyOverridePostProcessor;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -64,7 +65,8 @@ public class ArtemisApp {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
 
-        new PropertyBuilder().attachPostProcessor(app);
+        new ConfigValidationPostProcessor().attachTo(app);
+        new PropertyOverridePostProcessor().attachTo(app);
 
         var context = app.run(args);
         Environment env = context.getEnvironment();
