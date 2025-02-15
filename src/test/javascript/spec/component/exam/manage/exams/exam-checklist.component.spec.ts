@@ -13,6 +13,12 @@ import { of } from 'rxjs';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -55,7 +61,6 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ExamChecklistComponent,
                 MockPipe(ArtemisDatePipe),
@@ -67,6 +72,10 @@ describe('ExamChecklistComponent', () => {
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
