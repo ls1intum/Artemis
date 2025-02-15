@@ -11,6 +11,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('LearningPathInstructorPageComponent', () => {
     let component: LearningPathInstructorPageComponent;
@@ -48,6 +50,7 @@ describe('LearningPathInstructorPageComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
 
