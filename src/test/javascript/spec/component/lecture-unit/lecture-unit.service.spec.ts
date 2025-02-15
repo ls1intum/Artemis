@@ -12,6 +12,8 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureUnitService', () => {
     let service: LectureUnitService;
@@ -26,8 +28,7 @@ describe('LectureUnitService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         expectedResultArray = {} as HttpResponse<LectureUnit[]>;
         service = TestBed.inject(LectureUnitService);
