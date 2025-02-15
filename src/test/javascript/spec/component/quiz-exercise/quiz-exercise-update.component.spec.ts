@@ -40,6 +40,14 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ArtemisTestModule } from '../../test.module';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -145,7 +153,6 @@ describe('QuizExerciseUpdateComponent', () => {
 
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -156,6 +163,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -219,6 +227,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
                 queryParams: of({}),
             } as any as ActivatedRoute;
+
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
