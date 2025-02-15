@@ -12,6 +12,8 @@ import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component'
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { RouterModule } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 // Mock the initialize method
 class MockThemeService {
@@ -33,6 +35,8 @@ describe('JhiMainComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
