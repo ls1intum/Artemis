@@ -165,19 +165,22 @@ public class ExerciseResource {
                 // Students should never access exam exercises like this
                 throw new AccessForbiddenException();
             }
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            exercise.setGradingCriteria(gradingCriteria);
         }
         // Normal exercise
         else {
             if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException();
             }
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+                exercise.setGradingCriteria(gradingCriteria);
+            }
+            else {
                 exercise.filterSensitiveInformation();
             }
         }
-
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
         return ResponseEntity.ok(exercise);
     }
 
