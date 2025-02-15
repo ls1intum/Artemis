@@ -68,6 +68,8 @@ import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-insta
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -144,6 +146,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockProvider(ProfileService, {
                     getProfileInfo: () => of(mockProfileInfo),
                 }),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
