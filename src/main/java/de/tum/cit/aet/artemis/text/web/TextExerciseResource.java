@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.text.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -560,8 +560,8 @@ public class TextExerciseResource {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, textExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        File zipFile = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
-        return ResponseUtil.ok(zipFile);
+        Path zipFilePath = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFilePath);
     }
 
     /**

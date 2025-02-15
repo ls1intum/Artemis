@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -763,7 +764,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitHash, true);
-        doReturn(Map.of()).when(gitService).getFilesAndFolders(any());
+        doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
+        doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
         doNothing().when(gitService).switchBackToDefaultBranchHead(any());
 
         request.getMap("/api/programming-exercise-participations/" + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
@@ -792,7 +794,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
             COMMIT_HASH = "commitHash";
 
-            doReturn(Map.of()).when(gitService).getFilesAndFolders(any());
+            doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
+            doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
             doNothing().when(gitService).switchBackToDefaultBranchHead(any());
             doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
                     any(Boolean.class));

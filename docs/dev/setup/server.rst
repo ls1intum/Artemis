@@ -44,6 +44,7 @@ You can override the following configuration options in this file.
            user: <username>    # e.g. ga12abc
            password: <password>
            token: <token>                 # VCS API token giving Artemis full Admin access.
+           repository-authentication-mechanisms: password,token,ssh # the order of authentication mechanisms shown to the user in the code button
        continuous-integration:
            url: https://jenkins.ase.in.tum.de
            user: <username>    # e.g. ga12abc

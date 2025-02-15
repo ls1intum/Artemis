@@ -4,7 +4,6 @@ import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -16,6 +15,11 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
 import { facDetails } from 'app/icons/icons';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormsModule } from '@angular/forms';
 
 export interface FeedbackAnalysisState {
     page: number;
@@ -29,7 +33,7 @@ export interface FeedbackAnalysisState {
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [ArtemisSharedCommonModule, SortIconComponent, NgbModule, NgbPagination],
+    imports: [SortIconComponent, NgbModule, NgbPagination, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {

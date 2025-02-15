@@ -781,7 +781,6 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
