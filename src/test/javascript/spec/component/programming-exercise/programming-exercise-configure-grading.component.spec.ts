@@ -38,7 +38,7 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
@@ -48,9 +48,12 @@ import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/servi
 import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -218,7 +221,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
