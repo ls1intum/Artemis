@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
+import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -18,10 +18,14 @@ import { MockTranslateService, TranslateTestingModule } from '../../helpers/mock
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-describe('TextblockFeedbackEditorComponent', () => {
-    let component: TextblockFeedbackEditorComponent;
-    let fixture: ComponentFixture<TextblockFeedbackEditorComponent>;
+describe('TextBlockFeedbackEditorComponent', () => {
+    let component: TextBlockFeedbackEditorComponent;
+    let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
     let compiled: any;
 
     const textBlock = { id: '1' } as TextBlock;
@@ -30,7 +34,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
             declarations: [
-                TextblockFeedbackEditorComponent,
+                TextBlockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
                 MockComponent(TextblockFeedbackDropdownComponent),
                 MockComponent(ConfirmIconComponent),
@@ -44,12 +48,15 @@ describe('TextblockFeedbackEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                provideHttpClientTesting(),
+                provideHttpClient(),
             ],
         }).compileComponents();
     });
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(TextblockFeedbackEditorComponent);
+        fixture = TestBed.createComponent(TextBlockFeedbackEditorComponent);
         component = fixture.componentInstance;
         component.textBlock = textBlock;
         component.feedback = Feedback.forText(textBlock);
