@@ -3,6 +3,7 @@ import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
@@ -154,10 +155,17 @@ export const getExerciseDashboardLink = (courseId: number, exerciseId: number, e
         : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];
 };
 
-export const getLocalRepositoryLink = (courseId: number, exerciseId: number, participationId: number, exerciseGroupId: number = 0, examId = 0): string[] => {
-    const suffix = ['programming-exercises', exerciseId.toString(), 'participations', participationId.toString(), 'repository'];
+export const getLocalRepositoryLink = (
+    courseId: number,
+    exerciseId: number,
+    repositoryType: RepositoryType,
+    participationId: number,
+    exerciseGroupId: number = 0,
+    examId = 0,
+): string[] => {
+    const suffix = ['programming-exercises', exerciseId.toString(), 'repository', repositoryType, participationId.toString()];
 
-    return examId < 0
+    return examId > 0
         ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'exercise-groups', exerciseGroupId.toString(), ...suffix]
         : ['/course-management', courseId.toString(), ...suffix];
 };

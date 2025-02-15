@@ -144,7 +144,28 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.selectedTab = tab;
+        if (this.getAsOneToOneChat(this.activeConversation)) {
+            modalRef.componentInstance.selectedTab = ConversationDetailTabs.INFO;
+        }
         modalRef.componentInstance.initialize();
+
+        const userNameClicked = modalRef.componentInstance.userNameClicked;
+        if (userNameClicked) {
+            const subscription = userNameClicked.subscribe((username: number) => {
+                modalRef.dismiss();
+                this.metisConversationService
+                    .createOneToOneChatWithId(username)
+                    .pipe(
+                        catchError((error) => {
+                            return EMPTY;
+                        }),
+                    )
+                    .subscribe();
+            });
+
+            modalRef.closed.subscribe(() => subscription.unsubscribe());
+        }
+
         from(modalRef.result)
             .pipe(
                 catchError(() => EMPTY),
