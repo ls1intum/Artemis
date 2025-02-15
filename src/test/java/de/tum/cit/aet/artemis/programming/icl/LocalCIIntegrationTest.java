@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -583,7 +582,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildLogs).isNotNull();
             assertThat(buildLogs.getFile().exists()).isTrue();
 
-            String content = new String(Files.readAllBytes(Paths.get(buildLogs.getFile().getAbsolutePath())));
+            String content = new String(Files.readAllBytes(Path.of(buildLogs.getFile().getAbsolutePath())));
 
             // Assert that the content contains the expected log entry
             assertThat(content).contains("Dummy log entry");
@@ -591,7 +590,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         finally {
             // Delete log file
             if (buildLogs != null && buildLogs.getFile().exists()) {
-                Files.deleteIfExists(Paths.get(buildLogs.getFile().getAbsolutePath()));
+                Files.deleteIfExists(Path.of(buildLogs.getFile().getAbsolutePath()));
             }
         }
     }

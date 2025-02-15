@@ -13,9 +13,11 @@ import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockProvider } from 'ng-mocks';
+import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
+import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -259,16 +261,8 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
-    const buildLogEntries: BuildLogEntry[] = [
-        {
-            time: dayjs('2024-01-01'),
-            log: 'log1',
-        },
-        {
-            time: dayjs('2024-01-02'),
-            log: 'log2',
-        },
-    ];
+    let alertService: AlertService;
+    let alertServiceErrorStub: jest.SpyInstance;
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -282,14 +276,15 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
-    }));
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(BuildQueueComponent);
         component = fixture.componentInstance;
-    });
+        alertService = TestBed.inject(AlertService);
+        alertServiceErrorStub = jest.spyOn(alertService, 'error');
+    }));
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -637,21 +632,31 @@ describe('BuildQueueComponent', () => {
 
     it('should download build logs', () => {
         const buildJobId = '1';
-        jest.spyOn(window, 'open').mockImplementation();
 
-        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogEntries));
-
-        const buildLogsMultiLines: BuildLogLines[] = buildLogEntries.map((entry) => {
-            return { time: entry.time, logLines: entry.log.split('\n') };
-        });
+        const buildLogsMultiLines = 'log1\nlog2\nlog3';
+        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogsMultiLines));
 
         component.viewBuildLogs(undefined, buildJobId);
 
         expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogs).toEqual(buildLogsMultiLines);
+        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+
+        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+
+        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
 
         component.downloadBuildLogs();
 
-        expect(window.open).toHaveBeenCalledWith(`/api/build-log/${component.displayedBuildJobId}`, '_blank');
+        expect(downloadSpy).toHaveBeenCalledOnce();
+        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+        expect(alertServiceErrorStub).toHaveBeenCalled();
+
+        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
+        global.URL.revokeObjectURL = jest.fn();
+
+        component.downloadBuildLogs();
+
+        expect(downloadSpy).toHaveBeenCalledTimes(2);
+        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
     });
 });

@@ -87,7 +87,8 @@
                 "title": "Build Logs für Job",
                 "download": "Herunterladen",
                 "noLogs": "Keine Logs verfügbar",
-                "errorFetchingLogs": "Fehler beim Abrufen von Build-Log-Einträgen für Build-Job"
+                "errorFetchingLogs": "Fehler beim Abrufen von Build-Log-Einträgen für Build-Job",
+                "downloadError": "Fehler beim Herunterladen von Build-Log des Build-Jobs"
             }
         }
     }

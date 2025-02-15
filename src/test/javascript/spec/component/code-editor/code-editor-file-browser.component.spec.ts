@@ -17,8 +17,7 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorFileBrowserComponent', () => {
@@ -39,7 +38,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
+            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 CodeEditorFileBrowserFileComponent,
@@ -75,7 +74,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        const expectedFileTreeItems: TreeviewItem<string>[] = [];
+        const expectedFileTreeItems: TreeViewItem<string>[] = [];
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
@@ -162,7 +161,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             value: 'file1',
         };
         jest.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
-        const transformTreeToTreeViewItemStub = jest.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeviewItem(treeNode)]);
+        const transformTreeToTreeViewItemStub = jest.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeViewItem(treeNode)]);
         comp.compressFolders = false;
         comp.toggleTreeCompress();
         expect(comp.compressFolders).toBeTrue();
@@ -233,7 +232,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             ...forbiddenFiles,
         };
         const expectedFileTreeItems = [
-            new TreeviewItem({
+            new TreeViewItem({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -339,13 +338,13 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file2': FileType.FILE,
         };
         comp.filesTreeViewItem = [
-            new TreeviewItem({
+            new TreeViewItem({
                 checked: false,
                 text: fileToSelect,
                 value: fileToSelect,
                 children: [],
             } as any),
-            new TreeviewItem({
+            new TreeViewItem({
                 checked: false,
                 text: otherFile,
                 value: otherFile,
@@ -374,14 +373,14 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file2': FileType.FILE,
         };
         comp.filesTreeViewItem = [
-            new TreeviewItem({
+            new TreeViewItem({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: selectedFile,
                 value: 'file1',
             } as any),
-            new TreeviewItem({
+            new TreeViewItem({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -415,14 +414,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filePath = 'folder2/file2';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const treeItems = [
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -466,14 +465,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filePath = 'folder2/folder3';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const treeItems = [
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -571,7 +570,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should manage the file/folder it is currently creating within another folder', () => {
         const folder = 'folder';
-        const item = { value: folder } as TreeviewItem<string>;
+        const item = { value: folder } as TreeViewItem<string>;
         comp.setCreatingFile({ item, fileType: FileType.FILE });
         expect(comp.creatingFile).toEqual([folder, FileType.FILE]);
         comp.setCreatingFile({ item, fileType: FileType.FOLDER });
@@ -584,14 +583,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const fileName = 'file1';
         const afterRename = 'newFileName';
         const treeItems = [
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -644,28 +643,28 @@ describe('CodeEditorFileBrowserComponent', () => {
         const folderName = 'folder';
         const afterRename = 'newFolderName';
         const treeItems = [
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'folder/file1',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file2',
                 value: 'folder/file2',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'folder',
                 value: 'folder',
             } as any),
-            new TreeviewItem<string>({
+            new TreeViewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -841,7 +840,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file1': FileType.FILE,
             folder: FileType.FOLDER,
         };
-        const item = { value: 'folder/file1', text: 'file1' } as TreeviewItem<string>;
+        const item = { value: 'folder/file1', text: 'file1' } as TreeViewItem<string>;
         comp.setRenamingFile(item);
         expect(comp.renamingFile).toEqual(['folder/file1', 'file1', FileType.FILE]);
         comp.clearRenamingFile();
@@ -914,7 +913,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file1': FileType.FILE,
             folder: FileType.FOLDER,
         };
-        const item = { value: 'folder/file1', text: 'file1' } as TreeviewItem<string>;
+        const item = { value: 'folder/file1', text: 'file1' } as TreeViewItem<string>;
         const modalRef = { componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined } } as NgbModalRef;
         const openModalStub = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
         comp.openDeleteFileModal(item);
@@ -937,17 +936,17 @@ describe('CodeEditorFileBrowserComponent', () => {
         });
 
         it('should return an empty array if folder is not collapsed', () => {
-            const result = comp.getFolderBadges({ value: 'folderA', collapsed: false } as TreeviewItem<string>);
+            const result = comp.getFolderBadges({ value: 'folderA', collapsed: false } as TreeViewItem<string>);
             expect(result).toEqual([]);
         });
 
         it('should work for single file badge for a collapsed folder', () => {
-            const result = comp.getFolderBadges({ value: 'folderA', collapsed: true } as TreeviewItem<string>);
+            const result = comp.getFolderBadges({ value: 'folderA', collapsed: true } as TreeViewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)]);
         });
 
         it('should aggregate file badges for a collapsed folder', () => {
-            const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeviewItem<string>);
+            const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeViewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
         });
     });

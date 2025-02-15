@@ -5,11 +5,11 @@ import { CourseCompetencyType } from 'app/entities/competency.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
-    imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisSharedModule],
+    imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisTranslatePipe],
     templateUrl: './course-competency-relation-node.component.html',
     styleUrl: './course-competency-relation-node.component.scss',
 })
