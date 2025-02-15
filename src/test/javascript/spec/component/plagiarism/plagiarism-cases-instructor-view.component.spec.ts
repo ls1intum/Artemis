@@ -3,7 +3,7 @@ import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-ca
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -23,6 +23,7 @@ import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shar
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { Component } from '@angular/core';
 import { Location } from '@angular/common';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -127,6 +128,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
