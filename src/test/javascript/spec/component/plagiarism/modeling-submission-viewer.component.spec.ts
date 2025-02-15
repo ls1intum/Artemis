@@ -11,6 +11,12 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Modeling Submission Viewer Component', () => {
     let comp: ModelingSubmissionViewerComponent;
@@ -22,10 +28,13 @@ describe('Modeling Submission Viewer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
