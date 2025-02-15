@@ -20,8 +20,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 
 describe('TextBlockFeedbackEditorComponent', () => {
     let component: TextBlockFeedbackEditorComponent;
@@ -44,13 +43,12 @@ describe('TextBlockFeedbackEditorComponent', () => {
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
+                MockProvider(TextAssessmentAnalytics),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
-                provideHttpClientTesting(),
-                provideHttpClient(),
             ],
         }).compileComponents();
     });
