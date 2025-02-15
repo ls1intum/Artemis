@@ -18,6 +18,14 @@ import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/qu
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -59,7 +67,13 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .overrideComponent(DragAndDropQuestionEditComponent, {
                 set: {
