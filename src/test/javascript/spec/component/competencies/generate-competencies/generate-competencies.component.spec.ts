@@ -25,6 +25,8 @@ import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -66,6 +68,7 @@ describe('GenerateCompetenciesComponent', () => {
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 MockProvider(ArtemisTranslatePipe),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
