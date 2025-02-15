@@ -1,8 +1,8 @@
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -33,6 +33,10 @@ import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -83,6 +87,10 @@ describe('ExampleTextSubmissionComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
 
