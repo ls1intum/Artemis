@@ -22,6 +22,10 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('QuizPoolComponent', () => {
     let fixture: ComponentFixture<QuizPoolComponent>;
@@ -45,7 +49,15 @@ describe('QuizPoolComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }, MockProvider(ChangeDetectorRef), MockProvider(AlertService)],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ActivatedRoute, useValue: route },
+                MockProvider(ChangeDetectorRef),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
