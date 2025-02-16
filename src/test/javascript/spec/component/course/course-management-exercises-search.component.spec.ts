@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course Management Exercises Search Component', () => {
     let comp: CourseManagementExercisesSearchComponent;
@@ -8,7 +10,7 @@ describe('Course Management Exercises Search Component', () => {
     let emitSpy: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;
