@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -18,6 +18,7 @@ import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
     let comp: StartPracticeModeButtonComponent;
@@ -37,6 +38,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ParticipationService),
             ],
         }).compileComponents();
 
