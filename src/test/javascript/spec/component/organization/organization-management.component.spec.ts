@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementComponent', () => {
     let component: OrganizationManagementComponent;
@@ -26,6 +27,8 @@ describe('OrganizationManagementComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(OrganizationManagementComponent, '')
