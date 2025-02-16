@@ -12,6 +12,8 @@ import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { lastValueFrom, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseRegistrationDetailComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationDetailComponent>;
@@ -31,7 +33,6 @@ describe('CourseRegistrationDetailComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseRegistrationDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -46,6 +47,7 @@ describe('CourseRegistrationDetailComponent', () => {
                     useValue: route,
                 },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
