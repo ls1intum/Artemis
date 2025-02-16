@@ -14,6 +14,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 type Store = {
     [key: string]: any;
@@ -47,7 +48,10 @@ describe('TextUnitFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [{ provide: Router, useClass: MockRouter }],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
