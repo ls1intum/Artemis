@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
@@ -12,6 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Password Component Tests', () => {
     describe('PasswordComponent', () => {
@@ -28,6 +29,8 @@ describe('Password Component Tests', () => {
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: ProfileService, useClass: MockProfileService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             }).compileComponents();
         });
