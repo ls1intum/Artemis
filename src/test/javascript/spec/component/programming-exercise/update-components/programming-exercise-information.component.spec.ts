@@ -15,6 +15,10 @@ import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercis
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -33,6 +37,9 @@ describe('ProgrammingExerciseInformationComponent', () => {
                     provide: ExerciseService,
                     useValue: MockExerciseService,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();
