@@ -9,6 +9,9 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -46,8 +49,12 @@ describe('Programming Exercise Group Cell Component', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: ProfileService, useValue: mockedProfileService }],
+            providers: [
+                { provide: ProfileService, useValue: mockedProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
+                MockProvider(ProgrammingExerciseService),
+            ],
         })
             .compileComponents()
             .then(() => {
