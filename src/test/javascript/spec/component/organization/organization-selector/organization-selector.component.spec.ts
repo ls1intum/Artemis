@@ -1,10 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Organization } from 'app/entities/organization.model';
+import { MockProvider } from 'ng-mocks';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -13,10 +15,11 @@ describe('OrganizationSelectorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(OrganizationManagementService),
+                MockProvider(NgbActiveModal),
             ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
