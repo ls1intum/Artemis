@@ -10,7 +10,7 @@ import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/v
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -19,6 +19,9 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
     const course = { id: 1 } as Course;
@@ -40,7 +43,6 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),
@@ -48,6 +50,9 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
