@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlServ
 @Entity
 @Table(name = "programming_exercise_build_config")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// We dont want to expose the programming exercise in the build config
 @JsonIgnoreProperties(value = { "programmingExercise" })
 public class ProgrammingExerciseBuildConfig extends DomainObject {
 
