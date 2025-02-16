@@ -5,6 +5,7 @@ import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
@@ -50,7 +51,7 @@ describe('SCA category distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
