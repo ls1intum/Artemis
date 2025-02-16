@@ -112,19 +112,19 @@ public class UserService {
 
     private final FileService fileService;
 
-    private final ScienceEventApi scienceEventApi;
+    private final Optional<ScienceEventApi> scienceEventApi;
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -473,7 +473,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            learnerProfileApi.deleteProfile(user);
+            learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
@@ -514,7 +514,7 @@ public class UserService {
         clearUserCaches(user);
         userRepository.flush();
 
-        scienceEventApi.renameIdentity(originalLogin, anonymizedLogin);
+        scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
