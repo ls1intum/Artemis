@@ -6,6 +6,8 @@ import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MockComponent } from 'ng-mocks';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
     let component: CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
@@ -13,8 +15,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             declarations: [CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent, MockComponent(FeedbackSuggestionBadgeComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
     });
 
