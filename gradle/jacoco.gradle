@@ -155,10 +155,8 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
  * @param rootTask the JacocoReportBase root task
  */
 private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
-    task.group = "Reporting"
-    task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
-        include "test.exec"
-    }
+    task.group = rootTask.group
+    task.executionData = rootTask.executionData
 
     def classPath
     if (moduleName == "aggregated") {
