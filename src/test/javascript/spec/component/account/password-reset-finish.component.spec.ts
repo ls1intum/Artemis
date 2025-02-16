@@ -11,6 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('Component Tests', () => {
     describe('PasswordResetFinishComponent', () => {
@@ -29,6 +30,7 @@ describe('Component Tests', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
+                    MockProvider(PasswordResetFinishService),
                 ],
             })
                 .overrideTemplate(PasswordResetFinishComponent, '')
