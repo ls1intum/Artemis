@@ -12,6 +12,10 @@ import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -27,7 +31,13 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         TestBed.configureTestingModule({
             imports: [MockJhiTranslateDirective],
             declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
-            providers: [provideRouter([]), MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
+            providers: [
+                provideRouter([]),
+                MockProvider(IrisSettingsService),
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {
