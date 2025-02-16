@@ -4,13 +4,16 @@ import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-i
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CommitsInfoComponent', () => {
     let component: CommitsInfoComponent;
@@ -61,8 +64,12 @@ describe('CommitsInfoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(ProgrammingExerciseParticipationService),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         fixture = TestBed.createComponent(CommitsInfoComponent);
         component = fixture.componentInstance;
