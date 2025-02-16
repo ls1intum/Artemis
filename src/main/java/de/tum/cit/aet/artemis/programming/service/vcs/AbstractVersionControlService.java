@@ -100,12 +100,12 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer numberOfAttempts) throws VersionControlException {
+            Integer attempt) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
-        if (numberOfAttempts != null && numberOfAttempts > 0 && !targetRepositoryName.contains("practice-")) {
-            targetProjectKeyLowerCase = targetProjectKeyLowerCase + numberOfAttempts;
+        if (attempt != null && attempt > 0 && !targetRepositoryName.contains("practice-")) {
+            targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         // get the remote url of the source repo
