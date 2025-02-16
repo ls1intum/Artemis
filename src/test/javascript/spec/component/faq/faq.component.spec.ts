@@ -84,6 +84,9 @@ describe('FaqComponent', () => {
                     },
                 },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                MockProvider(IrisSettingsService),
+                MockProvider(SortService),
+
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
                         return of(
