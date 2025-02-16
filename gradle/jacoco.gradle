@@ -166,7 +166,7 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
     } else {
         sourcePath = "$BasePath/$moduleName/**/*.class"
     }
-    task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
+    task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
