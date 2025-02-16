@@ -18,15 +18,19 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
-    real: { entityData: [] },
-    test: { entityData: [] },
-    attempt: { entityData: [] },
+    future: { entityData: [] },
+    current: { entityData: [] },
+    dueSoon: { entityData: [] },
+    past: { entityData: [] },
+    noDate: { entityData: [] },
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
-    real: false,
-    test: false,
-    attempt: false,
+    future: true,
+    current: false,
+    dueSoon: false,
+    past: true,
+    noDate: true,
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
