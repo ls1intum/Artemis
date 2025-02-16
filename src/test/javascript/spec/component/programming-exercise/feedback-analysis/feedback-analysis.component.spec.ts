@@ -12,6 +12,8 @@ import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/m
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -64,6 +66,8 @@ describe('FeedbackAnalysisComponent', () => {
                 },
                 FeedbackAnalysisService,
                 LocalStorageService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
