@@ -19,6 +19,8 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -324,6 +326,7 @@ describe('CourseStatisticsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { parent: { params: of(1) } },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
