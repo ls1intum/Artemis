@@ -13,6 +13,9 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import '@angular/localize/init';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
@@ -36,12 +39,14 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: mockRouter },
+                MockProvider(ExerciseGroupService),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
