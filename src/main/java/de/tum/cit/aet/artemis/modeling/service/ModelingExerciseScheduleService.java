@@ -153,7 +153,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private void scheduleExamExercise(ModelingExercise exercise) {
-        var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
         var exam = exercise.getExerciseGroup().getExam();
         var endDate = api.getLatestIndividualExamEndDateWithGracePeriod(exam);
         if (endDate == null) {

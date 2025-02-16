@@ -100,7 +100,7 @@ public class ComplaintService {
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
-            var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+            ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
             final Exam exam = api.findByIdElseThrow(examId.get());
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));

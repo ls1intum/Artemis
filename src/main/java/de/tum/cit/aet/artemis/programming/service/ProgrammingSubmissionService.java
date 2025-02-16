@@ -302,7 +302,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         if (exercise.isExamExercise()) {
-            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
             return api.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
         }
         return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);

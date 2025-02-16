@@ -796,7 +796,7 @@ public class ExerciseService {
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
                 && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            var api = examLiveEventsApi.orElseThrow(() -> new ApiNotPresentException(ExamLiveEventsApi.class, PROFILE_CORE));
+            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ApiNotPresentException(ExamLiveEventsApi.class, PROFILE_CORE));
             User instructor = userRepository.getUser();
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }

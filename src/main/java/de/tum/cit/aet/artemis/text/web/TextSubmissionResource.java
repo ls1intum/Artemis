@@ -143,7 +143,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
-            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
 
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(exercise, user);

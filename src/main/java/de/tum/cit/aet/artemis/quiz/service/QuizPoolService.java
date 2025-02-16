@@ -65,7 +65,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      * @return updated quiz pool
      */
     public QuizPool update(Long examId, QuizPool quizPool) {
-        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         Exam exam = api.findByIdElseThrow(examId);
 
         quizPool.setExam(exam);

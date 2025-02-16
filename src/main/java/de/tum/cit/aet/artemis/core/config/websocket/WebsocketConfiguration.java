@@ -326,7 +326,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
-                var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
                 var exam = api.findByIdElseThrow(examId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }

@@ -406,7 +406,7 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
-        var api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
@@ -424,7 +424,7 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
-        var api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);

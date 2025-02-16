@@ -130,7 +130,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Apply further checks if it is an exam submission
         if (exercise.isExamExercise()) {
-            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
             api.checkSubmissionAllowanceElseThrow(exercise, user);
 
             // Prevent multiple submissions (currently only for exam submissions)

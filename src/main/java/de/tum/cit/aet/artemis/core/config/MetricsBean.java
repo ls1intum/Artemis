@@ -437,7 +437,7 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        var api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
 
         var startDate = System.currentTimeMillis();
 
@@ -601,7 +601,7 @@ public class MetricsBean {
             return;
         }
 
-        var api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
         final long startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -659,7 +659,7 @@ public class MetricsBean {
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
-        var api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
             final Tags tags = getExamMetricTags(courses, exam);

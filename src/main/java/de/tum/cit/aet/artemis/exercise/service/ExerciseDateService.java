@@ -78,7 +78,7 @@ public class ExerciseDateService {
     public boolean isAfterDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
         if (exercise.isExamExercise()) {
-            var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
             if (participation instanceof StudentParticipation studentParticipation) {
                 return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
             }
@@ -198,7 +198,7 @@ public class ExerciseDateService {
     @Nullable
     public ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
         if (exercise.isExamExercise()) {
-            var api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
             var studentExam = api.findStudentExam(exercise, participation).orElse(null);
             if (studentExam == null) {
                 return exercise.getDueDate();

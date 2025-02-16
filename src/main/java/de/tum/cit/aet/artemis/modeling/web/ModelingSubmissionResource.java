@@ -145,7 +145,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
-            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(exercise, user);
 
@@ -327,7 +327,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (modelingExercise.isExamExercise()) {
-            var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
             api.checkIfAllowedToGetExamResult(modelingExercise, participation, user);
         }
 
@@ -417,7 +417,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (modelingExercise.isExamExercise()) {
-            var api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
             api.checkIfAllowedToGetExamResult(modelingExercise, participation, user);
         }
 

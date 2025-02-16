@@ -402,7 +402,7 @@ public class CourseService {
      * @return an unmodifiable list of all courses including exercises for the user
      */
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
-        var api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
 
         long start = System.nanoTime();
 
@@ -490,7 +490,7 @@ public class CourseService {
      * @return the course deletion summary
      */
     public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
-        var api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
 
         Long courseId = course.getId();
 
@@ -573,7 +573,7 @@ public class CourseService {
 
     private void deleteExamsOfCourse(Course course) {
         var deletionApi = examDeletionApi.orElseThrow(() -> new ApiNotPresentException(ExamDeletionApi.class, PROFILE_CORE));
-        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         // delete the Exams
         List<Exam> exams = api.findByCourseId(course.getId());
         for (Exam exam : exams) {
@@ -634,7 +634,7 @@ public class CourseService {
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
 
         if (exercise.isExamExercise()) {
-            var api = exerciseGroupApi.orElseThrow(() -> new ApiNotPresentException(ExerciseGroupApi.class, PROFILE_CORE));
+            ExerciseGroupApi api = exerciseGroupApi.orElseThrow(() -> new ApiNotPresentException(ExerciseGroupApi.class, PROFILE_CORE));
             ExerciseGroup exerciseGroup = api.findByIdElseThrow(exercise.getExerciseGroup().getId());
             exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();

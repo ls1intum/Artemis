@@ -240,7 +240,7 @@ public class QuizSubmissionResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (quizExercise.isExamExercise()) {
-            var api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
 
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(quizExercise, user);

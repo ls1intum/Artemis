@@ -68,7 +68,7 @@ public class DataExportExamCreationService {
             return;
         }
 
-        var api = studentExamApi.get();
+        StudentExamApi api = studentExamApi.get();
         Map<Course, List<StudentExam>> studentExamsPerCourse = api.findStudentExamsByCourseForUserId(userId);
 
         for (var entry : studentExamsPerCourse.entrySet()) {
@@ -121,7 +121,7 @@ public class DataExportExamCreationService {
      * @param examWorkingDir the directory in which the results should be stored
      */
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        var api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamApi api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
         var studentExamGrade = api.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
         var gradingScale = gradingScaleRepository.findByExamId(studentExam.getExam().getId());

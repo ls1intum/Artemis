@@ -418,7 +418,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         // The common unlock date of the exam's programming exercises
-        var api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
         ZonedDateTime unlockDate = api.getExamProgrammingExerciseUnlockDate(exercise);
 
         // BEFORE EXAM
@@ -868,7 +868,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param examId the id of the exam
      */
     public void rescheduleExamDuringConduction(Long examId) {
-        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
         Exam exam = api.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(examId).orElseThrow(NoSuchElementException::new);
 
         // get all programming exercises in the exam
@@ -898,7 +898,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param studentExamId the id of the student exam
      */
     public void rescheduleStudentExamDuringConduction(Long studentExamId) {
-        var api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
         StudentExam studentExam = api.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
 
         // iterate over all programming exercises and its student participation in the student's exam
