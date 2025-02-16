@@ -14,6 +14,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
+import { MockProvider } from 'ng-mocks';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
     let comp: ProgrammingExerciseEditSelectedComponent;
@@ -22,12 +25,14 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(NgbActiveModal),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(ExerciseService),
             ],
         })
             .overrideTemplate(ProgrammingExerciseEditSelectedComponent, '')
