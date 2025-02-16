@@ -9,6 +9,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyCardComponent } from '../../../../../../main/webapp/app/course/competencies/competency-card/competency-card.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
@@ -22,7 +24,6 @@ describe('CoursePrerequisitesModal', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
             providers: [
                 MockProvider(AlertService),
@@ -31,6 +32,7 @@ describe('CoursePrerequisitesModal', () => {
                     provide: NgbActiveModal,
                     useValue: activeModalStub,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         })
