@@ -12,7 +12,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import dayjs from 'dayjs/esm';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -24,6 +24,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -34,7 +36,6 @@ describe('Course Exam Archive Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseExamArchiveButtonComponent,
                 MockComponent(SecuredImageComponent),
@@ -52,6 +53,9 @@ describe('Course Exam Archive Button Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(NgbModal),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseExamArchiveButtonComponent);
