@@ -17,4 +17,5 @@ export class MockProgrammingExerciseParticipationService implements IProgramming
     checkIfParticipationHasResult = (participationId: number) => of(true);
     getVcsAccessLogForRepository = (exerciseId: number, repositoryType: string) => of([] as VcsAccessLogDTO[]);
     getVcsAccessLogForParticipation = (participationId: number) => of([] as VcsAccessLogDTO[]);
+    resetRepository(participationId: number, gradedParticipationId?: number) {}
 }

@@ -18,6 +18,7 @@ import { MockParticipationService } from '../../helpers/mocks/service/mock-parti
 import { InitializationState } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
+import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 
 describe('JhiResetRepoButtonComponent', () => {
     let comp: ResetRepoButtonComponent;
@@ -36,6 +37,7 @@ describe('JhiResetRepoButtonComponent', () => {
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
         }).compileComponents();
 
