@@ -13,8 +13,11 @@ import { DomainChange, DomainType, FileType } from 'app/exercises/programming/sh
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -32,11 +35,13 @@ describe('Text Submission Viewer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(SubmissionService),
             ],
         }).compileComponents();
 
