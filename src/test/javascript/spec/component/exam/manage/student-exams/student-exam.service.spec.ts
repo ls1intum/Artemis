@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Student Exam Service', () => {
     let httpClient: any;
@@ -14,7 +15,6 @@ describe('Student Exam Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: AccountService,
@@ -22,6 +22,8 @@ describe('Student Exam Service', () => {
                         setAccessRightsForCourse: jest.fn(),
                     },
                 },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         });
 
