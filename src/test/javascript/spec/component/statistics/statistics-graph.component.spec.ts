@@ -1,4 +1,4 @@
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -6,6 +6,9 @@ import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model'
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('StatisticsGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsGraphComponent>;
@@ -15,7 +18,7 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
