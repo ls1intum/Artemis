@@ -272,6 +272,13 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Kills a Docker container asynchronously using the given container ID and executor.
+     * Waits up to 10 seconds for completion. Logs an error if the operation fails.
+     *
+     * @param containerId The ID of the container to kill.
+     * @param executor    The ExecutorService for running the command.
+     */
     private void killContainer(String containerId, ExecutorService executor) {
         try (final var killCommand = buildAgentConfiguration.getDockerClient().killContainerCmd(containerId)) {
             Future<Void> killFuture = executor.submit(() -> {
@@ -286,6 +293,13 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Removes a Docker container asynchronously using the given container ID and executor.
+     * Waits up to 10 seconds for completion. Logs an error if the operation fails.
+     *
+     * @param containerId The ID of the container to remove.
+     * @param executor    The ExecutorService for running the command.
+     */
     private void removeContainer(String containerId, ExecutorService executor) {
         try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeContainerCmd(containerId)) {
             Future<Void> removeFuture = executor.submit(() -> {
