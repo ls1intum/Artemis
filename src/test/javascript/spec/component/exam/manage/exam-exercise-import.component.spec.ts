@@ -13,6 +13,9 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
 
@@ -63,9 +66,9 @@ describe('Exam Exercise Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule)],
+            imports: [MockModule(FormsModule), FontAwesomeTestingModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
