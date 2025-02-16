@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -18,7 +18,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from '../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../helpers/utils/general.utils';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({
@@ -58,7 +57,7 @@ describe('CourseWideSearchComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, NgbTooltipMocksModule],
+            imports: [FormsModule, ReactiveFormsModule],
             declarations: [
                 CourseWideSearchComponent,
                 InfiniteScrollStubDirective,

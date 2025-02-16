@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { ArtemisTestModule } from '../../test.module';
-import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
+import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -18,7 +18,7 @@ describe('TextAssessmentAreaComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 TextAssessmentAreaComponent,
-                MockComponent(TextblockAssessmentCardComponent),
+                MockComponent(TextBlockAssessmentCardComponent),
                 MockComponent(ManualTextblockSelectionComponent),
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
@@ -54,7 +54,7 @@ describe('TextAssessmentAreaComponent', () => {
             component.textBlockRefs = textBlockRefs.slice(0, i);
             fixture.detectChanges();
 
-            const all = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
+            const all = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent));
             expect(all).toHaveLength(i);
         }
     });

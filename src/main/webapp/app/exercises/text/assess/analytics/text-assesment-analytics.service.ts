@@ -14,8 +14,8 @@ import { captureException } from '@sentry/angular';
  */
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
-    protected assessmentsService = inject(TextAssessmentService);
-    protected accountService = inject(AccountService);
+    private assessmentsService = inject(TextAssessmentService);
+    private accountService = inject(AccountService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
 

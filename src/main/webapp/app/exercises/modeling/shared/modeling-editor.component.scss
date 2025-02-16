@@ -9,6 +9,7 @@ $draggable-width: 15px;
     height: 100%;
     display: flex;
     flex-flow: column nowrap;
+    background-color: var(--module-bg);
 
     .help-and-status {
         display: flex;

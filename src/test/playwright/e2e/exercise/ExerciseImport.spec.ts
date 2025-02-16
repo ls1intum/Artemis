@@ -44,6 +44,7 @@ test.describe('Import exercises', () => {
             await courseManagementExercises.importTextExercise();
             await courseManagementExercises.clickImportExercise(textExercise.id!);
 
+            await textExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(textExercise.title!);
             await expect(page.locator('#field_points')).toHaveValue(`${textExercise.maxPoints!}`);
 
@@ -74,10 +75,11 @@ test.describe('Import exercises', () => {
             await courseManagementExercises.importQuizExercise();
             await courseManagementExercises.clickImportExercise(quizExercise.id!);
 
+            await quizExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(quizExercise.title!);
             await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${quizExercise.duration! / 60}`);
 
-            await quizExerciseCreation.setVisibleFrom(dayjs());
+            await quizExerciseCreation.setReleaseDate(dayjs());
 
             const importResponse = await quizExerciseCreation.import();
             const exercise: QuizExercise = await importResponse.json();
@@ -100,7 +102,7 @@ test.describe('Import exercises', () => {
                 await courseManagementExercises.importModelingExercise();
                 await courseManagementExercises.clickImportExercise(modelingExercise.id!);
 
-                await page.waitForTimeout(10000);
+                await modelingExerciseCreation.waitForFormToLoad();
                 await expect(page.locator('#field_title')).toHaveValue(modelingExercise.title!);
                 await expect(page.locator('#field_points')).toHaveValue(`${modelingExercise.maxPoints!}`);
 
@@ -131,6 +133,7 @@ test.describe('Import exercises', () => {
                 await courseManagementExercises.importProgrammingExercise();
                 await courseManagementExercises.clickImportExercise(programmingExercise.id!);
 
+                await programmingExerciseCreation.waitForFormToLoad();
                 await expect(page.locator('#field_points')).toHaveValue(`${programmingExercise.maxPoints!}`);
 
                 await programmingExerciseCreation.setTitle('Import Test');

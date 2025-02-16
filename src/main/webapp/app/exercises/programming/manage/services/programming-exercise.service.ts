@@ -23,6 +23,7 @@ import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/Plagi
 import { ImportOptions } from 'app/types/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -40,9 +41,6 @@ export type ProgrammingExerciseResetOptions = {
     deleteParticipationsSubmissionsAndResults: boolean;
     recreateBuildPlans: boolean;
 };
-
-// TODO: we should use a proper enum here
-export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
@@ -437,12 +435,8 @@ export class ProgrammingExerciseService {
      * @param repositoryType
      * @param auxiliaryRepositoryId
      */
-    exportInstructorRepository(
-        exerciseId: number,
-        repositoryType: ProgrammingExerciseInstructorRepositoryType,
-        auxiliaryRepositoryId: number | undefined,
-    ): Observable<HttpResponse<Blob>> {
-        if (repositoryType === 'AUXILIARY' && auxiliaryRepositoryId !== undefined) {
+    exportInstructorRepository(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId: number | undefined): Observable<HttpResponse<Blob>> {
+        if (repositoryType === RepositoryType.AUXILIARY && auxiliaryRepositoryId !== undefined) {
             return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',
@@ -599,7 +593,7 @@ export class ProgrammingExerciseService {
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -612,7 +606,7 @@ export class ProgrammingExerciseService {
      * Gets all files from the last commit in the template participation repository
      */
     getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content`).pipe(
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

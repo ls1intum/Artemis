@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -57,7 +57,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
-    private router = inject(Router);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
 
@@ -103,22 +102,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faRedo = faRedo;
 
     ngOnInit(): void {
-        this.repositoryLink = this.router.url;
-        if (this.repositoryLink.endsWith('exercises')) {
-            this.repositoryLink += `/${this.exercise.id}`;
-        }
-        if (this.repositoryLink.includes('exams')) {
-            this.repositoryLink += `/exercises/${this.exercise.id}`;
-        }
-        if (this.repositoryLink.includes('dashboard')) {
-            const parts = this.repositoryLink.split('/');
-            this.repositoryLink = [...parts.slice(0, parts.indexOf('dashboard')), 'exercises', this.exercise.id].join('/');
-        }
-        if (this.repositoryLink.includes('lectures')) {
-            const parts = this.repositoryLink.split('/');
-            this.repositoryLink = [...parts.slice(0, parts.indexOf('lectures')), 'exercises', this.exercise.id].join('/');
-        }
-
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);

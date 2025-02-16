@@ -7,7 +7,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailStubComponent } from './detail/standardized-competency-detail-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency } from 'app/entities/competency.model';
@@ -20,9 +20,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { Source } from 'app/entities/competency/standardized-competency.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
@@ -39,9 +36,6 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CourseImportStandardizedCompetenciesComponent,
-                ArtemisSharedCommonModule,
-                ArtemisSharedComponentModule,
-                ArtemisMarkdownModule,
                 StandardizedCompetencyFilterComponent,
                 StandardizedCompetencyDetailComponent,
                 KnowledgeAreaTreeComponent,

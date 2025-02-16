@@ -117,6 +117,17 @@ export default tseslint.config(
                     ignoreDeclarationSort: true,
                 },
             ],
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'dayjs',
+                            message: "Please import from 'dayjs/esm' instead."
+                        }
+                    ]
+                }
+            ]
         },
     },
     {
