@@ -19,6 +19,8 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
@@ -52,6 +54,8 @@ describe('TriggerBuildButtonSpec', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
