@@ -26,7 +26,7 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     private alertService = inject(AlertService);
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
-    subsequentExerciseGroupSelection = input<boolean>();
+    subsequentExerciseGroupSelection = input<boolean>(false);
     // Values to specify the target of the exercise group import
     targetCourseId = input<number>();
     targetExamId = input<number>();
