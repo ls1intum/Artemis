@@ -119,6 +119,14 @@ artemis:
             short-name: "artemis-build-agent-1"
             display-name: "Artemis Build Agent 1"
 
+    compatible-versions:
+      android:
+        min: "619"
+        recommended: "619"
+      ios:
+        min: "1.6.1"
+        recommended: "1.6.1"
+
 
 
 management:
