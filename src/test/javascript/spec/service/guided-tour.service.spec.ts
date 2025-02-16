@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -155,7 +155,6 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
                 declarations: [
                     GuidedTourComponent,
                     MockDirective(TranslateDirective),
@@ -172,6 +171,9 @@ describe('GuidedTourService', () => {
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouter },
+                    { provide: AccountService, useClass: MockAccountService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             })
                 .compileComponents()
