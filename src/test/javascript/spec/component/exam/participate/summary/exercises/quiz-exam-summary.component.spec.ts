@@ -20,6 +20,10 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { MockArtemisServerDateService } from '../../../../../helpers/mocks/service/mock-server-date.service';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -70,7 +74,10 @@ describe('QuizExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
+            ],
         })
             .compileComponents()
             .then(() => {
