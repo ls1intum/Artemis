@@ -26,6 +26,7 @@ describe('PasswordResetInitComponent', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(PasswordResetInitService),
             ],
         })
             .compileComponents()
