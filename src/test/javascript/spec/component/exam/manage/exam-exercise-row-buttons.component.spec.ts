@@ -13,6 +13,9 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { MockProvider } from 'ng-mocks';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('Exam Exercise Row Buttons Component', () => {
     const course = new Course();
@@ -95,7 +98,14 @@ describe('Exam Exercise Row Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                MockProvider(TextExerciseService),
+                MockProvider(FileUploadExerciseService),
+                MockProvider(ModelingExerciseService),
+                MockProvider(QuizExerciseService),
+                MockProvider(ProgrammingExerciseService),
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
