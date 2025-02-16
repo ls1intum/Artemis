@@ -13,6 +13,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 
+/**
+ * General-purpose API for file upload exercises (but not for general upload functionality).
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class FileUploadApi extends AbstractFileModuleApi {

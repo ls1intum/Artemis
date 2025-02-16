@@ -13,6 +13,9 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissionsExportService;
 
+/**
+ * API for functionality regarding the export of file upload exercises with submissions (but not for general upload functionality).
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class FileSubmissionExportApi extends AbstractFileModuleApi {

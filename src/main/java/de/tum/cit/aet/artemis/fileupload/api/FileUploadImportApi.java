@@ -12,6 +12,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 
+/**
+ * API for functionality regarding the import of file upload exercises (but not for general upload functionality).
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class FileUploadImportApi extends AbstractFileModuleApi {

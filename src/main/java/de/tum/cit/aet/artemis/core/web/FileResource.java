@@ -190,7 +190,7 @@ public class FileResource {
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
         String responsePath = filePathInformation.publicPath().toString();
 
-        var api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
         api.createFileUpload(responsePath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId, FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
@@ -327,7 +327,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        var api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
         FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 

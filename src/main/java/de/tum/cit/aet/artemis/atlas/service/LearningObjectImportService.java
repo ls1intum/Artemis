@@ -199,7 +199,7 @@ public class LearningObjectImportService {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
-                var api = fileUploadImportApi.orElseThrow(() -> new ApiNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
+                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
                         api::importFileUploadExercise);
             }
