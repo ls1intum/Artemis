@@ -3,6 +3,8 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Alert Overlay Component Tests', () => {
     let comp: AlertOverlayComponent;
@@ -12,7 +14,10 @@ describe('Alert Overlay Component Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NoopAnimationsModule],
-            providers: [{ provide: AlertService, useClass: AlertService }],
+            providers: [
+                { provide: AlertService, useClass: AlertService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
