@@ -2,13 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -222,7 +222,7 @@ export class OrionConnectorService {
      *
      * @param repository The repository to be selected for all future interactions
      */
-    selectRepository(repository: REPOSITORY): void {
+    selectRepository(repository: RepositoryType): void {
         theWindow().orionVCSConnector.selectRepository(repository);
     }
 

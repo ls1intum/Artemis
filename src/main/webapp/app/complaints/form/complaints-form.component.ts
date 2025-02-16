@@ -9,14 +9,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { TextareaModule } from 'app/shared/textarea/textarea.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent],
 })
 export class ComplaintsFormComponent implements OnInit {
     private complaintService = inject(ComplaintService);
