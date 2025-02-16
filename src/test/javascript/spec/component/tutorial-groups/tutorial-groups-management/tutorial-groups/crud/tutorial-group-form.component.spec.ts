@@ -26,6 +26,13 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../../../helpers/mocks/service/mock-theme.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -87,6 +94,10 @@ describe('TutorialGroupFormComponent', () => {
                     },
                 }),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(FileUploaderService),
+                MockProvider(ArtemisIntelligenceService),
+                { provide: ThemeService, useClass: MockThemeService },
             ],
         }).compileComponents();
 
