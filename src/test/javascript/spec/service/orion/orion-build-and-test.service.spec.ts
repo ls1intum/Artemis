@@ -12,7 +12,6 @@ import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -50,10 +49,8 @@ describe('OrionBuildAndTestService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
-                OrionBuildAndTestService,
-                { provide: SubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 MockProvider(OrionConnectorService),
                 { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
