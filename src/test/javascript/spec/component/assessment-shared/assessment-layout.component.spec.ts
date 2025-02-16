@@ -14,6 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentNoteComponent } from 'app/assessment/assessment-note/assessment-note.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -32,7 +34,11 @@ describe('AssessmentLayoutComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
-            providers: [MockProvider(TextAssessmentAnalytics), { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [
+                MockProvider(TextAssessmentAnalytics),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
