@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -19,6 +19,7 @@ describe('ExerciseImportWrapperComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(ExerciseImportTabsComponent), MockComponent(ExerciseImportComponent), FormsModule],
             declarations: [ExerciseImportWrapperComponent, MockDirective(TranslateDirective)],
+            providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportWrapperComponent);
