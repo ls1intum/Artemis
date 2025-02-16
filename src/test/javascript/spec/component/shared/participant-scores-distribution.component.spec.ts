@@ -5,6 +5,8 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GraphColors } from 'app/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ParticipantScoresDistributionComponent', () => {
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;
@@ -76,8 +78,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            providers: [MockProvider(GradingSystemService)],
+            providers: [MockProvider(GradingSystemService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
