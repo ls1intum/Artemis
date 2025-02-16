@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
@@ -15,6 +15,7 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../exe
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from '../../exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -41,12 +42,12 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     private orionBuildAndTestService = inject(OrionBuildAndTestService);
 
     orionState: OrionState;
-
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    protected readonly RepositoryType = RepositoryType;
 
     /**
      * Calls ngOnInit of its superclass and initialize the subscription to
@@ -70,7 +71,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      */
     submit(): void {
         this.orionConnectorService.submit();
-        if (this.selectedRepository !== REPOSITORY.TEST) {
+        if (this.selectedRepository !== RepositoryType.TESTS) {
             this.orionConnectorService.isBuilding(true);
             this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
         }

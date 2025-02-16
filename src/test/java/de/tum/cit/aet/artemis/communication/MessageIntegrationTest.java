@@ -716,6 +716,46 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         });
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseWideMessagesWithPinnedOnly() throws Exception {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "channel-for-pinned-test", false);
+        ConversationParticipant instructorParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+        Post unpinnedPost = new Post();
+        unpinnedPost.setAuthor(instructorParticipant.getUser());
+        unpinnedPost.setConversation(channel);
+        Post createdUnpinnedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", unpinnedPost, Post.class, HttpStatus.CREATED);
+
+        Post pinnedPost = new Post();
+        pinnedPost.setAuthor(instructorParticipant.getUser());
+        pinnedPost.setConversation(channel);
+        Post createdPinnedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", pinnedPost, Post.class, HttpStatus.CREATED);
+
+        MultiValueMap<String, String> paramsPin = new LinkedMultiValueMap<>();
+        paramsPin.add("displayPriority", DisplayPriority.PINNED.toString());
+        Post updatedPinnedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/messages/" + createdPinnedPost.getId() + "/display-priority", null, Post.class,
+                HttpStatus.OK, paramsPin);
+
+        assertThat(updatedPinnedPost.getDisplayPriority()).isEqualTo(DisplayPriority.PINNED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("courseWideChannelIds", channel.getId().toString());
+        params.add("pinnedOnly", "true");
+        params.add("size", "10");
+
+        List<Post> pinnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        assertThat(pinnedPosts).hasSize(1);
+        assertThat(pinnedPosts.get(0).getId()).isEqualTo(updatedPinnedPost.getId());
+
+        params.set("pinnedOnly", "false");
+        List<Post> allPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        assertThat(allPosts).hasSize(2);
+        assertThat(allPosts).extracting(Post::getId).containsExactlyInAnyOrder(createdPinnedPost.getId(), createdUnpinnedPost.getId());
+    }
+
     private long getUnreadMessagesCount(Conversation conversation, User user) {
         return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversation.getId()).orElseThrow().getConversationParticipants().stream()
                 .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findFirst().orElseThrow().getUnreadMessagesCount();
