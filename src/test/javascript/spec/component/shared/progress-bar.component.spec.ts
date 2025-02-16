@@ -16,7 +16,7 @@ describe('ProgressBarComponent', () => {
             declarations: [ProgressBarComponent],
             providers: [
                 {
-                    class: ThemeService,
+                    provide: ThemeService,
                     useClass: MockThemeService,
                 },
             ],
