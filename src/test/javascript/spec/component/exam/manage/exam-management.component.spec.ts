@@ -27,6 +27,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { signal } from '@angular/core';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -202,7 +203,7 @@ describe('Exam Management Component', () => {
     it('should open the import modal for exercise groups', fakeAsync(() => {
         const mockReturnValue = {
             componentInstance: {
-                subsequentExerciseGroupSelection: undefined,
+                subsequentExerciseGroupSelection: signal<boolean>(false),
                 targetCourseId: undefined,
                 targetExamId: undefined,
             },

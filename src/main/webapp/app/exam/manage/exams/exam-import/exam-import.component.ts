@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, inject, input, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -26,10 +26,10 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     private alertService = inject(AlertService);
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
-    subsequentExerciseGroupSelection = input<boolean>(false);
+    subsequentExerciseGroupSelection = signal<boolean>(false);
     // Values to specify the target of the exercise group import
-    targetCourseId = input<number>();
-    targetExamId = input<number>();
+    targetCourseId = signal<number | undefined>(undefined);
+    targetExamId = signal<number | undefined>(undefined);
 
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
