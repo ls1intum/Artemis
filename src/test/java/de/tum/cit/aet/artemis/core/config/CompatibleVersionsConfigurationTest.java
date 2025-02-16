@@ -27,9 +27,9 @@ class CompatibleVersionsInfoConfigurationTest {
         contributor.contribute(builder);
         Info info = builder.build();
 
-        assertThat(info.getDetails()).containsKey("compatible-versions");
+        assertThat(info.getDetails()).containsKey("compatibleVersions");
 
-        Object value = info.getDetails().get("compatible-versions");
+        Object value = info.getDetails().get("compatibleVersions");
         assertThat(value).isInstanceOf(ArtemisCompatibleVersionsConfiguration.class);
 
         ArtemisCompatibleVersionsConfiguration resultConfig = (ArtemisCompatibleVersionsConfiguration) value;
