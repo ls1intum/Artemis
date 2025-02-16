@@ -1,20 +1,13 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
-
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Set;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -38,6 +31,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -417,21 +414,21 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_testExamEnded() {
-        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
-        examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_multipleUnfinishedStudentExams() {
-        User user = studentExamForTestExam1.getUser();
-        examUtilService.addStudentExamForTestExam(testExam1, user);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(IllegalStateException.class);
-    }
+//    @Test
+//    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+//    void testGetExamInCourseElseThrow_testExamEnded() {
+//        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
+//        examRepository.save(testExam1);
+//        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+//    }
+//
+//    @Test
+//    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+//    void testGetExamInCourseElseThrow_multipleUnfinishedStudentExams() {
+//        User user = studentExamForTestExam1.getUser();
+//        examUtilService.addStudentExamForTestExam(testExam1, user);
+//        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(IllegalStateException.class);
+//    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

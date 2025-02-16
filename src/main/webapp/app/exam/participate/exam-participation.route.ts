@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export const examParticipationRoute: Routes = [
