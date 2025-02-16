@@ -7,12 +7,13 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;
@@ -25,9 +26,14 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(RatingService), MockProvider(SortService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(RatingService),
+                MockProvider(SortService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
