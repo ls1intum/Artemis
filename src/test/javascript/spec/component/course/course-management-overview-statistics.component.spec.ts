@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
@@ -12,7 +16,10 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
