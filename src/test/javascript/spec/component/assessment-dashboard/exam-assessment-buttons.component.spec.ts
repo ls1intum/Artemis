@@ -19,6 +19,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
@@ -91,6 +93,7 @@ describe('ExamAssessmentButtons', () => {
             },
         },
         { provide: AccountService, useClass: MockAccountService },
+        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
