@@ -37,7 +37,6 @@ public class ArtemisCompatibleVersionsConfiguration {
 
         private String recommended;
 
-        // No-args constructor eklemek, property binding için faydalı olabilir
         public Platform() {
         }
 
