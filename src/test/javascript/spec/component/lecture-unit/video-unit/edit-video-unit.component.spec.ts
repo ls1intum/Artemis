@@ -12,6 +12,9 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { VideoUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 describe('EditVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditVideoUnitComponent>;
@@ -52,6 +55,8 @@ describe('EditVideoUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(CourseCompetencyService),
             ],
             schemas: [],
         }).compileComponents();
