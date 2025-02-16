@@ -3,6 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
@@ -13,7 +18,11 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(CourseManagementService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
