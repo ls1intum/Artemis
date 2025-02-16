@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -26,6 +26,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -65,6 +66,8 @@ describe('Exam Management Component', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 EventManager,
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
