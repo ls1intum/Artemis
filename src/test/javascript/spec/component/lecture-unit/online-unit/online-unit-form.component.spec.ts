@@ -13,6 +13,8 @@ import { of } from 'rxjs';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -28,7 +30,7 @@ describe('OnlineUnitFormComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [MockProvider(OnlineUnitService)],
+            providers: [MockProvider(OnlineUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
