@@ -30,8 +30,8 @@
                 "label": "Thread",
                 "close": "Thread schließen",
                 "reply": "Antworten im Thread",
-                "expand": "Expand thread",
-                "collapse": "Collapse thread"
+                "expand": "Thread erweitern",
+                "collapse": "Thread einklappen"
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
