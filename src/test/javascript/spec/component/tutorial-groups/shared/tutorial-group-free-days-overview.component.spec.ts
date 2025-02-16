@@ -10,6 +10,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Component, Input, IterableDiffers } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
@@ -35,7 +37,7 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockSidePanelComponent,
             ],
-            providers: [SortService, IterableDiffers],
+            providers: [SortService, IterableDiffers, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupFreeDaysOverviewComponent);
