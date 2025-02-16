@@ -4,6 +4,8 @@ import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagia
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SplitPaneHeaderComponent', () => {
     let comp1: SplitPaneHeaderComponent;
@@ -19,7 +21,7 @@ describe('SplitPaneHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
