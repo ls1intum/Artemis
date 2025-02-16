@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
@@ -12,6 +12,7 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
+import { MockActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -37,6 +38,10 @@ describe('PostingContentPartComponent', () => {
                 {
                     provide: Router,
                     useClass: MockRouter,
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute(),
                 },
                 MockProvider(AccountService),
             ],
