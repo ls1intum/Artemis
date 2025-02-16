@@ -12,6 +12,8 @@ import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repo
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { AlertService, AlertType } from '../../../../../../main/webapp/app/core/util/alert.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -147,6 +149,8 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
