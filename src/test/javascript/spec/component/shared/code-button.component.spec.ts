@@ -463,7 +463,9 @@ describe('CodeButtonComponent', () => {
         getBuildconfigStub.mockReturnValue(of(buildConfig as ProgrammingExerciseBuildConfig));
 
         // Expand the programmingExercise by given properties
-        fixture.componentRef.setInput('exercise', programmingExercise as Exercise);
+        fixture.componentRef.setInput('exercise', {
+            ...programmingExercise,
+        } as any);
 
         await component.ngOnInit();
 
