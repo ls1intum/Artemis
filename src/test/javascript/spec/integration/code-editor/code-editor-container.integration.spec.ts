@@ -55,6 +55,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
@@ -80,7 +86,6 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 CodeEditorConflictStateService,
                 MockProvider(AlertService),
@@ -96,6 +101,10 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
