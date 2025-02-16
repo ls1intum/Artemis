@@ -8,6 +8,9 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
@@ -23,12 +26,13 @@ describe('ComplaintsFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: ComplaintService,
                     useClass: MockComplaintService,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
