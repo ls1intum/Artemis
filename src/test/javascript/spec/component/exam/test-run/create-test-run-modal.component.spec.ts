@@ -8,6 +8,9 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
@@ -21,7 +24,7 @@ describe('Create Test Run Modal Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
