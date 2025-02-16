@@ -1,5 +1,5 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
@@ -10,6 +10,8 @@ import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ImprintComponent', () => {
     let component: ImprintComponent;
@@ -26,6 +28,8 @@ describe('ImprintComponent', () => {
                     provide: SessionStorageService,
                     useClass: MockSyncStorage,
                 },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(LegalDocumentService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);
