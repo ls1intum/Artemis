@@ -12,6 +12,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CourseManagementExerciseRowComponent', () => {
     let fixture: ComponentFixture<CourseManagementExerciseRowComponent>;
@@ -28,7 +30,6 @@ describe('CourseManagementExerciseRowComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseManagementExerciseRowComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -37,7 +38,12 @@ describe('CourseManagementExerciseRowComponent', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTimeAgoPipe),
             ],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
