@@ -204,8 +204,8 @@ describe('Exam Management Component', () => {
         const mockReturnValue = {
             componentInstance: {
                 subsequentExerciseGroupSelection: signal<boolean>(false),
-                targetCourseId: undefined,
-                targetExamId: undefined,
+                targetCourseId: signal<number | undefined>(undefined),
+                targetExamId: signal<number | undefined>(undefined),
             },
             result: Promise.resolve(exam),
         } as NgbModalRef;
