@@ -6,6 +6,8 @@ import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/pr
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
 import { Course } from '../../../../../main/webapp/app/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from '../../../../../main/webapp/app/entities/programming/programming-exercise-build.config';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
@@ -21,7 +23,10 @@ describe('ProgrammingExercise Docker Image', () => {
 
         TestBed.configureTestingModule({
             imports: [FormsModule],
-            providers: [{ provide: ProfileService, useValue: profileServiceMock }],
+            providers: [
+                { provide: ProfileService, useValue: profileServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then();
