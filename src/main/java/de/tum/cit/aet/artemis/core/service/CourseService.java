@@ -225,20 +225,21 @@ public class CourseService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
-            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi, CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService,
-                         Optional<ExamRepositoryApi> examRepositoryApi,
-            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
-            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
-            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+    public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
+            GroupNotificationRepository groupNotificationRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi,
+            Optional<CompetencyProgressApi> competencyProgressApi, GroupNotificationService groupNotificationService, Optional<ExamRepositoryApi> examRepositoryApi,
+            Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
+            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.examMetricsApi = examMetricsApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -359,14 +360,14 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        var api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
 
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
-        course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now()));
+        course.setExams(examRepoApi.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now()));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
@@ -379,7 +380,7 @@ public class CourseService {
             course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
         }
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            course.setExams(api.filterVisibleExams(course.getExams()));
+            course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
         }
         return course;
     }

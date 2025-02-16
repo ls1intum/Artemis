@@ -170,9 +170,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
-            Optional<AthenaModuleService> athenaModuleService, Optional<ExamAccessApi> examAccessApi,
-            CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService, Optional<ExamAccessApi> examAccessApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
