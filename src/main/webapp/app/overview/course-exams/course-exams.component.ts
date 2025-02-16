@@ -10,7 +10,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
@@ -18,27 +18,21 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
-    future: { entityData: [] },
-    current: { entityData: [] },
-    dueSoon: { entityData: [] },
-    past: { entityData: [] },
-    noDate: { entityData: [] },
+    real: { entityData: [] },
+    test: { entityData: [] },
+    attempt: { entityData: [] },
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
-    future: true,
-    current: false,
-    dueSoon: false,
-    past: true,
-    noDate: true,
+    real: false,
+    test: false,
+    attempt: false,
 };
 
-const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
-    future: false,
-    current: false,
-    dueSoon: false,
-    past: false,
-    noDate: false,
+const DEFAULT_SHOW_ALWAYS: CollapseState = {
+    real: false,
+    test: false,
+    attempt: false,
 };
 
 @Component({
