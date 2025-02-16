@@ -7,6 +7,8 @@ import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-servi
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { signal } from '@angular/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;
@@ -20,7 +22,10 @@ describe('CleanupServiceComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [CleanupServiceComponent],
-            providers: [{ provide: DataCleanupService, useValue: mockCleanupService }],
+            providers: [
+                { provide: DataCleanupService, useValue: mockCleanupService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CleanupServiceComponent);
