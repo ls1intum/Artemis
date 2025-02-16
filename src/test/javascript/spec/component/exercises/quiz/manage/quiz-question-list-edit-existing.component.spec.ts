@@ -30,6 +30,10 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -107,7 +111,14 @@ describe('QuizQuestionListEditExistingComponent', () => {
         TestBed.configureTestingModule({
             imports: [CommonModule, FormsModule],
             declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(NgbModal),
+                MockProvider(ChangeDetectorRef),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {
