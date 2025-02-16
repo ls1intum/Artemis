@@ -7,6 +7,10 @@ import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 class MockNgbModalRef {
     componentInstance = {
@@ -27,9 +31,13 @@ describe('Submission Export Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
