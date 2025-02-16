@@ -135,7 +135,7 @@ public class CourseService {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    private final CompetencyRelationApi competencyRelationApi;
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     private final ExerciseService exerciseService;
 
@@ -167,9 +167,9 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final PrerequisitesApi prerequisitesApi;
+    private final Optional<PrerequisitesApi> prerequisitesApi;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -205,7 +205,7 @@ public class CourseService {
 
     private final ConversationRepository conversationRepository;
 
-    private final LearningPathApi learningPathApi;
+    private final Optional<LearningPathApi> learningPathApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -221,26 +221,25 @@ public class CourseService {
 
     private final FaqRepository faqRepository;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            GroupNotificationRepository groupNotificationRepository, Optional<ExerciseGroupApi> exerciseGroupApi, AuditEventRepository auditEventRepository,
-            UserService userService, Optional<ExamDeletionApi> examDeletionApi, CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService,
-            Optional<ExamRepositoryApi> examRepositoryApi, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
-            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+    public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
+            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi, CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService,
+                         Optional<ExamRepositoryApi> examRepositoryApi,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
+            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
+            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
-            LearningPathApi learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            PrerequisitesApi prerequisitesApi, CompetencyRelationApi competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            BuildJobRepository buildJobRepository, FaqRepository faqRepository, LearnerProfileApi learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
+            Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.examMetricsApi = examMetricsApi;
-
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -371,9 +370,9 @@ public class CourseService {
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        course.setNumberOfCompetencies(competencyProgressApi.countByCourse(course));
+        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourse(course)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        course.setNumberOfPrerequisites(prerequisitesApi.countByCourse(course));
+        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourse(course)));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (course.isFaqEnabled()) {
@@ -542,7 +541,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
-        learnerProfileApi.deleteAllForCourse(course);
+        learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -615,9 +614,9 @@ public class CourseService {
     }
 
     private void deleteCompetenciesOfCourse(Course course) {
-        competencyRelationApi.deleteAllByCourseId(course.getId());
-        prerequisitesApi.deleteAll(course.getPrerequisites());
-        competencyProgressApi.deleteAll(course.getCompetencies());
+        competencyRelationApi.ifPresent(api -> api.deleteAllByCourseId(course.getId()));
+        prerequisitesApi.ifPresent(api -> api.deleteAll(course.getPrerequisites()));
+        competencyProgressApi.ifPresent(api -> api.deleteAll(course.getCompetencies()));
     }
 
     private void deleteFaqsOfCourse(Course course) {
@@ -656,8 +655,8 @@ public class CourseService {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
-            learnerProfileApi.createCourseLearnerProfile(course, user);
-            learningPathApi.generateLearningPathForUser(course, user);
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(course, user));
         }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -690,8 +689,9 @@ public class CourseService {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
-                learnerProfileApi.createCourseLearnerProfile(course, optionalStudent.get());
-                learningPathApi.generateLearningPathForUser(course, optionalStudent.get());
+                final Course finalCourse = course;
+                learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, optionalStudent.get()));
+                learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, optionalStudent.get()));
             }
         }
 
@@ -707,7 +707,7 @@ public class CourseService {
     public void unenrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
-        learnerProfileApi.deleteCourseLearnerProfile(course, user);
+        learnerProfileApi.ifPresent(api -> api.deleteCourseLearnerProfile(course, user));
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
@@ -1093,8 +1093,8 @@ public class CourseService {
         userService.addUserToGroup(user, group);
         if (group.equals(course.getStudentGroupName()) && course.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
-            learnerProfileApi.createCourseLearnerProfile(course, user);
-            learningPathApi.generateLearningPathForUser(courseWithCompetencies, user);
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
         }
     }
 

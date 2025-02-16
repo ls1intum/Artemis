@@ -23,9 +23,9 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
-import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
-import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
+import { TreeItem, TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import { TreeViewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/tree-view.component';
+import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -59,7 +59,7 @@ export interface FileTreeItem extends TreeItem<string> {
         FaIconComponent,
         TranslateDirective,
         CodeEditorFileBrowserCreateNodeComponent,
-        TreeviewComponent,
+        TreeViewComponent,
         CodeEditorStatusComponent,
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserFileComponent,
@@ -77,7 +77,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
-    @ViewChild('treeview', { static: false }) treeview: TreeviewComponent<string>;
+    @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
 
     @Input()
     get selectedFile(): string | undefined {
@@ -122,7 +122,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeviewItem<string>[];
+    filesTreeViewItem: TreeViewItem<string>[];
     compressFolders = true;
 
     collapsed = false;
@@ -283,7 +283,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Callback function for when a node in the file tree view has been selected
      * @param item Corresponding event object, holds the selected TreeViewItem
      */
-    handleNodeSelected(item: TreeviewItem<string>) {
+    handleNodeSelected(item: TreeViewItem<string>) {
         if (item && item.value !== this.selectedFile) {
             item.checked = true;
             // If we had selected a file prior to this, we 'uncheck' it
@@ -319,10 +319,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Converts a parsed file tree to a TreeViewItem[] which will then be used by the Treeviewer
      * @param tree File tree obtained by parsing the repository file list
      */
-    transformTreeToTreeViewItem(tree: FileTreeItem[]): TreeviewItem<string>[] {
-        const treeViewItem = new Array<TreeviewItem<string>>();
+    transformTreeToTreeViewItem(tree: FileTreeItem[]): TreeViewItem<string>[] {
+        const treeViewItem = new Array<TreeViewItem<string>>();
         for (const node of tree) {
-            treeViewItem.push(new TreeviewItem<string>(node));
+            treeViewItem.push(new TreeViewItem<string>(node));
         }
         return treeViewItem;
     }
@@ -454,7 +454,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setRenamingFile(item: TreeviewItem<string>) {
+    setRenamingFile(item: TreeViewItem<string>) {
         this.renamingFile = [item.value, item.text, this.repositoryFiles[item.value]];
     }
 
@@ -506,7 +506,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeviewItem<string>; fileType: FileType }) {
+    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeViewItem<string>; fileType: FileType }) {
         this.creatingFile = [folder, fileType];
     }
 
@@ -561,7 +561,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * Opens a popup to delete the selected repository file
      */
-    openDeleteFileModal(item: TreeviewItem<string>) {
+    openDeleteFileModal(item: TreeViewItem<string>) {
         const { value: filePath } = item;
         const fileType = this.repositoryFiles[filePath];
         if (filePath) {
@@ -605,7 +605,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Aggregate the file badges for the given folder. The numbers of the badges are summed up.
      * The folder badges will only be shown on collapsed folders (otherwise you can see the file badges already and we don't want to clutter the UI)
      */
-    getFolderBadges(folder: TreeviewItem<string>): FileBadge[] {
+    getFolderBadges(folder: TreeViewItem<string>): FileBadge[] {
         if (!folder.collapsed) {
             return []; // Only show folder badges on collapsed folders
         }

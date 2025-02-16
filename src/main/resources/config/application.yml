@@ -109,6 +109,8 @@ artemis:
                     default: "mathworks/matlab:r2024b"
                 ruby:
                     default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.1"
+                dart:
+                    default: "ghcr.io/ls1intum/artemis-dart-docker:v1.0.0"
 
         # The following properties are used to configure the Artemis build agent.
         # The build agent is responsible for executing the buildJob to test student submissions.

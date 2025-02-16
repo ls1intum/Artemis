@@ -12,7 +12,7 @@ export interface LinkPreview {
     shouldPreviewBeShown?: boolean;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class LinkPreviewService {
     private http = inject(HttpClient);
 

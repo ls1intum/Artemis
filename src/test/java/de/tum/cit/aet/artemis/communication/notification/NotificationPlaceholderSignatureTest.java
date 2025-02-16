@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -66,7 +66,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
     }
 
     private String readPlaceholderText(URL url) throws URISyntaxException, IOException {
-        return Files.readString(Paths.get(url.toURI())).strip();
+        return Files.readString(Path.of(url.toURI())).strip();
     }
 
     private record ClassSignature(String notificationType, List<NotificationPlaceholderSignatureTest.FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {

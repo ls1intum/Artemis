@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import type { BooleanDetail } from 'app/detail-overview-list/detail.model';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 
 @Component({
     selector: 'jhi-boolean-detail',
     templateUrl: 'boolean-detail.component.html',
-    imports: [ArtemisSharedComponentModule],
+    imports: [ChecklistCheckComponent],
 })
 export class BooleanDetailComponent {
     @Input() detail: BooleanDetail;

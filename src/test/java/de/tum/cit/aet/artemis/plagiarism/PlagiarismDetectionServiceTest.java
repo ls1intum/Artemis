@@ -8,8 +8,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -120,7 +120,7 @@ class PlagiarismDetectionServiceTest {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
         programmingExercise.setPlagiarismDetectionConfig(config);
-        var zipFile = new File("");
+        var zipFile = Path.of("").toFile();
         when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(zipFile);
 

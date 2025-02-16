@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.service.export;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -436,10 +436,8 @@ public class CourseExamExportService {
                             .exportModelingExerciseWithSubmissions(modelingExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
                     case QuizExercise quizExercise ->
                         exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
-                    default -> {
-                        logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): Exercise type not supported for export",
-                                exportErrors, null);
-                    }
+                    default -> logMessageAndAppendToList(
+                            "Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): Exercise type not supported for export", exportErrors, null);
                 }
             }
             catch (Exception e) {
@@ -527,7 +525,7 @@ public class CourseExamExportService {
      */
     private Path writeFile(List<String> data, Path outputDir, String fileName) throws IOException {
         Path outputFile = outputDir.resolve(fileName);
-        try (FileWriter writer = new FileWriter(outputFile.toFile(), StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8)) {
             for (String line : data) {
                 writer.write(line);
                 writer.write(System.lineSeparator());

@@ -79,7 +79,7 @@ public class ExerciseDeletionService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -87,7 +87,8 @@ public class ExerciseDeletionService {
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            ChannelRepository channelRepository, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -216,7 +217,10 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressApi::updateProgressByCompetencyAsync);
+        if (competencyProgressApi.isPresent()) {
+            var api = competencyProgressApi.get();
+            competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync);
+        }
     }
 
     /**
