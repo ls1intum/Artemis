@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { MockBuilder } from 'ng-mocks';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
@@ -10,6 +9,23 @@ import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/
 import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockProvider } from 'ng-mocks';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ElementRef, Renderer2 } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -30,7 +46,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     };
 
     beforeEach(async () => {
-        await MockBuilder(MultipleChoiceQuestionEditComponent).mock(ArtemisTestModule);
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
+        });
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
         component.question = question;
