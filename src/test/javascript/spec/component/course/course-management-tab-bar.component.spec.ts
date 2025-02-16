@@ -17,6 +17,10 @@ import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -64,6 +68,9 @@ describe('Course Management Tab Bar Component', () => {
                 { provide: Router, useValue: router },
                 MockProvider(CourseManagementService),
                 MockProvider(CourseAccessStorageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(EventManager),
             ],
         })
             .compileComponents()
