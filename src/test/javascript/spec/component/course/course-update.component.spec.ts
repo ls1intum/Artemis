@@ -859,6 +859,8 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 MockProvider(LoadImageService),
             ],
             declarations: [
@@ -882,6 +884,9 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 accountService = TestBed.inject(AccountService);
                 featureToggleService = TestBed.inject(FeatureToggleService);
                 featureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
