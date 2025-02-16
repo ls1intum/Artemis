@@ -15,17 +15,6 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ElementRef, Renderer2 } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
