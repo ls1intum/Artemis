@@ -16,6 +16,8 @@ import {
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupFreePeriodFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
@@ -28,7 +30,12 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
-            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
+            providers: [
+                MockProvider(TutorialGroupFreePeriodService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
         activeModal = TestBed.inject(NgbActiveModal);
         fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
