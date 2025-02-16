@@ -23,18 +23,15 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let pastLecture: Lecture;
@@ -46,7 +43,6 @@ describe('Lecture', () => {
     let futureLecture2: Lecture;
     let unspecifiedLecture: Lecture;
     let lectureToIngest: Lecture;
-    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
         const lastWeek = dayjs().subtract(1, 'week');
@@ -100,7 +96,7 @@ describe('Lecture', () => {
         lectureToIngest.id = 1;
         lectureToIngest.title = 'machine Learning';
         lectureToIngest.course = new Course();
-        consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+        lectureToIngest.course.id = 99;
 
         const profileInfo = {
             activeProfiles: [],
@@ -134,7 +130,7 @@ describe('Lecture', () => {
                     },
                 },
                 MockProvider(LectureService, {
-                    findAllByCourseId: () => {
+                    findAllByCourseIdWithSlides: () => {
                         return of(
                             new HttpResponse({
                                 body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
@@ -142,7 +138,7 @@ describe('Lecture', () => {
                             }),
                         );
                     },
-                    import: (courseId, lectureId) => {
+                    import: (_courseId, lectureId) => {
                         return of(
                             new HttpResponse({
                                 body: { id: lectureId } as Lecture,
@@ -172,7 +168,7 @@ describe('Lecture', () => {
     });
 
     it('should fetch lectures when initialized', () => {
-        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseId');
+        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
 
         lectureComponentFixture.detectChanges();
 
@@ -265,39 +261,46 @@ describe('Lecture', () => {
 
     it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
         lectureComponent.lectures = [lectureToIngest];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
     });
 
+    it('should update ingestion states correctly when getIngestionState returns data', () => {
+        lectureComponent.courseId = 99;
+        lectureComponent.lectures = [lectureToIngest, pastLecture];
+        const mockIngestionStates = {
+            1: IngestionState.DONE,
+            6: IngestionState.PARTIALLY_INGESTED,
+        };
+
+        jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: mockIngestionStates,
+                    status: 200,
+                }),
+            ),
+        );
+
+        lectureComponent.updateIngestionStates();
+
+        expect(lectureService.getIngestionState).toHaveBeenCalledWith(lectureToIngest.course!.id!);
+        expect(lectureToIngest.ingested).toBe(IngestionState.DONE);
+        expect(pastLecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
+    });
+
     it('should not call the service if the first lecture does not exist', () => {
         lectureComponent.lectures = [];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).not.toHaveBeenCalled();
     });
-    it('should log error when error occurs', () => {
+
+    it('should do nothing when error occurs', () => {
         lectureComponent.lectures = [lectureToIngest];
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to send Ingestion request', expect.any(Error));
-    });
-    it('should set lectureIngestionEnabled based on service response', () => {
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
-        lectureComponent.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureComponent.courseId);
-        expect(lectureComponent.lectureIngestionEnabled).toBeTrue();
     });
 });

@@ -1,115 +1,64 @@
 @if (exercise) {
-    <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-        <jhi-header-exercise-page-with-details
-            [exercise]="exercise"
-            [studentParticipation]="gradedStudentParticipation"
-            [submissionPolicy]="submissionPolicy"
-            [course]="exercise.course"
-        >
-            <span pagetitle>{{ exercise.title }}</span>
-        </jhi-header-exercise-page-with-details>
-        <div class="tab-bar-exercise-details justify-content-end">
-            <jhi-exercise-details-student-actions
-                class="col"
-                *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
-                [courseId]="courseId"
-                [exercise]="exercise"
-                [isGeneratingFeedback]="isGeneratingFeedback"
-                (generatingFeedback)="this.isGeneratingFeedback = true"
-            />
-            @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
-                <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
-                    @if (!plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
-                    }
-                    @if (plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
-                    }
-                </a>
-            }
-            <div class="d-flex flex-column gap-2">
-                <div class="col-auto">
-                    <jhi-submission-result-status
-                        class="d-flex justify-content-end"
-                        [exercise]="exercise"
-                        [studentParticipation]="gradedStudentParticipation"
-                        [showBadge]="true"
-                        [triggerLastGraded]="false"
-                    />
-                </div>
+    <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+        <div class="d-flex align-items-center my-2 justify-content-between">
+            <div class="d-flex">
+                <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
+            </div>
+            <div class="d-flex gap-1">
                 @if (exercise.isAtLeastTutor) {
-                    <div class="col-auto d-flex flex-wrap align-items-center instructor-actions">
-                        <span class="me-1 d-none d-md-inline">{{
-                            'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
-                        }}</span>
-                        <div class="gap-1 d-flex flex-wrap">
-                            <!-- Actions for Tutors, Editors and Instructors -->
-                            <a [routerLink]="baseResource" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faEye" />
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
-                            </a>
-                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faTable" />
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
-                            </a>
-                            @if (exercise.type !== QUIZ) {
-                                <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="faListAlt" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
+                    <div ngbDropdown class="d-inline">
+                        <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+                            <fa-icon [icon]="faWrench" />
+                            <span class="d-none d-md-inline">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
+                            >
+                        </button>
+                        <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
+                            @for (instructorActionItem of instructorActionItems; track instructorActionItem) {
+                                <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
+                                    @if (instructorActionItem.icon) {
+                                        <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
+                                    }
+                                    <span [jhiTranslate]="instructorActionItem.translation"></span>
                                 </a>
-                            }
-                            @if (exercise.type === QUIZ) {
-                                <a [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'preview']" class="btn btn-success btn-sm">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview"></span>
-                                </a>
-                            }
-                            @if (exercise.type === QUIZ) {
-                                <a [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'solution']" class="btn btn-success btn-sm">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution"></span>
-                                </a>
-                            }
-                            @if (exercise.isAtLeastEditor) {
-                                @if (exercise.type === QUIZ) {
-                                    <a [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm">
-                                        <fa-icon [icon]="faSignal" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics"></span>
-                                    </a>
-                                }
-                                @if (exercise.type === MODELING) {
-                                    <a [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm">
-                                        <fa-icon [icon]="faSignal" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics"></span>
-                                    </a>
-                                }
-                                @if (exercise.type === PROGRAMMING) {
-                                    <a [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faFileSignature" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
-                                    </a>
-                                }
-                                @if (!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)) {
-                                    <a [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faWrench" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                    </a>
-                                }
-                                @if (QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor) {
-                                    <a [routerLink]="baseResource + 're-evaluate'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faWrench" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate"></span>
-                                    </a>
-                                }
                             }
                         </div>
                     </div>
                 }
+                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                <!--                <jhi-exercise-details-student-actions-->
+                <!--                    class="col"-->
+                <!--                    *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"-->
+                <!--                    [courseId]="courseId"-->
+                <!--                    [exercise]="exercise"-->
+                <!--                />-->
+                <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" />
+                @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
+                    <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
+                        @if (!plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
+                        }
+                        @if (plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
+                        }
+                    </a>
+                }
             </div>
         </div>
+
+        <hr class="my-0" />
+        <div class="my-3">
+            <jhi-exercise-headers-information
+                [exercise]="exercise"
+                [studentParticipation]="gradedStudentParticipation"
+                [submissionPolicy]="submissionPolicy"
+                [course]="exercise.course"
+            />
+        </div>
+
+        <!-- <hr class="mt-0" /> -->
         <div class="row">
             <div class="col flex-grow-1">
-                <!-- EXERCISE ACTIONS END -->
                 <!-- RESULTS START -->
                 @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length) {
                     <div class="row">
@@ -241,14 +190,9 @@
                     </div>
                 }
                 @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" [isChatGptWrapper]="isChatGptWrapper" />
+                    <!-- TODO TW: This "feature" is only temporary for a paper. -->
                 }
-                <jhi-exercise-hint-button-overlay
-                    class="p-3"
-                    [availableExerciseHints]="availableExerciseHints"
-                    [activatedExerciseHints]="activatedExerciseHints"
-                    (onHintActivated)="onHintActivated($event)"
-                />
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>

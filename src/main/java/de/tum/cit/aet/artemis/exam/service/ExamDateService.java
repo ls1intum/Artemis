@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
@@ -190,6 +191,7 @@ public class ExamDateService {
      * @param exam the exam
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
+    @Nullable
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
         if (exam.getStartDate() == null) {
             return null;
@@ -198,13 +200,24 @@ public class ExamDateService {
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 
+    /**
+     * Returns the unlock date for the exam programming exercise.
+     * <p>
+     * The unlock date is the exam start date minus a certain amount of time to ensure that the exam is unlocked before the start date.
+     *
+     * @param exercise the programming exercise
+     * @return the unlock date or <code>null</code> if the exercise is not an exam exercise
+     */
+    @Nullable
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+        // TODO: can we guarantee that this is an exam exercise to avoid the null check and return?
         if (!exercise.isExamExercise()) {
             return null;
         }
         return getExamProgrammingExerciseUnlockDate(exercise.getExerciseGroup().getExam());
     }
 
+    @NotNull
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(Exam exam) {
         // using start date minus 5 minutes here because unlocking will take some time.
         return exam.getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);

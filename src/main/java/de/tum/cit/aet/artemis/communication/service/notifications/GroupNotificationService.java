@@ -120,6 +120,7 @@ public class GroupNotificationService {
      * @param author                  is the user who initiated the process of the notifications. Can be null if not specified
      * @param onlySave                whether the notification should only be saved and not sent to users
      */
+    @SuppressWarnings("unchecked")
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author, boolean onlySave) {
         for (GroupNotificationType group : groups) {

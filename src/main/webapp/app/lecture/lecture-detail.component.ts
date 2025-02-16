@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/entities/lecture.model';
@@ -9,11 +9,24 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DetailOverviewListComponent } from '../detail-overview-list/detail-overview-list.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { captureException } from '@sentry/angular';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
+    imports: [TranslateDirective, DetailOverviewListComponent, RouterLink, FaIconComponent],
 })
 export class LectureDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    protected lectureService = inject(LectureService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     lecture: Lecture;
     lectureIngestionEnabled = false;
 
@@ -26,14 +39,6 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
     detailSections: DetailOverviewSection[];
     irisEnabled = false;
     private profileInfoSubscription: Subscription;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        protected lectureService: LectureService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -93,7 +98,11 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
      */
     ingestLectureInPyris() {
         this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id).subscribe({
-            error: (error) => console.error(`Failed to send Ingestion request`, error),
+            next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureSuccess'),
+            error: (error) => {
+                this.alertService.error('artemisApp.iris.ingestionAlert.lectureError');
+                captureException('Failed to send Ingestion request', error);
+            },
         });
     }
 }

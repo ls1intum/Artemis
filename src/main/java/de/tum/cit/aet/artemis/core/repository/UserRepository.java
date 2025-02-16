@@ -99,6 +99,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
+    @Query("""
+            SELECT u
+            FROM User u
+            LEFT JOIN FETCH u.groups
+            LEFT JOIN FETCH u.authorities
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
+            WHERE u.login = :login
+                AND clp.course.id = :courseId
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
@@ -177,6 +189,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(String groupName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "learnerProfile" })
+    Set<User> findAllWithGroupsAndAuthoritiesAndLearnerProfileByIsDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT DISTINCT user
@@ -728,16 +743,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.sshPublicKeyHash = :sshPublicKeyHash,
-                user.sshPublicKey = :sshPublicKey
-            WHERE user.id = :userId
-            """)
-    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash, @Param("sshPublicKey") String sshPublicKey);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
             SET user.vcsAccessToken = :vcsAccessToken,
                 user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
             WHERE user.id = :userId
@@ -899,6 +904,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Get user with user groups and authorities of currently logged-in user
+     *
+     * @param courseId the id of the course for which to load the user and the course learner profile
+     * @return currently logged-in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
+    }
+
+    /**
      * Get user with user groups, authorities and organizations of currently logged-in user
      *
      * @return currently logged-in user
@@ -930,7 +947,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.getName())
+     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.name())
      *
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
@@ -1003,6 +1020,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default Set<User> getStudents(Course course) {
         return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+    }
+
+    /**
+     * Get students by given course with their learner Profile
+     *
+     * @param course object
+     * @return students for given course
+     */
+    default Set<User> getStudentsWithLearnerProfile(Course course) {
+        return findAllWithGroupsAndAuthoritiesAndLearnerProfileByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
     }
 
     /**
@@ -1119,8 +1146,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default boolean isCurrentUser(String login) {
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
-
-    Optional<User> findBySshPublicKeyHash(String keyString);
 
     /**
      * Finds all users which a non-null VCS access token that expires before some given date.

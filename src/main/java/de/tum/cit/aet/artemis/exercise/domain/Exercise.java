@@ -756,7 +756,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     /**
      * Checks whether the exercise is released
      *
-     * @return boolean
+     * @return true if the exercise is released (i.e. now is after the release date or the release date is null), false otherwise
      */
     @JsonIgnore
     public boolean isReleased() {

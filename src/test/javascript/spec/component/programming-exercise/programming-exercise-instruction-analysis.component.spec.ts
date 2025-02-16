@@ -2,15 +2,11 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { TaskCountWarningComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -33,13 +29,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [MockDirective(NgbTooltip)],
-                declarations: [
-                    ProgrammingExerciseInstructionAnalysisComponent,
-                    MockComponent(TaskCountWarningComponent),
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                ],
+                imports: [ArtemisTestModule],
                 providers: [
                     {
                         provide: ProgrammingExerciseInstructionAnalysisService,

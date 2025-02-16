@@ -6,11 +6,16 @@
                     @if (submission) {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     }
+                    <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
-                        [repositoryUri]="participation?.userIndependentRepositoryUri || ''"
-                        [routerLinkForRepositoryView]="routerLinkForRepositoryView"
                         [participations]="[participation]"
+                        [repositoryUri]="participation?.userIndependentRepositoryUri ?? ''"
+                        [routerLinkForRepositoryView]="
+                            isInCourseManagement
+                                ? ['..', 'programming-exercises', exercise.id!, 'repository', 'USER', participation.id!]
+                                : [routerLink, 'exercises', exercise.id!, 'repository', participation.id!]
+                        "
                     />
                     <br />
                     <span>

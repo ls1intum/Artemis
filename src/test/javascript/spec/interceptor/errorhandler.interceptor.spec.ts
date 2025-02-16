@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
@@ -18,7 +19,11 @@ describe(`ErrorHandlerInterceptor`, () => {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
 
-        errorHandlerInterceptor = new ErrorHandlerInterceptor(eventManagerMock, accountServiceMock);
+        TestBed.configureTestingModule({
+            providers: [ErrorHandlerInterceptor, { provide: EventManager, useValue: eventManagerMock }, { provide: AccountService, useValue: accountServiceMock }],
+        });
+
+        errorHandlerInterceptor = TestBed.inject(ErrorHandlerInterceptor);
     });
 
     afterEach(() => {

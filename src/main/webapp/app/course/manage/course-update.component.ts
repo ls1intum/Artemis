@@ -1,8 +1,9 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -15,12 +16,11 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
-import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -31,6 +31,17 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -38,20 +49,58 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
     styleUrls: ['./course-update.component.scss'],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        SecuredImageComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgStyle,
+        ColorSelectorComponent,
+        NgClass,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        HelpIconComponent,
+        MarkdownEditorMonacoComponent,
+        FeatureToggleHideDirective,
+        NgbTypeahead,
+        NgTemplateOutlet,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        RemoveKeysPipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+    ],
 })
 export class CourseUpdateComponent implements OnInit {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private courseAdminService = inject(CourseAdminService);
+    private activatedRoute = inject(ActivatedRoute);
+    private fileService = inject(FileService);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private organizationService = inject(OrganizationManagementService);
+    private modalService = inject(NgbModal);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private featureToggleService = inject(FeatureToggleService);
+    private accountService = inject(AccountService);
+
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
 
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+
     tzFocus$ = new Subject<string>();
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
     originalTimeZone?: string;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
@@ -78,6 +127,8 @@ export class CourseUpdateComponent implements OnInit {
     isAthenaEnabled = false;
     tutorialGroupsFeatureActivated = false;
 
+    private courseStorageService = inject(CourseStorageService);
+
     readonly semesters = getSemesters();
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
@@ -85,24 +136,7 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
-
     readonly COURSE_TITLE_LIMIT = 255;
-
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private activatedRoute: ActivatedRoute,
-        private fileService: FileService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private organizationService: OrganizationManagementService,
-        private modalService: NgbModal,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-        private featureToggleService: FeatureToggleService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');
@@ -125,7 +159,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             } else {
-                this.fileService.getTemplateCodeOfCondcut().subscribe({
+                this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
@@ -292,15 +326,18 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue();
+        const course = this.courseForm.getRawValue() as Course;
+        // NOTE: prevent overriding this value accidentally
+        // TODO: move presentationScore to gradingScale to avoid this
+        course.presentationScore = this.course.presentationScore;
 
         if (this.communicationEnabled && this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         } else if (this.communicationEnabled && !this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             this.communicationEnabled = false;
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
 
         if (!course.enrollmentEnabled) {
@@ -344,6 +381,7 @@ export class CourseUpdateComponent implements OnInit {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
+            this.courseStorageService.updateCourse(updatedCourse!);
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
@@ -361,13 +399,6 @@ export class CourseUpdateComponent implements OnInit {
             this.openCropper();
         }
         element.value = '';
-    }
-
-    /**
-     * @param event
-     */
-    imageCropped(event: ImageCroppedEvent) {
-        this.croppedImage = event.base64;
     }
 
     /**

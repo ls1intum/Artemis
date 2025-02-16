@@ -1,22 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTestModule } from '../../../../test.module';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -31,17 +22,6 @@ describe('TextExamSubmissionComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                TextExamSubmissionComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgModel),
-                MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ExamExerciseUpdateHighlighterComponent),
-                MockComponent(ResizeableContainerComponent),
-                MockDirective(TranslateDirective),
-            ],
-            providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {
@@ -139,5 +119,16 @@ describe('TextExamSubmissionComponent', () => {
         component.setSubmissionVersion(submissionVersion);
         expect(component.answer).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
+    });
+
+    it('should call triggerSave if save exercise button is clicked', () => {
+        component.exercise = exercise;
+        textSubmission.text = 'Hello World';
+        component.studentSubmission = textSubmission;
+        fixture.detectChanges();
+        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+        saveButton.triggerEventHandler('save', null);
+        expect(saveExerciseSpy).toHaveBeenCalledOnce();
     });
 });

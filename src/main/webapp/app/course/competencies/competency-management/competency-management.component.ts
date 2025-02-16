@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { Competency, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
-import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
+import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
+import { firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -11,7 +10,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
 import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
@@ -20,30 +18,17 @@ import { CourseCompetencyApiService } from 'app/course/competencies/services/cou
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/course/competencies/components/course-competency-explanation-modal/course-competency-explanation-modal.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    standalone: true,
-    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule, ArtemisSharedComponentModule],
+    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule],
 })
-export class CompetencyManagementComponent implements OnInit, OnDestroy {
-    courseId: number;
-    isLoading = false;
-    irisCompetencyGenerationEnabled = false;
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
-    standardizedCompetenciesEnabled = false;
-    private standardizedCompetencySubscription: Subscription;
-
-    competencies: Competency[] = [];
-    prerequisites: Prerequisite[] = [];
-    courseCompetencies: CourseCompetency[] = [];
-
-    // Icons
+export class CompetencyManagementComponent implements OnInit {
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -52,12 +37,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faRobot = faRobot;
     protected readonly faCircleQuestion = faCircleQuestion;
 
-    // other constants
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
 
-    // Injected services
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
@@ -66,58 +49,61 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
 
-    ngOnInit(): void {
-        this.activatedRoute.parent!.params.subscribe(async (params) => {
-            this.courseId = Number(params['courseId']);
-            await this.loadData();
-            this.loadIrisEnabled();
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    readonly isLoading = signal<boolean>(false);
+
+    readonly courseCompetencies = signal<CourseCompetency[]>([]);
+    competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
+    prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
+
+    private readonly irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS))), {
+        initialValue: false,
+    });
+
+    irisCompetencyGenerationEnabled = signal<boolean>(false);
+    standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
+
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(async () => await this.loadCourseCompetencies(courseId));
         });
+        effect(() => {
+            const irisEnabled = this.irisEnabled();
+            untracked(async () => {
+                if (irisEnabled) {
+                    await this.loadIrisEnabled();
+                }
+            });
+        });
+    }
+
+    ngOnInit(): void {
         const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
         if (!lastVisit) {
             this.openCourseCompetencyExplanation();
         }
         sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
-        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
-            this.standardizedCompetenciesEnabled = isActive;
-        });
     }
 
-    ngOnDestroy() {
-        this.dialogErrorSource.unsubscribe();
-        if (this.standardizedCompetencySubscription) {
-            this.standardizedCompetencySubscription.unsubscribe();
+    private async loadIrisEnabled() {
+        try {
+            const combinedCourseSettings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId()));
+            this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
+        } catch (error) {
+            this.alertService.error(error);
         }
     }
 
-    /**
-     * Sends a request to determine if Iris and Competency Generation is enabled
-     *
-     * @private
-     */
-    private loadIrisEnabled() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.irisCompetencyGenerationEnabled = settings?.irisCompetencyGenerationSettings?.enabled ?? false;
-                });
-            }
-        });
-    }
-
-    /**
-     * Loads all data for the competency management: Prerequisites and competencies (with average course progress)
-     */
-    async loadData() {
+    private async loadCourseCompetencies(courseId: number) {
         try {
-            this.isLoading = true;
-            this.courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(this.courseId);
-            this.competencies = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
-            this.prerequisites = this.courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
+            this.isLoading.set(true);
+            const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
+            this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         } finally {
-            this.isLoading = false;
+            this.isLoading.set(false);
         }
     }
 
@@ -127,8 +113,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             backdrop: 'static',
             windowClass: 'course-competencies-relation-graph-modal',
         });
-        modalRef.componentInstance.courseId = signal<number>(this.courseId);
-        modalRef.componentInstance.courseCompetencies = signal<CourseCompetency[]>(this.courseCompetencies);
+        modalRef.componentInstance.courseId = signal<number>(this.courseId());
+        modalRef.componentInstance.courseCompetencies = signal<CourseCompetency[]>(this.courseCompetencies());
     }
 
     /**
@@ -139,14 +125,14 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             size: 'lg',
             backdrop: 'static',
         });
-        modalRef.componentInstance.courseId = signal<number>(this.courseId);
+        modalRef.componentInstance.courseId = signal<number>(this.courseId());
         const importResults: ImportAllCourseCompetenciesResult | undefined = await modalRef.result;
         if (!importResults) {
             return;
         }
         const courseTitle = importResults.course.title ?? '';
         try {
-            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(this.courseId, importResults.courseCompetencyImportOptions);
+            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(this.courseId(), importResults.courseCompetencyImportOptions);
             if (importedCompetencies.length) {
                 this.alertService.success(`artemisApp.courseCompetency.importAll.success`, {
                     noOfCompetencies: importedCompetencies.length,
@@ -157,7 +143,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
             }
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         }
     }
 
@@ -167,18 +153,15 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @private
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
-        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => element?.type === CourseCompetencyType.COMPETENCY);
-        const importedPrerequisites = res.map((dto) => dto.competency).filter((element): element is Prerequisite => element?.type === CourseCompetencyType.PREREQUISITE);
-
-        this.competencies = this.competencies.concat(importedCompetencies);
-        this.prerequisites = this.prerequisites.concat(importedPrerequisites);
-        this.courseCompetencies = this.competencies.concat(this.prerequisites);
+        const importedCourseCompetencies = res.map((dto) => dto.competency!);
+        const newCourseCompetencies = importedCourseCompetencies.filter(
+            (competency) => !this.courseCompetencies().some((existingCompetency) => existingCompetency.id === competency.id),
+        );
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(newCourseCompetencies));
     }
 
     onRemoveCompetency(competencyId: number) {
-        this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
-        this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== competencyId);
-        this.courseCompetencies = this.competencies.concat(this.prerequisites);
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((cc) => cc.id !== competencyId));
     }
 
     openCourseCompetencyExplanation(): void {

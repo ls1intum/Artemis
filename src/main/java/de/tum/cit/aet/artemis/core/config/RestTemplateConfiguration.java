@@ -4,16 +4,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -43,14 +44,12 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab | gitlabci")
-    @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("jenkins")
-    @Autowired // ok
+    @Profile(PROFILE_JENKINS)
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
@@ -89,14 +88,12 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab | gitlabci")
-    @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("jenkins")
-    @Autowired // ok
+    @Profile(PROFILE_JENKINS)
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
@@ -113,9 +110,13 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
+    @Bean
+    public RestTemplate shortTimeoutHermesRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
-
     @Bean
     @Profile(PROFILE_ATHENA)
     public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
@@ -172,16 +173,19 @@ public class RestTemplateConfiguration {
     }
 
     private RestTemplate createShortTimeoutRestTemplate() {
-        var requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setReadTimeout(SHORT_READ_TIMEOUT);
-        requestFactory.setConnectTimeout(SHORT_CONNECTION_TIMEOUT);
+        final var requestFactory = getSimpleClientHttpRequestFactory(SHORT_READ_TIMEOUT, SHORT_CONNECTION_TIMEOUT);
         return new RestTemplate(requestFactory);
     }
 
-    private RestTemplate createVeryShortTimeoutRestTemplate() {
+    private static ClientHttpRequestFactory getSimpleClientHttpRequestFactory(int shortReadTimeout, int shortConnectionTimeout) {
         var requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setReadTimeout(VERY_SHORT_READ_TIMEOUT);
-        requestFactory.setConnectTimeout(VERY_SHORT_CONNECTION_TIMEOUT);
+        requestFactory.setReadTimeout(shortReadTimeout);
+        requestFactory.setConnectTimeout(shortConnectionTimeout);
+        return requestFactory;
+    }
+
+    private RestTemplate createVeryShortTimeoutRestTemplate() {
+        final var requestFactory = getSimpleClientHttpRequestFactory(VERY_SHORT_READ_TIMEOUT, VERY_SHORT_CONNECTION_TIMEOUT);
         return new RestTemplate(requestFactory);
     }
 }

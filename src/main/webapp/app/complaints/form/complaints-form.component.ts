@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintType } from 'app/entities/complaint.model';
@@ -7,13 +7,21 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent],
 })
 export class ComplaintsFormComponent implements OnInit {
+    private complaintService = inject(ComplaintService);
+    private alertService = inject(AlertService);
+
     @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() examId?: number;
@@ -26,11 +34,6 @@ export class ComplaintsFormComponent implements OnInit {
     course?: Course;
 
     readonly ComplaintType = ComplaintType;
-
-    constructor(
-        private complaintService: ComplaintService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise);

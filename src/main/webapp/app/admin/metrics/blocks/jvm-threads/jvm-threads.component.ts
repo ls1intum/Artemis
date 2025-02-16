@@ -10,7 +10,6 @@ import { DecimalPipe } from '@angular/common';
     selector: 'jhi-jvm-threads',
     templateUrl: './jvm-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe],
 })
 export class JvmThreadsComponent {

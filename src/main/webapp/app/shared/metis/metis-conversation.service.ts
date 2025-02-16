@@ -1,8 +1,8 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
@@ -26,15 +26,25 @@ import { NotificationService } from 'app/shared/notification/notification.servic
  */
 @Injectable()
 export class MetisConversationService implements OnDestroy {
+    private groupChatService = inject(GroupChatService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private channelService = inject(ChannelService);
+    private conversationService = inject(ConversationService);
+    private websocketService = inject(WebsocketService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private notificationService = inject(NotificationService);
+
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
     _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
     _activeConversation$: ReplaySubject<ConversationDTO | undefined> = new ReplaySubject<ConversationDTO | undefined>(1);
-    private isCodeOfConductAccepted: boolean = false;
+    private isCodeOfConductAccepted = false;
     _isCodeOfConductAccepted$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-    private isCodeOfConductPresented: boolean = false;
+    private isCodeOfConductPresented = false;
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
@@ -52,17 +62,7 @@ export class MetisConversationService implements OnDestroy {
 
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
-    constructor(
-        private groupChatService: GroupChatService,
-        private oneToOneChatService: OneToOneChatService,
-        private channelService: ChannelService,
-        protected conversationService: ConversationService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private router: Router,
-        private notificationService: NotificationService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
         });
@@ -76,7 +76,7 @@ export class MetisConversationService implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.subscribedConversationMembershipTopic) {
-            this.jhiWebsocketService.unsubscribe(this.subscribedConversationMembershipTopic);
+            this.websocketService.unsubscribe(this.subscribedConversationMembershipTopic);
             this.subscribedConversationMembershipTopic = undefined;
         }
 
@@ -210,6 +210,8 @@ export class MetisConversationService implements OnDestroy {
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
+    public createOneToOneChatWithId = (userId: number): Observable<HttpResponse<OneToOneChatDTO>> =>
+        this.onConversationCreation(this.oneToOneChatService.createWithId(this._courseId, userId));
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
@@ -375,10 +377,10 @@ export class MetisConversationService implements OnDestroy {
         }
 
         const conversationMembershipTopic = this.getConversationMembershipTopic(courseId, userId);
-        this.jhiWebsocketService.subscribe(conversationMembershipTopic);
+        this.websocketService.subscribe(conversationMembershipTopic);
         this.subscribedConversationMembershipTopic = conversationMembershipTopic;
 
-        this.jhiWebsocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
+        this.websocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
             this.onConversationMembershipMessageReceived(websocketDTO);
         });
     }
@@ -469,5 +471,18 @@ export class MetisConversationService implements OnDestroy {
 
     static getLinkForConversation(courseId: number): RouteComponents {
         return ['/courses', courseId, 'communication'];
+    }
+
+    markAllChannelsAsRead(course: Course | undefined) {
+        if (!course?.id) {
+            return of();
+        }
+
+        return this.conversationService.markAllChannelsAsRead(course.id).pipe(
+            catchError((errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+                return of();
+            }),
+        );
     }
 }

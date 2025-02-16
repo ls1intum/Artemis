@@ -73,8 +73,15 @@ public class PageUtil {
         )),
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id)",
-            "detailText", "f.detailText",
-            "testCaseName", "f.testCase.testName"
+            "detailTexts", "f.detailText",
+            "testCaseName", "f.testCase.testName",
+            "taskName", """
+                    COALESCE((
+                    SELECT MAX(t.taskName)
+                    FROM ProgrammingExerciseTask t
+                    JOIN t.testCases tct
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                ), '')"""
         ));
         // @formatter:on
 

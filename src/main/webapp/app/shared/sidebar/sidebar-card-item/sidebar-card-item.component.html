@@ -85,7 +85,19 @@
                     [class.muted]="sidebarItem.conversation?.isMuted"
                     [ngClass]="unreadCount() > 0 ? 'fw-bold' : 'fw-normal'"
                 >
-                    @if (sidebarItem.icon) {
+                    @if (otherUser) {
+                        <jhi-profile-picture
+                            [imageSizeInRem]="'1.1'"
+                            [fontSizeInRem]="'0.5'"
+                            [imageId]="'sidebar-profile-picture'"
+                            [defaultPictureId]="'sidebar-default-profile-picture'"
+                            [isGray]="false"
+                            [authorId]="otherUser.id"
+                            [authorName]="otherUser.name"
+                            [imageUrl]="otherUser.imageUrl"
+                            [isEditable]="false"
+                        />
+                    } @else if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }
                     {{ sidebarItem.title }}</span
@@ -104,7 +116,7 @@
                     {{ sidebarItem.subtitleLeft }}
                 </small>
                 <small class="text-truncate d-inline">
-                    @if (sidebarType === 'exercise' && sidebarItem.studentParticipation && sidebarItem.exercise) {
+                    @if (sidebarType === 'exercise' && sidebarItem.exercise) {
                         <jhi-submission-result-status
                             class="text-truncate result"
                             [exercise]="sidebarItem.exercise"

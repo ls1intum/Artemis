@@ -20,7 +20,7 @@ services:
             file: ./postgres.yml
             service: postgres
     migration-check:
-        image: alpine
+        image: docker.io/library/alpine:3.21.0
         container_name: migration-check
         command: /bin/sh -c "exit 0"
         depends_on:

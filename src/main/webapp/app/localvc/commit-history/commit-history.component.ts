@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -11,20 +11,26 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CommitsInfoComponent } from '../../exercises/programming/shared/commits-info/commits-info.component';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-history',
     templateUrl: './commit-history.component.html',
+    imports: [CommitsInfoComponent],
 })
 export class CommitHistoryComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
     participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
-    participationId: number;
     exerciseId: number;
-    repositoryType: string;
-    repositoryId?: number;
+    repositoryType: RepositoryType;
+    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     paramSub: Subscription;
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
@@ -33,12 +39,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     exercise: ProgrammingExercise;
 
     isTestRepository = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
-    ) {}
 
     ngOnDestroy() {
         this.paramSub?.unsubscribe();
@@ -51,14 +51,13 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.participationId = Number(params['participationId']);
             this.exerciseId = Number(params['exerciseId']);
-            this.repositoryType = params['repositoryType'];
+            this.repositoryType = params['repositoryType'] ?? RepositoryType.USER;
             this.repositoryId = Number(params['repositoryId']);
-            if (this.repositoryType) {
-                this.loadDifferentParticipation();
-            } else {
+            if (this.repositoryId && this.repositoryType === RepositoryType.USER) {
                 this.loadStudentParticipation();
+            } else {
+                this.loadDifferentParticipation();
             }
         });
     }
@@ -108,7 +107,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     private loadStudentParticipation() {
         this.participationSub = this.programmingExerciseParticipationService
-            .getStudentParticipationWithAllResults(this.participationId)
+            .getStudentParticipationWithAllResults(this.repositoryId!)
             .pipe(
                 tap((participation) => {
                     this.participation = participation;
@@ -130,9 +129,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleCommits() {
-        if (!this.repositoryType) {
+        if (this.repositoryType === RepositoryType.USER) {
             this.handleParticipationCommits();
-        } else if (this.repositoryType === 'AUXILIARY') {
+        } else if (this.repositoryType === RepositoryType.AUXILIARY) {
             this.handleAuxiliaryRepositoryCommits();
         } else {
             this.handleTemplateSolutionTestRepositoryCommits();

@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -69,17 +68,17 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
-            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
-                    .filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.getId())).findFirst();
+            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.id()))
+                    .findFirst();
             if (matchingTestCaseOpt.isEmpty()) {
                 continue;
             }
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
-            matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
-            matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.getVisibility());
-            matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
-            matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
+            matchingTestCase.setWeight(programmingExerciseTestCaseDTO.weight());
+            matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.visibility());
+            matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.bonusMultiplier());
+            matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.bonusPoints());
 
             validateTestCase(matchingTestCase);
             updatedTests.add(matchingTestCase);

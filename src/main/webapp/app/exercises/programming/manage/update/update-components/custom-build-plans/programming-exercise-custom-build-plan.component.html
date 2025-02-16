@@ -8,6 +8,7 @@
         <div class="row m-1">
             @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
                 <jhi-programming-exercise-build-configuration
+                    [programmingExercise]="programmingExercise"
                     [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
                     [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"

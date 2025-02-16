@@ -183,7 +183,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
         // Create a programming exercise with real categories
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(exercise);
@@ -369,7 +369,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories_differentLanguages() throws Exception {
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, ProgrammingLanguage.SWIFT);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, ProgrammingLanguage.SWIFT);
 
         var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.CONFLICT);

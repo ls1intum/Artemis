@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
+import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -69,8 +70,11 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     void createAttachment() throws Exception {
         Attachment actualAttachment = request.postWithMultipartFile("/api/attachments", attachment, "attachment",
                 new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()), Attachment.class, HttpStatus.CREATED);
-        assertThat(actualAttachment.getLink()).isNotNull();
-        MvcResult file = request.performMvcRequest(get(actualAttachment.getLink())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
+        String actualLink = actualAttachment.getLink();
+        assertThat(actualLink).isNotNull();
+        // getLectureAttachment uses the provided file name to fetch the attachment which has that attachment name (not filename)
+        String linkWithCorrectFileName = actualLink.substring(0, actualLink.lastIndexOf('/') + 1) + attachment.getName() + "." + getExtension(actualAttachment.getLink());
+        MvcResult file = request.performMvcRequest(get(linkWithCorrectFileName)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
                 .andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isNotEmpty();
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();

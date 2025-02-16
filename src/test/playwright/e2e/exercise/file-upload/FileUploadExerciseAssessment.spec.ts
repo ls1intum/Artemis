@@ -16,7 +16,7 @@ const tutorFeedback = 'Try to use some newlines next time!';
 const tutorFeedbackPoints = 4;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('File upload exercise assessment', () => {
+test.describe('File upload exercise assessment', { tag: '@fast' }, () => {
     let course: Course;
     let exercise: FileUploadExercise;
 

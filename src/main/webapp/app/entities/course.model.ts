@@ -13,6 +13,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Faq } from 'app/entities/faq.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -26,6 +27,10 @@ export enum CourseInformationSharingConfiguration {
 export function isCommunicationEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+}
+
+export function isFaqEnabled(course: Course | undefined) {
+    return course?.faqEnabled;
 }
 
 /**
@@ -98,6 +103,7 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
+    public faqs?: Faq[];
     public competencies?: Competency[];
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
@@ -163,8 +169,6 @@ export class CourseForImportDTO {
     title?: string;
     shortName?: string;
     semester?: string;
-
-    constructor() {}
 }
 
 export const enum CourseGroup {

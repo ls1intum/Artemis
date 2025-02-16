@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
-import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { debounceTime, distinctUntilChanged, map, switchMap, take, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
@@ -12,25 +12,39 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { GraphColors } from 'app/entities/statistics.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
-    buildStartDateFilterFrom?: dayjs.Dayjs = undefined;
-    buildStartDateFilterTo?: dayjs.Dayjs = undefined;
+    buildSubmissionDateFilterFrom?: dayjs.Dayjs = undefined;
+    buildSubmissionDateFilterTo?: dayjs.Dayjs = undefined;
     buildDurationFilterLowerBound?: number = undefined;
     buildDurationFilterUpperBound?: number = undefined;
     numberOfAppliedFilters = 0;
     appliedFilters = new Map<string, boolean>();
-    areDurationFiltersValid: boolean = true;
-    areDatesValid: boolean = true;
+    areDurationFiltersValid = true;
+    areDatesValid = true;
 
     /**
      * Adds the http param options
@@ -43,11 +57,11 @@ export class FinishedBuildJobFilter {
         if (this.buildAgentAddress) {
             options = options.append('buildAgentAddress', this.buildAgentAddress);
         }
-        if (this.buildStartDateFilterFrom) {
-            options = options.append('startDate', this.buildStartDateFilterFrom.toISOString());
+        if (this.buildSubmissionDateFilterFrom) {
+            options = options.append('startDate', this.buildSubmissionDateFilterFrom.toISOString());
         }
-        if (this.buildStartDateFilterTo) {
-            options = options.append('endDate', this.buildStartDateFilterTo.toISOString());
+        if (this.buildSubmissionDateFilterTo) {
+            options = options.append('endDate', this.buildSubmissionDateFilterTo.toISOString());
         }
         if (this.buildDurationFilterLowerBound) {
             options = options.append('buildDurationLower', this.buildDurationFilterLowerBound.toString());
@@ -89,13 +103,17 @@ enum BuildJobStatusFilter {
     FAILED = 'failed',
     ERROR = 'error',
     CANCELLED = 'cancelled',
+    MISSING = 'missing',
+    BUILDING = 'building',
+    QUEUED = 'queued',
+    TIMEOUT = 'timeout',
 }
 
 export enum FinishedBuildJobFilterStorageKey {
     status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
     buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
-    buildStartDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
-    buildStartDateFilterTo = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterTo',
+    buildSubmissionDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterFrom',
+    buildSubmissionDateFilterTo = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterTo',
     buildDurationFilterLowerBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterLowerBound',
     buildDurationFilterUpperBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterUpperBound',
 }
@@ -104,15 +122,42 @@ export enum FinishedBuildJobFilterStorageKey {
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        NgClass,
+        RouterLink,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        ResultComponent,
+        ItemCountComponent,
+        NgbPagination,
+        NgbTypeahead,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        BuildJobStatisticsComponent,
+    ],
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private websocketService = inject(WebsocketService);
+    private buildQueueService = inject(BuildQueueService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private localStorage = inject(LocalStorageService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     queuedBuildJobs: BuildJob[] = [];
     runningBuildJobs: BuildJob[] = [];
     finishedBuildJobs: FinishedBuildJob[] = [];
     courseChannels: string[] = [];
-    buildJobStatistics = new BuildJobStatistics();
 
     //icons
     readonly faTimes = faTimes;
@@ -121,31 +166,13 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faSync = faSync;
-    readonly faAngleDown = faAngleDown;
-    readonly faAngleRight = faAngleRight;
-
-    protected readonly SpanType = SpanType;
 
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-    predicate = 'buildCompletionDate';
+    predicate = 'buildSubmissionDate';
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
-    isCollapsed = false;
-    successfulBuildsPercentage: string;
-    failedBuildsPercentage: string;
-    cancelledBuildsPercentage: string;
-    currentSpan: SpanType = SpanType.WEEK;
-
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW],
-    } as Color;
 
     // Filter
     @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
@@ -159,14 +186,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
-    constructor(
-        private route: ActivatedRoute,
-        private websocketService: JhiWebsocketService,
-        private buildQueueService: BuildQueueService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private localStorage: LocalStorageService,
-    ) {}
+    displayedBuildJobId?: string;
+    rawBuildLogsString: string = '';
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
@@ -174,7 +195,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
         }, 1000); // 1 second
-        this.getBuildJobStatistics(this.currentSpan);
         this.loadFilterFromLocalStorage();
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
@@ -386,12 +406,36 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     /**
      * View the build logs of a specific build job
-     * @param resultId The id of the build job
+     * @param modal The modal to open
+     * @param buildJobId The id of the build job
      */
-    viewBuildLogs(resultId: string | undefined): void {
-        if (resultId) {
-            const url = `/api/build-log/${resultId}`;
-            window.open(url, '_blank');
+    viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+        this.rawBuildLogsString = '';
+        this.displayedBuildJobId = undefined;
+        if (buildJobId) {
+            this.openModal(modal, true);
+            this.displayedBuildJobId = buildJobId;
+            this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
+                next: (buildLogs: string) => {
+                    this.rawBuildLogsString = buildLogs;
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res, false);
+                },
+            });
+        }
+    }
+    /**
+     * Download the build logs of a specific build job
+     */
+    downloadBuildLogs(): void {
+        if (this.displayedBuildJobId && this.rawBuildLogsString) {
+            const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
+            try {
+                downloadFile(blob, `${this.displayedBuildJobId}.log`);
+            } catch (error) {
+                this.alertService.error('artemisApp.buildQueue.logs.downloadError');
+            }
         }
     }
 
@@ -443,8 +487,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Opens the modal.
      */
-    open(content: any) {
-        this.modalService.open(content);
+    openModal(modal: any, fullscreen?: boolean, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
+        this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
     }
 
     /**
@@ -533,24 +577,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Method to remove the build start date filter and store the selected build start date in the local store if required.
      */
     filterDateChanged() {
-        if (!this.finishedBuildJobFilter.buildStartDateFilterFrom?.isValid()) {
-            this.finishedBuildJobFilter.buildStartDateFilterFrom = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterFrom?.isValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom, this.finishedBuildJobFilter.buildStartDateFilterFrom);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom, this.finishedBuildJobFilter.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
         }
-        if (!this.finishedBuildJobFilter.buildStartDateFilterTo?.isValid()) {
-            this.finishedBuildJobFilter.buildStartDateFilterTo = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterTo?.isValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo, this.finishedBuildJobFilter.buildStartDateFilterTo);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo, this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
         }
-        if (this.finishedBuildJobFilter.buildStartDateFilterFrom && this.finishedBuildJobFilter.buildStartDateFilterTo) {
-            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildStartDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildStartDateFilterTo);
+        if (this.finishedBuildJobFilter.buildSubmissionDateFilterFrom && this.finishedBuildJobFilter.buildSubmissionDateFilterTo) {
+            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildSubmissionDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
         } else {
             this.finishedBuildJobFilter.areDatesValid = true;
         }
@@ -579,67 +623,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 this.finishedBuildJobFilter.buildDurationFilterLowerBound <= this.finishedBuildJobFilter.buildDurationFilterUpperBound;
         } else {
             this.finishedBuildJobFilter.areDurationFiltersValid = true;
-        }
-    }
-
-    /**
-     * Get Build Job Result statistics. Should be called in admin view only.
-     */
-    getBuildJobStatistics(span: SpanType = SpanType.WEEK) {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService.getBuildJobStatisticsForCourse(courseId, span).subscribe({
-                    next: (res: BuildJobStatistics) => {
-                        this.updateDisplayedBuildJobStatistics(res);
-                    },
-                    error: (res: HttpErrorResponse) => {
-                        onError(this.alertService, res);
-                    },
-                });
-            } else {
-                this.buildQueueService.getBuildJobStatistics(span).subscribe({
-                    next: (res: BuildJobStatistics) => {
-                        this.updateDisplayedBuildJobStatistics(res);
-                    },
-                    error: (res: HttpErrorResponse) => {
-                        onError(this.alertService, res);
-                    },
-                });
-            }
-        });
-    }
-
-    /**
-     * Update the displayed build job statistics
-     * @param stats The new build job statistics
-     */
-    updateDisplayedBuildJobStatistics(stats: BuildJobStatistics) {
-        this.buildJobStatistics = stats;
-        if (stats.totalBuilds === 0) {
-            this.successfulBuildsPercentage = '-%';
-            this.failedBuildsPercentage = '-%';
-            this.cancelledBuildsPercentage = '-%';
-        } else {
-            this.successfulBuildsPercentage = ((stats.successfulBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
-            this.failedBuildsPercentage = ((stats.failedBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
-            this.cancelledBuildsPercentage = ((stats.cancelledBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
-        }
-        this.ngxData = [
-            { name: 'Successful', value: stats.successfulBuilds },
-            { name: 'Failed', value: stats.failedBuilds },
-            { name: 'Cancelled', value: stats.cancelledBuilds },
-        ];
-    }
-
-    /**
-     * Callback function when the tab is changed
-     * @param span The new span
-     */
-    onTabChange(span: SpanType): void {
-        if (this.currentSpan !== span) {
-            this.currentSpan = span;
-            this.getBuildJobStatistics(span);
         }
     }
 }

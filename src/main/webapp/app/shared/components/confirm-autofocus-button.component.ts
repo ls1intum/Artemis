@@ -1,14 +1,18 @@
-import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild, inject } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ButtonComponent } from './button.component';
 
 @Component({
     selector: 'jhi-confirm-button',
     templateUrl: './confirm-autofocus-button.component.html',
+    imports: [ButtonComponent],
 })
 export class ConfirmAutofocusButtonComponent {
+    private modalService = inject(NgbModal);
+
     @Input() icon: IconProp;
     @Input() title: string;
     @Input() tooltip: string;
@@ -24,8 +28,6 @@ export class ConfirmAutofocusButtonComponent {
     @Output() onCancel = new EventEmitter<void>();
 
     @ViewChild('content') content?: TemplateRef<any>;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * open confirmation modal with text and title

@@ -269,8 +269,7 @@ describe('ExerciseImportComponent', () => {
             comp.exerciseType = exerciseType;
 
             comp.ngOnInit();
-
-            expect(getSpy).toHaveBeenCalledExactlyOnceWith(expectedPagingService, undefined, 0); // default values for arguments 2 and 3
+            expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
         }),
     );
 
@@ -285,7 +284,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
 
         expect(comp.titleKey).toContain('configureGrading');
-        expect(getSpy).toHaveBeenCalledExactlyOnceWith(CodeAnalysisPagingService, undefined, 0);
+        expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
     });
 
     it('should sort by exam title when only the exam filter is active', () => {

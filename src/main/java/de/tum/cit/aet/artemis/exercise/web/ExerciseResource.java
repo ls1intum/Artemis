@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ICER_PAPER_FLAG;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -35,6 +37,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -55,9 +59,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
@@ -104,14 +106,12 @@ public class ExerciseResource {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    private final ExerciseHintService exerciseHintService;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
-            PlagiarismCaseService plagiarismCaseService, ExerciseHintService exerciseHintService) {
+            PlagiarismCaseService plagiarismCaseService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -128,7 +128,6 @@ public class ExerciseResource {
         this.examAccessService = examAccessService;
         this.irisSettingsService = irisSettingsService;
         this.plagiarismCaseService = plagiarismCaseService;
-        this.exerciseHintService = exerciseHintService;
     }
 
     /**
@@ -139,6 +138,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -162,22 +162,25 @@ public class ExerciseResource {
                 }
             }
             else {
-                // Students should never access exercises
+                // Students should never access exam exercises like this
                 throw new AccessForbiddenException();
             }
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            exercise.setGradingCriteria(gradingCriteria);
         }
         // Normal exercise
         else {
-            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException();
             }
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+                exercise.setGradingCriteria(gradingCriteria);
+            }
+            else {
                 exercise.filterSensitiveInformation();
             }
         }
-
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
         return ResponseEntity.ok(exercise);
     }
 
@@ -203,7 +206,7 @@ public class ExerciseResource {
         }
         else {
             // Course exercise
-            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException("You are not allowed to see this exercise!");
             }
             if (!exercise.isExampleSolutionPublished()) {
@@ -300,6 +303,7 @@ public class ExerciseResource {
 
     /**
      * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
+     * NOTE: this should only be used for course exercises, not for exam exercises
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -312,14 +316,12 @@ public class ExerciseResource {
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
 
-        // TODO: Create alternative route so that instructors and admins can access the exercise details
-        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
-        if (exercise.isExamExercise() && !isAtLeastTAForExercise) {
+        if (exercise.isExamExercise()) {
             throw new AccessForbiddenException();
         }
 
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+        if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
             throw new AccessForbiddenException();
         }
 
@@ -349,13 +351,14 @@ public class ExerciseResource {
                 .orElse(null);
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            Set<ExerciseHint> activatedExerciseHints = exerciseHintService.getActivatedExerciseHints(programmingExercise, user);
-            Set<ExerciseHint> availableExerciseHints = exerciseHintService.getAvailableExerciseHints(programmingExercise, user);
-            return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, availableExerciseHints, activatedExerciseHints));
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (StringUtils.contains(exercise.getProblemStatement(), ICER_PAPER_FLAG)) {
+            if (user.getId() % 3 == 2) {
+                irisSettings = null;
+            }
         }
 
-        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, null, null));
+        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo));
     }
 
     /**

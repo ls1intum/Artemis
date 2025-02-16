@@ -4,6 +4,10 @@ import java.nio.file.Path;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RubocopCategorizer;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RubocopMessageProcessor;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RuffCategorizer;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.SarifParser;
 
 /**
  * Policy class for the parser strategies.
@@ -23,11 +27,12 @@ public class ParserPolicy {
                 .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + filePattern + " not found"));
 
         return switch (tool) {
-            case SPOTBUGS -> new SpotbugsParser();
             case CHECKSTYLE -> new CheckstyleParser();
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
-            // so far, we do not support swiftlint and gcc only SCA for Java
+            case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());
+            case RUFF -> new SarifParser(StaticCodeAnalysisTool.RUFF, new RuffCategorizer());
+            case SPOTBUGS -> new SpotbugsParser();
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }

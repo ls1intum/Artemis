@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @param clientRegistrationId The client registration ID.
  * @param returnUrl            The URL to return to after deep linking is completed.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) String aud, @JsonProperty(IdTokenClaimNames.ISS) String iss,
         @JsonProperty(IdTokenClaimNames.EXP) String exp, @JsonProperty(IdTokenClaimNames.IAT) String iat, @JsonProperty(IdTokenClaimNames.NONCE) String nonce,
         @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId, @JsonProperty(Claims.MESSAGE_TYPE) String messageType,
@@ -105,7 +107,6 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         claims.put(Claims.MESSAGE_TYPE, messageType());
         claims.put(Claims.LTI_VERSION, ltiVersion());
         claims.put(Claims.CONTENT_ITEMS, contentItems());
-
         return claims;
     }
 

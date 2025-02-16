@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +23,10 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
 
-    private final VcsRepositoryUri fileRepositoryUri1 = new VcsRepositoryUri(new File("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950"));
+    private final VcsRepositoryUri fileRepositoryUri1 = new VcsRepositoryUri(Path.of("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950").toFile());
 
-    private final VcsRepositoryUri fileRepositoryUri2 = new VcsRepositoryUri(new File("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205"));
+    private final VcsRepositoryUri fileRepositoryUri2 = new VcsRepositoryUri(
+            Path.of("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205").toFile());
 
     /**
      * empty constructor for exception handling

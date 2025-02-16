@@ -1,26 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { MockBuilder } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
 import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -40,23 +30,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         ],
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DragDropModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
-            declarations: [
-                MultipleChoiceQuestionEditComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(QuizScoringInfoModalComponent),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockComponent(SecuredImageComponent),
-                MockComponent(DragAndDropQuestionComponent),
-                MockComponent(MultipleChoiceQuestionComponent),
-                MockComponent(MultipleChoiceVisualQuestionComponent),
-            ],
-        }).compileComponents();
+    beforeEach(async () => {
+        await MockBuilder(MultipleChoiceQuestionEditComponent).mock(ArtemisTestModule);
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
         component.question = question;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {

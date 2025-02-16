@@ -168,11 +168,6 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     });
 
     it('should fail when parser throws exception', async () => {
-        // Currently, Angular + Jest seems to have a problem where an error thrown
-        // from within a Promise, which is catched (here: by the component), is not
-        // properly handled. Therefore, we need to mock the console.error method
-        // to prevent the error from being printed to the console and failing the test.
-        jest.spyOn(console, 'error').mockImplementation();
         // given
         mockedParse.mockImplementation(() => {
             throw new Error('testError');

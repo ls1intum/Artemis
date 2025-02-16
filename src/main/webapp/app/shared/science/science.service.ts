@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
@@ -7,16 +7,16 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 
 @Injectable({ providedIn: 'root' })
 export class ScienceService {
+    private httpClient = inject(HttpClient);
+    private featureToggleService = inject(FeatureToggleService);
+    private scienceSettingsService = inject(ScienceSettingsService);
+    private accountService = inject(AccountService);
+
     private resourceURL = 'api';
 
     private featureToggleActive = false;
 
-    constructor(
-        private httpClient: HttpClient,
-        private featureToggleService: FeatureToggleService,
-        private scienceSettingsService: ScienceSettingsService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.scienceSettingsService.getScienceSettingsUpdates();
         this.accountService.getAuthenticationState().subscribe((user) => this.onUserIdentityChange(user));
         this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {

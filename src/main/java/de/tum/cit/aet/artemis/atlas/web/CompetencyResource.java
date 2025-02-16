@@ -337,8 +337,12 @@ public class CompetencyResource {
     }
 
     private void checkCompetencyAttributes(Competency competency) {
-        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty() || competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
-            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
+        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+            throw new BadRequestAlertException("The title of a competency is invalid!", ENTITY_NAME, "invalidCompetencyTitle");
+        }
+        if (competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
+            throw new BadRequestAlertException("The mastery threshold of the competency '" + competency.getTitle() + "' is invalid!", ENTITY_NAME,
+                    "invalidCompetencyMasteryThreshold");
         }
     }
 

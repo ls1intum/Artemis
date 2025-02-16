@@ -47,7 +47,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
 7. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
-8. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.cit.tum.de/features/students) and on [Exam mode instructor features](https://artemis.cit.tum.de/features/instructors).
+8. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.tum.de/features/students) and on [Exam mode instructor features](https://artemis.tum.de/features/instructors).
 9. **[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. 
     * **Training process**: It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback. 
     * **Grading**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). They can define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
@@ -59,7 +59,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **[Adaptive learning](https://docs.artemis.cit.tum.de/user/adaptive-learning)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives. 
     * **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies. 
     * **[Learning paths](https://docs.artemis.cit.tum.de/user/adaptive-learning/adaptive-learning-student.html#learning-paths)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
-13. **[Iris](https://artemis.cit.tum.de/about-iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
+13. **[Iris](https://artemis.tum.de/about-iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/Athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generate AI. 
@@ -193,7 +193,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.7.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-7.10.1.war
 ```
 
 ## Architecture
@@ -242,7 +242,7 @@ We communicate using GitHub issues and pull requests. Additionally, you can join
 The following universities are actively using Artemis or are currently evaluating Artemis.
 
 * **Technical University of Munich**  
-  https://artemis.cit.tum.de  
+  https://artemis.tum.de  
   Main contact person: [Stephan Krusche](mailto:krusche@tum.de)  
   
 * **LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien**  

@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
+import { AlertService, AlertType } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -27,6 +26,9 @@ describe('BuildAgentSummaryComponent', () => {
 
     const mockBuildAgentsService = {
         getBuildAgentSummary: jest.fn().mockReturnValue(of([])),
+        pauseAllBuildAgents: jest.fn().mockReturnValue(of({})),
+        resumeAllBuildAgents: jest.fn().mockReturnValue(of({})),
+        clearDistributedData: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -55,7 +57,6 @@ describe('BuildAgentSummaryComponent', () => {
         projectType: 'Maven',
         scaEnabled: false,
         sequentialTestRunsEnabled: false,
-        testwiseCoverageEnabled: false,
         resultPaths: [],
     };
 
@@ -135,20 +136,25 @@ describe('BuildAgentSummaryComponent', () => {
             status: BuildAgentStatus.ACTIVE,
         },
     ];
+    let alertService: AlertService;
+    let alertServiceAddAlertStub: jest.SpyInstance;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [BuildAgentSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            imports: [ArtemisTestModule],
+            declarations: [],
             providers: [
-                { provide: JhiWebsocketService, useValue: mockWebsocketService },
+                { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
+        alertService = TestBed.inject(AlertService);
+        alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
     }));
 
     beforeEach(() => {
@@ -217,5 +223,55 @@ describe('BuildAgentSummaryComponent', () => {
 
         expect(component.buildCapacity).toBe(0);
         expect(component.currentBuilds).toBe(0);
+    });
+
+    it('should call correct service method when pausing and resuming build agents', () => {
+        component.pauseAllBuildAgents();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.buildAgents.alerts.buildAgentsPaused',
+        });
+
+        component.resumeAllBuildAgents();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.buildAgents.alerts.buildAgentsResumed',
+        });
+    });
+
+    it('should show alert when error in pausing or resuming build agents', () => {
+        mockBuildAgentsService.pauseAllBuildAgents.mockReturnValue(throwError(() => new Error()));
+
+        component.pauseAllBuildAgents();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentPauseFailed',
+        });
+
+        mockBuildAgentsService.resumeAllBuildAgents.mockReturnValue(throwError(() => new Error()));
+
+        component.resumeAllBuildAgents();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+        });
+    });
+
+    it('should call correct service method when clearing distributed data', () => {
+        component.clearDistributedData();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.buildAgents.alerts.distributedDataCleared',
+        });
+    });
+
+    it('should show alert when error in clearing distributed data', () => {
+        mockBuildAgentsService.clearDistributedData.mockReturnValue(throwError(() => new Error()));
+
+        component.clearDistributedData();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
+        });
     });
 });

@@ -4,14 +4,14 @@ import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, PageType } from 'app/shared/metis/metis.util';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,
@@ -33,9 +33,20 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { Post } from 'app/entities/metis/post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -62,25 +73,31 @@ describe('PostComponent', () => {
                 { provide: DOCUMENT, useValue: document },
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
             declarations: [
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(PostHeaderComponent),
+                MockComponent(PostingHeaderComponent),
                 MockComponent(PostingContentComponent),
-                MockComponent(PostFooterComponent),
+                MockComponent(PostingFooterComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
-                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
+                ArtemisDatePipe,
+                ArtemisTranslatePipe,
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
                 metisService = TestBed.inject(MetisService);
+                metisService.course = metisCourse;
 
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
@@ -150,7 +167,7 @@ describe('PostComponent', () => {
     });
 
     it('should contain a post footer', () => {
-        const footer = getElement(debugElement, 'jhi-post-footer');
+        const footer = getElement(debugElement, 'jhi-posting-footer');
         expect(footer).not.toBeNull();
     });
 
@@ -165,8 +182,19 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
+
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
+        component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
@@ -310,5 +338,90 @@ describe('PostComponent', () => {
         component.onClickOutside();
         expect(component.showDropdown).toBeFalse();
         expect(enableBodyScrollSpy).toHaveBeenCalled();
+    });
+
+    it('should handle onRightClick correctly based on cursor style', () => {
+        const testCases = [
+            {
+                cursor: 'pointer',
+                preventDefaultCalled: false,
+                showDropdown: false,
+                dropdownPosition: { x: 0, y: 0 },
+            },
+            {
+                cursor: 'default',
+                preventDefaultCalled: true,
+                showDropdown: true,
+                dropdownPosition: { x: 100, y: 200 },
+            },
+        ];
+
+        testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
+            const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+
+            const targetElement = document.createElement('div');
+            Object.defineProperty(event, 'target', { value: targetElement });
+
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+                cursor,
+            } as CSSStyleDeclaration);
+
+            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+            component.onRightClick(event);
+
+            expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
+            expect(component.showDropdown).toBe(showDropdown);
+            expect(component.dropdownPosition).toEqual(dropdownPosition);
+
+            jest.restoreAllMocks();
+        });
+    });
+
+    it('should cast the post to Post on change', () => {
+        const mockPost: Posting = {
+            id: 1,
+            author: {
+                id: 1,
+                name: 'Test Author',
+                internal: false,
+            },
+            content: 'Test Content',
+            postingType: PostingType.POST,
+        };
+        // @ts-ignore method is private
+        const spy = jest.spyOn(component, 'assignPostingToPost');
+        component.posting = mockPost;
+        fixture.detectChanges();
+
+        expect(component.posting).toBeInstanceOf(Post);
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should display post-time span when isConsecutive() returns true', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
+        const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
+
+        expect(postTimeDebugElement).toBeTruthy();
+
+        const expectedTime = dayjs(fixedDate).format('HH:mm');
+        expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
+    });
+
+    it('should not display post-time span when isConsecutive() returns false', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        fixture.detectChanges();
+
+        const postTimeElement = debugElement.query(By.css('span.post-time'));
+        expect(postTimeElement).toBeFalsy();
     });
 });

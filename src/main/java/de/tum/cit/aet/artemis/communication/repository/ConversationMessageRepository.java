@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCo
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getOwnSpecification;
+import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnresolvedSpecification;
@@ -57,6 +58,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
+            .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))
             .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
             // @formatter:on
     }
@@ -137,21 +139,4 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
-
-    /**
-     * Finds tags of course-wide messages
-     *
-     * @param courseId the course
-     * @return list of tags
-     */
-    // TODO: unused, delete
-    @Query("""
-            SELECT DISTINCT tag
-            FROM Post post
-                LEFT JOIN post.tags tag
-                LEFT JOIN Channel channel ON channel.id = post.conversation.id
-            WHERE channel.course.id = :courseId
-                AND channel.isCourseWide = TRUE
-            """)
-    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

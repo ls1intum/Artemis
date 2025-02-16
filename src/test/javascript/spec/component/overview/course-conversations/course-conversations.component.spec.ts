@@ -1,8 +1,9 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
@@ -10,9 +11,9 @@ import { CourseWideSearchComponent } from 'app/overview/course-conversations/cou
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
-import { BehaviorSubject, EMPTY } from 'rxjs';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, EMPTY, of } from 'rxjs';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -23,14 +24,12 @@ import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-serv
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -42,8 +41,15 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { ElementRef, signal } from '@angular/core';
 
-const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDTO | undefined)[] = [
+    undefined,
+    generateOneToOneChatDTO({} as OneToOneChatDTO),
+    generateExampleGroupChatDTO({} as GroupChatDTO),
+    generateExampleChannelDTO({} as ChannelDTO),
+];
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
@@ -56,9 +62,11 @@ examples.forEach((activeConversation) => {
         let acceptCodeOfConductSpy: jest.SpyInstance;
         let setActiveConversationSpy: jest.SpyInstance;
         let metisConversationService: MetisConversationService;
+        let courseOverviewService: CourseOverviewService;
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
         let layoutService: LayoutService;
+        let activatedRoute: ActivatedRoute;
 
         const MockLayoutService = {
             activeBreakpoints: [],
@@ -72,6 +80,10 @@ examples.forEach((activeConversation) => {
             },
             isBreakpointActive: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
         };
+
+        // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
+        MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+        MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -116,7 +128,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(ProfileService),
                     { provide: LayoutService, useValue: MockLayoutService },
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
 
             const metisService = new MockMetisService();
@@ -128,8 +140,10 @@ examples.forEach((activeConversation) => {
             });
 
             metisConversationService = TestBed.inject(MetisConversationService);
+            courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             layoutService = TestBed.inject(LayoutService);
+            activatedRoute = TestBed.inject(ActivatedRoute);
 
             Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
@@ -155,6 +169,39 @@ examples.forEach((activeConversation) => {
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             modalService = TestBed.inject(NgbModal);
+            component.sidebarConversations = [];
+
+            jest.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
+                {
+                    id: 1,
+                    title: 'Test Channel 1',
+                    isCurrent: true,
+                    conversation: { id: 1 },
+                    size: 'S',
+                },
+                {
+                    id: 2,
+                    title: 'Test Channel 2',
+                    isCurrent: false,
+                    conversation: { id: 2 },
+                    size: 'S',
+                },
+            ]);
+
+            jest.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
+                recents: {
+                    entityData: [
+                        {
+                            id: 1,
+                            title: 'Test Channel 1',
+                            isCurrent: true,
+                            conversation: { id: 1 },
+                            size: 'S',
+                        },
+                    ],
+                },
+                generalChannels: { entityData: [] },
+            });
         }));
 
         afterEach(() => {
@@ -406,8 +453,6 @@ examples.forEach((activeConversation) => {
             });
 
             it('should log an error if createChannelFn throws an error', () => {
-                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
                 component.createChannelFn = jest.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ error }: any) => {
@@ -417,9 +462,6 @@ examples.forEach((activeConversation) => {
                 });
 
                 component.performChannelAction(channelAction);
-                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
-
-                consoleErrorSpy.mockRestore();
             });
 
             it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {
@@ -429,6 +471,227 @@ examples.forEach((activeConversation) => {
                 expect(component.createChannelFn).toBeUndefined();
                 // Since createChannelFn is undefined, prepareSidebarData should not be called
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
+
+            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', fakeAsync(() => {
+                (metisConversationService.forceRefresh as jest.Mock).mockReturnValue(of({}));
+
+                component.prepareSidebarData();
+                tick();
+                const recentsGroup = component.accordionConversationGroups.recents;
+                expect(recentsGroup).toBeDefined();
+                expect(recentsGroup.entityData).toHaveLength(1);
+                expect(recentsGroup.entityData[0].isCurrent).toBeTrue();
+            }));
+        });
+
+        describe('query parameter handling', () => {
+            it('should handle SavedPostStatus in conversationId', () => {
+                const queryParams = {
+                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should handle numeric conversationId', () => {
+                const queryParams = {
+                    conversationId: '123',
+                };
+                activatedRoute.queryParams = of(queryParams);
+                const spy = jest.spyOn(component, 'closeSidebarOnMobile');
+
+                component.subscribeToQueryParameter();
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
+                expect(spy).toHaveBeenCalled();
+            });
+
+            it('should handle focusPostId parameter', () => {
+                const queryParams = {
+                    focusPostId: '456',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['focusPostId']).toBe(456);
+            });
+
+            it('should handle openThreadOnFocus parameter', () => {
+                const queryParams = {
+                    openThreadOnFocus: 'true',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['openThreadOnFocus']).toBe('true');
+            });
+
+            it('should handle messageId parameter', () => {
+                const queryParams = {
+                    messageId: '789',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['postInThread']).toEqual({ id: 789 });
+            });
+
+            it('should clear postInThread when no messageId is present', () => {
+                const queryParams = {};
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['postInThread']).toBeUndefined();
+            });
+
+            it('should handle multiple query parameters together', () => {
+                const queryParams = {
+                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                    focusPostId: '456',
+                    openThreadOnFocus: 'true',
+                    messageId: '789',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
+                expect(component['focusPostId']).toBe(456);
+                expect(component['openThreadOnFocus']).toBe('true');
+                expect(component['postInThread']).toEqual({ id: 789 });
+            });
+        });
+
+        describe('navigate to post functionality', () => {
+            it('should handle answer post navigation correctly', () => {
+                const answerPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.ANSWER,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(answerPost);
+
+                expect(component['focusPostId']).toBe(123);
+                expect(component['openThreadOnFocus']).toBeTrue();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
+            });
+
+            it('should handle question post navigation correctly', () => {
+                const questionPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.POST,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(questionPost);
+
+                expect(component['focusPostId']).toBe(123);
+                expect(component['openThreadOnFocus']).toBeFalse();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
+            });
+
+            it('should not process navigation when referencePostId is undefined', () => {
+                const invalidPost: Posting = {
+                    postingType: PostingType.POST,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(invalidPost);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should not process navigation when conversation id is undefined', () => {
+                const invalidPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.POST,
+                    conversation: {},
+                };
+
+                component.onNavigateToPost(invalidPost);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        it('should mark all channels as read', () => {
+            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+            const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            component.markAllChannelAsRead();
+            expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
+            expect(forceRefresh).toHaveBeenCalledTimes(2);
+        });
+
+        describe('conversation selection', () => {
+            it('should handle numeric conversationId', () => {
+                component.onConversationSelected(123);
+                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
+            });
+
+            it('should handle valid string conversationId as SavedPostStatus', () => {
+                const validStatus = SavedPostStatusMap.ARCHIVED.toString();
+                component.onConversationSelected(validStatus);
+                expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
+                expect(component.postInThread).toBeUndefined();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+                expect(component.activeConversation).toBeUndefined();
+            });
+
+            it('should ignore invalid string conversationId', () => {
+                const invalidStatus = 'invalidStatus';
+                component.onConversationSelected(invalidStatus);
+                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
+            });
+
+            it('should toggle the value of showOnlyPinned', () => {
+                expect(component.showOnlyPinned).toBe(false);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(true);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(false);
+            });
+
+            it('should update pinnedCount when onPinnedCountChanged is called', () => {
+                const newPinnedCount = 5;
+
+                component.onPinnedCountChanged(newPinnedCount);
+                expect(component.pinnedCount).toBe(newPinnedCount);
+            });
+
+            it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(0);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+
+            it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(5);
+                expect(component.showOnlyPinned).toBeTrue();
+
+                component.showOnlyPinned = false;
+                component.onPinnedCountChanged(10);
+                expect(component.showOnlyPinned).toBeFalse();
             });
         });
     });

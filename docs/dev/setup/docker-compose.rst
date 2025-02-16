@@ -21,7 +21,7 @@ Getting Started with Docker Compose
      Make sure that Docker Desktop has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``.
 
 2. Check that all local network ports used by Docker Compose are free (e.g. you haven't started a local MySQL server
-   when you would like to start a Docker Compose instance of mysql)
+   when you would like to start a Docker Compose instance of MySQL).
 3. Run ``docker compose pull && docker compose up`` in the directory ``docker/``
 4. Open the Artemis instance in your browser at https://localhost
 5. Run ``docker compose down`` in the directory ``docker/`` to stop and remove the docker containers
@@ -62,13 +62,12 @@ Three example commands to run such setups:
 
 .. code:: bash
 
-  docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
   docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
-  This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
+  This should provide a quick way, without manual changes necessary, for new contributors to start up an Artemis instance.
   If the documentation just mentions to run ``docker compose`` without a ``-f <file.yml>`` argument, it's
   assumed you are running the command from the ``docker/`` directory.
 
@@ -82,7 +81,7 @@ is defined in the following files:
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 
-For testing mails or SAML logins, you can append the following services to any setup with an artemis container:
+For testing mails or SAML logins, you can append the following services to any setup with an Artemis container:
 
 * ``mailhog.yml``: **Mailhog Service** (email testing tool)
 * ``saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
@@ -145,7 +144,7 @@ Get a shell into the containers
    ``docker compose exec artemis-app bash`` or if the container is not yet running:
    ``docker compose run --rm artemis-app bash``
 -  mysql container:
-   ``docker compose exec mysql bash`` or directly into mysql ``docker compose exec mysql mysql``
+   ``docker compose exec mysql bash`` or directly into MySQL ``docker compose exec mysql mysql``
 
 Analog for other services.
 
@@ -157,7 +156,7 @@ Other useful commands
 - Stop, remove containers and volumes: ``docker compose down -v``
 - Remove Artemis-related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
-  This is helpful in setups where you just want to delete the state of artemis
+  This is helpful in setups where you just want to delete the state of Artemis
   but not of Jenkins and GitLab for instance.
 - Stop a service: ``docker compose stop <name of the service>`` (restart via
   ``docker compose start <name of the service>``)
@@ -306,7 +305,7 @@ The ``docker-compose.yml`` file could look like this for an Artemis, Jenkins and
           - "traefik.http.services.artemis.loadbalancer.server.port=8080"
 
       artemis-db:
-        image: mysql:9
+        image: mysql:9.1.0
         container_name: "mysql"
         restart: unless-stopped
         volumes:

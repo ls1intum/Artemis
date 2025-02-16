@@ -39,7 +39,6 @@ describe('LectureDetailComponent', () => {
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;
     let lectureService: LectureService;
-    let consoleSpy: jest.SpyInstance;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
 
@@ -68,7 +67,6 @@ describe('LectureDetailComponent', () => {
         component = fixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
         fixture.detectChanges();
-        consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     });
 
     it('should initialize lecture when ngOnInit is called', () => {
@@ -101,16 +99,16 @@ describe('LectureDetailComponent', () => {
     });
     it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
         component.lecture = mockLecture;
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
         component.ingestLectureInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
     });
+
     it('should log error when error occurs', () => {
         component.lecture = mockLecture;
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         component.ingestLectureInPyris();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to send Ingestion request', expect.any(Error));
     });
     it('should set lectureIngestionEnabled based on service response', () => {
         component.lecture = mockLecture;

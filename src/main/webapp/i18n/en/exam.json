@@ -315,8 +315,8 @@
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
-            "points": "Points",
-            "bonus": "Bonus Points",
+            "points": "({{ points }} Points)",
+            "bonus": "({{ points }} Points, {{ bonusPoints }} Bonus Points)",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "notStarted": "Exercise not started",
@@ -339,7 +339,10 @@
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
                 "button": "Show exam summary{{countdown}}"
-            }
+            },
+            "saveExercise": "Save exercise",
+            "exerciseSaved": "Exercise saved",
+            "reloadWarning": "You are about to reload the page. All unsaved changes will be lost. Are you sure you want to continue?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -776,6 +779,7 @@
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",
+            "studentTestExam": "Student test exam ({{ examTitle }})",
             "testRun": "Test Run ({{ examTitle }})",
             "exercises": "Exercises",
             "overview": "Overview",
@@ -799,7 +803,7 @@
             "endOfIndividualWorkingTime": "End of individual working time:",
             "disabledChangeSubmissionStateButtonExplanation": "Cannot be changed before the end of the working time and the respective grace period.",
             "toggleSuccessful": "The submitted status was changed successfully.",
-            "togglefailed": "The submitted status could not be changed!",
+            "toggleFailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint",
             "noSessions": "No Sessions"
         },

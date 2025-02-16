@@ -19,15 +19,19 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -47,6 +51,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Service
 public class LectureUnitService {
 
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
+
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
@@ -59,24 +65,24 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final CourseCompetencyApi courseCompetencyApi;
 
-    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+    private final CompetencyRelationApi competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService,
-            CourseCompetencyRepository courseCompetencyRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi,
+            CourseCompetencyApi courseCompetencyApi, CompetencyRelationApi competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.courseCompetencyRepository = courseCompetencyRepository;
-        this.competencyProgressService = competencyProgressService;
-        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
@@ -177,7 +183,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+            competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
     }
 
@@ -190,7 +196,7 @@ public class LectureUnitService {
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
-        courseCompetencyRepository.save(competency);
+        courseCompetencyApi.save(competency);
     }
 
     /**
@@ -200,7 +206,7 @@ public class LectureUnitService {
      * @param competency       competency to remove
      */
     public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyLectureUnitLinkRepository.deleteAll(lectureUnitLinks);
+        competencyRelationApi.deleteAllLectureUnitLinks(lectureUnitLinks);
         competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
@@ -218,6 +224,30 @@ public class LectureUnitService {
         catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new BadRequestException();
         }
+    }
+
+    /**
+     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
+     * `AttachmentUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
+     * database.
+     * The method responds with different HTTP status codes based on the result:
+     * Returns {OK} if the ingestion is successful.
+     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
+     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentUnit}.
+     *
+     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentUnit.
+     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
+     */
+    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
+        if (!(lectureUnit instanceof AttachmentUnit)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        if (pyrisWebhookService.isEmpty()) {
+            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 
     /**
@@ -253,10 +283,10 @@ public class LectureUnitService {
 
         T savedLectureUnit = saveFunction.apply(lectureUnit);
 
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
             savedLectureUnit.setCompetencyLinks(links);
             reconnectCompetencyLectureUnitLinks(savedLectureUnit);
-            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyLectureUnitLinkRepository.saveAll(links)));
+            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyRelationApi.saveAllLectureUnitLinks(links)));
         }
 
         return savedLectureUnit;

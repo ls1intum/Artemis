@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -19,13 +20,6 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository;
 import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
@@ -33,9 +27,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -52,28 +44,10 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
-    protected CodeHintRepository codeHintRepository;
-
-    @Autowired
-    protected CoverageFileReportRepository coverageFileReportRepository;
-
-    @Autowired
-    protected CoverageReportRepository coverageReportRepository;
-
-    @Autowired
-    protected ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    @Autowired
-    protected ExerciseHintRepository exerciseHintRepository;
-
-    @Autowired
     protected IdeRepository ideRepository;
 
     @Autowired
     protected ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    protected ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
 
     @Autowired
     protected ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
@@ -95,9 +69,6 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
-
-    @Autowired
-    protected TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
 
     @Autowired
     protected UserIdeMappingRepository userIdeMappingRepository;
@@ -124,18 +95,15 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     @Autowired
     protected UserTestRepository userRepository;
 
+    @Autowired
+    protected LongFeedbackTextRepository longFeedbackTextRepository;
+
     // Services
     @Autowired
     protected AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     @Autowired
     protected BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    protected CodeHintService codeHintService;
-
-    @Autowired
-    protected ExerciseHintService exerciseHintService;
 
     @Autowired
     protected GitUtilService gitUtilService;

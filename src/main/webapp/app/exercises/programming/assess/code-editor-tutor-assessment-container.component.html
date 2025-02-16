@@ -52,67 +52,75 @@
     </jhi-assessment-layout>
 
     <ng-template #assessment>
-        <ng-container
-            *jhiExtensionPoint="
-                overrideCodeEditor;
-                context: { title: editorTitle, toolbar: editorToolbar, feedback: editorBottom, exercise: exercise, participation: participation }
-            "
-        >
-            @if (!loadingParticipation && !participationCouldNotBeFetched) {
-                <jhi-code-editor-container
-                    [editable]="false"
-                    [participation]="participation"
-                    [feedbackSuggestions]="feedbackSuggestions"
-                    [showEditorInstructions]="showEditorInstructions"
-                    [isTutorAssessment]="true"
-                    [highlightFileChanges]="true"
-                    [readOnlyManualFeedback]="readOnly()"
-                    [highlightDifferences]="highlightDifferences"
-                    [course]="getCourseFromExercise(exercise)"
-                    (onUpdateFeedback)="onUpdateFeedback($event)"
-                    (onAcceptSuggestion)="removeSuggestion($event)"
-                    (onDiscardSuggestion)="removeSuggestion($event)"
-                    (onFileLoad)="highlightChangedLines($event)"
-                >
-                    <div editorTitle *ngTemplateOutlet="editorTitle"></div>
-                    <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
-                    <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
-                    <div class="mt-3" *ngTemplateOutlet="editorBottom" editorBottom></div>
-                </jhi-code-editor-container>
-            }
-        </ng-container>
+        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+        <!--        <ng-container-->
+        <!--            *jhiExtensionPoint="-->
+        <!--                overrideCodeEditor;-->
+        <!--                context: { title: editorTitle, toolbar: editorToolbar, feedback: editorBottom, exercise: exercise, participation: participation }-->
+        <!--            "-->
+        <!--        >-->
+        @if (!loadingParticipation && !participationCouldNotBeFetched) {
+            <jhi-code-editor-container
+                [editable]="false"
+                [participation]="participation"
+                [feedbackSuggestions]="feedbackSuggestions"
+                [showEditorInstructions]="showEditorInstructions"
+                [isTutorAssessment]="true"
+                [highlightFileChanges]="true"
+                [readOnlyManualFeedback]="readOnly()"
+                [highlightDifferences]="highlightDifferences"
+                [course]="getCourseFromExercise(exercise)"
+                (onUpdateFeedback)="onUpdateFeedback($event)"
+                (onAcceptSuggestion)="removeSuggestion($event)"
+                (onDiscardSuggestion)="removeSuggestion($event)"
+                (onFileLoad)="highlightChangedLines($event)"
+            >
+                <div editorTitle *ngTemplateOutlet="editorTitle"></div>
+                <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
+                <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
+                <div class="mt-3" *ngTemplateOutlet="editorBottom" editorBottom></div>
+            </jhi-code-editor-container>
+        }
+        <!--        </ng-container>-->
         <!-- The templates must be outside of the ng-container, otherwise it cannot be transferred via the context -->
         <ng-template #editorTitle>
             <span>
                 <span>{{ exercise?.title }}</span>
-                <span>&nbsp;[</span>
-                <span>{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}</span>
-                @if (exercise.bonusPoints) {
-                    <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-                }
-                @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
-                }
-                <span>]</span>
+                <span
+                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                ></span>
+                <span>
+                    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                    }
+                </span>
             </span>
         </ng-template>
         <ng-template #editorToolbar>
-            <ng-container *jhiExtensionPoint="overrideExportGoToRepository">
-                <jhi-programming-assessment-repo-export
-                    [programmingExercises]="[exercise]"
-                    [singleParticipantMode]="true"
-                    [participationIdList]="participation ? [participation!.id!] : []"
-                />
-                @if (!localVCEnabled) {
-                    <a
-                        class="ms-2 me-5"
-                        href="{{ participation?.userIndependentRepositoryUri }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-                    ></a>
-                }
-            </ng-container>
+            <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+            <!--            <ng-container *jhiExtensionPoint="overrideExportGoToRepository">-->
+            @if (isAtLeastEditor && localVCEnabled && !isTestRun) {
+                <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink" target="_blank" rel="noopener noreferrer">
+                    <fa-icon [icon]="faExternalLink" />
+                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+                </a>
+            }
+            <jhi-programming-assessment-repo-export
+                [programmingExercises]="[exercise]"
+                [singleParticipantMode]="true"
+                [participationIdList]="participation ? [participation!.id!] : []"
+            />
+            @if (isAtLeastEditor && !localVCEnabled) {
+                <a
+                    class="ms-2 me-5"
+                    href="{{ participation?.userIndependentRepositoryUri }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
+                ></a>
+            }
+            <!--            </ng-container>-->
             @if (participation) {
                 <jhi-result
                     [result]="manualResult"

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -108,6 +109,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @Component
 @Profile("gitlab")
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 public class GitlabRequestMockProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
@@ -129,6 +132,7 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks doesn't work
     @SpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
@@ -154,6 +158,7 @@ public class GitlabRequestMockProvider {
     @Mock
     private PipelineApi pipelineApi;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks (see above) doesn't work
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
@@ -361,7 +366,7 @@ public class GitlabRequestMockProvider {
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockCreatePersonalAccessTokenError() throws GitLabApiException {

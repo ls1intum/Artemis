@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -27,6 +29,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -34,14 +37,16 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
@@ -54,6 +59,8 @@ public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
+    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
+
     private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -63,6 +70,8 @@ public class LocalCIResultProcessingService {
     private final BuildJobRepository buildJobRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
     private final ParticipationRepository participationRepository;
 
@@ -78,7 +87,8 @@ public class LocalCIResultProcessingService {
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -87,6 +97,7 @@ public class LocalCIResultProcessingService {
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.buildLogEntryService = buildLogEntryService;
+        this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
     }
 
     /**
@@ -133,8 +144,8 @@ public class LocalCIResultProcessingService {
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
-        List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
-        Throwable ex = resultQueueItem.exception();
+        List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
+        Throwable buildException = resultQueueItem.exception();
 
         BuildJob savedBuildJob;
 
@@ -159,38 +170,47 @@ public class LocalCIResultProcessingService {
                 }
             }
             finally {
+                ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
+                if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
+                    ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
+                    programmingExerciseParticipation.setExercise(exercise);
+                    programmingExerciseParticipation.setProgrammingExercise(exercise);
+                }
+
                 // save build job to database
-                if (ex != null) {
-                    if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                if (buildException != null) {
+                    if (buildException.getCause() instanceof CancellationException
+                            && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                     }
+                    else if (buildException.getCause() instanceof TimeoutException) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
+                    }
                     else {
-                        log.error("Error while processing build job: {}", buildJob, ex);
+                        log.error("Error while processing build job: {}", buildJob, buildException);
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
                     }
                 }
                 else {
                     savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+                    if (programmingExerciseParticipation != null) {
+                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
+                    }
                 }
 
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    if (participation.getExercise() == null) {
-                        participation.setExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
-                    }
-
+                if (programmingExerciseParticipation != null) {
                     if (result != null) {
-                        programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                        programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                         addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                     }
                     else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                                new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                                new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                     }
 
                     if (!buildLogs.isEmpty()) {
                         if (savedBuildJob != null) {
-                            buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), participation.getProgrammingExercise());
+                            buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), programmingExerciseParticipation.getProgrammingExercise());
                         }
                         else {
                             log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
@@ -253,14 +273,53 @@ public class LocalCIResultProcessingService {
      *
      * @return the saved the build job
      */
-    public BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
+                buildJob.setId(existingBuildJob.getId());
+            });
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
             return null;
+        }
+    }
+
+    private void updateExerciseBuildDurationAsync(long exerciseId) {
+        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exerciseId));
+    }
+
+    private void updateExerciseBuildDuration(long exerciseId) {
+        try {
+            var buildStatisticsDto = buildJobRepository.findBuildJobStatisticsByExerciseId(exerciseId);
+            if (buildStatisticsDto == null || buildStatisticsDto.buildCountWhenUpdated() == 0) {
+                return;
+            }
+
+            long averageDuration = Math.round(buildStatisticsDto.buildDurationSeconds());
+
+            var programmingExerciseBuildStatisticsOpt = programmingExerciseBuildStatisticsRepository.findByExerciseId(exerciseId);
+
+            if (programmingExerciseBuildStatisticsOpt.isEmpty()) {
+                // create the database row if it does not exist
+                var programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exerciseId, averageDuration, buildStatisticsDto.buildCountWhenUpdated());
+                programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
+            }
+            else {
+                var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsOpt.get();
+                // only update the database row if the build duration has changed using a modifying query or when the build count is above a certain threshold
+                if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()
+                        && buildStatisticsDto.buildCountWhenUpdated() - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() < BUILD_STATISTICS_UPDATE_THRESHOLD) {
+                    return;
+                }
+                programmingExerciseBuildStatisticsRepository.updateStatistics(averageDuration, buildStatisticsDto.buildCountWhenUpdated(), exerciseId);
+            }
+
+        }
+        catch (Exception e) {
+            log.error("Could not update exercise build duration", e);
         }
     }
 

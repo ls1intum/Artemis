@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import java.net.URI;
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -37,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTok
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -66,7 +67,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected String artemisGitEmail;
 
     @Value("${artemis.continuous-integration.url}")
-    protected URL jenkinsServerUrl;
+    protected URI jenkinsServerUri;
 
     @Autowired
     protected RestTemplate restTemplate;
@@ -138,9 +139,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected JenkinsInternalUrlService jenkinsInternalUrlService;
 
     @Autowired
-    protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
-    @Autowired
     protected JenkinsJobService jenkinsJobService;
 
     @Autowired
@@ -206,4 +204,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
 
     @Autowired
     protected UserUtilService userUtilService;
+
+    @Autowired
+    protected LearnerProfileUtilService learnerProfileUtilService;
 }

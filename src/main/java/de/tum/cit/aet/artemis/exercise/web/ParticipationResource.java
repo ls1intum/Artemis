@@ -55,6 +55,8 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -66,7 +68,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -219,6 +220,7 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -399,8 +401,9 @@ public class ParticipationResource {
 
         // Check submission requirements
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
-            if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
-                throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+            boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
+            if (!hasSubmittedOnce) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
@@ -595,9 +598,7 @@ public class ParticipationResource {
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        if (exercise.getExerciseType() == ExerciseType.QUIZ) {
-            return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(exercise.getId());
-        }
+        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
         if (exercise.isTeamMode()) {
             // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
@@ -636,7 +637,12 @@ public class ParticipationResource {
             });
         }
         else {
-            participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            if (exercise.isTeamMode()) {
+                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            }
 
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -780,8 +786,17 @@ public class ParticipationResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            throw new AccessForbiddenException();
+        // Exam exercise
+        if (exercise.isExamExercise()) {
+            // NOTE: we disable access to exam exercises over this endpoint for now, in the future we should check if there is a way to enable this
+            // e.g. by checking if there is a visible exam attached and a student exam exists
+            throw new AccessForbiddenException("You are not allowed to access this exam exercise");
+        }
+        // Course exercise
+        else {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
+                throw new AccessForbiddenException();
+            }
         }
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise quizExercise) {

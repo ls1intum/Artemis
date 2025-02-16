@@ -162,25 +162,37 @@
     gap: 8px;
 }
 
-.bubble-left,
-.bubble-right {
-    --r: 13px; /* the radius */
-    --t: 10px; /* the size of the tail */
+:host {
+    .bubble-left,
+    .bubble-right {
+        --r: 13px; /* the radius */
+        --t: 10px; /* the size of the tail */
 
-    max-width: 100%;
-    margin-bottom: 10px;
-    color: var(--bs-body-color);
-    padding: 10px;
-    // prettier-ignore
-    -webkit-mask:
-        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+        max-width: 100%;
+        margin-bottom: 10px;
+        color: var(--bs-body-color);
+        padding: 10px;
+        // prettier-ignore
+        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
         conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
         radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    ::ng-deep p {
-        margin-bottom: 0;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+
+        ::ng-deep > span > p,
+        ::ng-deep > p {
+            margin-bottom: 0;
+        }
+
+        ::ng-deep > span > p:not(:last-child),
+        ::ng-deep > p:not(:last-child) {
+            margin-bottom: 7px;
+        }
+
+        ::ng-deep pre code {
+            line-height: 1;
+        }
     }
 }
 

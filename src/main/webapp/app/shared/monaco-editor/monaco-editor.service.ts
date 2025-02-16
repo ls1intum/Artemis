@@ -1,11 +1,10 @@
 import { Injectable, effect, inject } from '@angular/core';
-import * as monaco from 'monaco-editor';
-import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
-import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-editor-theme.model';
+import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
+import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-editor-theme.model';
+import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
+import * as monaco from 'monaco-editor';
 
 /**
  * Service providing shared functionality for the Monaco editor.
@@ -15,7 +14,7 @@ import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/the
 @Injectable({ providedIn: 'root' })
 export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
-    private readonly currentTheme = toSignal(this.themeService.getCurrentThemeObservable(), { requireSync: true });
+    private readonly currentTheme = this.themeService.currentTheme;
 
     private lightTheme: MonacoEditorTheme;
     private darkTheme: MonacoEditorTheme;

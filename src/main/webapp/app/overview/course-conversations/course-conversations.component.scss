@@ -20,8 +20,8 @@
 }
 
 .scrollable-content {
-    --message-input-height-dev: 193px;
-    --message-input-height-prod: 177px;
+    --message-input-height-dev: 164px;
+    --message-input-height-prod: 148px;
     overflow-y: auto;
     overflow-x: hidden;
     max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod));

@@ -1,50 +1,49 @@
-import { Component, InputSignal, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { IconDefinition, faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+
 @Component({
     selector: 'jhi-learning-path-nav-overview-learning-objects',
-    standalone: true,
-    imports: [NgbAccordionModule, FontAwesomeModule, ArtemisSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgbAccordionModule, FontAwesomeModule, TranslateDirective, NgClass],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
 export class LearningPathNavOverviewLearningObjectsComponent {
-    protected readonly faCheckCircle: IconDefinition = faCheckCircle;
-    protected readonly faLock: IconDefinition = faLock;
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faLock = faLock;
 
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
-    readonly learningPathId: InputSignal<number> = input.required();
-    readonly competencyId: InputSignal<number> = input.required();
+    readonly learningPathId = input.required<number>();
+    readonly competencyId = input.required<number>();
     // competency id of current competency of learning path (not the one of the selected learning object)
-    readonly currentCompetencyIdOnPath: InputSignal<number | undefined> = input.required();
-    readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = this.learningPathNavigationService.currentLearningObject;
+    readonly currentCompetencyIdOnPath = input.required();
+    readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
 
-    readonly isLoading: WritableSignal<boolean> = signal(false);
-    readonly learningObjects: WritableSignal<LearningPathNavigationObjectDTO[] | undefined> = signal(undefined);
+    readonly isLoading = signal<boolean>(false);
+    readonly learningObjects = signal<LearningPathNavigationObjectDTO[] | undefined>(undefined);
 
-    readonly nextLearningObjectOnPath: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() =>
+    readonly nextLearningObjectOnPath = computed(() =>
         this.competencyId() === this.currentCompetencyIdOnPath() ? this.learningObjects()?.find((learningObject) => !learningObject.completed) : undefined,
     );
 
-    readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
+    readonly onLearningObjectSelected = output<void>();
 
     constructor() {
-        effect(
-            () => {
-                untracked(async () => await this.loadLearningObjects());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            untracked(() => this.loadLearningObjects());
+        });
     }
 
     async loadLearningObjects(): Promise<void> {

@@ -304,7 +304,7 @@ public class TeamService {
      * Returns an instance of TeamImportStrategy based on the given import strategy type (enum)
      *
      * @param importStrategyType Type for which to instantiate a strategy
-     * @return TeamImportStrategy
+     * @return an instance of TeamImportStrategy based on the given import strategy type
      */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
         return switch (importStrategyType) {

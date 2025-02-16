@@ -12,7 +12,19 @@
                 "slideNotFound": "Referenzierte Folie wurde nicht gefunden",
                 "imageNotFound": "Referenziertes Bild wurde nicht gefunden"
             },
-            "slideWithNumber": "Folie {{ number }}"
+            "slideWithNumber": "Folie {{ number }}",
+            "artemisIntelligence": {
+                "tooltip": "Artemis Intelligence",
+                "commands": {
+                    "rewrite": "Umformulieren",
+                    "consistencyCheck": "Konsistenz prüfen"
+                },
+                "alerts": {
+                    "rewrite": {
+                        "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
+                    }
+                }
+            }
         }
     }
 }

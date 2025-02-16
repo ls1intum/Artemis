@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 /**
  * REST controller for receiving build results.
@@ -51,19 +50,15 @@ public class PublicResultResource {
 
     private final ResultService resultService;
 
-    private final TestwiseCoverageService testwiseCoverageService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
     public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ResultService resultService, TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService) {
+            ResultService resultService, ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.resultService = resultService;
-        this.testwiseCoverageService = testwiseCoverageService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
     }
@@ -125,12 +120,6 @@ public class PublicResultResource {
                 // This method will return without triggering the build if the submission is not of type TEST.
                 var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
                 triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission);
-
-                // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
-                if (Boolean.TRUE.equals(participation.getProgrammingExercise().getBuildConfig().isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(result.isSuccessful())) {
-                    testwiseCoverageService.createTestwiseCoverageReport(result.getCoverageFileReportsByTestCaseName(), participation.getProgrammingExercise(),
-                            programmingSubmission);
-                }
             }
 
             programmingMessagingService.notifyUserAboutNewResult(result, participation);

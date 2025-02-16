@@ -1,12 +1,42 @@
 <div [id]="'exercise-' + modelingExercise?.id">
     @if (displayHeader) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [participation]="participation">
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
                 <span class="font-weight-normal">{{ examMode ? modelingExercise?.exerciseGroup?.title : modelingExercise?.title }}</span>
             </span>
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
+                    @if (isFeedbackView) {
+                        @if ((sortedSubmissionHistory?.length || 0) > 1) {
+                            <jhi-button
+                                id="toggleTimeline"
+                                [icon]="faTimeline"
+                                [title]="showResultHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
+                                (click)="showResultHistory = !showResultHistory"
+                            />
+                        }
+                        @if (isActive || !modelingExercise.dueDate) {
+                            <jhi-button
+                                id="Continue"
+                                [title]="'entity.action.continueSubmission'"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', result?.participation?.id]"
+                            />
+                        }
+                    } @else {
+                        @if (modelingExercise.allowFeedbackRequests && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))) {
+                            <jhi-request-feedback-button
+                                [exercise]="modelingExercise"
+                                [pendingChanges]="isChanged"
+                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
+                                [isGeneratingFeedback]="isGeneratingFeedback"
+                                (generatingFeedback)="this.isGeneratingFeedback = true"
+                                [isSubmitted]="submission.submitted || false"
+                            />
+                        }
+                    }
+                }
+                @if (!this.isFeedbackView) {
                     <jhi-button
                         class="guided-tour submission-button"
                         id="submit-modeling-submission"
@@ -21,146 +51,159 @@
             </ng-container>
         </jhi-header-participation-page>
     }
+
+    @if (isFeedbackView && showResultHistory) {
+        <div class="mb-4">
+            <div id="result-history" class="row mb-2">
+                <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" [selectedResultId]="submission.latestResult?.id!" />
+            </div>
+        </div>
+    }
+
     @if (modelingExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement">
+        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement" [collapsed]="isFeedbackView">
             <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission || submission.submitted || !isExamSummary) {
-                    <div class="submission-container d-flex flex-column w-100">
-                        <div class="d-flex flex-column flex-md-row">
-                            @if (modelingExercise.teamMode && (isActive || isLate)) {
-                                <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
-                                    <jhi-team-participate-info-box
-                                        [exercise]="modelingExercise"
-                                        [participation]="participation"
-                                        [typing$]="submissionObservable"
-                                        [dockedToRightSide]="true"
-                                    />
-                                </div>
-                            }
-                        </div>
-                        <jhi-fullscreen>
-                            <div class="row flex-grow-1">
-                                @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)) {
-                                    <div class="col-12 editor-large">
-                                        <jhi-modeling-editor
-                                            [readOnly]="!isOwnerOfParticipation"
-                                            [umlModel]="umlModel"
-                                            [diagramType]="modelingExercise.diagramType!"
-                                            [withExplanation]="true"
-                                            [(explanation)]="explanation"
-                                            [resizeOptions]="resizeOptions"
-                                            [savedStatus]="{ isChanged, isSaving }"
-                                            (onModelPatch)="onModelPatch($event)"
+                    <div class="w-100">
+                        <div class="submission-container d-flex flex-column w-100">
+                            <div class="d-flex flex-column flex-md-row">
+                                @if (modelingExercise.teamMode && (isActive || isLate)) {
+                                    <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
+                                        <jhi-team-participate-info-box
+                                            [exercise]="modelingExercise"
+                                            [participation]="participation"
+                                            [typing$]="submissionObservable"
+                                            [dockedToRightSide]="true"
                                         />
-                                        <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
-                                        @if (modelingExercise.teamMode) {
-                                            <jhi-team-submission-sync
-                                                [exerciseType]="modelingExercise.type!"
-                                                [submissionObservable]="submissionObservable"
-                                                [submissionPatchObservable]="submissionPatchObservable"
-                                                [participation]="participation"
-                                                (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
-                                                (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
-                                            />
-                                        }
-                                    </div>
-                                }
-                                @if ((!isActive || result) && (!isLate || submission.submitted)) {
-                                    <div class="col-9">
-                                        <div class="flex flex-column h-100">
-                                            <jhi-modeling-assessment
-                                                [umlModel]="umlModel"
-                                                [resultFeedbacks]="assessmentResult?.feedbacks || []"
-                                                [diagramType]="modelingExercise.diagramType!"
-                                                [maxScore]="modelingExercise.maxPoints || 0"
-                                                [maxBonusPoints]="modelingExercise.bonusPoints || 0"
-                                                [readOnly]="true"
-                                                [enablePopups]="false"
-                                                [displayPoints]="false"
-                                                [course]="course"
-                                                (selectionChanged)="onSelectionChanged($event)"
-                                                [explanation]="explanation"
-                                            />
-                                        </div>
-                                    </div>
-                                }
-                                @if (submission?.submitted && (!isActive || result)) {
-                                    <div class="col-3 pt-5">
-                                        <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
-                                        @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {
-                                            <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
-                                        }
-                                        @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
-                                            <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
-                                            <table class="table" id="component-feedback-table">
-                                                <thead class="thead-light">
-                                                    <tr>
-                                                        <th jhiTranslate="artemisApp.modelingSubmission.assessment.element"></th>
-                                                        <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score"></th>
-                                                    </tr>
-                                                </thead>
-                                                @if (assessmentsNames) {
-                                                    <tbody>
-                                                        @for (feedback of referencedFeedback; track feedback) {
-                                                            <tr [hidden]="!shouldBeDisplayed(feedback)">
-                                                                <td>
-                                                                    @if (feedback.reference) {
-                                                                        <span>{{ assessmentsNames[feedback.referenceId!]?.type }} </span>
-                                                                    }
-                                                                    @if (feedback.reference) {
-                                                                        <code class="text-primary">{{ assessmentsNames[feedback.referenceId!]?.name }}</code>
-                                                                    }
-                                                                    @if (feedback.reference) {
-                                                                        <br />
-                                                                    }
-                                                                    @if (feedback.text || feedback.detailText || feedback.gradingInstruction) {
-                                                                        <span
-                                                                            [ngClass]="{
-                                                                                'text-secondary': feedback.isSubsequent,
-                                                                                'text-success': feedback.credits! > 0 && feedback.isSubsequent === undefined,
-                                                                                'text-danger': feedback.credits! < 0 && feedback.isSubsequent === undefined,
-                                                                            }"
-                                                                            ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
-                                                                        ></span>
-                                                                    }
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    {{ feedback.credits | number: '1.0-1' }}
-                                                                    @if (feedback.isSubsequent) {
-                                                                        <fa-icon
-                                                                            class="text-secondary"
-                                                                            [icon]="faExclamationTriangle"
-                                                                            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-                                                                        />
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                        }
-                                                    </tbody>
-                                                }
-                                            </table>
-                                        }
                                     </div>
                                 }
                             </div>
-                        </jhi-fullscreen>
-                        <div class="row">
-                            @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                <jhi-additional-feedback
-                                    class="col-xl-8 mt-3 alert unreferencedFeedback"
-                                    [feedback]="unreferencedFeedback || []"
-                                    [additional]="true"
-                                    [course]="course"
-                                />
-                            }
+                            <jhi-fullscreen>
+                                <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
+                                    <div class="row" style="flex-grow: 1; display: flex">
+                                        @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted) && !isFeedbackView) {
+                                            <div class="col-12 editor-large">
+                                                <jhi-modeling-editor
+                                                    [readOnly]="!isOwnerOfParticipation"
+                                                    [umlModel]="umlModel"
+                                                    [diagramType]="modelingExercise.diagramType!"
+                                                    [withExplanation]="true"
+                                                    [(explanation)]="explanation"
+                                                    [resizeOptions]="resizeOptions"
+                                                    [savedStatus]="{ isChanged, isSaving }"
+                                                    (onModelPatch)="onModelPatch($event)"
+                                                />
+                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                                                @if (modelingExercise.teamMode) {
+                                                    <jhi-team-submission-sync
+                                                        [exerciseType]="modelingExercise.type!"
+                                                        [submissionObservable]="submissionObservable"
+                                                        [submissionPatchObservable]="submissionPatchObservable"
+                                                        [participation]="participation"
+                                                        (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
+                                                        (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
+                                                    />
+                                                }
+                                            </div>
+                                        }
+                                        @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
+                                            <div class="col-8 editor-assessment">
+                                                <jhi-modeling-assessment
+                                                    [umlModel]="umlModel"
+                                                    [resultFeedbacks]="assessmentResult?.feedbacks || []"
+                                                    [diagramType]="modelingExercise.diagramType!"
+                                                    [maxScore]="modelingExercise.maxPoints || 0"
+                                                    [maxBonusPoints]="modelingExercise.bonusPoints || 0"
+                                                    [readOnly]="true"
+                                                    [enablePopups]="false"
+                                                    [displayPoints]="false"
+                                                    [course]="course"
+                                                    (selectionChanged)="onSelectionChanged($event)"
+                                                    [explanation]="explanation"
+                                                />
+                                            </div>
+                                        }
+                                        @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
+                                            <div class="col-4 pt-5 editor-assessment overflow-auto">
+                                                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
+                                                @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {
+                                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
+                                                }
+                                                @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
+                                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
+                                                    <table class="table" id="component-feedback-table">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th jhiTranslate="artemisApp.modelingSubmission.assessment.element"></th>
+                                                                <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        @if (assessmentsNames) {
+                                                            <tbody>
+                                                                @for (feedback of referencedFeedback; track feedback) {
+                                                                    <tr [hidden]="!shouldBeDisplayed(feedback)">
+                                                                        <td>
+                                                                            @if (feedback.reference) {
+                                                                                <span>{{ assessmentsNames[feedback.referenceId!]?.type }} </span>
+                                                                            }
+                                                                            @if (feedback.reference) {
+                                                                                <code class="text-primary">{{ assessmentsNames[feedback.referenceId!]?.name }}</code>
+                                                                            }
+                                                                            @if (feedback.reference) {
+                                                                                <br />
+                                                                            }
+                                                                            @if (feedback.text || feedback.detailText || feedback.gradingInstruction) {
+                                                                                <span
+                                                                                    [ngClass]="{
+                                                                                        'text-secondary': feedback.isSubsequent,
+                                                                                        'text-success': feedback.credits! > 0 && feedback.isSubsequent === undefined,
+                                                                                        'text-danger': feedback.credits! < 0 && feedback.isSubsequent === undefined,
+                                                                                    }"
+                                                                                    ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
+                                                                                ></span>
+                                                                            }
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            {{ feedback.credits | number: '1.0-1' }}
+                                                                            @if (feedback.isSubsequent) {
+                                                                                <fa-icon
+                                                                                    class="text-secondary"
+                                                                                    [icon]="faExclamationTriangle"
+                                                                                    [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                                                                                />
+                                                                            }
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        }
+                                                    </table>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </jhi-fullscreen>
                         </div>
+                        @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
+                            <div class="row">
+                                @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
+                                    <jhi-additional-feedback
+                                        class="col-xl-8 mt-3 alert unreferencedFeedback"
+                                        [feedback]="unreferencedFeedback || []"
+                                        [additional]="true"
+                                        [course]="course"
+                                    />
+                                }
+                            </div>
+                        }
                         @if (result) {
                             <div class="row">
                                 <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)" />
                             </div>
                         }
-                        @if (result && !examMode) {
+                        @if (result && !examMode && !isFeedbackView) {
                             <jhi-complaint-student-view
                                 [exercise]="modelingExercise"
                                 [participation]="participation"

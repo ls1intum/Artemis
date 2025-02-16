@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +105,7 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var plagiarismResult = (TextPlagiarismResult) plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
+            var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
             return buildPlagiarismResultResponse(plagiarismResult);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {
@@ -144,7 +144,7 @@ public class ProgrammingExercisePlagiarismResource {
                         "notEnoughSubmissions");
             }
 
-            var resource = new InputStreamResource(new FileInputStream(zipFile));
+            var resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
             return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {

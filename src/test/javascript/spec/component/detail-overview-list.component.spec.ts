@@ -11,8 +11,7 @@ import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -36,8 +35,7 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ExerciseDetailDirective],
-            declarations: [DetailOverviewListComponent, TranslatePipeMock],
+            imports: [ArtemisTestModule],
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
@@ -56,7 +54,7 @@ describe('DetailOverviewList', () => {
     });
 
     it('should initialize and destroy', () => {
-        component.sections = sections;
+        fixture.componentRef.setInput('sections', sections);
         fixture.detectChanges();
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
@@ -67,7 +65,7 @@ describe('DetailOverviewList', () => {
     });
 
     it('should escape all falsy values', () => {
-        component.sections = [
+        fixture.componentRef.setInput('sections', [
             {
                 headline: 'some-section',
                 details: [
@@ -81,7 +79,7 @@ describe('DetailOverviewList', () => {
                     },
                 ],
             },
-        ];
+        ]);
         fixture.detectChanges();
         const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
         expect(detailListTitleDOMElements).toHaveLength(1);

@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -22,6 +22,21 @@ import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTim
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from '../../programming/shared/actions/programming-exercise-instructor-submission-state.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { TeamStudentsListComponent } from '../team/team-participate/team-students-list.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from '../../programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -33,13 +48,41 @@ enum FilterProp {
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ProgrammingExerciseInstructorSubmissionStateComponent,
+        RouterLink,
+        FaIconComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        CodeButtonComponent,
+        TeamStudentsListComponent,
+        FormDateTimePickerComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+        DeleteButtonDirective,
+        FeatureToggleDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private participationService = inject(ParticipationService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private exerciseService = inject(ExerciseService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private gradingSystemService = inject(GradingSystemService);
+
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
+    protected readonly RepositoryType = RepositoryType;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -83,17 +126,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faFilePowerpoint = faFilePowerpoint;
     faCodeBranch = faCodeBranch;
 
-    constructor(
-        private route: ActivatedRoute,
-        private participationService: ParticipationService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private exerciseService: ExerciseService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private gradingSystemService: GradingSystemService,
-    ) {
+    constructor() {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
         };
@@ -150,7 +183,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     private loadParticipations(exerciseId: number) {
-        this.participationService.findAllParticipationsByExercise(exerciseId, true).subscribe((participationsResponse) => {
+        this.participationService.findAllParticipationsByExercise(exerciseId, false).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 const programmingExercise = this.exercise as ProgrammingExercise;

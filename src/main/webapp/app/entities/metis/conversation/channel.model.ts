@@ -10,6 +10,7 @@ export enum ChannelSubType {
     EXERCISE = 'exercise',
     LECTURE = 'lecture',
     EXAM = 'exam',
+    FEEDBACK_DISCUSSION = 'feedbackDiscussion',
 }
 
 /**
@@ -19,10 +20,10 @@ export class Channel extends Conversation {
     public name?: string; // max 30 characters
     public description?: string; // max 250 characters
     public topic?: string; // max 250 characters;
-    public isPublic?: boolean;
-    public isAnnouncementChannel?: boolean;
-    public isArchived?: boolean;
-    public isCourseWide?: boolean;
+    public isPublic = false; // default value
+    public isAnnouncementChannel = false; // default value
+    public isArchived = false; // default value
+    public isCourseWide = false; // default value
 
     public exercise?: Exercise;
     public lecture?: Lecture;
@@ -42,12 +43,12 @@ export class ChannelDTO extends ConversationDTO {
     public name?: string;
     public description?: string;
     public topic?: string;
-    public isPublic?: boolean;
-    public isAnnouncementChannel?: boolean;
-    public isArchived?: boolean;
-    public isChannelModerator?: boolean;
-    public hasChannelModerationRights?: boolean;
-    public isCourseWide?: boolean;
+    public isPublic = false; // default value
+    public isAnnouncementChannel = false; // default value
+    public isArchived = false; // default value
+    public isChannelModerator = false; // default value
+    public hasChannelModerationRights = false; // default value
+    public isCourseWide = false; // default value
 
     public tutorialGroupId?: number;
 

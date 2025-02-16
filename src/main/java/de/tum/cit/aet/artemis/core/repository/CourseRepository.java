@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -323,14 +324,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
 
-    @Query("""
-            SELECT COUNT(DISTINCT ug.userId)
-            FROM Course c
-                JOIN UserGroup ug ON c.studentGroupName = ug.group
-            WHERE c.id = :courseId
-            """)
-    int countCourseStudents(@Param("courseId") long courseId);
-
     /**
      * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
      * Users that are part of multiple groups are NOT counted multiple times.
@@ -569,4 +562,23 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("groups") Set<String> groups,
             @Param("now") ZonedDateTime now);
 
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO(
+                c.instructorGroupName,
+                c.editorGroupName,
+                c.teachingAssistantGroupName,
+                c.studentGroupName
+            ) FROM Course c
+            """)
+    Set<CourseGroupsDTO> findAllCourseGroups();
+
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.teachingAssistantGroupName IN :userGroups
+               OR c.editorGroupName IN :userGroups
+               OR c.instructorGroupName IN :userGroups
+               OR :isAdmin = TRUE
+            """)
+    List<Course> findCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
 }

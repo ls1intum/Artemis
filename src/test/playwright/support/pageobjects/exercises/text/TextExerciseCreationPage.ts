@@ -1,10 +1,14 @@
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
 import { TEXT_EXERCISE_BASE } from '../../../constants';
 
 export class TextExerciseCreationPage {
     private readonly page: Page;
+
+    private readonly PROBLEM_STATEMENT_SELECTOR = '#problemStatement';
+    private readonly EXAMPLE_SOLUTION_SELECTOR = '#exampleSolution';
+    private readonly ASSESSMENT_INSTRUCTIONS_SELECTOR = '#gradingInstructions';
 
     constructor(page: Page) {
         this.page = page;
@@ -33,15 +37,33 @@ export class TextExerciseCreationPage {
     }
 
     async typeProblemStatement(statement: string) {
-        await this.typeText('#problemStatement', statement);
+        const textEditor = this.getTextEditorLocator(this.PROBLEM_STATEMENT_SELECTOR);
+        await this.typeText(textEditor, statement);
+    }
+
+    async clearProblemStatement() {
+        const textEditor = this.getTextEditorLocator(this.PROBLEM_STATEMENT_SELECTOR);
+        await this.clearText(textEditor);
     }
 
     async typeExampleSolution(statement: string) {
-        await this.typeText('#exampleSolution', statement);
+        const textEditor = this.getTextEditorLocator(this.EXAMPLE_SOLUTION_SELECTOR);
+        await this.typeText(textEditor, statement);
+    }
+
+    async clearExampleSolution() {
+        const textEditor = this.getTextEditorLocator(this.EXAMPLE_SOLUTION_SELECTOR);
+        await this.clearText(textEditor);
     }
 
     async typeAssessmentInstructions(statement: string) {
-        await this.typeText('#gradingInstructions', statement);
+        const textEditor = this.getTextEditorLocator(this.ASSESSMENT_INSTRUCTIONS_SELECTOR);
+        await this.typeText(textEditor, statement);
+    }
+
+    async clearAssessmentInstructions() {
+        const textEditor = this.getTextEditorLocator(this.ASSESSMENT_INSTRUCTIONS_SELECTOR);
+        await this.clearText(textEditor);
     }
 
     async create() {
@@ -56,9 +78,18 @@ export class TextExerciseCreationPage {
         return await responsePromise;
     }
 
-    private async typeText(selector: string, text: string) {
-        const textField = this.page.locator(selector).locator('.monaco-editor');
-        await textField.click();
-        await textField.pressSequentially(text);
+    private getTextEditorLocator(selector: string) {
+        return this.page.locator(selector).locator('.monaco-editor');
+    }
+
+    private async clearText(textEditor: Locator) {
+        await textEditor.click();
+        await textEditor.press('Control+a');
+        await textEditor.press('Delete');
+    }
+
+    private async typeText(textEditor: Locator, text: string) {
+        await textEditor.click();
+        await textEditor.pressSequentially(text);
     }
 }

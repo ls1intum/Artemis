@@ -42,7 +42,6 @@ describe('BuildAgentsService', () => {
         projectType: 'Maven',
         scaEnabled: false,
         sequentialTestRunsEnabled: false,
-        testwiseCoverageEnabled: false,
         resultPaths: [],
     };
 
@@ -134,7 +133,7 @@ describe('BuildAgentsService', () => {
     it('should pause build agent', () => {
         service.pauseBuildAgent('buildAgent1').subscribe();
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/pause`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/pause`);
         expect(req.request.method).toBe('PUT');
         req.flush({});
     });
@@ -142,7 +141,23 @@ describe('BuildAgentsService', () => {
     it('should resume build agent', () => {
         service.resumeBuildAgent('buildAgent1').subscribe();
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/resume`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/resume`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should pause all build agents', () => {
+        service.pauseAllBuildAgents().subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/pause-all`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should resume all build agents', () => {
+        service.resumeAllBuildAgents().subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/resume-all`);
         expect(req.request.method).toBe('PUT');
         req.flush({});
     });
@@ -152,7 +167,7 @@ describe('BuildAgentsService', () => {
 
         const observable = lastValueFrom(service.pauseBuildAgent('buildAgent1'));
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/pause`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/pause`);
         expect(req.request.method).toBe('PUT');
         req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
 
@@ -170,8 +185,69 @@ describe('BuildAgentsService', () => {
         const observable = lastValueFrom(service.resumeBuildAgent('buildAgent1'));
 
         // Set up the expected HTTP request and flush the response with an error.
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/resume`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/resume`);
         expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should handle pause all build agents error', async () => {
+        const errorMessage = 'Failed to pause build agents';
+
+        const observable = lastValueFrom(service.pauseAllBuildAgents());
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/pause-all`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should handle resume all build agents error', async () => {
+        const errorMessage = 'Failed to resume build agents';
+
+        const observable = lastValueFrom(service.resumeAllBuildAgents());
+
+        // Set up the expected HTTP request and flush the response with an error.
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/resume-all`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should clear distributed data', () => {
+        service.clearDistributedData().subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/clear-distributed-data`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({});
+    });
+
+    it('should handle clear distributed data error', async () => {
+        const errorMessage = 'Failed to clear distributed data';
+
+        const observable = lastValueFrom(service.clearDistributedData());
+
+        // Set up the expected HTTP request and flush the response with an error.
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/clear-distributed-data`);
+        expect(req.request.method).toBe('DELETE');
         req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
 
         try {

@@ -41,7 +41,7 @@ const editedCourseData = {
 const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-test.describe('Course management', () => {
+test.describe('Course management', { tag: '@fast' }, () => {
     test.describe('Manual student selection', () => {
         let course: Course;
 

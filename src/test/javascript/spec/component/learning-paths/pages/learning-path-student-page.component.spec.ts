@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathStudentPageComponent } from 'app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -12,7 +12,6 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
 import { LearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -127,7 +126,7 @@ describe('LearningPathStudentPageComponent', () => {
     });
 
     it('should generate learning path on start when not found', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockReturnValueOnce(Promise.reject(new EntityNotFoundError()));
+        jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockReturnValueOnce(Promise.reject(new HttpErrorResponse({ status: 404 })));
         const generateLearningPathSpy = jest.spyOn(learningPathApiService, 'generateLearningPathForCurrentUser').mockResolvedValue(learningPath);
         const startSpy = jest.spyOn(learningPathApiService, 'startLearningPathForCurrentUser');
 

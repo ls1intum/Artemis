@@ -32,7 +32,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -50,6 +49,7 @@ import com.nimbusds.jwt.SignedJWT;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 class Lti13TokenRetrieverTest {
 
@@ -72,7 +72,7 @@ class Lti13TokenRetrieverTest {
         lti13TokenRetriever = new Lti13TokenRetriever(oAuth2JWKSService, restTemplate);
 
         clientRegistration = ClientRegistration.withRegistrationId("regId") //
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) //
+                .authorizationGrantType(LTIAuthorizationGrantType.IMPLICIT) //
                 .redirectUri("redirectUri") //
                 .authorizationUri("authUri") //
                 .tokenUri("tokenUri").clientId("clientId") //

@@ -19,6 +19,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programm
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -43,7 +44,6 @@ describe('ProgrammingExercise Management Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseComponent],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -176,7 +176,7 @@ describe('ProgrammingExercise Management Component', () => {
         const alertSuccessStub = jest.spyOn(alertService, 'success');
 
         // WHEN
-        comp.downloadRepository(programmingExercise.id, 'TEMPLATE');
+        comp.downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE);
 
         // THEN
         expect(exportRepositoryStub).toHaveBeenCalledOnce();

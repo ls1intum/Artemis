@@ -1,27 +1,31 @@
 @if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && showTags.notReleased) {
-    <h4 class="fw-medium">
+    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
         <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
             <jhi-not-released-tag [exercise]="exercise" />
         </a>
-    </h4>
+    </span>
 }
 @if (asQuizExercise(exercise).isActiveQuiz && showTags.quizLive) {
-    <h4 class="fw-medium">
+    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
         <span class="badge bg-success" jhiTranslate="artemisApp.courseOverview.exerciseList.live"></span>
-    </h4>
-}
-@for (category of exercise.categories; track category) {
-    <jhi-custom-exercise-category-badge [category]="category" />
-}
-@if (exercise.difficulty && showTags.difficulty) {
-    <h4 class="fw-medium">
-        <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false" />
-    </h4>
+    </span>
 }
 @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {
-    <h4 class="fw-medium">
+    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
         <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
             <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
         </a>
-    </h4>
+    </span>
+}
+@for (category of exercise.categories; track category) {
+    @if (category.category) {
+        <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
+            <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category | truncate: 30 }}</span>
+        </span>
+    }
+}
+@if (exercise.difficulty && showTags.difficulty) {
+    <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
+        <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false" />
+    </span>
 }

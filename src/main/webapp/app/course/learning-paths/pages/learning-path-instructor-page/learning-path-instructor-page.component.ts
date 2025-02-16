@@ -1,22 +1,21 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { LearningPathsConfigurationComponent } from 'app/course/learning-paths/components/learning-paths-configuration/learning-paths-configuration.component';
 import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { LearningPathsStateComponent } from 'app/course/learning-paths/components/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/course/learning-paths/components/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/course/learning-paths/components/learning-paths-analytics/learning-paths-analytics.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
-    standalone: true,
-    imports: [LearningPathsConfigurationComponent, ArtemisSharedCommonModule, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })
@@ -33,7 +32,10 @@ export class LearningPathInstructorPageComponent {
     readonly isLoading = signal<boolean>(false);
 
     constructor() {
-        effect(() => this.loadCourse(this.courseId()), { allowSignalWrites: true });
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadCourse(courseId));
+        });
     }
 
     private async loadCourse(courseId: number): Promise<void> {

@@ -1,4 +1,4 @@
-import { Injectable, inject, isDevMode } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
@@ -18,9 +18,9 @@ export class UserRouteAccessService implements CanActivate {
 
     /**
      * Check if the client can activate a route.
-     * @param route {ActivatedRouteSnapshot} The ActivatedRouteSnapshot of the route to activate.
-     * @param state {RouterStateSnapshot} The current RouterStateSnapshot.
-     * @return {(boolean | Promise<boolean>)} True if Orion version is valid or the connected client is a regular browser and
+     * @param route The ActivatedRouteSnapshot of the route to activate.
+     * @param state The current RouterStateSnapshot.
+     * @return True if Orion version is valid or the connected client is a regular browser and
      * user is logged in, false otherwise.
      */
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
@@ -34,7 +34,7 @@ export class UserRouteAccessService implements CanActivate {
         // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
         if (
             (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||
-                ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
+                route.routeConfig?.path === ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
             route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true'
         ) {
             authorities.push(Authority.EDITOR);
@@ -84,9 +84,9 @@ export class UserRouteAccessService implements CanActivate {
 
     /**
      * Check whether user is logged in and has the required authorities.
-     * @param {string[]}authorities List of required authorities.
-     * @param {string} url Current url.
-     * @return {Promise<boolean>} True if authorities are empty or null, False if user not logged in or does not have required authorities.
+     * @param authorities List of required authorities.
+     * @param url Current url.
+     * @return True if authorities are empty or null, False if user not logged in or does not have required authorities.
      */
     checkLogin(authorities: string[], url: string): Promise<boolean> {
         const accountService = this.accountService;
@@ -98,13 +98,7 @@ export class UserRouteAccessService implements CanActivate {
 
                 if (account) {
                     return accountService.hasAnyAuthority(authorities).then((response) => {
-                        if (response) {
-                            return true;
-                        }
-                        if (isDevMode()) {
-                            console.error('User has not any of required authorities: ', authorities);
-                        }
-                        return false;
+                        return !!response;
                     });
                 }
 

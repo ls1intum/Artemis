@@ -1,15 +1,16 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphDTO, CompetencyGraphNodeValueType } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, CompetencyGraphComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CompetencyGraphComponent, TranslateDirective, CommonModule],
     templateUrl: './learning-paths-analytics.component.html',
     styleUrl: './learning-paths-analytics.component.scss',
 })
@@ -27,7 +28,10 @@ export class LearningPathsAnalyticsComponent {
     readonly valueSelection = signal<CompetencyGraphNodeValueType>(CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS);
 
     constructor() {
-        effect(() => this.loadInstructionCompetencyGraph(this.courseId()), { allowSignalWrites: true });
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadInstructionCompetencyGraph(courseId));
+        });
     }
 
     private async loadInstructionCompetencyGraph(courseId: number): Promise<void> {

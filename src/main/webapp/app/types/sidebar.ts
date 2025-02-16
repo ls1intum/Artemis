@@ -10,20 +10,25 @@ export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noD
 export type ExamGroupCategory = 'real' | 'test' | 'attempt';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<
+    TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
+    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
+    | 'recents'
     | 'generalChannels'
     | 'exerciseChannels'
     | 'lectureChannels'
     | 'groupChats'
     | 'directMessages'
     | 'examChannels'
+    | 'feedbackDiscussion'
+    | 'savedPosts'
     | 'hiddenChannels';
 export type CollapseState = {
     [key: string]: boolean;
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
-export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 export type SidebarItemShowAlways = {
     [key: string]: boolean;
@@ -37,6 +42,7 @@ export interface SidebarData {
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
     messagingEnabled?: boolean;
+    canCreateChannel?: boolean;
 }
 
 export interface SidebarCardElement {
@@ -150,4 +156,6 @@ export interface SidebarCardElement {
      * Set for Conversation. Will be removed after refactoring
      */
     conversation?: ConversationDTO;
+
+    isCurrent?: boolean;
 }

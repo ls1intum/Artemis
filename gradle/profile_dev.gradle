@@ -12,12 +12,12 @@ dependencies {
 }
 */
 
-def profiles = 'dev'
-if (project.hasProperty('no-liquibase')) {
-    profiles += ',no-liquibase'
+def profiles = "dev"
+if (project.hasProperty("no-liquibase")) {
+    profiles += ",no-liquibase"
 }
-if (project.hasProperty('tls')) {
-    profiles += ',tls'
+if (project.hasProperty("tls")) {
+    profiles += ",tls"
 }
 
 springBoot {
@@ -36,16 +36,16 @@ bootJar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-tasks.register('webapp', NpmTask) {
-    inputs.property('appVersion', project.version)
+tasks.register("webapp", NpmTask) {
+    inputs.property("appVersion", project.version)
     inputs.files("package-lock.json")
-        .withPropertyName('package-lock')
+        .withPropertyName("package-lock")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("build.gradle")
-        .withPropertyName('build.gradle')
+        .withPropertyName("build.gradle")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("angular.json")
-        .withPropertyName('angular.json')
+        .withPropertyName("angular.json")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("tsconfig.json", "tsconfig.app.json")
         .withPropertyName("tsconfig")
@@ -63,8 +63,8 @@ tasks.register('webapp', NpmTask) {
 }
 
 processResources {
-    inputs.property('version', version)
-    inputs.property('springProfiles', profiles)
+    inputs.property("version", version)
+    inputs.property("springProfiles", profiles)
     filesMatching("**/application.yml") {
         filter {
             it.replace("#project.version#", version)

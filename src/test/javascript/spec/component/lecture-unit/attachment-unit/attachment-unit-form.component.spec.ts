@@ -5,32 +5,34 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
     let attachmentUnitFormComponent: AttachmentUnitFormComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 AttachmentUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                attachmentUnitFormComponentFixture = TestBed.createComponent(AttachmentUnitFormComponent);
-                attachmentUnitFormComponent = attachmentUnitFormComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        attachmentUnitFormComponentFixture = TestBed.createComponent(AttachmentUnitFormComponent);
+        attachmentUnitFormComponent = attachmentUnitFormComponentFixture.componentInstance;
     });
 
     afterEach(() => {

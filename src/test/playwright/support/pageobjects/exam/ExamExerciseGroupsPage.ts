@@ -22,8 +22,9 @@ export class ExamExerciseGroupsPage {
     async clickEditGroup(groupID: number) {
         await this.page.click(`#group-${groupID} .edit-group`);
     }
+
     async clickEditGroupForTestExam() {
-        await this.page.getByText('Edit').click();
+        await this.page.getByRole('link', { name: 'Edit' }).click();
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {
@@ -57,6 +58,10 @@ export class ExamExerciseGroupsPage {
 
     async clickAddProgrammingExercise(groupID: number) {
         await this.page.locator(`#group-${groupID} .add-programming-exercise`).click();
+    }
+
+    async clickEditExercise(groupID: number, exerciseID: number) {
+        await this.page.locator(`#group-${groupID} #exercise-${exerciseID}`).locator('.btn', { hasText: 'Edit' }).click();
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {

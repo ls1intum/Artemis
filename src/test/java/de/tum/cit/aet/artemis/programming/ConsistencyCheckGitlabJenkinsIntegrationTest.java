@@ -10,7 +10,7 @@ class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractProgrammingIn
     @BeforeEach
     void setup() throws Exception {
         consistencyCheckTestService.setup(this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
 

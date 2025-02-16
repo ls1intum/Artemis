@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { ProfileInfo } from './profile-info.model';
@@ -12,14 +12,12 @@ import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-finger
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
+    private http = inject(HttpClient);
+    private featureToggleService = inject(FeatureToggleService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
+
     private infoUrl = 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
-
-    constructor(
-        private http: HttpClient,
-        private featureToggleService: FeatureToggleService,
-        private browserFingerprintService: BrowserFingerprintService,
-    ) {}
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
@@ -50,7 +48,6 @@ export class ProfileService {
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
 
                         profileInfo.sentry = data.sentry;
-                        profileInfo.postHog = data.postHog;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
@@ -73,8 +70,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.showCloneUrlWithoutToken = data.showCloneUrlWithoutToken;
-                        profileInfo.useVersionControlAccessToken = data.useVersionControlAccessToken;
+                        profileInfo.repositoryAuthenticationMechanisms = data.repositoryAuthenticationMechanisms;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data.textAssessmentAnalyticsEnabled;
@@ -102,7 +98,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo.pipe(filter((x) => x != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
+        return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {

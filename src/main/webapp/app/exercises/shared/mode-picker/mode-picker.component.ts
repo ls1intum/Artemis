@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type ModePickerOption<TMode> = {
     value: TMode;
@@ -11,6 +13,7 @@ export type ModePickerOption<TMode> = {
     selector: 'jhi-mode-picker',
     templateUrl: './mode-picker.component.html',
     styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
+    imports: [NgClass, ArtemisTranslatePipe],
 })
 export class ModePickerComponent<TMode> {
     @Input() options: ModePickerOption<TMode>[];

@@ -49,8 +49,6 @@
             "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
             "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
             "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",
-            "repositoryPassword": "Dein Passwort lautet:",
-            "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
@@ -66,6 +64,7 @@
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
+            "sshKeyExpiredTip": "Du hast abgelaufene SSH-Schlüssel. Möglicherweise musst du {link:hier} einen neuen SSH-Schlüssel zu deinem Konto hinzufügen.",
             "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
             "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",

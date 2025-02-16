@@ -21,7 +21,6 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [DummyImportComponent],
             providers: [],
         })
             .compileComponents()

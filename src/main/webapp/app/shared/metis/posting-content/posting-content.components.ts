@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -8,28 +8,39 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgStyle } from '@angular/common';
+import { PostingContentPartComponent } from './posting-content-part/posting-content-part.components';
+import { LinkPreviewContainerComponent } from '../../link-preview/components/link-preview-container/link-preview-container.component';
 
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() content?: string;
-    @Input() previewMode?: boolean;
-    @Input() author?: User;
-    @Input() isEdited = false;
-    @Input() posting?: Posting;
-    @Input() isReply?: boolean;
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+    private metisService = inject(MetisService);
+
+    content = input<string | undefined>();
+    previewMode = input<boolean | undefined>();
+    author = input<User | undefined>();
+    isEdited = input<boolean>(false);
+    posting = input<Posting | undefined>();
+    isReply = input<boolean | undefined>();
+
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
+
     isDeleted = input<boolean>(false);
+    isSubscribeToMetis = input<boolean>(true);
     deleteTimerInSeconds = input<number>(0);
     onUndoDeleteEvent = output<void>();
 
     showContent = false;
-    currentlyLoadedPosts: Post[];
+    currentlyLoadedPosts: Post[] = [];
     postingContentParts = signal<PostingContentPart[]>([]);
 
     private postsSubscription: Subscription;
@@ -41,20 +52,28 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(private metisService: MetisService) {}
-
     /**
      * on initialization: calculate posting parts to be displayed
      */
     ngOnInit(): void {
-        this.computeContentPartsOfPosts();
+        if (!this.isSubscribeToMetis()) {
+            const patternMatches: PatternMatch[] = this.getPatternMatches();
+            this.computePostingContentParts(patternMatches);
+        } else {
+            this.computeContentPartsOfPosts();
+        }
     }
 
     /**
      * on changes: update posting parts to be displayed
      */
-    ngOnChanges(): void {
-        this.computeContentPartsOfPosts();
+    ngOnChanges() {
+        if (!this.isSubscribeToMetis()) {
+            this.computeContentPartsOfPosts();
+        }
+
+        const patternMatches: PatternMatch[] = this.getPatternMatches();
+        this.computePostingContentParts(patternMatches);
     }
 
     /**
@@ -84,11 +103,11 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // if there are references found in the posting content, we need to create a PostingContentPart per reference match
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
-                if (this.content === undefined) {
+                if (this.content() === undefined) {
                     return;
                 }
 
-                const referencedId = this.content.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
+                const referencedId = this.content()!.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
                 const referenceType = patternMatch.referenceType;
                 let referenceStr; // e.g. '#6', 'Lecture-1.pdf', 'Modeling Exercise'
                 let linkToReference;
@@ -101,7 +120,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // by invoking the respective metis service methods for link and query params and passing the post object;
                     // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
-                    referenceStr = this.content.substring(patternMatch.startIndex, patternMatch.endIndex);
+                    referenceStr = this.content()!.substring(patternMatch.startIndex, patternMatch.endIndex);
                     if (isCommunicationEnabled(this.metisService.getCourse())) {
                         linkToReference = this.metisService.getLinkForPost();
                         queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
@@ -118,40 +137,58 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
-                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    linkToReference = [
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex)),
+                    ];
+                } else if (ReferenceType.FAQ === referenceType) {
+                    referenceStr = this.content()!.substring(
+                        this.content()!.indexOf(']', patternMatch.startIndex)! + 1,
+                        this.content()!.indexOf('(/courses', patternMatch.startIndex)!,
+                    );
+                    linkToReference = [
+                        this.content()!.substring(this.content()!.indexOf('(/courses', patternMatch.startIndex)! + 1, this.content()!.indexOf('?faqId', patternMatch.startIndex)),
+                    ];
+                    queryParams = { faqId: this.content()!.substring(this.content()!.indexOf('=') + 1, this.content()!.indexOf(')')) } as Params;
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // attachmentRefDir: directory of the attachment
-                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
                     const attachmentRefDir = this.ATTACHMENT_DIR;
                     attachmentToReference =
-                        attachmentRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
+                        attachmentRefDir +
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
-                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
                     const attachmentUnitRefDir = this.ATTACHMENT_DIR;
                     slideToReference =
-                        attachmentUnitRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
+                        attachmentUnitRefDir +
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
                     queryParams = {
-                        referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
+                        referenceUserLogin: this.content()!.substring(
+                            this.content()!.indexOf('(', patternMatch.startIndex)! + 1,
+                            this.content()!.indexOf(')', patternMatch.startIndex),
+                        ),
                     } as Params;
                 } else if (ReferenceType.CHANNEL === referenceType) {
                     // referenceStr: string to be displayed for the reference
-                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
+                    referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
+                    const channelId = parseInt(
+                        this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex)),
+                    );
                     queryParams = {
                         channelId: isNaN(channelId) ? undefined : channelId,
                     } as Params;
                 } else if (ReferenceType.IMAGE === referenceType) {
                     // get filename of the image
-                    referenceStr = this.content.substring(this.content.indexOf('![') + 2, this.content.indexOf('](', patternMatch.startIndex));
-                    imageToReference = this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
+                    referenceStr = this.content()!.substring(this.content()!.indexOf('![') + 2, this.content()!.indexOf('](', patternMatch.startIndex));
+                    imageToReference = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 }
 
                 // determining the endIndex of the content after the reference
@@ -163,12 +200,12 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // if current match is the only or last one in patternMatches
                 } else {
                     // endIndex of the content after the reference equals the end of the post content
-                    endIndexOfContentAfterReference = this.content.length;
+                    endIndexOfContentAfterReference = this.content()!.length;
                 }
 
                 // building the PostingContentPart object
                 const contentPart: PostingContentPart = {
-                    contentBeforeReference: index === 0 ? this.content.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
+                    contentBeforeReference: index === 0 ? this.content()!.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
                     linkToReference,
                     attachmentToReference,
                     slideToReference,
@@ -176,7 +213,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     referenceStr,
                     referenceType,
                     imageToReference,
-                    contentAfterReference: this.content.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
+                    contentAfterReference: this.content()!.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
                 };
                 this.postingContentParts.set([...this.postingContentParts(), contentPart]);
             });
@@ -184,7 +221,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
             // with contentBeforeReferenced represents the post content
         } else {
             const contentLink: PostingContentPart = {
-                contentBeforeReference: this.content,
+                contentBeforeReference: this.content()!,
                 linkToReference: undefined,
                 queryParams: undefined,
                 referenceStr: undefined,
@@ -209,15 +246,16 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 8: reference pattern for Lecture Units
         // Group 9: reference pattern for Users
         // Group 10: pattern for embedded images
+        // Group 11: reference pattern for FAQ
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<IMAGE>!\[.*?]\(.*?\))/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<IMAGE>!\[.*?]\(.*?\))|(?<FAQ>\[faq].*?\[\/faq])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];
 
         // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
-        let match = pattern.exec(this.content!);
+        let match = pattern.exec(this.content()!);
         while (match) {
             let group: ReferenceType | undefined = undefined;
 
@@ -234,8 +272,12 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 } as PatternMatch);
             }
 
-            match = pattern.exec(this.content!);
+            match = pattern.exec(this.content()!);
         }
         return patternMatches;
+    }
+
+    contentPartTrack(index: number) {
+        return this.posting()?.id + '_' + index;
     }
 }

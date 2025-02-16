@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -45,8 +43,7 @@ public class PrerequisiteService extends CourseCompetencyService {
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
-                competencyLectureUnitLinkRepository, courseRepository);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService, courseRepository);
         this.prerequisiteRepository = prerequisiteRepository;
     }
 
@@ -59,17 +56,7 @@ public class PrerequisiteService extends CourseCompetencyService {
      * @return The set of imported prerequisites, each also containing the relations for which it is the tail prerequisite for.
      */
     public Set<CompetencyWithTailRelationDTO> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites, CompetencyImportOptionsDTO importOptions) {
-        var idToImportedPrerequisite = new HashMap<Long, CompetencyWithTailRelationDTO>();
-
-        for (var prerequisite : prerequisites) {
-            Prerequisite importedPrerequisite = new Prerequisite(prerequisite);
-            importedPrerequisite.setCourse(course);
-
-            importedPrerequisite = prerequisiteRepository.save(importedPrerequisite);
-            idToImportedPrerequisite.put(prerequisite.getId(), new CompetencyWithTailRelationDTO(importedPrerequisite, new ArrayList<>()));
-        }
-
-        return importCourseCompetencies(course, prerequisites, idToImportedPrerequisite, importOptions);
+        return importCourseCompetencies(course, prerequisites, importOptions, Prerequisite::new);
     }
 
     /**

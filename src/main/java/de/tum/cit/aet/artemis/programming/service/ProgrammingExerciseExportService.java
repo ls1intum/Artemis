@@ -74,7 +74,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 
 /**
  * Service for exporting programming exercises.
@@ -186,6 +185,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }
@@ -261,9 +261,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
-            var exportOptions = new RepositoryExportOptionsDTO();
-            exportOptions.setAnonymizeRepository(false);
-            exportOptions.setExportAllParticipants(true);
+            var exportOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, false, false, false);
 
             // Export student repositories and add them to list
             var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, workingDir, outputDir, exportErrors).stream()
@@ -603,7 +601,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
-        if (repositoryExportOptions.isExportAllParticipants()) {
+        if (repositoryExportOptions.exportAllParticipants()) {
             log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
                     programmingExercise.getTitle());
         }
@@ -617,23 +615,24 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
-        var threadPool = Executors.newFixedThreadPool(10);
-        var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
-            try {
-                log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
-                Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
-                if (dir != null) {
-                    exportedStudentRepositories.add(dir);
+        try (var threadPool = Executors.newFixedThreadPool(10)) {
+            var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
+                try {
+                    log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
+                    Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
+                    if (dir != null) {
+                        exportedStudentRepositories.add(dir);
+                    }
                 }
-            }
-            catch (Exception exception) {
-                var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
-                        + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                exportErrors.add(error);
-            }
-        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-        // wait until all operations finish
-        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+                catch (Exception exception) {
+                    var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
+                            + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
+                    exportErrors.add(error);
+                }
+            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+            // wait until all operations finish
+            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+        }
         return exportedStudentRepositories;
     }
 
@@ -705,7 +704,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isPracticeMode()) {
+        if (repositoryExportOptions.excludePracticeSubmissions() && participation.isPracticeMode()) {
             log.debug("Ignoring practice participation {}", participation);
             return null;
         }
@@ -722,21 +721,21 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             // TODO: this operation is only necessary if the repo was not newly cloned
             gitService.resetToOriginHead(repository);
 
-            if (repositoryExportOptions.isFilterLateSubmissions()) {
+            if (repositoryExportOptions.filterLateSubmissions()) {
                 filterLateSubmissions(repositoryExportOptions, participation, repository);
             }
 
-            if (repositoryExportOptions.isAddParticipantName()) {
+            if (repositoryExportOptions.addParticipantName()) {
                 log.debug("Adding student or team name to participation {}", participation);
                 addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
             }
 
-            if (repositoryExportOptions.isCombineStudentCommits()) {
+            if (repositoryExportOptions.combineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeRepository());
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.anonymizeRepository());
             }
 
-            if (repositoryExportOptions.isAnonymizeRepository()) {
+            if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
@@ -744,7 +743,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 gitService.removeRemotesFromRepository(repository);
             }
 
-            if (repositoryExportOptions.isNormalizeCodeStyle()) {
+            if (repositoryExportOptions.normalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
                     fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
@@ -756,7 +755,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository(), zipOutput);
+            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
@@ -793,11 +792,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());
         final Optional<ZonedDateTime> latestAllowedDate;
-        if (repositoryExportOptions.isFilterLateSubmissionsIndividualDueDate()) {
+        if (repositoryExportOptions.filterLateSubmissionsIndividualDueDate()) {
             latestAllowedDate = ExerciseDateService.getDueDate(participation);
         }
         else {
-            latestAllowedDate = Optional.of(repositoryExportOptions.getFilterLateSubmissionsDate());
+            latestAllowedDate = Optional.of(repositoryExportOptions.filterLateSubmissionsDate());
         }
 
         if (latestAllowedDate.isPresent()) {
@@ -854,7 +853,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToMavenProjectName(Repository repo, String participantIdentifier, String pomFilePath) {
         try {
-            File pomFile = new File(pomFilePath);
+            File pomFile = Path.of(pomFilePath).toFile();
             // check if file exists and full file name is pom.xml and not just the file ending.
             if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
                 return;
@@ -890,7 +889,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToEclipseProjectName(Repository repo, String participantIdentifier, String eclipseProjectFilePath) {
         try {
-            File eclipseProjectFile = new File(eclipseProjectFilePath);
+            File eclipseProjectFile = Path.of(eclipseProjectFilePath).toFile();
             // Check if file exists and full file name is .project and not just the file ending.
             if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
                 return;

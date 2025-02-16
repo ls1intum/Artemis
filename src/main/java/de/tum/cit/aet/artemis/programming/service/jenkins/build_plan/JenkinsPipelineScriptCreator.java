@@ -36,8 +36,6 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private static final String REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED = "#isStaticCodeAnalysisEnabled";
 
-    private static final String REPLACE_TESTWISE_COVERAGE = "#testWiseCoverage";
-
     private final ResourceLoaderService resourceLoaderService;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
@@ -58,8 +56,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         final String pipelineScript = loadPipelineScript(exercise, projectType);
 
         final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        final boolean isTestwiseCoverageAnalysisEnabled = exercise.getBuildConfig().isTestwiseCoverageEnabled();
-        final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
+        final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled);
 
         return replaceVariablesInBuildPlanTemplate(replacements, pipelineScript);
     }
@@ -86,12 +83,10 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         }
     }
 
-    private Map<String, String> getReplacements(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isStaticCodeAnalysisEnabled,
-            final boolean isTestwiseCoverageAnalysisEnabled) {
+    private Map<String, String> getReplacements(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isStaticCodeAnalysisEnabled) {
         final Map<String, String> replacements = new HashMap<>();
 
         replacements.put(REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
-        replacements.put(REPLACE_TESTWISE_COVERAGE, String.valueOf(isTestwiseCoverageAnalysisEnabled));
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
         replacements.put(REPLACE_DOCKER_ARGS, String.join(" ", programmingLanguageConfiguration.getDefaultDockerFlags()));
 

@@ -39,6 +39,8 @@ public class ConversationDTO {
     // property not taken from entity
     private Long unreadMessagesCount;
 
+    // TODO: use boolean where possible
+
     // property not taken from entity
     private Boolean isFavorite;
 

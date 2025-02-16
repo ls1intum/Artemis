@@ -87,6 +87,10 @@ public class EmailSummaryService {
     private void prepareEmailSummaryForUser(User user, Set<Exercise> allPossiblyRelevantExercisesForSummary) {
         // Get all courses with exercises, lectures and exams (filtered for given user)
         Set<Course> courses = courseService.findAllActiveForUser(user);
+        if (courses.isEmpty()) {
+            // There are not active courses for the user, so it also does not make sense to send an email summary
+            return;
+        }
 
         // Filter out the relevant exercises for this individual user's summary
         Set<Exercise> relevantExercisesForThisUser = allPossiblyRelevantExercisesForSummary.stream()

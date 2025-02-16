@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject, output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -6,25 +6,47 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { onTextEditorTab } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FormsModule,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private textService = inject(TextEditorService);
+    private stringCountService = inject(StringCountService);
+
     exerciseType = ExerciseType.TEXT;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: TextSubmission;
-    @Input()
-    exercise: Exercise;
+    @Input() studentSubmission: TextSubmission;
+    @Input() exercise: Exercise;
+
+    saveCurrentExercise = output<void>();
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
@@ -35,15 +57,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textEditorInput = new Subject<string>();
 
     // Icons
-    farListAlt = faListAlt;
+    protected readonly faListAlt = faListAlt;
 
-    constructor(
-        private textService: TextEditorService,
-        private stringCountService: StringCountService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
 
     ngOnInit(): void {
         // show submission answers in UI
@@ -93,16 +110,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.stringCountService.countCharacters(this.answer);
     }
 
-    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
-    }
-
     onTextEditorInput(event: Event) {
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
@@ -120,5 +127,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
     }
 }

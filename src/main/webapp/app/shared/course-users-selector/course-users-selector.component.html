@@ -13,13 +13,30 @@
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
             [ngbTypeahead]="search"
             [inputFormatter]="usersFormatter"
-            [resultFormatter]="usersFormatter"
+            [resultTemplate]="resultTemplate"
             [editable]="false"
             [focusFirst]="false"
             (input)="onInputChange($event)"
             placement="bottom-start"
             #instance="ngbTypeahead"
         />
+        <ng-template #resultTemplate let-user="result">
+            <div class="d-flex align-items-center">
+                <jhi-profile-picture
+                    [imageSizeInRem]="'1.1'"
+                    [fontSizeInRem]="'0.5'"
+                    [imageId]="'sidebar-profile-picture'"
+                    [defaultPictureId]="'sidebar-default-profile-picture'"
+                    [isGray]="false"
+                    [authorId]="user.id"
+                    [authorName]="user.name"
+                    [imageUrl]="user.imageUrl"
+                    [isEditable]="false"
+                    class="me-2"
+                />
+                <span>{{ getUserLabel(user) }}</span>
+            </div>
+        </ng-template>
         @if (isSearching) {
             <small class="form-text text-body-secondary" jhiTranslate="artemisApp.userSelector.searchingText"></small>
             <br />

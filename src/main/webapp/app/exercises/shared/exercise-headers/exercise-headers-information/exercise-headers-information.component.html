@@ -1,0 +1,40 @@
+@if (exercise) {
+    <div id="exercise-headers-information" class="d-flex flex-row flex-wrap gap-2 overflow-auto">
+        @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
+            <jhi-information-box [informationBoxData]="informationBoxItem">
+                @switch (informationBoxItem.content.type) {
+                    @case ('difficultyLevel') {
+                        <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content.value" />
+                    }
+                    @case ('categories') {
+                        <jhi-exercise-categories
+                            contentComponent
+                            [exercise]="informationBoxItem.content.value"
+                            [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
+                            [ngClass]="'badge-row'"
+                            [isSmall]="true"
+                        />
+                    }
+                    @case ('timeAgo') {
+                        <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content.value | artemisTimeAgo }}</span>
+                    }
+                    @case ('dateTime') {
+                        <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
+                    }
+                    @case ('submissionStatus') {
+                        <jhi-submission-result-status
+                            contentComponent
+                            class="text-truncate result"
+                            [exercise]="informationBoxItem.content.value"
+                            [studentParticipation]="studentParticipation"
+                            [triggerLastGraded]="false"
+                            [showCompletion]="false"
+                            [showBadge]="false"
+                            [showProgressBar]="true"
+                        />
+                    }
+                }
+            </jhi-information-box>
+        }
+    </div>
+}

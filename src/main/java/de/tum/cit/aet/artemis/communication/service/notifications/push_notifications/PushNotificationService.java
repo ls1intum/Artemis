@@ -57,17 +57,6 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
-    private static final Cipher cipher;
-
-    static {
-        try {
-            cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
     private final RestTemplate restTemplate;
@@ -141,7 +130,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     @Override
     @Async
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
-        final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
+        final String relayServerBaseUrl = getRelayBaseUrl();
 
         if (relayServerBaseUrl.isEmpty()) {
             return;
@@ -155,11 +144,11 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
-                Constants.PUSH_NOTIFICATION_VERSION);
 
         try {
-            final String payload = mapper.writeValueAsString(notificationData);
+            var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
+                    Constants.PUSH_NOTIFICATION_VERSION);
+            var payload = mapper.writeValueAsString(notificationData);
             final byte[] initializationVector = new byte[16];
 
             List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
@@ -170,10 +159,11 @@ public abstract class PushNotificationService implements InstantNotificationServ
                 String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
                 Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
-                return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
+                return payloadCiphertext.stream()
+                        .map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken(), deviceConfiguration.getApiType().getDatabaseKey()));
             }).toList();
 
-            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
+            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl);
         }
         catch (JsonProcessingException e) {
             log.error("Error creating push notification payload!", e);
@@ -184,7 +174,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     abstract PushNotificationDeviceType getDeviceType();
 
-    abstract Optional<String> getRelayBaseUrl();
+    abstract String getRelayBaseUrl();
 
     abstract String getRelayPath();
 
@@ -203,11 +193,14 @@ public abstract class PushNotificationService implements InstantNotificationServ
      */
     private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
         try {
+            // We need to get a fresh instance here for every notification to avoid a race condition between tasks
+            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 
             return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
         }
-        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException e) {
             log.error("Error encrypting push notification payload!", e);
             return Optional.empty();
         }

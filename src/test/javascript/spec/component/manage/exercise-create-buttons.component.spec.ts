@@ -22,8 +22,8 @@ describe('Exercise Create Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [QuizExerciseComponent],
+            imports: [ArtemisTestModule, QuizExerciseComponent],
+            declarations: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

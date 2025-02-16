@@ -37,7 +37,7 @@ export abstract class ListAction extends TextEditorAction {
      */
     protected stripAnyListPrefix(line: string): string {
         const numberedListRegex = /^\s*\d+\.\s+/;
-        const bulletListRegex = /^\s*[-*+•]\s+/;
+        const bulletListRegex = /^\s*[-*+]\s+/;
 
         if (numberedListRegex.test(line)) {
             return line.replace(numberedListRegex, '');
@@ -79,22 +79,22 @@ export abstract class ListAction extends TextEditorAction {
         const lines = selectedText.split('\n');
 
         // Check if the cursor is at the end of the line to add or remove the prefix
-        let position = editor.getPosition();
+        const position = editor.getPosition();
         if (position) {
             const currentLineText = editor.getLineText(position.getLineNumber());
 
             if (!selectedText && position.getColumn() <= currentLineText.length) {
-                const endPosition = new TextEditorPosition(position.getLineNumber(), currentLineText.length + 1);
-                editor.setPosition(endPosition);
-                editor.focus();
-                position = endPosition;
+                return;
             }
 
             if (position.getColumn() === currentLineText.length + 1) {
-                const lineWithoutPrefix = this.stripAnyListPrefix(currentLineText);
                 const newPrefix = this.getPrefix(1);
 
-                const updatedLine = currentLineText.startsWith(newPrefix) ? lineWithoutPrefix : newPrefix + lineWithoutPrefix;
+                if (currentLineText.startsWith(newPrefix)) {
+                    return;
+                }
+
+                const updatedLine = newPrefix + currentLineText;
 
                 editor.replaceTextAtRange(
                     new TextEditorRange(new TextEditorPosition(position.getLineNumber(), 1), new TextEditorPosition(position.getLineNumber(), currentLineText.length + 1)),
@@ -110,7 +110,7 @@ export abstract class ListAction extends TextEditorAction {
 
         // Determine if all lines have the current prefix
         let allLinesHaveCurrentPrefix;
-        if (this.getPrefix(1) != '•  ') {
+        if (this.getPrefix(1) != '- ') {
             const numberedListRegex = /^\s*\d+\.\s+/;
             allLinesHaveCurrentPrefix = lines.every((line) => numberedListRegex.test(line));
         } else {
@@ -124,7 +124,7 @@ export abstract class ListAction extends TextEditorAction {
             const linesWithoutPrefix = lines.map((line) => this.stripAnyListPrefix(line));
 
             updatedLines = linesWithoutPrefix.map((line, index) => {
-                const prefix = this.getPrefix(index) != '•  ' ? this.getPrefix(index + 1) : this.getPrefix(startLineNumber + index);
+                const prefix = this.getPrefix(index) != '- ' ? this.getPrefix(index + 1) : this.getPrefix(startLineNumber + index);
                 return prefix + line;
             });
         }
@@ -141,7 +141,7 @@ export abstract class ListAction extends TextEditorAction {
      */
     protected hasPrefix(line: string): boolean {
         const numberedListRegex = /^\s*\d+\.\s+/;
-        const bulletListRegex = /^\s*[•\-*+]\s+/;
+        const bulletListRegex = /^\s*[-\-*+]\s+/;
         return numberedListRegex.test(line) || bulletListRegex.test(line);
     }
 
@@ -162,9 +162,9 @@ export abstract class ListAction extends TextEditorAction {
                 if (isNumbered) {
                     const match = currentLineText.match(/^\s*(\d+)\.\s+/);
                     const currentNumber = match ? parseInt(match[1], 10) : 0;
-                    nextLinePrefix = `${currentNumber + 1}.  `;
+                    nextLinePrefix = `${currentNumber + 1}. `;
                 } else {
-                    nextLinePrefix = '•  ';
+                    nextLinePrefix = '- ';
                 }
             }
 
@@ -187,7 +187,7 @@ export abstract class ListAction extends TextEditorAction {
         if (position) {
             const lineNumber = position.getLineNumber();
             const lineContent = editor.getLineText(lineNumber);
-            const linePrefixMatch = lineContent.match(/^\s*(\d+\.\s+|[-*+•]\s+)/);
+            const linePrefixMatch = lineContent.match(/^\s*(\d+\.\s+|[-*+]\s+)/);
 
             if (linePrefixMatch) {
                 const prefixLength = linePrefixMatch[0].length;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -13,12 +13,21 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
+    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
+    private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() participation: Participation;
@@ -28,20 +37,16 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     correctionRoundIndices: number[];
     cancelConfirmationText: string;
-    newManualResultAllowed: boolean = false;
+    newManualResultAllowed = false;
     examMode = false;
 
     readonly faBan = faBan;
     readonly faFolderOpen = faFolderOpen;
     readonly AssessmentType = AssessmentType;
 
-    constructor(
-        translateService: TranslateService,
-        private programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 

@@ -4,11 +4,43 @@
 -->
 <ng-container id="result">
     @switch (templateStatus) {
+        @case (ResultTemplateStatus.IS_QUEUED) {
+            @if (showProgressBar) {
+                <jhi-result-progress-bar
+                    [estimatedDuration]="estimatedDuration"
+                    [estimatedRemaining]="estimatedRemaining"
+                    [isBuilding]="isBuilding"
+                    [isQueued]="isQueued"
+                    [showBorder]="showProgressBarBorder"
+                />
+            } @else {
+                <span class="text-primary">
+                    <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                    <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+                    @if (estimatedRemaining) {
+                        <span> {{ estimatedRemaining | artemisDurationFromSeconds }} </span>
+                    }
+                </span>
+            }
+        }
         @case (ResultTemplateStatus.IS_BUILDING) {
-            <span class="text-primary">
-                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
-            </span>
+            @if (showProgressBar) {
+                <jhi-result-progress-bar
+                    [estimatedDuration]="estimatedDuration"
+                    [estimatedRemaining]="estimatedRemaining"
+                    [isBuilding]="isBuilding"
+                    [isQueued]="isQueued"
+                    [showBorder]="showProgressBarBorder"
+                />
+            } @else {
+                <span class="text-primary">
+                    <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                    <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
+                    @if (estimatedRemaining) {
+                        <span> {{ estimatedRemaining | artemisDurationFromSeconds }} </span>
+                    }
+                </span>
+            }
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
             @if (result) {
@@ -60,7 +92,7 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    @if (!isInSidebarCard) {
+                    @if (!isInSidebarCard && showCompletion) {
                         <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>
@@ -97,7 +129,7 @@
         }
         @case (ResultTemplateStatus.MISSING) {
             <span class="text-danger">
-                <fa-icon [icon]="faExclamationCircle" size="lg" />&nbsp;
+                <fa-icon class="me-1" [icon]="faExclamationCircle" size="lg" />
                 @switch (missingResultInfo) {
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
                         <span

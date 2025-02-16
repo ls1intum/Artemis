@@ -11,6 +11,9 @@
             "showMultipleAnswers": "Zeige {{ number }} Antworten",
             "multipleAnswers": "{{ number }} Antworten",
             "showSingleAnswer": "Zeige 1 Antwort",
+            "showing": "Anzeigen ",
+            "singlePinned": "1 angeheftete Nachricht",
+            "multiplePinned": "{{ number }} angeheftete Nachrichten",
             "singleAnswer": "1 Antwort",
             "collapseAnswers": "Antworten einklappen",
             "savePosting": "Speichern",
@@ -27,6 +30,7 @@
             "createModalTitleAnswer": "Antwort erstellen",
             "editPosting": "Inhalt bearbeiten",
             "edited": "(bearbeitet)",
+            "saveForLater": "Für später speichern",
             "markAsResolvingAnswerTooltip": "Bestätige, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
             "resolvingAnswerTooltip": "Die ursprüngliche Nachricht wird durch diese Antwort geklärt",
             "unmarkAsResolvingAnswerTooltip": "Widerrufe, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
@@ -46,7 +50,8 @@
                 "exercise": "Aufgabe",
                 "lecture": "Vortrag",
                 "channel": "Kanal",
-                "user": "Benutzer"
+                "user": "Benutzer",
+                "faq": "FAQ"
             },
             "channel": {
                 "noChannel": "Es ist kein Kanal verfügbar.",
@@ -94,7 +99,13 @@
                 "allPublicMessages": "Alle öffentlichen Nachrichten",
                 "searchResults": "Suchergebnisse für {{ search }}",
                 "mobileDisclaimer": "Bitte erst eine Konversation auswählen.",
-                "mobileDisclaimerCallToAction": "Konversation wählen"
+                "mobileDisclaimerCallToAction": "Konversation wählen",
+                "savedPosts": "Gespeicherte Nachrichten",
+                "progress": "In Bearbeitung",
+                "completed": "Erledigt",
+                "archived": "Archiviert",
+                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten, damit sie hier auftauchen.",
+                "deleteNoticeSavedPosts": "Erledigte und archivierte Lesezeichen werden nach 100 Tagen gelöscht."
             },
             "post": {
                 "context": "Kontext",
@@ -133,7 +144,14 @@
                 "deleteMessage": "Nachricht löschen",
                 "replyMessage": "Antworten im Thread",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
-                "undoDelete": "Löschen umkehren"
+                "undoDelete": "Löschen umkehren",
+                "bookmarkPost": "Beitrag speichern",
+                "removeBookmarkPost": "Beitrag nicht mehr speichern",
+                "bookmarkPostProgress": "Beitrag als in Bearbeitung speichern",
+                "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
+                "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
+                "thread": "Thread",
+                "saved": "Für später gespeichert"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
@@ -142,12 +160,14 @@
             "userRoles": {
                 "instructor": "Instruktor",
                 "tutor": "Tutor",
-                "student": "Student"
+                "student": "Student",
+                "deleted": "Gelöscht"
             },
             "userAuthorityTooltips": {
                 "instructor": "Lehrkraft: Verantwortlich für die Kursdurchführung.",
                 "tutor": "Tutor:in: Verantwortlich für die Unterstützung der Studierenden bei ihren Fragen zum Kurs und zu den Übungen.",
-                "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen."
+                "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen.",
+                "deleted": "Gelöscht: Nutzer:in wurde gelöscht."
             }
         }
     }

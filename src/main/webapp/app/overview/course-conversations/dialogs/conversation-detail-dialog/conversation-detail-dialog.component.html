@@ -4,10 +4,19 @@
             <h4 class="modal-title">
                 <span>
                     @if (getAsChannel(activeConversation); as channel) {
-                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
-                    }
-                    @if (getAsGroupChat(activeConversation); as groupChat) {
-                        <jhi-group-chat-icon />
+                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
+                    } @else if (getAsGroupChat(activeConversation)) {
+                        <fa-icon [icon]="faPeopleGroup" size="xs" />
+                    } @else {
+                        <jhi-profile-picture
+                            imageSizeInRem="2"
+                            fontSizeInRem="0.8"
+                            imageId="user-profile-picture"
+                            defaultPictureId="user-default-profile-picture"
+                            [authorId]="otherUser?.id"
+                            [authorName]="otherUser?.name"
+                            [imageUrl]="otherUser?.imageUrl"
+                        />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
                 </span>
@@ -37,16 +46,16 @@
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
                     ></a>
                 </li>
-                <li class="nav-item members-tab">
-                    <a
-                        class="nav-link"
-                        [class.active]="selectedTab === Tabs.MEMBERS"
-                        role="button"
-                        (click)="selectedTab = Tabs.MEMBERS"
-                        jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
-                    ></a>
-                </li>
-                @if (!isOneToOneChat(activeConversation)) {
+                @if (!isOneToOneChat) {
+                    <li class="nav-item members-tab">
+                        <a
+                            class="nav-link"
+                            [class.active]="selectedTab === Tabs.MEMBERS"
+                            role="button"
+                            (click)="selectedTab = Tabs.MEMBERS"
+                            jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
+                        ></a>
+                    </li>
                     <li class="nav-item settings-tab">
                         <a
                             class="nav-link"
@@ -62,7 +71,12 @@
         <div class="modal-body">
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
-                    <jhi-conversation-members [course]="course" [activeConversation]="activeConversation" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-members
+                        [course]="course"
+                        [activeConversationInput]="activeConversation"
+                        (changesPerformed)="changesWerePerformed = true"
+                        (userNameClicked)="onUserNameClicked($event)"
+                    />
                 }
                 @case (Tabs.INFO) {
                     <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />
@@ -72,6 +86,7 @@
                         [activeConversation]="activeConversation"
                         [course]="course"
                         (channelArchivalChange)="onArchivalChange()"
+                        (channelPrivacyChange)="onPrivacyChange()"
                         (channelDeleted)="onChannelDeleted()"
                         (conversationLeave)="onConversationLeave()"
                     />

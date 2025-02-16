@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, input, output } from '@angular/core';
+import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -11,22 +11,33 @@ import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
     styleUrls: ['./create-exercise-unit.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, ArtemisTranslatePipe],
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private exerciseUnitService = inject(ExerciseUnitService);
+
     protected readonly faTimes = faTimes;
     protected readonly faSort = faSort;
 
     @Input() lectureId: number | undefined;
     @Input() courseId: number | undefined;
     hasCancelButton = input<boolean>();
-    hasCreateExerciseButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
-    currentWizardStep = input<number>();
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
@@ -37,15 +48,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private exerciseUnitService: ExerciseUnitService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -122,12 +124,5 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     cancelForm() {
         this.onCancel.emit();
-    }
-
-    createNewExercise() {
-        this.router.navigate(['/course-management', this.courseId, 'exercises'], {
-            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep() },
-            queryParamsHandling: '',
-        });
     }
 }

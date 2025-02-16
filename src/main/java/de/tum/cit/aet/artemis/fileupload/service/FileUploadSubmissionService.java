@@ -255,9 +255,11 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return a locked file upload submission that needs an assessment
      */
     public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean ignoreTestRunParticipations, int correctionRound) {
-        FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, ignoreTestRunParticipations, correctionRound)
+        var submission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, ignoreTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
-        lockSubmission(fileUploadSubmission, correctionRound);
-        return fileUploadSubmission;
+        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+        submission = fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submission.getId());
+        lockSubmission(submission, correctionRound);
+        return submission;
     }
 }

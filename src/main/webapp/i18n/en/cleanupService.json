@@ -1,0 +1,64 @@
+{
+    "cleanupService": {
+        "title": "Cleanup Service",
+        "table": {
+            "operation": "Operation name",
+            "deleteFrom": "Delete from",
+            "deleteTo": "Delete to",
+            "lastExecuted": "Last executed"
+        },
+        "operation": {
+            "deleteOrphans": "Delete orphans",
+            "deletePlagiarismComparisons": "Delete plagiarism comparisons",
+            "deleteNonRatedResults": "Delete feedback of old non-rated results",
+            "deleteOldRatedResults": "Delete feedback of old rated results",
+            "deleteOldSubmissionVersions": "Delete old submission versions",
+            "deleteOldFeedback": "Delete old feedback versions"
+        },
+        "tooltip": {
+            "deleteOrphans": "Deletes orphaned entities that are no longer associated with valid results or participations. This includes feedback, text blocks, and scores that reference null results, participations, or submissions.",
+            "deletePlagiarismComparisons": "Deletes plagiarism comparisons with a status of \"None\" that belong to courses within the specified date range. A status of \"None\" indicates that the plagiarism incident has not yet been reviewed.",
+            "deleteNonRatedResults": "Deletes non-rated results, excluding the latest non-rated result for each participation (to be able to compute Competencies Scores), within the specified date range, along with associated long feedback texts, text blocks, feedback items, and participant scores.",
+            "deleteOldRatedResults": "Deletes rated results, excluding the latest rated result for each participation, for courses conducted within the specified date range. Also deletes associated long feedback texts, text blocks, feedback items, and participant scores.",
+            "deleteOldSubmissionVersions": "Deletes old submission versions. The last submission will not be deleted, as it is always stored in the corresponding Submission subclass.",
+            "deleteOldFeedback": "Delete old feedback versions"
+        },
+        "execute": {
+            "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",
+            "questionWithoutDates": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? This action cannot be undone!",
+            "typeOperationNameToConfirm": "Please type in the name of the operation to confirm."
+        },
+        "modal": {
+            "affectedEntities": "This operation will delete the following entities:",
+            "noEntriesToDelete": "No entries to delete"
+        },
+        "notRunYet": "This operation has not been run yet",
+        "error": {
+            "datesInvalid": "'Delete to' must be after 'Delete from'"
+        },
+        "entities": {
+            "orphanFeedback": "Orphan feedback",
+            "orphanLongFeedbackText": "Orphan long feedback text",
+            "orphanTextBlock": "Orphan text block",
+            "orphanStudentScore": "Orphan student score",
+            "orphanTeamScore": "Orphan team score",
+            "orphanFeedbackForOrphanResults": "Orphan feedback for orphan results",
+            "orphanLongFeedbackTextForOrphanResults": "Orphan long feedback text for orphan results",
+            "orphanTextBlockForOrphanResults": "Orphan text block for orphan results",
+            "orphanRating": "Orphan rating",
+            "orphanResultsWithoutParticipation": "Orphan results without participation",
+            "plagiarismComparison": "Plagiarism comparisons",
+            "plagiarismElements": "Plagiarism elements",
+            "plagiarismSubmissions": "Plagiarism submissions",
+            "plagiarismMatches": "Plagiarism matches",
+            "longFeedbackText": "Long feedback text",
+            "textBlock": "Text block",
+            "feedback": "Feedback",
+            "submissionVersions": "Submission versions"
+        },
+        "button": {
+            "execute": "Execute",
+            "close": "Close"
+        }
+    }
+}

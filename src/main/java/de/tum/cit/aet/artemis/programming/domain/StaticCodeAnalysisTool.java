@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import java.util.ArrayList;
+import static java.util.Map.entry;
+
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -10,28 +13,33 @@ import java.util.Optional;
  */
 public enum StaticCodeAnalysisTool {
 
-    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle:checkstyle", "checkstyle-result.xml"),
-    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml"), PMD_CPD(ProgrammingLanguage.JAVA, "pmd:cpd", "cpd.xml"), SWIFTLINT(ProgrammingLanguage.SWIFT, "", "swiftlint-result.xml"),
-    GCC(ProgrammingLanguage.C, "", "gcc.xml");
+    // @formatter:off
+    CHECKSTYLE("checkstyle-result.xml"),
+    GCC("gcc.xml"),
+    PMD("pmd.xml"),
+    PMD_CPD("cpd.xml"),
+    RUBOCOP("rubocop.sarif"),
+    RUFF("ruff.sarif"),
+    SPOTBUGS("spotbugsXml.xml"),
+    SWIFTLINT("swiftlint-result.xml"),
+    OTHER(null),
+    ;
+    // @formatter:on
 
-    private final ProgrammingLanguage language;
+    // @formatter:off
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.ofEntries(
+        entry(ProgrammingLanguage.C, List.of(GCC)),
+        entry(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD)),
+        entry(ProgrammingLanguage.PYTHON, List.of(RUFF)),
+        entry(ProgrammingLanguage.RUBY, List.of(RUBOCOP)),
+        entry(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT))
+    ));
+    // @formatter:on
 
-    private final String command;
+    private final String fileName;
 
-    private final String filePattern;
-
-    StaticCodeAnalysisTool(ProgrammingLanguage language, String command, String filePattern) {
-        this.language = language;
-        this.command = command;
-        this.filePattern = filePattern;
-    }
-
-    public String getTask() {
-        return this.command;
-    }
-
-    public String getFilePattern() {
-        return this.filePattern;
+    StaticCodeAnalysisTool(String fileName) {
+        this.fileName = fileName;
     }
 
     /**
@@ -41,13 +49,7 @@ public enum StaticCodeAnalysisTool {
      * @return List of static code analysis
      */
     public static List<StaticCodeAnalysisTool> getToolsForProgrammingLanguage(ProgrammingLanguage language) {
-        List<StaticCodeAnalysisTool> tools = new ArrayList<>();
-        for (var tool : StaticCodeAnalysisTool.values()) {
-            if (tool.language == language) {
-                tools.add(tool);
-            }
-        }
-        return tools;
+        return TOOLS_OF_PROGRAMMING_LANGUAGE.getOrDefault(language, List.of());
     }
 
     /**
@@ -58,7 +60,7 @@ public enum StaticCodeAnalysisTool {
      */
     public static Optional<StaticCodeAnalysisTool> getToolByFilePattern(String fileName) {
         for (StaticCodeAnalysisTool tool : StaticCodeAnalysisTool.values()) {
-            if (Objects.equals(fileName, tool.filePattern)) {
+            if (Objects.equals(fileName, tool.fileName)) {
                 return Optional.of(tool);
             }
         }

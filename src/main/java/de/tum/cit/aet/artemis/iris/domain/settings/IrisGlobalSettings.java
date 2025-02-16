@@ -28,8 +28,20 @@ public class IrisGlobalSettings extends IrisSettings {
     private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_course_chat_settings_id")
+    private IrisCourseChatSubSettings irisCourseChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_lecture_ingestion_settings_id")
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_lecture_chat_settings_id")
+    private IrisLectureChatSubSettings irisLectureChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_faq_ingestion_settings_id")
+    private IrisFaqIngestionSubSettings irisFaqIngestionSubSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
@@ -66,6 +78,26 @@ public class IrisGlobalSettings extends IrisSettings {
     }
 
     @Override
+    public IrisLectureChatSubSettings getIrisLectureChatSettings() {
+        return irisLectureChatSettings;
+    }
+
+    @Override
+    public void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings) {
+        this.irisLectureChatSettings = irisLectureChatSettings;
+    }
+
+    @Override
+    public IrisCourseChatSubSettings getIrisCourseChatSettings() {
+        return irisCourseChatSettings;
+    }
+
+    @Override
+    public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
+        this.irisCourseChatSettings = irisCourseChatSettings;
+    }
+
+    @Override
     public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
         return irisCompetencyGenerationSettings;
     }
@@ -73,5 +105,16 @@ public class IrisGlobalSettings extends IrisSettings {
     @Override
     public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings) {
         this.irisCompetencyGenerationSettings = irisCompetencyGenerationSettings;
+    }
+
+    @Override
+    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
+        return irisFaqIngestionSubSettings;
+    }
+
+    @Override
+    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
+        this.irisFaqIngestionSubSettings = irisFaqIngestionSubSettings;
+
     }
 }

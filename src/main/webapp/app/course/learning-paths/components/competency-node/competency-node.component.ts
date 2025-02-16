@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, computed, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
@@ -12,7 +12,7 @@ export interface SizeUpdate {
 
 @Component({
     selector: 'jhi-learning-path-competency-node',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbDropdownModule, FontAwesomeModule, NgbAccordionModule, CommonModule],
     templateUrl: './competency-node.component.html',
     styleUrl: './competency-node.component.scss',

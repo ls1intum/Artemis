@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -14,6 +14,9 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementPlugin {
+    private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    private plantUmlService = inject(ProgrammingExercisePlantUmlService);
+
     private latestResult?: Result;
     private testCases?: ProgrammingExerciseTestCase[];
     private injectableElementsFoundSubject = new Subject<() => void>();
@@ -21,10 +24,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
     private plantUmlIndex = 0;
 
-    constructor(
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private plantUmlService: ProgrammingExercisePlantUmlService,
-    ) {
+    constructor() {
         super();
     }
 

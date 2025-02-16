@@ -9,11 +9,9 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
@@ -36,7 +34,7 @@ describe('ProblemStatementComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            declarations: [ProblemStatementComponent, TranslatePipeMock, HtmlForMarkdownPipe, MockComponent(ProgrammingExerciseInstructionComponent)],
+            imports: [ArtemisTestModule],
             providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }, MockProvider(ParticipationService), MockProvider(ExerciseService)],
         })
             .compileComponents()

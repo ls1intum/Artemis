@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription, combineLatest } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
@@ -8,15 +8,28 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { switchMap, tap } from 'rxjs/operators';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight, NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteUsersButtonComponent } from './delete-users-button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { NgClass } from '@angular/common';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -86,8 +99,38 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
     styleUrls: ['./user-management.component.scss'],
+    imports: [
+        TranslateDirective,
+        UsersImportButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        DeleteUsersButtonComponent,
+        DeleteButtonDirective,
+        NgClass,
+        SortDirective,
+        SortByDirective,
+        ProfilePictureComponent,
+        NgbHighlight,
+        ItemCountComponent,
+        NgbPagination,
+        HelpIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
+    private adminUserService = inject(AdminUserService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private eventManager = inject(EventManager);
+    private localStorage = inject(LocalStorageService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+
     @ViewChild('filterModal') filterModal: TemplateRef<any>;
 
     search = new Subject<void>();
@@ -126,18 +169,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     readonly medium = ButtonSize.MEDIUM;
     readonly ButtonType = ButtonType;
-
-    constructor(
-        private adminUserService: AdminUserService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private eventManager: EventManager,
-        private localStorage: LocalStorageService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init

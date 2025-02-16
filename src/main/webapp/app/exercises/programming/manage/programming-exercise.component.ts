@@ -1,23 +1,20 @@
-import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
-import { ActivatedRoute } from '@angular/router';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
@@ -26,7 +23,6 @@ import {
     faCheckDouble,
     faDownload,
     faFileSignature,
-    faLightbulb,
     faListAlt,
     faPencilAlt,
     faPlus,
@@ -40,13 +36,60 @@ import {
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/programming-exercise-grading-dirty-warning.component';
+import { ProgrammingExerciseInstructorStatusComponent } from './status/programming-exercise-instructor-status.component';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
+import { SlicePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ProgrammingExerciseGradingDirtyWarningComponent,
+        ProgrammingExerciseInstructorStatusComponent,
+        ExerciseCategoriesComponent,
+        FeatureToggleLinkDirective,
+        ProgrammingExerciseResetButtonDirective,
+        FeatureToggleDirective,
+        DeleteButtonDirective,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ExerciseScoresExportButtonComponent,
+        SlicePipe,
+        ArtemisDatePipe,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+    ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
-    @Input() programmingExercises: ProgrammingExercise[];
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
+
+    @Input() programmingExercises: ProgrammingExercise[] = [];
     filteredProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
@@ -58,9 +101,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     onlineIdeEnabled = false;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
-    @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
+    // @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
+    protected readonly RepositoryType = RepositoryType;
 
     // Icons
     faSort = faSort;
@@ -74,30 +119,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faTable = faTable;
     faTrash = faTrash;
     faListAlt = faListAlt;
-    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
 
     protected get exercises() {
         return this.programmingExercises;
-    }
-
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private courseExerciseService: CourseExerciseService,
-        public exerciseService: ExerciseService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private profileService: ProfileService,
-        courseService: CourseManagementService,
-        translateService: TranslateService,
-        eventManager: EventManager,
-        route: ActivatedRoute,
-    ) {
-        super(courseService, translateService, route, eventManager);
-        this.programmingExercises = [];
     }
 
     ngOnInit(): void {
@@ -148,7 +174,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 
-    trackId(index: number, item: ProgrammingExercise) {
+    trackId(_index: number, item: ProgrammingExercise) {
         return item.id;
     }
 
@@ -227,7 +253,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId
      * @param repositoryType
      */
-    downloadRepository(programmingExerciseId: number | undefined, repositoryType: ProgrammingExerciseInstructorRepositoryType) {
+    downloadRepository(programmingExerciseId: number | undefined, repositoryType: RepositoryType) {
         if (programmingExerciseId) {
             // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
             this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {

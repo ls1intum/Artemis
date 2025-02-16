@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,49 +78,45 @@ public class AthenaRepositoryExportService {
      * @param exerciseId     the id of the exercise to export the repository for
      * @param submissionId   the id of the submission to export the repository for (only for student repository, otherwise pass null)
      * @param repositoryType the type of repository to export. Pass null to export the student repository.
-     * @return the zip file containing the exported repository
+     * @return the path to the zip file containing the exported repository
      * @throws IOException              if the export fails
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
-    public File exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
+    public Path exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
         log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAnonymizeRepository(true);
-        exportOptions.setExportAllParticipants(false);
-        exportOptions.setFilterLateSubmissions(true);
-        exportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
-        exportOptions.setFilterLateSubmissionsIndividualDueDate(false); // Athena currently does not support individual due dates
+        // Athena currently does not support individual due dates
+        var exportOptions = new RepositoryExportOptionsDTO(false, true, false, programmingExercise.getDueDate(), false, false, false, true, false);
 
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
 
         Path exportDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 15);
-        Path zipFile = null;
+        Path zipFilePath = null;
 
         if (repositoryType == null) { // Export student repository
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
             var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
-            zipFile = programmingExerciseExportService.getRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir, true);
+            zipFilePath = programmingExerciseExportService.getRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir, true);
         }
         else {
             List<String> exportErrors = List.of();
             var exportFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, exportDir, exportDir,
                     exportErrors);
             if (exportFile.isPresent()) {
-                zipFile = exportFile.get().toPath();
+                zipFilePath = exportFile.get().toPath();
             }
         }
 
-        if (zipFile == null) {
+        if (zipFilePath == null) {
             throw new IOException("Failed to export repository");
         }
 
-        return zipFile.toFile();
+        return zipFilePath;
     }
 }

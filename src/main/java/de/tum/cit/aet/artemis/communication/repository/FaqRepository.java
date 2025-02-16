@@ -40,7 +40,7 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
     Set<Faq> findAllByCourseIdAndFaqState(Long courseId, FaqState faqState);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByCourseId(Long courseId);
 }

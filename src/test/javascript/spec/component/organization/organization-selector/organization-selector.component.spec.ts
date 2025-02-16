@@ -5,8 +5,6 @@ import { of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockProvider } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
 import { Organization } from 'app/entities/organization.model';
 
 describe('OrganizationSelectorComponent', () => {
@@ -17,8 +15,10 @@ describe('OrganizationSelectorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [OrganizationSelectorComponent],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
             .compileComponents()

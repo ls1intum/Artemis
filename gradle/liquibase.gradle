@@ -1,45 +1,54 @@
 import org.gradle.internal.os.OperatingSystem
 
 configurations {
-    liquibase
+    liquibaseRuntime.extendsFrom sourceSets.main.compileClasspath
 }
 
 dependencies {
-    liquibase "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
+    implementation("org.liquibase:liquibase-core:${liquibase_version}") {
+        exclude group: 'com.opencsv', module: 'opencsv'
+    }
+    liquibaseRuntime "org.liquibase:liquibase-core:${liquibase_version}"
+    // Dependency required to parse options. Refer to https://github.com/liquibase/liquibase-gradle-plugin/tree/Release_2.2.0#news.
+    liquibaseRuntime "info.picocli:picocli:4.7.6"
+
+    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
+    liquibaseRuntime "com.mysql:mysql-connector-j:${mysql_version}"
+    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
 }
 
 ext.isWindows = OperatingSystem.current().isWindows()
 
 if (isWindows) {
-    tasks.register('pathingLiquibaseJar', Jar) {
-        dependsOn configurations.liquibase
-        archiveAppendix = 'pathingLiquibase'
+    tasks.register("pathingLiquibaseJar", Jar) {
+        dependsOn configurations.liquibaseRuntime
+        archiveAppendix = "pathingLiquibase"
 
         doFirst {
             manifest {
-                attributes 'Class-Path': (sourceSets.main.runtimeClasspath + configurations.liquibase).collect {
-                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
-                }.join(' ')
+                attributes "Class-Path": (sourceSets.main.runtimeClasspath + configurations.liquibaseRuntime).collect {
+                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, "/")
+                }.join(" ")
             }
         }
     }
 }
 
-tasks.register('initPaths', {
+tasks.register("initPaths", {
     group = "liquibase"
-    dependsOn tasks.named('compileJava')
+    dependsOn tasks.named("compileJava")
     if (isWindows) {
-        dependsOn tasks.named('pathingLiquibaseJar')
+        dependsOn tasks.named("pathingLiquibaseJar")
     }
 })
 
 def liquibaseCommand(command) {
-    javaexec {
+    tasks.register("runLiquibaseCommand", JavaExec) {
         if (isWindows) {
-            classpath tasks.named('pathingLiquibaseJar').get().outputs.files
+            classpath tasks.named("pathingLiquibaseJar").get().outputs.files
         } else {
             classpath sourceSets.main.runtimeClasspath
-            classpath configurations.liquibase
+            classpath configurations.liquibaseRuntime
         }
         mainClass = "liquibase.integration.commandline.Main"
 
@@ -53,26 +62,26 @@ def liquibaseCommand(command) {
             "--url=jdbc:mysql://localhost:3306/Artemis700?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--driver=com.mysql.cj.jdbc.Driver",
             command
-            ]
-    }
+        ]
+    }.get().exec()
 }
 
-tasks.register('liquibaseDiffChangeLog', {
-    dependsOn tasks.named('initPaths')
+tasks.register("liquibaseDiffChangeLog", {
+    dependsOn tasks.named("initPaths")
     doLast {
         liquibaseCommand("diffChangeLog")
     }
 })
 
-tasks.register('liquibaseClearChecksums', {
-    dependsOn tasks.named('initPaths')
+tasks.register("liquibaseClearChecksums", {
+    dependsOn tasks.named("initPaths")
     doLast {
         liquibaseCommand("clearChecksums")
     }
 })
 
-tasks.register('liquibaseGenerateChangelog', {
-    dependsOn tasks.named('initPaths')
+tasks.register("liquibaseGenerateChangelog", {
+    dependsOn tasks.named("initPaths")
     doLast {
         liquibaseCommand("generateChangeLog")
     }
@@ -80,6 +89,6 @@ tasks.register('liquibaseGenerateChangelog', {
 
 static def buildTimestamp() {
     def date = new Date()
-    def formattedDate = date.format('yyyyMMddHHmmss')
+    def formattedDate = date.format("yyyyMMddHHmmss")
     return formattedDate
 }

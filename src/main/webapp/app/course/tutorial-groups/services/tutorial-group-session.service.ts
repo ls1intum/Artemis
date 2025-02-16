@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
@@ -17,12 +17,10 @@ export class TutorialGroupSessionDTO {
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-    ) {}
+    private resourceURL = 'api';
 
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient

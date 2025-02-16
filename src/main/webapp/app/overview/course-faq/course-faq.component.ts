@@ -1,11 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, map } from 'rxjs/operators';
+import { debounceTime, map, takeUntil } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
@@ -16,21 +15,26 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SortService } from 'app/shared/service/sort.service';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
+    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
+    faqElements = viewChildren<ElementRef>('faqElement');
     private ngUnsubscribe = new Subject<void>();
     private parentParamSubscription: Subscription;
 
     courseId: number;
+    referencedFaqId: number;
     faqs: Faq[];
     faqState = FaqState.ACCEPTED;
 
@@ -52,6 +56,16 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private renderer = inject(Renderer2);
+
+    constructor() {
+        effect(() => {
+            if (this.referencedFaqId) {
+                this.scrollToFaq(this.referencedFaqId);
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
@@ -59,6 +73,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.loadFaqs();
             this.loadCourseExerciseCategories(this.courseId);
         });
+
+        this.route.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
+            this.referencedFaqId = params['faqId'];
+        });
+
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
         });
@@ -79,6 +98,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
+                    this.sortFaqs();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -113,5 +133,16 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
+    }
+
+    sortFaqs() {
+        this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
+    }
+
+    scrollToFaq(faqId: number): void {
+        const faqElement = this.faqElements().find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
+        if (faqElement) {
+            this.renderer.selectRootElement(faqElement.nativeElement, true).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 }

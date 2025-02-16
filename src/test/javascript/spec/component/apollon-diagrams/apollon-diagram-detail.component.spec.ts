@@ -44,7 +44,7 @@ describe('ApollonDiagramDetail Component', () => {
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
         TestBed.configureTestingModule({
-            declarations: [ApollonDiagramDetailComponent],
+            imports: [ApollonDiagramDetailComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

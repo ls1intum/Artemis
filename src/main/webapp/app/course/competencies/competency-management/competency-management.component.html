@@ -8,8 +8,8 @@
             </button>
         </div>
         <div class="ms-auto justify-content-end">
-            @if (irisCompetencyGenerationEnabled) {
-                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
+            @if (irisCompetencyGenerationEnabled()) {
+                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId(), 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
@@ -24,7 +24,7 @@
             </button>
         </div>
     </div>
-    @if (isLoading) {
+    @if (isLoading()) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
                 <span class="sr-only" jhiTranslate="loading"></span>
@@ -32,17 +32,19 @@
         </div>
     }
     <jhi-competency-management-table
-        [courseId]="courseId"
-        [courseCompetencies]="competencies"
+        [courseId]="courseId()"
+        [(allCompetencies)]="courseCompetencies"
+        [courseCompetencies]="competencies()"
         [competencyType]="CourseCompetencyType.COMPETENCY"
-        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
     <jhi-competency-management-table
-        [courseId]="courseId"
-        [courseCompetencies]="prerequisites"
+        [courseId]="courseId()"
+        [(allCompetencies)]="courseCompetencies"
+        [courseCompetencies]="prerequisites()"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
-        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
 </div>

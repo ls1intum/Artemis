@@ -1,25 +1,50 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
+import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StudentExamDetailTableRowComponent } from './student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        WorkingTimeControlComponent,
+        FaIconComponent,
+        TestExamWorkingTimeComponent,
+        NgbTooltip,
+        RouterLink,
+        StudentExamDetailTableRowComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private studentExamService = inject(StudentExamService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+
     examId: number;
     courseId: number;
     studentExam: StudentExam;
@@ -47,13 +72,6 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
 
     private componentActive = true;
 
-    constructor(
-        private route: ActivatedRoute,
-        private studentExamService: StudentExamService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
-
     /**
      * Initialize the courseId and studentExam
      */
@@ -63,8 +81,9 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
             .subscribe(([data, params, url]) => {
                 this.examId = params.examId;
                 this.courseId = params.courseId;
-                this.setStudentExamWithGrade(data.studentExam);
-                this.isTestExam = data.studentExam.exam?.testExam;
+                const studentExamWithGrade = data.studentExam as StudentExamWithGradeDTO;
+                this.setStudentExamWithGrade(studentExamWithGrade);
+                this.isTestExam = studentExamWithGrade.studentExam?.exam?.testExam || false;
                 this.isTestRun = url[1]?.toString() === 'test-runs';
             });
     }
@@ -215,7 +234,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                     this.isSaving = false;
                 },
                 error: () => {
-                    this.alertService.error('artemisApp.studentExamDetail.togglefailed');
+                    this.alertService.error('artemisApp.studentExamDetail.toggleFailed');
                     this.isSaving = false;
                 },
             });

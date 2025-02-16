@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -40,14 +40,12 @@ type CompetencyJolMapResponseType = HttpResponse<{
     providedIn: 'root',
 })
 export class CourseCompetencyService {
-    protected resourceURL = 'api';
+    protected httpClient = inject(HttpClient);
+    protected entityTitleService = inject(EntityTitleService);
+    protected lectureUnitService = inject(LectureUnitService);
+    protected accountService = inject(AccountService);
 
-    constructor(
-        protected httpClient: HttpClient,
-        protected entityTitleService: EntityTitleService,
-        protected lectureUnitService: LectureUnitService,
-        protected accountService: AccountService,
-    ) {}
+    protected resourceURL = 'api';
 
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);
@@ -74,11 +72,13 @@ export class CourseCompetencyService {
             .set('semester', pageable.semester);
     }
 
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-        );
+    getAllForCourse(courseId: number, filtered = false): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies${filtered ? '?filter=true' : ''}`, { observe: 'response' })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {

@@ -109,14 +109,8 @@ services:
         condition: service_healthy
     environment:
       PLAYWRIGHT_DB_TYPE: 'MySQL'
-    command: >
-      sh -c '
-      cd /app/artemis/src/test/playwright &&
-      chmod 777 /root &&
-      npm ci &&
-      npm run playwright:setup &&
-      npm run playwright:test
-      '
+    networks:
+      - artemis
 
 networks:
   artemis:

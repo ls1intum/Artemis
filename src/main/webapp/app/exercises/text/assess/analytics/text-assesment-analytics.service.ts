@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
@@ -7,12 +7,18 @@ import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Location } from '@angular/common';
+import { captureException } from '@sentry/angular';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server
  */
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
+    private assessmentsService = inject(TextAssessmentService);
+    private accountService = inject(AccountService);
+    private location = inject(Location);
+    private profileService = inject(ProfileService);
+
     private userId: number;
     private courseId: number;
     private textExerciseId: number;
@@ -23,12 +29,7 @@ export class TextAssessmentAnalytics {
     private route: ActivatedRoute;
     public analyticsEnabled = false;
 
-    constructor(
-        protected assessmentsService: TextAssessmentService,
-        protected accountService: AccountService,
-        private profileService: ProfileService,
-        public location: Location,
-    ) {
+    constructor() {
         // retrieve the analytics enabled status from the profile info and set to current property
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.analyticsEnabled = profileInfo.textAssessmentAnalyticsEnabled || false;
@@ -59,7 +60,7 @@ export class TextAssessmentAnalytics {
             this.eventToSend.setFeedbackType(feedbackType);
             this.eventToSend.setSegmentType(textBlockType);
             this.assessmentsService.addTextAssessmentEvent(this.eventToSend).subscribe({
-                error: (e) => console.error('Error sending statistics: ' + e.message),
+                error: (e) => captureException('Error sending statistics: ' + e.message),
             });
         }
     }

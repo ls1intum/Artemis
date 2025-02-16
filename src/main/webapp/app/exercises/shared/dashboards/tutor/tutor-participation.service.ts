@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -12,12 +12,10 @@ export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
-    public resourceUrl = 'api/exercises';
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    public resourceUrl = 'api/exercises';
 
     /**
      * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned

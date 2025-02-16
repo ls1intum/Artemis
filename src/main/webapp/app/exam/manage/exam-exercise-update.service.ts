@@ -14,8 +14,6 @@ export class ExamExerciseUpdateService {
     private examExerciseIdForNavigationSource = new BehaviorSubject<number>(-1);
     currentExerciseIdForNavigation = this.examExerciseIdForNavigationSource.asObservable();
 
-    constructor() {}
-
     navigateToExamExercise(exerciseId: number) {
         this.examExerciseIdForNavigationSource.next(exerciseId);
     }

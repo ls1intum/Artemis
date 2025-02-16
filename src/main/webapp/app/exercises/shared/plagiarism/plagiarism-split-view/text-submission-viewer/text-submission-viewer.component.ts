@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -12,6 +12,12 @@ import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-spl
 import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { Subject } from 'rxjs';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -20,12 +26,20 @@ type FilesWithType = { [p: string]: FileType };
     styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
+    imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
 export class TextSubmissionViewerComponent implements OnChanges {
+    private repositoryService = inject(CodeEditorRepositoryFileService);
+    private textSubmissionService = inject(TextSubmissionService);
+
     @Input() exercise: ProgrammingExercise | TextExercise;
     @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
     @Input() hideContent: boolean;
+    @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
+    @Input() isLockFilesEnabled: boolean;
+    @Input() showFilesSubject!: Subject<boolean>;
+    @Input() dropdownHoverSubject!: Subject<TextPlagiarismFileElement>;
 
     /**
      * Name of the currently selected file.
@@ -71,14 +85,9 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * True if fetching submission files resulted in an error.
      */
-    cannotLoadFiles: boolean = false;
+    cannotLoadFiles = false;
 
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private repositoryService: CodeEditorRepositoryFileService,
-        private textSubmissionService: TextSubmissionService,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {

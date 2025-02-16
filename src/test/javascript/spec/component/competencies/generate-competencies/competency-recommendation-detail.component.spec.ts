@@ -6,8 +6,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -20,7 +18,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule],
             declarations: [
                 CompetencyRecommendationDetailComponent,
                 ButtonComponent,

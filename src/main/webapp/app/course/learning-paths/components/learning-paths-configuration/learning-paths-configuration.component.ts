@@ -1,17 +1,18 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathApiService } from '../../services/learning-path-api.service';
 import { LearningPathsConfigurationDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
-    standalone: true,
-    imports: [FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FontAwesomeModule, TranslateDirective, HelpIconComponent],
     templateUrl: './learning-paths-configuration.component.html',
     styleUrls: ['../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
@@ -32,7 +33,10 @@ export class LearningPathsConfigurationComponent {
     readonly includeAllGradedExercisesEnabled = computed(() => this.learningPathsConfiguration()?.includeAllGradedExercises ?? false);
 
     constructor() {
-        effect(() => this.loadLearningPathsConfiguration(this.courseId()), { allowSignalWrites: true });
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathsConfiguration(courseId));
+        });
     }
 
     private async loadLearningPathsConfiguration(courseId: number): Promise<void> {

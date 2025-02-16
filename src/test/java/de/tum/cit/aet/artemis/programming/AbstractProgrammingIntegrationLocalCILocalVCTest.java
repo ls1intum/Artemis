@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasic
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -53,6 +54,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     // Services
     @Autowired
+    protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
+
+    @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @Autowired
@@ -75,6 +79,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    protected LocalCIEventListenerService localCIEventListenerService;
 
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;

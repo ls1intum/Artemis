@@ -19,6 +19,7 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseOverviewService } from 'app/overview/course-overview.service';
 
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
@@ -26,6 +27,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     let tutorialGroupOne: TutorialGroup;
     let tutorialGroupTwo: TutorialGroup;
+    let courseOverviewService: CourseOverviewService;
 
     const router = new MockRouter();
 
@@ -60,6 +62,7 @@ describe('CourseTutorialGroupsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseTutorialGroupsComponent);
                 component = fixture.componentInstance;
+                courseOverviewService = TestBed.inject(CourseOverviewService);
                 component.sidebarData = { groupByCategory: true, sidebarType: 'default', storageId: 'tutorialGroup' };
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1, isUserTutor: true });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, isUserRegistered: true });
@@ -114,5 +117,15 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
         expect(updateCourseSpy).not.toHaveBeenCalled();
+    });
+
+    it('should toggle isCollapsed and call setSidebarCollapseState with the correct arguments', () => {
+        const initialCollapseState = component.isCollapsed;
+        const detectChangesSpy = jest.spyOn(component['cdr'], 'detectChanges');
+        jest.spyOn(courseOverviewService, 'setSidebarCollapseState');
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBe(!initialCollapseState);
+        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed);
+        expect(detectChangesSpy).toHaveBeenCalled();
     });
 });

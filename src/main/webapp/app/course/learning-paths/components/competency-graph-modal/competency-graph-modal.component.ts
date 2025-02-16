@@ -1,26 +1,27 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
-import { FontAwesomeModule, IconDefinition } from '@fortawesome/angular-fontawesome';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-competency-graph-modal',
-    standalone: true,
-    imports: [FontAwesomeModule, CompetencyGraphComponent, ArtemisSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FontAwesomeModule, CompetencyGraphComponent, TranslateDirective],
     templateUrl: './competency-graph-modal.component.html',
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    protected readonly closeIcon: IconDefinition = faXmark;
+    protected readonly closeIcon = faXmark;
 
-    private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
-    private readonly alertService: AlertService = inject(AlertService);
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
 
+    readonly name = input<string>();
     readonly learningPathId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
@@ -28,7 +29,10 @@ export class CompetencyGraphModalComponent {
     private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
-        effect(() => this.loadCompetencyGraph(this.learningPathId()), { allowSignalWrites: true });
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencyGraph(learningPathId));
+        });
     }
 
     private async loadCompetencyGraph(learningPathId: number): Promise<void> {
@@ -47,12 +51,13 @@ export class CompetencyGraphModalComponent {
         this.activeModal.close();
     }
 
-    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number): void {
+    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number, name: string | undefined): void {
         const modalRef = modalService.open(CompetencyGraphModalComponent, {
             size: 'xl',
             backdrop: 'static',
             windowClass: 'competency-graph-modal',
         });
         modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
+        modalRef.componentInstance.name = signal<string | undefined>(name);
     }
 }

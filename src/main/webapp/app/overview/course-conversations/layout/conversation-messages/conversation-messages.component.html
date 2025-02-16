@@ -1,7 +1,7 @@
 @if (course) {
-    <div class="row p-3 pt-0 justify-content-center conversation-messages">
+    <div class="py-3 pt-0 justify-content-center conversation-messages">
         <div class="justify-content-center">
-            <div class="row justify-content-center p-0">
+            <div class="justify-content-center px-3 py-0">
                 <!-- search bar -->
                 @if (!searchbarCollapsed) {
                     <div class="input-group ps-0" [class.search-active]="!!searchText">
@@ -96,14 +96,14 @@
                                         [isCommunicationPage]="true"
                                         (openThread)="setPostForThread($event)"
                                         [isConsecutive]="post.isConsecutive || false"
-                                    ></jhi-posting-thread>
+                                    />
                                 </div>
                             }
                         </div>
                     }
 
                     @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
-                        <div>
+                        <div class="px-3">
                             @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
                                     <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
@@ -116,7 +116,7 @@
                     }
                 </div>
                 @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
-                    <div class="d-none d-sm-block">
+                    <div class="d-none d-sm-block px-3">
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
                                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>

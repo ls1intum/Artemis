@@ -18,7 +18,7 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
               "allowedCommonJsDependencies": [
                   "@vscode/markdown-it-katex",
@@ -30,6 +30,7 @@
                   "dompurify",
                   "emoji-js",
                   "export-to-csv",
+                  "graphemer",
                   "hoist-non-react-statics",
                   "interactjs",
                   "is-mobile",
@@ -39,6 +40,7 @@
                   "markdown-it-highlightjs",
                   "mobile-drag-drop",
                   "papaparse",
+                  "pako",
                   "pepjs",
                   "prop-types",
                   "react",
@@ -186,7 +188,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "artemis:build:development",
             "proxyConfig": "proxy.conf.mjs",
@@ -225,7 +227,7 @@
     "packageManager": "npm",
     "cache": {
       "enabled": true,
-      "path": ".cache",
+      "path": "./build/angular/",
       "environment": "all"
     },
     "schematicCollections": [

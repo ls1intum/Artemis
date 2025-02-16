@@ -13,8 +13,8 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 
 /**
  * A Service to create the science event export data for users.
@@ -25,10 +25,10 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 @Service
 public class DataExportScienceEventService {
 
-    private final ScienceEventRepository scienceEventRepository;
+    private final ScienceEventApi scienceEventApi;
 
-    public DataExportScienceEventService(ScienceEventRepository scienceEventRepository) {
-        this.scienceEventRepository = scienceEventRepository;
+    public DataExportScienceEventService(ScienceEventApi scienceEventApi) {
+        this.scienceEventApi = scienceEventApi;
     }
 
     /**
@@ -39,7 +39,7 @@ public class DataExportScienceEventService {
      * @throws IOException if the file cannot be created
      */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
-        var scienceEvents = scienceEventRepository.findAllByIdentity(login);
+        var scienceEvents = scienceEventApi.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }
 
@@ -57,7 +57,7 @@ public class DataExportScienceEventService {
         }
 
         String[] header = { "timestamp", "event_type", "resource_id" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("science_events" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var scienceEvent : scienceEvents) {

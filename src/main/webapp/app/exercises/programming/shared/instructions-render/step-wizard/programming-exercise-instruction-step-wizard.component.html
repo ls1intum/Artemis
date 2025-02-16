@@ -1,8 +1,9 @@
 <div class="card-second-header" [hidden]="!steps?.length">
     <div class="stepwizard">
-        <div class="stepwizard-title" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
-        <div class="stepwizard-row">
-            @for (step of steps; track step; let i = $index) {
+        <div class="stepwizard-title pe-3" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
+        <div class="stepwizard-row position-relative">
+            <hr class="stepwizard-row-line" />
+            @for (step of steps; let i = $index; track i) {
                 <div class="stepwizard-step">
                     <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                     <div
@@ -21,7 +22,7 @@
                             <fa-icon [icon]="faTimes" size="lg" class="text-danger" />
                         }
                         @if (step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT) {
-                            <fa-icon [icon]="faQuestion" size="lg" class="not-done" />
+                            <fa-icon [icon]="faCircle" size="lg" class="not-done" />
                         }
                     </div>
                 </div>

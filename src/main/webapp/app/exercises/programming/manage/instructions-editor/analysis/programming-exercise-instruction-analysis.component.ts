@@ -1,15 +1,23 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TaskCountWarningComponent } from './task-count-warning/task-count-warning.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
     templateUrl: './programming-exercise-instruction-analysis.component.html',
+    imports: [FaIconComponent, NgbTooltip, TranslateDirective, TaskCountWarningComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
+    private analysisService = inject(ProgrammingExerciseInstructionAnalysisService);
+
     @Input() exerciseTestCases: string[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
@@ -26,8 +34,6 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     // Icons
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private analysisService: ProgrammingExerciseInstructionAnalysisService) {}
 
     ngOnInit(): void {
         this.analysisSubscription = this.delayedAnalysisSubject

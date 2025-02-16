@@ -1,25 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
+    imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private organizationService = inject(OrganizationManagementService);
+
     organization: Organization;
     isSaving: boolean;
 
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private route: ActivatedRoute,
-        private organizationService: OrganizationManagementService,
-    ) {}
 
     /**
      * Enable subscriptions to retrieve the organization based on the activated route on init

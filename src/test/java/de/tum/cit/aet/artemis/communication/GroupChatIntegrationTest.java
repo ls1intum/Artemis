@@ -111,6 +111,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         var post = this.postInConversation(chat.getId(), "student1");
+        post.setIsSaved(false);
         // then
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
@@ -319,6 +320,24 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
+        conversationRepository.delete(conversation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnExistingGroupChatWhenChatAlreadyExists() throws Exception {
+        var chat1 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
+                HttpStatus.CREATED);
+
+        var chat2 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(chat1).isNotNull();
+        assertThat(chat2).isNotNull();
+        assertThat(chat1.getId()).isEqualTo(chat2.getId());
+        assertParticipants(chat1.getId(), 3, "student1", "student2", "student3");
+
+        var conversation = groupChatRepository.findById(chat1.getId()).orElseThrow();
         conversationRepository.delete(conversation);
     }
 

@@ -2,25 +2,35 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
     HostListener,
-    Inject,
-    Input,
-    Output,
+    OnChanges,
+    OnDestroy,
+    OnInit,
     Renderer2,
-    ViewChild,
     ViewContainerRef,
+    inject,
     input,
+    output,
+    viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT } from '@angular/common';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { captureException } from '@sentry/angular';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -33,41 +43,65 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostingHeaderComponent,
+        PostingContentComponent,
+        PostingReactionsBarComponent,
+        AnswerPostCreateEditModalComponent,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+    ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> {
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() isLastAnswer: boolean;
-    @Output() openPostingCreateEditModal = new EventEmitter<void>();
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    isLastAnswer = input<boolean>(false);
+    isReadOnlyMode = input<boolean>(false);
+    isConsecutive = input<boolean>(false);
+
+    openPostingCreateEditModal = output<void>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
+
+    containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
+
     isAnswerPost = true;
 
-    @Input()
-    isReadOnlyMode = false;
-    // ng-container to render answerPostCreateEditModalComponent
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    isConsecutive = input<boolean>(false);
+    // Icons
+    faBookmark = faBookmark;
+
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
-    readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
-    mayEditOrDelete: boolean = false;
-    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
+    mayEdit = false;
+    mayDelete = false;
 
-    constructor(
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
+    ngOnInit() {
+        super.ngOnInit();
+        this.assignPostingToAnswerPost();
+    }
+
+    ngOnChanges() {
+        this.assignPostingToAnswerPost();
     }
 
     get reactionsBar() {
-        return this.reactionsBarComponent;
+        return this.reactionsBarComponent();
     }
 
-    onPostingUpdated(updatedPosting: Posting) {
+    onPostingUpdated(updatedPosting: AnswerPost) {
         this.posting = updatedPosting;
     }
 
@@ -95,29 +129,42 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         }
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
+    }
+
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
-
-        if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
-            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+        const targetElement = event.target as HTMLElement;
+        let isPointerCursor: boolean;
+        try {
+            isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+        } catch (error) {
+            captureException(error);
+            isPointerCursor = true;
         }
 
-        AnswerPostComponent.activeDropdownPost = this;
+        if (!isPointerCursor) {
+            event.preventDefault();
 
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
+            if (AnswerPostComponent.activeDropdownPost !== this) {
+                AnswerPostComponent.cleanupActiveDropdown();
+            }
 
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
+            AnswerPostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
+        }
     }
 
     adjustDropdownPosition() {
@@ -126,6 +173,28 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
         if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
             this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
+    }
+
+    private static cleanupActiveDropdown(): void {
+        if (AnswerPostComponent.activeDropdownPost) {
+            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
+            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+            AnswerPostComponent.activeDropdownPost = null;
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (AnswerPostComponent.activeDropdownPost === this) {
+            AnswerPostComponent.cleanupActiveDropdown();
+        }
+    }
+
+    private assignPostingToAnswerPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof AnswerPost)) {
+            this.posting = Object.assign(new AnswerPost(), this.posting);
         }
     }
 }

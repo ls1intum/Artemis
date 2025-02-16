@@ -1,16 +1,19 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-state',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FontAwesomeModule, NgClass],
     templateUrl: './learning-paths-state.component.html',
     styleUrls: ['./learning-paths-state.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
@@ -42,7 +45,10 @@ export class LearningPathsStateComponent {
     readonly learningPathHealthState = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
-        effect(() => this.loadLearningPathHealthState(this.courseId()), { allowSignalWrites: true });
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathHealthState(courseId));
+        });
     }
 
     protected async loadLearningPathHealthState(courseId: number): Promise<void> {

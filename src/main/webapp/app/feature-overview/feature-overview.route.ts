@@ -1,17 +1,16 @@
 import { Routes } from '@angular/router';
-import { FeatureOverviewComponent } from 'app/feature-overview/feature-overview.component';
 
 export const featureOverviewRoutes: Routes = [
     {
         path: 'instructors',
-        component: FeatureOverviewComponent,
+        loadComponent: () => import('app/feature-overview/feature-overview.component').then((m) => m.FeatureOverviewComponent),
         data: {
             pageTitle: 'featureOverview.instructor.pageTitle',
         },
     },
     {
         path: 'students',
-        component: FeatureOverviewComponent,
+        loadComponent: () => import('app/feature-overview/feature-overview.component').then((m) => m.FeatureOverviewComponent),
         data: {
             pageTitle: 'featureOverview.students.pageTitle',
         },

@@ -25,19 +25,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
-import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
-import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
@@ -68,12 +60,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
-    protected CoverageFileReportRepository coverageFileReportRepository;
-
-    @Autowired
-    protected CoverageReportRepository coverageReportRepository;
-
-    @Autowired
     protected ProgrammingExerciseGitDiffReportRepository reportRepository;
 
     @Autowired
@@ -84,9 +70,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
-
-    @Autowired
-    protected TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
 
     // External Repositories
     @Autowired
@@ -100,13 +83,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     // Services
     @Autowired
-    protected BehavioralTestCaseService behavioralTestCaseService;
-
-    @Autowired
     protected BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    protected HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     protected LocalCIResultService localCIResultService;
@@ -119,15 +96,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected ParticipationVcsAccessTokenService participationVcsAccessTokenService;
-
-    @Autowired
-    protected ProgrammingExerciseGitDiffReportService reportService;
-
-    @Autowired
-    protected StructuralTestCaseService structuralTestCaseService;
-
-    @Autowired
-    protected TestwiseCoverageService testwiseCoverageService;
 
     // External Services
 

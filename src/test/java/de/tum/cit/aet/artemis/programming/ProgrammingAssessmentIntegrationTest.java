@@ -19,6 +19,8 @@ import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -526,7 +528,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateManualProgrammingExerciseResult_addFeedbackAfterManualLongFeedback() throws Exception {
-
         List<Feedback> feedbacks = new ArrayList<>();
         var manualLongFeedback = new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED);
         manualLongFeedback.setDetailText("abc".repeat(5000));
@@ -551,6 +552,54 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
         });
         assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(manualLongFeedback.getDetailText());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldKeepExistingLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
+        var manualLongFeedback = new Feedback().credits(0.0);
+        var longText = "abc".repeat(5000);
+        manualLongFeedback.setDetailText(longText);
+        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        result = resultRepository.save(result);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", String.valueOf(submit));
+        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK, params);
+
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        assertThat(longFeedbackText).isPresent();
+        assertThat(longFeedbackText.get().getText()).isEqualTo(longText);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldUpdateUnreferencedLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
+        var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
+        var longText = "abc".repeat(5000);
+        manualLongFeedback.setDetailText(longText);
+        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        result = resultRepository.save(result);
+
+        var newLongText = "def".repeat(5000);
+        manualLongFeedback = result.getFeedbacks().getFirst();
+
+        // The actual complete longtext is still stored in the detailText field when the result is sent from the client
+        var detailText = Feedback.class.getDeclaredField("detailText");
+        detailText.setAccessible(true);
+        detailText.set(manualLongFeedback, newLongText);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", String.valueOf(submit));
+        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK, params);
+
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        assertThat(longFeedbackText).isPresent();
+        assertThat(longFeedbackText.get().getText()).isEqualTo(newLongText);
     }
 
     @Test

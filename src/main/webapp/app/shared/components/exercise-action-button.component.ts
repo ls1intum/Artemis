@@ -1,12 +1,14 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
-    /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
     styleUrls: ['../../overview/course-overview.scss'],
+    imports: [FaIconComponent, NgClass],
 })
 export class ExerciseActionButtonComponent {
     @Input() buttonIcon: IconProp;
@@ -14,6 +16,7 @@ export class ExerciseActionButtonComponent {
     @Input() hideLabelMobile = true;
     @Input() overwriteDisabled = false;
     @Input() buttonLoading = false;
+
     @HostBinding('class.btn-outline-primary') @Input() outlined = false;
     @HostBinding('class.btn-sm') @Input() smallButton = false;
     @HostBinding('class.btn') isButton = true;

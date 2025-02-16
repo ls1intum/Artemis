@@ -107,38 +107,41 @@
                     />
                 }
                 <!-- TODO: The exam mode reuses the whole component at the moment. We need the code button but not the open
-        code editor button. We should think about defining a component that contains only the code button. -->
+                    code editor button. We should think about defining a component that contains only the code button. -->
                 @if (shouldDisplayIDEButtons()) {
-                    <ng-container *jhiExtensionPoint="overrideCodeAndOnlineEditorButton; context: { exercise: exercise }">
-                        @if (!examMode && programmingExercise?.allowOnlineEditor) {
-                            <jhi-open-code-editor-button
-                                [loading]="!!exercise.loading"
-                                [smallButtons]="smallButtons"
-                                [participations]="exercise.studentParticipations!"
-                                [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'exercises', 'programming-exercises', exercise.id, 'code-editor']"
-                                [exercise]="exercise"
-                            />
-                        }
-                        @if (programmingExercise?.allowOfflineIde) {
-                            <jhi-code-button
-                                [loading]="!!exercise.loading"
-                                [smallButtons]="smallButtons"
-                                [participations]="exercise.studentParticipations!"
-                                [exercise]="exercise"
-                                [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
-                                [useParticipationVcsAccessToken]="true"
-                            />
-                        }
-                        @if (theiaEnabled) {
-                            <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
-                                <fa-icon [icon]="faDesktop" [fixedWidth]="true" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
-                            </a>
-                        }
-                        @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
-                            <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
-                        }
-                    </ng-container>
+                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                    <!--                    <ng-container *jhiExtensionPoint="overrideCodeAndOnlineEditorButton; context: { exercise: exercise }">-->
+                    @if (!examMode && programmingExercise?.allowOnlineEditor) {
+                        <jhi-open-code-editor-button
+                            [loading]="!!exercise.loading"
+                            [smallButtons]="smallButtons"
+                            [participations]="exercise.studentParticipations!"
+                            [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'exercises', 'programming-exercises', exercise.id, 'code-editor']"
+                            [exercise]="exercise"
+                            [hideLabelMobile]="true"
+                        />
+                    }
+                    @if (programmingExercise?.allowOfflineIde) {
+                        <jhi-code-button
+                            [loading]="!!exercise.loading"
+                            [smallButtons]="smallButtons"
+                            [participations]="exercise.studentParticipations!"
+                            [exercise]="exercise"
+                            [routerLinkForRepositoryView]="['/courses', courseId, 'exercises', exercise.id!, 'repository', exercise.studentParticipations![0].id!]"
+                            [hideLabelMobile]="true"
+                            [repositoryUri]="''"
+                        />
+                    }
+                    @if (theiaEnabled) {
+                        <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
+                            <fa-icon [icon]="faDesktop" [fixedWidth]="true" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
+                        </a>
+                    }
+                    @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
+                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons" />
+                    }
+                    <!--                    </ng-container>-->
                 }
                 <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
                 @if (
@@ -236,7 +239,7 @@
                             [isGeneratingFeedback]="isGeneratingFeedback"
                             (generatingFeedback)="this.isGeneratingFeedback = true"
                             [isSubmitted]="gradedParticipation?.submissions?.last()?.submitted || false"
-                        ></jhi-request-feedback-button>
+                        />
                     }
                 }
             </div>

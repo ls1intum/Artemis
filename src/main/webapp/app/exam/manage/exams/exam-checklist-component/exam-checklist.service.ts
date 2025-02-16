@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -8,7 +8,7 @@ import { filter, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamChecklistService {
-    constructor(private examService: ExamManagementService) {}
+    private examService = inject(ExamManagementService);
 
     /**
      * indicates whether all student exams are generated

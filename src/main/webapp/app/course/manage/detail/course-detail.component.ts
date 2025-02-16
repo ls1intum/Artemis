@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
@@ -16,10 +16,12 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
+import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -29,14 +31,27 @@ export enum DoughnutChartType {
     AVERAGE_EXERCISE_SCORE = 'AVERAGE_EXERCISE_SCORE',
     PARTICIPATIONS = 'PARTICIPATIONS',
     QUESTIONS = 'QUESTIONS',
+    CURRENT_LLM_COST = 'LLM_COST',
 }
 
 @Component({
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private organizationService = inject(OrganizationManagementService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private markdownService = inject(ArtemisMarkdownService);
+    private featureToggleService = inject(FeatureToggleService);
+
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
 
@@ -69,20 +84,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faChartBar = faChartBar;
     faClipboard = faClipboard;
 
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private organizationService: OrganizationManagementService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private accountService: AccountService,
-        private irisSettingsService: IrisSettingsService,
-        private translateService: TranslateService,
-        private markdownService: ArtemisMarkdownService,
-        private featureToggleService: FeatureToggleService,
-    ) {}
-
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
@@ -94,6 +95,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
@@ -222,12 +224,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
             });
         }
-        // TODO: Enable in future PR
-        // details.push({
-        //     type: DetailType.ProgrammingIrisEnabled,
-        //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
-        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-        // });
         return irisDetails;
     }
 

@@ -11,7 +11,7 @@ export class Account {
     public lastName?: string;
     public langKey?: string;
     public imageUrl?: string;
-    public guidedTourSettings: GuidedTourSetting[];
+    public guidedTourSettings?: GuidedTourSetting[];
 
     constructor(
         activated?: boolean,

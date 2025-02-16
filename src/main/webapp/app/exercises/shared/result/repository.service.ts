@@ -1,14 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
-    private resourceUrl = 'api/repository';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/repository';
 
     /**
      * Checks whether the participation data is clean or not.
@@ -47,9 +47,9 @@ export interface IRepositoryFileService {
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryFileService implements IRepositoryFileService {
-    private resourceUrl = 'api/repository';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/repository';
 
     /**
      * Get files of a specific participation.

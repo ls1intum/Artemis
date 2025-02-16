@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, ViewChild, inject } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -19,6 +19,13 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ProgrammingSubmissionPolicyStatusComponent } from 'app/exercises/programming/participate/programming-submission-policy-status';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -32,20 +39,30 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
         CodeEditorRepositoryService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        CodeEditorContainerComponent,
+        ProgrammingSubmissionPolicyStatusComponent,
+        ExerciseDetailsStudentActionsComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        UpdatingResultComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+    private domainService = inject(DomainService);
+
     exerciseType = ExerciseType.PROGRAMMING;
 
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
-    @Input()
-    studentParticipation: ProgrammingExerciseStudentParticipation;
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    courseId: number;
+    @Input() studentParticipation: ProgrammingExerciseStudentParticipation;
+    @Input() exercise: ProgrammingExercise;
+    @Input() courseId: number;
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
@@ -75,13 +92,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(
-        private domainService: DomainService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
-
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
@@ -91,7 +101,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setSubmissionCountAndLockIfNeeded();
     }
 

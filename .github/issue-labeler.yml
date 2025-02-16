@@ -10,6 +10,8 @@ assessment:
 
 athena:
   - athena
+  - ai feedback
+  - request (ai )?feedback
   - caseSensitive: false
 
 atlas:
@@ -48,8 +50,6 @@ core:
   - authority
   - data export
   - migration
-  - user
-  - group
   - caseSensitive: false
 
 exam:
@@ -79,20 +79,19 @@ iris:
   - iris
   - llm
   - chatbot
-  - ai
+  - \b(?<!\S)ai(?!\S)\b
   - caseSensitive: false
 
 lecture:
   - lecture
   - attachment
-  - online
   - slide
   - video
   - text unit
   - caseSensitive: false
 
 lti:
-  - lti
+  - \b(?<!\S)lti(?!\S)\b
   - online course
   - caseSensitive: false
 
@@ -111,15 +110,13 @@ programming:
   - build
   - build plan
   - code hint
-  - git
-  - testwise coverage
-  - ide
+  - \b(?<!\S)git(?!\S)\b
+  - \b(?<!\S)ide(?!\S)\b
   - submission policy
   - aeolus
   - penalty
   - auxilary
   - commit
-  - project
   - static code analysis
   - caseSensitive: false
 
@@ -134,11 +131,9 @@ quiz:
   - caseSensitive: false
 
 text:
-  - text
   - block
   - caseSensitive: false
 
 tutorialgroup:
   - tutorialgroup
-  - session
   - caseSensitive: false

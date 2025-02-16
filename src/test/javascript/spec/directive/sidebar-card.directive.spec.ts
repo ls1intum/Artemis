@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -10,7 +10,8 @@ import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medi
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
 
 @Component({
-    template: `<div jhiSidebarCard [size]="size" [itemSelected]="false"></div>`,
+    template: ` <div jhiSidebarCard [size]="size" [itemSelected]="false"></div>`,
+    imports: [SidebarCardDirective],
 })
 class TestHostComponent {
     @ViewChild(SidebarCardDirective) directive: SidebarCardDirective;
@@ -20,7 +21,6 @@ class TestHostComponent {
 describe('SidebarCardDirective', () => {
     let component: TestHostComponent;
     let fixture: ComponentFixture<TestHostComponent>;
-    let queryParamsSubject: BehaviorSubject<Params>;
     const router = new MockRouter();
 
     beforeEach(async () => {
@@ -46,13 +46,10 @@ describe('SidebarCardDirective', () => {
                                 ),
                             },
                         },
-                        queryParams: queryParamsSubject,
                     },
                 },
             ],
         }).compileComponents();
-
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         fixture = TestBed.createComponent(TestHostComponent);
         component = fixture.componentInstance;

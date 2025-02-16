@@ -329,13 +329,13 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.addEmptyCourse();
         course.setStudentGroupName("another");
         courseRepository.save(course);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), 123155L)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), 123155L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -343,13 +343,13 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testCheckAndGetCourseAndExamAccessForConduction_examBelongsToCourse() {
         studentExam2.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentExamRepository.save(studentExam2);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam2.getId())).isInstanceOf(ConflictException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam2.getId())).isInstanceOf(ConflictException.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_notRegisteredUser() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course2.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course2.getId(), exam2.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -360,7 +360,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1.setEndDate(ZonedDateTime.now().plusMinutes(10));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
-        assertThatNoException().isThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId()));
+        assertThatNoException().isThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId()));
     }
 
     @Test
@@ -370,8 +370,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1.setStartDate(ZonedDateTime.now().plusMinutes(7));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -382,40 +381,40 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1.setEndDate(ZonedDateTime.now().minusMinutes(7));
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
                 .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_studentExamPresent() {
-        StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId());
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId());
         assertThat(studentExam.equals(studentExam1)).isEqualTo(true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCheckAndGetCourseAndExamAccessForConduction_testExamIsVisible() {
+    void testCheckAndGetCourseAndExamAccessForConduction_examIsVisible() {
         testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_noCourseAccess() {
+    void testGetOrCreateStudentExamAccess() {
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setGroups(Set.of());
         userRepository.save(student1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_testExamNotVisible() {
+    void testGetOrCreateStudentExamElseThrow_notVisible() {
         testExam1.setVisibleDate(ZonedDateTime.now().plusHours(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -436,18 +435,17 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_success_studentExamPresent() {
-        StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId());
+    void testGetExamInCourseElseThrow_success_studentOrCreateStudentExamPresent() {
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
         assertThat(studentExam.equals(studentExamForTestExam1)).isEqualTo(true);
 
-        StudentExam studentExam2 = examAccessService.getExamInCourseElseThrow(course2.getId(), testExam2.getId());
+        StudentExam studentExam2 = examAccessService.getOrCreateStudentExamElseThrow(course2.getId(), testExam2.getId());
         assertThat(studentExam2.equals(studentExamForTestExam2)).isEqualTo(true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetExamInCourseElseThrow_tutor_skipAlert() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+    void testGetOrCreateStudentExamElseThrow_tutor_skipAlert() {
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 }

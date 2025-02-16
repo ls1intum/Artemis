@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shar
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -12,12 +12,20 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     templateUrl: './exercise-scores-export-button.component.html',
+    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ExerciseScoresExportButtonComponent implements OnInit {
+    private resultService = inject(ResultService);
+    private alertService = inject(AlertService);
+
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
 
@@ -25,11 +33,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(
-        private resultService: ResultService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
@@ -216,7 +219,8 @@ class ExerciseScoresRowBuilder {
     private setGradingCriteriaPoints() {
         let unnamedCriterionIndex = 1;
         this.gradingCriteria.forEach((criterion) => {
-            const points = this.resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0;
+            const pointsPerCriterion = this.resultWithPoints.pointsPerCriterion;
+            const points = pointsPerCriterion instanceof Map ? pointsPerCriterion.get(criterion.id!) || 0 : +(pointsPerCriterion[criterion.id!] || 0);
             if (criterion.title) {
                 this.set(criterion.title, points);
             } else {

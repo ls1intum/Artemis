@@ -191,6 +191,7 @@ public class StandardizedCompetencyService {
      */
     public String exportStandardizedCompetencyCatalog() {
         List<KnowledgeArea> knowledgeAreas = getAllForTreeView();
+        // TODO: we should avoid using findAll() here, as it might return a huge amount of data
         List<Source> sources = sourceRepository.findAll();
         var catalog = StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
 

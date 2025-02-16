@@ -29,7 +29,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @Test
@@ -702,6 +702,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
         courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 

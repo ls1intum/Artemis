@@ -24,6 +24,10 @@ export class ModalDialogBox {
         await expect(this.getModalDialogContent().locator('.content').getByText(message)).toBeVisible();
     }
 
+    async checkDialogType(type: string) {
+        await expect(this.getModalDialogContent().locator('.type').getByText(type)).toBeVisible();
+    }
+
     async checkDialogAuthor(authorUsername: string) {
         await expect(this.getModalDialogContent().locator('.author').getByText(authorUsername)).toBeVisible();
     }
@@ -36,5 +40,13 @@ export class ModalDialogBox {
 
     async closeDialog() {
         await this.getModalDialogContent().locator('button').click({ force: true });
+    }
+
+    async pressModalButton(buttonText: string) {
+        let buttonLocator = this.getModalDialogContent().locator('button');
+        if (buttonText) {
+            buttonLocator = buttonLocator.filter({ hasText: buttonText });
+        }
+        await buttonLocator.click();
     }
 }

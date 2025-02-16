@@ -1,18 +1,18 @@
-<div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
+<div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
     <span class="mb-2" jhiTranslate="artemisApp.metis.overview.mobileDisclaimer"></span>
     <button class="btn btn-outline-secondary" jhiTranslate="artemisApp.metis.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
 </div>
-<div [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
+<div [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
     <div class="mt-2 mx-2">
         <div>
             <h4 class="d-inline-block rounded p-1 info">
-                @if (!courseWideSearchConfig.searchTerm) {
+                @if (!courseWideSearchConfig().searchTerm) {
                     <span jhiTranslate="artemisApp.metis.overview.allPublicMessages"></span>
                 } @else {
                     <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
-                    <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig.searchTerm }"></span>
+                    <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig().searchTerm }"></span>
                 }
             </h4>
         </div>
@@ -72,7 +72,7 @@
             </div>
         }
         <hr />
-        <div class="row px-3 justify-content-center coursewide-search">
+        <div class="justify-content-center coursewide-search">
             <div class="justify-content-center">
                 <div class="row">
                     <!-- loading messages -->

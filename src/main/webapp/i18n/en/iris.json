@@ -18,6 +18,10 @@
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this programming exercise"
                     },
+                    "lecture": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this lecture"
+                    },
                     "course": {
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this course"
@@ -26,12 +30,30 @@
                 "subSettings": {
                     "chatSettings": "Chat Settings",
                     "textExerciseChatSettings": "Text Exercise Chat Settings",
+                    "lectureChatSettings": "Lecture Chat Settings",
+                    "courseChatSettings": "Course Chat Settings",
                     "lectureIngestionSettings": {
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
                     },
-                    "hestiaSettings": "Hestia Settings",
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "Send FAQs To Pyris Automatically"
+                    },
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Monitor submission build failures",
+                        "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Monitor exercise performance progress",
+                        "tooltip": "When enabled, Iris will proactively send help messages if the student's exercise performance does not improve."
+                    },
+                    "proactivitySettings": {
+                        "title": "Proactivity Settings",
+                        "tooltip": "Enable options below to allow Iris to proactively reach out to students when specific conditions are met.",
+                        "parentDisabled": "Iris won't send proactive messages for this option because either the option itself or Iris are disabled in the current or parent settings."
+                    },
                     "enabled-disabled": "Enabled/Disabled",
                     "enabledForCategories": "Automatically enable for categories",
                     "variants": {
@@ -56,8 +78,7 @@
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
-                        "chat": "Iris Chat",
-                        "hestia": "Hestia Integration"
+                        "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",
@@ -81,6 +102,30 @@
             },
             "chat": {
                 "helpOffer": "How can I help you today?"
+            },
+            "chatBubble": {
+                "seeFull": "See full message"
+            },
+            "ingestionStates": {
+                "loading": "Loading",
+                "notStarted": "Not started",
+                "inProgress": "In progress",
+                "done": "Done",
+                "error": "Error",
+                "partiallyIngested": "Partially ingested"
+            },
+            "ingestionAlert": {
+                "lectureUnitSuccess": "Lecture unit ingestion in Pyris started successfully",
+                "lectureUnitError": "Error while sending lecture unit to Pyris",
+                "lectureSuccess": "Lecture ingestion in Pyris started successfully",
+                "lectureError": "Error while sending lecture to Pyris",
+                "allLecturesSuccess": "All lecture ingestion in Pyris started successfully",
+                "allFaqsSuccess": "All Faq ingestion in Pyris started successfully",
+                "allLecturesError": "Error while sending all lectures to Pyris",
+                "allFaqsError": "Error while sending all Faqs to Pyris",
+                "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
+                "pyrisUnavailable": "Pyris is currently unavailable.",
+                "pyrisError": "An error occurred while getting ingestion state from Pyris."
             }
         }
     }

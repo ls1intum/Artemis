@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { Injectable, inject } from '@angular/core';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/programming-exercise-task.model';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
@@ -15,6 +15,10 @@ import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {
+    private http = inject(HttpClient);
+    private alertService = inject(AlertService);
+    private gradingService = inject(ProgrammingExerciseGradingService);
+
     exercise: ProgrammingExercise;
     course: Course;
     gradingStatistics: ProgrammingExerciseGradingStatistics;
@@ -27,12 +31,6 @@ export class ProgrammingExerciseTaskService {
     ignoreInactive = true;
 
     public resourceUrl = 'api/programming-exercises';
-
-    constructor(
-        private http: HttpClient,
-        private alertService: AlertService,
-        private gradingService: ProgrammingExerciseGradingService,
-    ) {}
 
     get totalWeights() {
         return sum(this.testCases.map(({ weight }) => weight ?? 0));

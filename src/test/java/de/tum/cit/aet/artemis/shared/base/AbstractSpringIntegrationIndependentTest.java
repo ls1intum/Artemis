@@ -18,10 +18,10 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -48,16 +48,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
 
-    @SpyBean
+    @MockitoSpyBean
     protected OAuth2JWKSService oAuth2JWKSService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
@@ -211,11 +211,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        log.debug("Called mockDeleteUserInUserManagement with args {}, {}, {}, {}", user, userExistsInUserManagement, failInVcs, failInCi);
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         log.debug("Called mockCreateGroupInUserManagement with args {}", groupName);
     }
@@ -258,6 +253,11 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         log.debug("Called mockGetBuildPlan with args {}, {}, {}, {}, {}, {}", projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        log.debug("Called mockGetBuildPlanConfig with args {}, {}", projectKey, planName);
     }
 
     @Override
@@ -318,5 +318,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockUserExists(String username) {
         log.debug("Called mockUserExists with args {}", username);
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        log.debug("Requested CI project {}", exercise.getProjectKey());
     }
 }

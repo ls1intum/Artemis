@@ -31,8 +31,8 @@ $delete-delay-duration: 6s;
     line-height: 1.1;
 }
 
-.post-content-margin {
-    margin-left: 2.65rem;
+.post-content-padding {
+    padding-left: 3.42rem;
 }
 
 .post-authority-icon-student {
@@ -78,7 +78,7 @@ $delete-delay-duration: 6s;
 }
 
 .card {
-    border-radius: 1em;
+    border-radius: 0.25em;
 }
 
 @include media-breakpoint-down(sm) {
@@ -87,7 +87,7 @@ $delete-delay-duration: 6s;
         gap: 0 !important;
     }
 
-    .post-content-margin {
+    .post-content-padding {
         margin-left: 0;
     }
 

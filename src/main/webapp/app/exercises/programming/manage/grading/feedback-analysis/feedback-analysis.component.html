@@ -1,81 +1,101 @@
-<ng-template #headerTemplate let-column="column" let-label="label">
-    <th scope="col" [class.clickable]="isSortableColumn(column)" (click)="isSortableColumn(column) && setSortedColumn(column)">
-        <span [jhiTranslate]="label"></span>
-        @if (sortedColumn() === column) {
-            <fa-icon [icon]="sortIcon()"></fa-icon>
-        }
+<ng-template #headerTemplate let-column="column" let-label="label" let-colSize="colSize">
+    <th scope="col" [class]="colSize" [class.clickable]="column !== 'errorCategory'" (click)="column !== 'errorCategory' && setSortedColumn(column)">
+        <div class="d-flex align-items-center">
+            <span [jhiTranslate]="label"></span>
+            @if (column !== 'errorCategory') {
+                <jhi-sort-icon [direction]="getSortDirection(column)" />
+            }
+        </div>
     </th>
+</ng-template>
+<ng-template #emptyTableTemplate>
+    <div
+        class="text-center p-3 text-muted"
+        [jhiTranslate]="this.selectedFiltersCount() > 0 || this.searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
+    ></div>
 </ng-template>
 <div class="m-3">
     <div class="row m-0 justify-content-between align-items-center">
-        <h3 class="m-0 col p-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
-        <div class="col-md-auto d-flex align-items-center position-relative">
-            <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
-                <fa-icon [icon]="faFilter"></fa-icon>
-                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filter"></span> ({{ selectedFiltersCount() }})
-            </button>
-            <input
-                type="search"
-                class="form-control"
-                [placeholder]="'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.search' | artemisTranslate"
-                aria-label="Search feedback"
-                [ngModel]="searchTerm()"
-                (ngModelChange)="search($event)"
-            />
+        <div class="justify-content-between d-flex align-items-center">
+            <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
+            <div class="d-flex align-items-center">
+                <div class="form-switch d-flex align-items-center flex-md-shrink-0 me-2">
+                    <input class="form-check-input mt-0" type="checkbox" (click)="toggleGroupFeedback()" [checked]="groupFeedback()" style="width: 2.5rem; height: 1.25rem" />
+                    <label class="ms-1 me-2 mb-0">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
+                        <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning" />
+                    </label>
+                </div>
+                <button class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
+                    <fa-icon [icon]="faFilter" />
+                    <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
+                </button>
+                <input
+                    type="search"
+                    class="form-control"
+                    [placeholder]="TRANSLATION_BASE + '.search' | artemisTranslate"
+                    aria-label="Search feedback"
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="search($event)"
+                />
+            </div>
         </div>
     </div>
-    <table class="table table-striped mb-3">
-        <thead>
-            <tr>
-                <ng-container
-                    *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence' }"
-                ></ng-container>
-                <ng-container
-                    *ngTemplateOutlet="headerTemplate; context: { column: 'detailText', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedback' }"
-                ></ng-container>
-                <ng-container
-                    *ngTemplateOutlet="headerTemplate; context: { column: 'taskNumber', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task' }"
-                ></ng-container>
-                <ng-container
-                    *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase' }"
-                ></ng-container>
-                <ng-container
-                    *ngTemplateOutlet="
-                        headerTemplate;
-                        context: { column: 'relativeCount', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory' }
-                    "
-                ></ng-container>
-            </tr>
-        </thead>
-        <tbody class="table-group-divider">
-            @for (item of content().resultsOnPage; track item) {
+    <div style="overflow-x: auto">
+        <table class="table table-striped mb-3">
+            <thead>
                 <tr>
-                    <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                    <td>
-                        {{ item.detailText.length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
-                    </td>
-                    <td class="text-center">{{ item.taskNumber }}</td>
-                    <td>{{ item.testCaseName }}</td>
-                    <td>{{ item.errorCategory }}</td>
-                    <td class="text-center">
-                        <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
-                    </td>
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }" />
                 </tr>
+            </thead>
+            @if (isLoading()) {
+                <div class="row justify-content-center p-2">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only"></span>
+                    </div>
+                </div>
+            } @else {
+                <tbody class="table-group-divider">
+                    @if (!content().resultsOnPage) {
+                        <tr>
+                            <td colspan="6">
+                                <ng-container *ngTemplateOutlet="emptyTableTemplate" />
+                            </td>
+                        </tr>
+                    } @else {
+                        @for (item of content().resultsOnPage; track item) {
+                            <tr>
+                                <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                                <td>
+                                    {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
+                                </td>
+                                <td>{{ item.taskName }}</td>
+                                <td>{{ item.testCaseName }}</td>
+                                <td>{{ item.errorCategory }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <fa-icon [icon]="facDetails" class="ms-2 clickable text-primary" (click)="openFeedbackModal(item)" />
+                                        <fa-icon [icon]="faUsers" class="ms-2 clickable text-primary" (click)="openAffectedStudentsModal(item)" />
+                                        @if (isCommunicationEnabled()) {
+                                            <fa-icon [icon]="faMessage" class="ms-2 clickable text-primary" (click)="openFeedbackDetailChannelModal(item)" />
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
             }
-        </tbody>
-    </table>
+        </table>
+    </div>
     <div class="d-flex flex-column align-items-end mt-2">
-        <ngb-pagination
-            [collectionSize]="collectionsSize()"
-            [pageSize]="pageSize()"
-            [page]="page()"
-            (pageChange)="setPage($event)"
-            size="sm"
-            class="pagination justify-content-end"
-        >
-        </ngb-pagination>
+        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5" />
         <div class="text-muted text-end">
-            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems" [translateValues]="{ count: totalItems() }"></span>
+            <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: totalItems() }"></span>
         </div>
     </div>
 </div>

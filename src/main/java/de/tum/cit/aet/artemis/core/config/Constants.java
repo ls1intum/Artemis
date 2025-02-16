@@ -39,6 +39,8 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
+    public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
+
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
@@ -63,6 +65,10 @@ public final class Constants {
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
+
+    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
+
+    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
@@ -190,6 +196,8 @@ public final class Constants {
 
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
+    public static final String UPDATE_EXAM = "UPDATE_EXAM";
+
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
@@ -235,9 +243,7 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
-
-    public static final String INFO_SHOW_CLONE_URL_WITHOUT_TOKEN = "showCloneUrlWithoutToken";
+    public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
@@ -309,6 +315,11 @@ public final class Constants {
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
     /**
+     * The name of the Spring profile used to process build jobs in a Jenkins setup.
+     */
+    public static final String PROFILE_JENKINS = "jenkins";
+
+    /**
      * The name of the Spring profile used for Artemis functionality.
      */
     public static final String PROFILE_ARTEMIS = "artemis";
@@ -377,6 +388,11 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
+    public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
+
+    /**
      * The directory in the docker container in which the build script is executed
      */
     public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
@@ -412,6 +428,9 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+
+    // TODO TW: This "feature" is only temporary for a paper.
+    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
 
     private Constants() {
     }

@@ -90,12 +90,14 @@ describe('MonacoEditorActionIntegration', () => {
         const imageClipboardItem: MockClipboardItem = {
             types: ['image/png'],
             getType: jest.fn().mockResolvedValue(imageBlob),
+            presentationStyle: 'inline',
         };
 
         const nonImageBlob = new Blob(['Sample text content']);
         const textClipboardItem: MockClipboardItem = {
             types: ['text/plain'],
             getType: jest.fn().mockResolvedValue(nonImageBlob),
+            presentationStyle: 'inline',
         };
 
         // Mock the clipboard read function to return the created ClipboardItems
@@ -138,7 +140,7 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new OrderedListAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe('1.  ');
+        expect(comp.getText()).toBe('1. ');
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {

@@ -1,10 +1,12 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingTab } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * The actions of the test case table:
@@ -14,8 +16,11 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 @Component({
     selector: 'jhi-programming-exercise-grading-table-actions',
     templateUrl: './programming-exercise-grading-table-actions.component.html',
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
+    private modalService = inject(NgbModal);
+
     readonly faCopy = faCopy;
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
@@ -25,8 +30,6 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     @Output() onSave = new EventEmitter();
     @Output() onReset = new EventEmitter();
     @Output() onCategoryImport = new EventEmitter<number>();
-
-    constructor(private modalService: NgbModal) {}
 
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });

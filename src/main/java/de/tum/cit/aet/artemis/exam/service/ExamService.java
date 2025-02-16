@@ -1422,17 +1422,17 @@ public class ExamService {
      * considering the use of Compass.
      *
      * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
-     * @param originalExamDuration The original duration of the exam, in minutes, before any changes.
-     * @param workingTimeChange    The amount of time, in minutes, to add or subtract from the exam's original duration and the student's working time. This value can be positive
+     * @param originalExamDuration The original duration of the exam, in seconds, before any changes.
+     * @param workingTimeChange    The amount of time, in seconds, to add or subtract from the exam's original duration and the student's working time. This value can be positive
      *                                 (to extend time) or negative (to reduce time).
      */
-    public void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
+    public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
         var now = now();
         User instructor = userRepository.getUser();
 
         var studentExams = exam.getStudentExams();
         for (var studentExam : studentExams) {
-            Integer originalStudentWorkingTime = studentExam.getWorkingTime();
+            int originalStudentWorkingTime = studentExam.getWorkingTime();
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
             // NOTE: take the original working time extensions into account
             if (originalTimeExtension == 0) {

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-public class Claims extends uk.ac.ox.ctl.lti13.lti.Claims {
+public final class Claims extends uk.ac.ox.ctl.lti13.lti.Claims {
 
     /**
      * Constant for LTI Assignment and Grade Services (AGS) claim endpoint.

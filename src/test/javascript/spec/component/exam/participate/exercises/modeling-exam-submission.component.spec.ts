@@ -10,13 +10,14 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -39,7 +40,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 ModelingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
@@ -49,6 +50,8 @@ describe('ModelingExamSubmissionComponent', () => {
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockComponent(ExerciseSaveButtonComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(ChangeDetectorRef)],
         })
@@ -78,8 +81,12 @@ describe('ModelingExamSubmissionComponent', () => {
             const maxScore = 30;
             comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points)`));
+            const el = fixture.debugElement.query(By.directive(TranslateDirective));
             expect(el).not.toBeNull();
+
+            const directiveInstance = el.injector.get(TranslateDirective);
+            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.points');
+            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: 0 });
         });
 
         it('should show exercise bonus score if any', () => {
@@ -88,10 +95,20 @@ describe('ModelingExamSubmissionComponent', () => {
             const bonusPoints = 55;
             comp.exercise.bonusPoints = bonusPoints;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) =>
-                de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus)`),
-            );
+            const el = fixture.debugElement.query(By.directive(TranslateDirective));
             expect(el).not.toBeNull();
+
+            const directiveInstance = el.injector.get(TranslateDirective);
+            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.bonus');
+            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
+        });
+
+        it('should call triggerSave if save exercise button is clicked', () => {
+            fixture.detectChanges();
+            const saveExerciseSpy = jest.spyOn(comp, 'notifyTriggerSave');
+            const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+            saveButton.triggerEventHandler('save', null);
+            expect(saveExerciseSpy).toHaveBeenCalledOnce();
         });
 
         it('should show modeling editor with correct props when there is submission and exercise', () => {

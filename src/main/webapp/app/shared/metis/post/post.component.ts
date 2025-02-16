@@ -3,38 +3,40 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
     HostListener,
-    Inject,
-    Input,
     OnChanges,
     OnInit,
-    Output,
     Renderer2,
-    ViewChild,
-    ViewContainerRef,
+    inject,
     input,
+    model,
+    output,
+    viewChild,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { Router } from '@angular/router';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT } from '@angular/common';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-post',
@@ -47,24 +49,48 @@ import { DOCUMENT } from '@angular/common';
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostingHeaderComponent,
+        RouterLinkActive,
+        RouterLink,
+        PostingContentComponent,
+        PostingReactionsBarComponent,
+        MessageInlineInputComponent,
+        PostingFooterComponent,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() readOnlyMode: boolean;
-    @Input() previewMode: boolean;
+    metisService = inject(MetisService);
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
-    @Input() modalRef?: NgbModalRef;
-    @Input() showAnswers: boolean;
-    @Output() openThread = new EventEmitter<void>();
-    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
-    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
-    showReactionSelector = false;
-    @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
-    static activeDropdownPost: PostComponent | null = null;
+    modalRef = input<NgbModalRef | undefined>(undefined);
+    showAnswers = model<boolean>(false);
 
+    openThread = output<void>();
+
+    postFooterComponent = viewChild<PostingFooterComponent>('postFooter');
+    reactionsBarComponent = viewChild.required<PostingReactionsBarComponent<Post>>(PostingReactionsBarComponent);
+
+    static activeDropdownPost: PostComponent | undefined = undefined;
+
+    showReactionSelector = false;
     displayInlineInput = false;
     routerLink: RouteComponents;
     queryParams = {};
@@ -77,8 +103,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEditOrDelete: boolean = false;
-    canPin: boolean = false;
+    mayEdit = false;
+    mayDelete = false;
+    canPin = false;
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -87,33 +114,25 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
+    readonly faBookmark = faBookmark;
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
-
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
 
     get reactionsBar() {
-        return this.reactionsBarComponent;
+        return this.reactionsBarComponent();
     }
 
     isPinned(): boolean {
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
+    }
+
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
     }
 
     onCanPin(value: boolean) {
@@ -121,24 +140,29 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
+        const targetElement = event.target as HTMLElement;
+        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
 
-        if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
-            PostComponent.activeDropdownPost.showDropdown = false;
-            PostComponent.activeDropdownPost.enableBodyScroll();
-            PostComponent.activeDropdownPost.changeDetector.detectChanges();
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
+                PostComponent.activeDropdownPost.showDropdown = false;
+                PostComponent.activeDropdownPost.enableBodyScroll();
+                PostComponent.activeDropdownPost.changeDetector.detectChanges();
+            }
+
+            PostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
         }
-
-        PostComponent.activeDropdownPost = this;
-
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
-
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
     }
 
     adjustDropdownPosition() {
@@ -179,6 +203,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -190,6 +215,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -206,7 +232,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
-            this.modalRef?.dismiss();
+            this.modalRef()?.dismiss();
             this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
         }
     }
@@ -215,7 +241,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
-        this.postFooterComponent.openCreateAnswerPostModal();
+        this.postFooterComponent()?.openCreateAnswerPostModal();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.postFooterComponent()?.closeCreateAnswerPostModal();
     }
 
     /**
@@ -235,28 +268,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     /**
-     * Create a or navigate to one-to-one chat with the referenced user
-     *
-     * @param referencedUserLogin login of the referenced user
-     */
-    onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
-            } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
-                        queryParams: {
-                            conversationId: res.body!.id,
-                        },
-                    });
-                });
-            }
-        }
-    }
-
-    /**
      * Navigate to the referenced channel
      *
      * @param channelId id of the referenced channel
@@ -273,6 +284,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    private assignPostingToPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof Post)) {
+            this.posting = Object.assign(new Post(), this.posting);
         }
     }
 }

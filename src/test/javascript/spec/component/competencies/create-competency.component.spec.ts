@@ -8,7 +8,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
@@ -16,9 +15,9 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CreateCompetency', () => {
@@ -27,7 +26,7 @@ describe('CreateCompetency', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreateCompetencyComponent, ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
+            imports: [CreateCompetencyComponent, CompetencyFormComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(CompetencyService),
@@ -106,12 +105,11 @@ describe('CreateCompetency', () => {
         const router: Router = TestBed.inject(Router);
         const competencyService = TestBed.inject(CompetencyService);
 
-        const textUnit: TextUnit = new TextUnit();
-        textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
+            masteryThreshold: 100,
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({

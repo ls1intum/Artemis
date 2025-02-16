@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRep
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
-import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,9 +63,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     GroupChatRepository groupChatRepository;
-
-    @Autowired
-    OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
     ConversationMessageRepository conversationMessageRepository;
@@ -184,6 +180,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();

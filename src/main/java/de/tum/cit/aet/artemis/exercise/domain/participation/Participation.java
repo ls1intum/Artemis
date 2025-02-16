@@ -96,14 +96,19 @@ public abstract class Participation extends DomainObject implements Participatio
     protected Exercise exercise;
 
     /**
-     * Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each participation
-     * has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading
-     * settings.
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     *
+     *              Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each
+     *              participation
+     *              has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to Submission.result for
+     *              cascading
+     *              settings.
      */
     @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties(value = "participation", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
+    @Deprecated(since = "7.7", forRemoval = true)
     private Set<Result> results = new HashSet<>();
 
     /**
@@ -212,26 +217,52 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = practiceMode;
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     * @return the results
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public Set<Result> getResults() {
         return results;
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     * @param results the results
+     * @return the results
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public Participation results(Set<Result> results) {
         this.results = results;
         return this;
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     * @param result the result
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     @Override
     public void addResult(Result result) {
         this.results.add(result);
         result.setParticipation(this);
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     * @param result the result
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public void removeResult(Result result) {
         this.results.remove(result);
         result.setParticipation(null);
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submissions.results instead
+     * @param results the results
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public void setResults(Set<Result> results) {
         this.results = results;
     }

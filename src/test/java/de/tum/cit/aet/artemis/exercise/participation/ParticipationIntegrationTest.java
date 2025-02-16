@@ -405,7 +405,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
@@ -645,6 +645,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
         TextSubmission submission = (TextSubmission) resultText1.getSubmission();
         submission.setText("some random text");
+        submission.setSubmitted(true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, submission);
         resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.MANUAL);
@@ -682,6 +683,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(modelingParticipation);
 
         Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, true);
+        ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
+        submission.setModel("some random model");
+        submission.setSubmitted(true);
         Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());
@@ -761,6 +765,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(textParticipation);
 
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, false);
+        TextSubmission submission = (TextSubmission) resultText1.getSubmission();
+        submission.setText("some random text");
+        submission.setSubmitted(true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
@@ -795,6 +802,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(modelingParticipation);
 
         Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, false);
+        ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
+        submission.setModel("some random model");
+        submission.setSubmitted(true);
         Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());
@@ -802,7 +812,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
 
-        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
         Result invokedModelingResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedModelingResult).isNotNull();
@@ -916,7 +926,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
         exerciseRepository.save(quizExercise);
 
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student1");
+        final var login = TEST_PREFIX + "student1";
+        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
         var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
         var notGradedResult = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
         notGradedResult.setRated(false);
@@ -926,11 +937,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
 
-        var receivedParticipationWithResult = participations.stream().filter(p -> ((User) p.getParticipant()).getLogin().equals(TEST_PREFIX + "student1")).findFirst()
-                .orElseThrow();
-        assertThat(receivedParticipationWithResult.getResults()).containsOnly(result1);
-        assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
-        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
+        var receivedParticipation = participations.stream().filter(p -> p.getParticipantIdentifier().equals(login)).findFirst().orElseThrow();
+        assertThat(receivedParticipation.getResults()).containsOnly(notGradedResult);
+        assertThat(receivedParticipation.getSubmissions()).isEmpty();
+        assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
     }
 
     @Test
@@ -1357,7 +1367,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepository.save(programmingExercise);
         }
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
@@ -1696,6 +1706,64 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "maxAthenaResultsReached");
 
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndNoSubmission_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndNoSubmittedSubmission_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        TextSubmission submission = new TextSubmission();
+        submission.setParticipation(textParticipation);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndSubmissionEmpty_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        TextSubmission submission = new TextSubmission();
+        submission.setParticipation(textParticipation);
+
+        submission.setText("");
+        submission.setSubmitted(true);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenModelingFeedbackRequestedAndSubmissionEmpty_thenFail() throws Exception {
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(modelingParticipation);
+
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setParticipation(modelingParticipation);
+
+        submission.setModel("");
+        submission.setSubmitted(true);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Nested

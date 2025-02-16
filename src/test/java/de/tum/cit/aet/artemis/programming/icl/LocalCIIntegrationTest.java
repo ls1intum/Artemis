@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIREC
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -19,13 +20,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -47,18 +51,25 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -92,6 +103,10 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private String commitHash;
 
+    private IQueue<BuildJobQueueItem> queuedJobs;
+
+    private IMap<String, BuildJobQueueItem> processingJobs;
+
     @BeforeAll
     void setupAll() {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
@@ -121,6 +136,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
+
+        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        processingJobs = hazelcastInstance.getMap("processingJobs");
     }
 
     @AfterEach
@@ -140,6 +158,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildJobPersistence() {
+        // Stop the build agent to prevent the build job from being processed.
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
@@ -153,21 +174,131 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         BuildJob buildJob = buildJobOptional.orElseThrow();
 
-        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.QUEUED);
         assertThat(buildJob.getRepositoryType()).isEqualTo(RepositoryType.USER);
         assertThat(buildJob.getCommitHash()).isEqualTo(commitHash);
         assertThat(buildJob.getTriggeredByPushTo()).isEqualTo(RepositoryType.USER);
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().getMetadata().docker().getFullImageName());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().metadata().docker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
-        assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
         assertThat(buildJob.getRetryCount()).isEqualTo(0);
         assertThat(buildJob.getName()).isNotEmpty();
+        assertThat(buildJob.getBuildAgentAddress()).isNull();
+        assertThat(buildJob.getBuildStartDate()).isNull();
+        assertThat(buildJob.getBuildCompletionDate()).isNull();
+
+        // resume the build agent
+        sharedQueueProcessingService.init();
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<BuildJob> buildJobOptionalTemp = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptionalTemp.isPresent() && buildJobOptionalTemp.get().getBuildStatus() == BuildStatus.BUILDING;
+        });
+
+        await().atMost(15, TimeUnit.SECONDS).until(() -> {
+            Optional<BuildJob> buildJobOptionalTemp = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptionalTemp.isPresent() && buildJobOptionalTemp.get().getBuildStatus() == BuildStatus.SUCCESSFUL;
+        });
+
+        buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+        buildJob = buildJobOptional.orElseThrow();
+
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(buildJob.getBuildStartDate()).isNotNull();
         assertThat(buildJob.getBuildCompletionDate()).isNotNull();
+        assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildJobTimeoutPersistence() {
+        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            int originalTimeout = buildConfig.getTimeoutSeconds();
+            buildConfig.setTimeoutSeconds(1);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            // delay the inspectImageCmd.exec() method by 1 second to simulate a timeout
+            InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+            InspectImageResponse inspectImageResponse = new InspectImageResponse();
+            doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+            doAnswer(invocation -> {
+                var future = scheduler.schedule(() -> inspectImageResponse, 3, TimeUnit.SECONDS);
+                return future.get(4, TimeUnit.SECONDS);
+            }).when(inspectImageCmd).exec();
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+            await().until(() -> {
+                Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+                return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() != BuildStatus.BUILDING
+                        && buildJobOptional.get().getBuildStatus() != BuildStatus.QUEUED;
+            });
+
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+
+            BuildJob buildJob = buildJobOptional.orElseThrow();
+
+            assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.TIMEOUT);
+            assertThat(buildJob.getRepositoryType()).isEqualTo(RepositoryType.USER);
+            assertThat(buildJob.getCommitHash()).isEqualTo(commitHash);
+            assertThat(buildJob.getTriggeredByPushTo()).isEqualTo(RepositoryType.USER);
+            assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
+            assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
+            assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
+            assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().metadata().docker().getFullImageName());
+            assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
+            assertThat(buildJob.getPriority()).isEqualTo(2);
+            assertThat(buildJob.getRetryCount()).isEqualTo(0);
+            assertThat(buildJob.getName()).isNotEmpty();
+            assertThat(buildJob.getBuildStartDate()).isNotNull();
+            assertThat(buildJob.getBuildCompletionDate()).isNotNull();
+            assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
+
+            buildConfig.setTimeoutSeconds(originalTimeout);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMissingBuildJobCheck() {
+        // Stop the build agent to prevent the build job from being processed.
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+        });
+
+        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+
+        BuildJob buildJob = buildJobOptional.orElseThrow();
+
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.QUEUED);
+
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+        buildJobRepository.save(buildJob);
+
+        hazelcastInstance.getQueue("buildJobQueue").clear();
+
+        localCIEventListenerService.checkPendingBuildJobsStatus();
+
+        buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+        buildJob = buildJobOptional.orElseThrow();
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
+
+        // resume the build agent
+        sharedQueueProcessingService.init();
     }
 
     @Test
@@ -451,7 +582,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildLogs).isNotNull();
             assertThat(buildLogs.getFile().exists()).isTrue();
 
-            String content = new String(Files.readAllBytes(Paths.get(buildLogs.getFile().getAbsolutePath())));
+            String content = new String(Files.readAllBytes(Path.of(buildLogs.getFile().getAbsolutePath())));
 
             // Assert that the content contains the expected log entry
             assertThat(content).contains("Dummy log entry");
@@ -459,7 +590,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         finally {
             // Delete log file
             if (buildLogs != null && buildLogs.getFile().exists()) {
-                Files.deleteIfExists(Paths.get(buildLogs.getFile().getAbsolutePath()));
+                Files.deleteIfExists(Path.of(buildLogs.getFile().getAbsolutePath()));
             }
         }
     }
@@ -476,6 +607,20 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testCustomCheckoutPaths() {
         var buildConfig = programmingExercise.getBuildConfig();
         buildConfig.setAssignmentCheckoutPath("customAssignmentPath");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+
+        buildConfig.setAssignmentCheckoutPath("");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDisableNetworkAccessAndEnvVars() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setDockerFlags("{\"network\": \"none\", \"env\": {\"key\": \"value\"}}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
@@ -502,5 +647,56 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildJobTimingInfo() {
+        // Pause build agent processing
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        ProgrammingExerciseBuildStatistics buildStatistics = new ProgrammingExerciseBuildStatistics(programmingExercise.getId(), 20, 100);
+        programmingExerciseBuildStatisticsRepository.save(buildStatistics);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        await().until(() -> queuedJobs.stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
+                && buildJobQueueItem.participationId() == studentParticipation.getId()));
+
+        BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
+                .findFirst().orElseThrow();
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        sharedQueueProcessingService.init();
+
+        await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
+                && buildJobQueueItem.participationId() == studentParticipation.getId()));
+        item = processingJobs.values().stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
+                .findFirst().orElseThrow();
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(22), within(500, ChronoUnit.MILLIS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSubmissionReturnsWhenSubmissionProcessing() throws Exception {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission.setCommitHash(commitHash);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusSeconds(30), ZonedDateTime.now(), null, ZonedDateTime.now().plusSeconds(30), 60);
+        BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, null, 0, null, null, null, null);
+        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem("1", "1", null, submission.getParticipation().getId(), 1L, programmingExercise.getId(), 0, 1, null, null,
+                jobTimingInfo, buildConfig, null);
+
+        processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
+        var submissionDto = request.get("/api/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                SubmissionDTO.class);
+        processingJobs.delete(buildJobQueueItem.id());
+
+        assertThat(submissionDto).isNotNull();
+        assertThat(submissionDto.isProcessing()).isTrue();
+        assertThat(submissionDto.buildStartDate()).isNotNull();
+        assertThat(submissionDto.estimatedCompletionDate()).isNotNull();
     }
 }

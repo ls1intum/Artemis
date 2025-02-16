@@ -112,7 +112,7 @@
                                     <li class="mb-3">
                                         <h5 class="mb-1">
                                             @if (!isDownloadingLink) {
-                                                <a class="text-primary" (click)="downloadAttachment(attachment.link)">
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.link, attachment.name)">
                                                     {{ attachment.name }}
                                                 </a>
                                             }
@@ -147,5 +147,8 @@
                 </div>
             </div>
         </div>
+        @if (irisSettings?.irisLectureChatSettings?.enabled) {
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
+        }
     </div>
 }

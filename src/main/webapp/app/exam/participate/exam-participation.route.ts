@@ -1,14 +1,14 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
-import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 
 export const examParticipationRoute: Routes = [
     {
         path: '',
-        component: ExamParticipationComponent,
+        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
@@ -17,7 +17,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'overview/grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
@@ -26,7 +26,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'overview/bonus-grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
@@ -35,21 +35,22 @@ export const examParticipationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'exercises/:exerciseId/example-solution',
-        component: ExampleSolutionComponent,
+        path: 'test-exam/:studentExamId',
+        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
     },
-];
-
-const EXAM_PARTICIPATION_ROUTES = [...examParticipationRoute];
-
-export const examParticipationState: Routes = [
     {
-        path: '',
-        children: EXAM_PARTICIPATION_ROUTES,
+        path: 'exercises/:exerciseId/example-solution',
+        loadComponent: () => import('app/exercises/shared/example-solution/example-solution.component').then((m) => m.ExampleSolutionComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.exam.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];

@@ -4,38 +4,36 @@
             <h2>
                 <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title"></span>
             </h2>
-            @if (exercise?.type === ExerciseType.PROGRAMMING) {
-                <div class="d-flex align-items-center mt-2">
-                    <label class="radio-inline mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                        <span class="ms-1" jhiTranslate="artemisApp.exercise.showAll"></span>
-                    </label>
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
-                        <span class="ms-1" jhiTranslate="artemisApp.exercise.showFailed"></span>
-                    </label>
+            <div class="d-flex align-items-center mt-2">
+                <label class="radio-inline mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showAll"></span>
+                </label>
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showFailed"></span>
+                </label>
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                    <input
+                        type="radio"
+                        [ngModel]="participationCriteria.filterProp"
+                        (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
+                        [value]="FilterProp.NO_SUBMISSIONS"
+                    />
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoSubmissions"></span>
+                </label>
+                @if (exercise?.type === ExerciseType.PROGRAMMING && afterDueDate) {
                     <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                         <input
                             type="radio"
                             [ngModel]="participationCriteria.filterProp"
-                            (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
-                            [value]="FilterProp.NO_SUBMISSIONS"
+                            (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)"
+                            [value]="FilterProp.NO_PRACTICE"
                         />
-                        <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoSubmissions"></span>
+                        <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoPracticeMode"></span>
                     </label>
-                    @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
-                        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                            <input
-                                type="radio"
-                                [ngModel]="participationCriteria.filterProp"
-                                (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)"
-                                [value]="FilterProp.NO_PRACTICE"
-                            />
-                            <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoPracticeMode"></span>
-                        </label>
-                    }
-                </div>
-            }
+                }
+            </div>
         </div>
         @if (exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor) {
             <div class="p-2">
@@ -122,7 +120,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            @if (value) {
+                            @if (value && getRepositoryLink(row, value)) {
                                 <span>
                                     @if (!localVCEnabled) {
                                         <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
@@ -130,8 +128,8 @@
                                         <jhi-code-button
                                             class="ms-2"
                                             [smallButtons]="true"
-                                            [routerLinkForRepositoryView]="'./' + row.id + '/repository'"
-                                            [repositoryUri]="getRepositoryLink(row, value)"
+                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, row.id]"
+                                            [repositoryUri]="getRepositoryLink(row, value)!"
                                         />
                                     }
                                 </span>

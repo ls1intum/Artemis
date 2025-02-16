@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -34,6 +35,10 @@ public class PushNotificationDeviceConfiguration {
     @Column(name = "device_type")
     private PushNotificationDeviceType deviceType;
 
+    @Enumerated
+    @Column(name = "api_type")
+    private PushNotificationApiType apiType;
+
     @Column(name = "expiration_date")
     private Date expirationDate;
 
@@ -51,6 +56,16 @@ public class PushNotificationDeviceConfiguration {
         this.expirationDate = expirationDate;
         this.secretKey = secretKey;
         this.owner = owner;
+    }
+
+    public PushNotificationDeviceConfiguration(String token, PushNotificationDeviceType deviceType, Date expirationDate, byte[] secretKey, User owner,
+            PushNotificationApiType apiType) {
+        this.token = token;
+        this.deviceType = deviceType;
+        this.expirationDate = expirationDate;
+        this.secretKey = secretKey;
+        this.owner = owner;
+        this.apiType = apiType;
     }
 
     public PushNotificationDeviceConfiguration() {
@@ -95,6 +110,10 @@ public class PushNotificationDeviceConfiguration {
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public PushNotificationApiType getApiType() {
+        return apiType;
     }
 
     @Override
