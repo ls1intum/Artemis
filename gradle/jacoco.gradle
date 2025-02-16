@@ -160,17 +160,17 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
         include "test.exec"
     }
 
-    def sourcePath
+    def classPath
     if (moduleName == "aggregated") {
-        sourcePath = "$BasePath/**/*.class"
+        classPath = "$BasePath/**/*.class"
     } else {
-        sourcePath = "$BasePath/$moduleName/**/*.class"
+        classPath = "$BasePath/$moduleName/**/*.class"
     }
     task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
-                includes=[sourcePath]
+                includes=[classPath]
                 excludes=ignoredDirectories
             }
         })
