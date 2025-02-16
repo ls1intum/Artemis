@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.repository;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAnsweredOrReactedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getOwnSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
@@ -87,8 +86,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * @return returns a Page of Messages
      */
     default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        var specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
-                .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
+        Specification<Post> specification = Specification.where(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
         specification = configureSearchSpecification(specification, postContextFilter, userId);
         return findPostsWithSpecification(pageable, specification);
     }
