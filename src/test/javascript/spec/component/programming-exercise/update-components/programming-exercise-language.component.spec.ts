@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -6,6 +6,8 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
@@ -18,7 +20,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 {
@@ -29,6 +30,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                     provide: TheiaService,
                     useValue: theiaServiceMock,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         })
