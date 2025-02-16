@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -21,7 +21,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, NgClass, UpdatingResultComponent, ArtemisTranslatePipe],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
-    protected changeDetectorReference: ChangeDetectorRef = inject(ChangeDetectorRef);
     private examParticipationService = inject(ExamParticipationService);
 
     studentExam = input.required<StudentExam>();
