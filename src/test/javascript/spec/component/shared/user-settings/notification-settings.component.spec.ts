@@ -10,6 +10,10 @@ import { NotificationSetting, notificationSettingsStructure } from 'app/shared/u
 import { AlertService } from 'app/core/util/alert.service';
 import { UrlSerializer } from '@angular/router';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -34,6 +38,9 @@ describe('NotificationSettingsComponent', () => {
         MockProvider(UrlSerializer),
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        { provide: TranslateService, useClass: MockTranslateService },
+        provideHttpClient(),
+        provideHttpClientTesting(),
     ];
 
     beforeEach(() => {
