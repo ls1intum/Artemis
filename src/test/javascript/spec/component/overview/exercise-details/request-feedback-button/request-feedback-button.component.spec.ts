@@ -13,6 +13,9 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -26,7 +29,14 @@ describe('RequestFeedbackButtonComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RequestFeedbackButtonComponent],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }, MockProvider(HttpClient)],
+            providers: [
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(HttpClient),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(CourseExerciseService),
+                MockProvider(ExerciseService),
+                MockProvider(ParticipationService),
+            ],
         })
             .compileComponents()
             .then(() => {
