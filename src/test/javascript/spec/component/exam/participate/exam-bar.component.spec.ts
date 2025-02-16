@@ -9,6 +9,13 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import { ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -16,10 +23,13 @@ describe('ExamBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
+                MockProvider(ArtemisServerDateService),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
         // Required because exam bar uses the ResizeObserver for height calculations
