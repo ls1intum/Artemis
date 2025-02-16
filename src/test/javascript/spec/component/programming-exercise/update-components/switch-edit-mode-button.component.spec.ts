@@ -1,29 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { SwitchEditModeButtonComponent } from '../../../../../../main/webapp/app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
-import { ArtemisSharedCommonModule } from '../../../../../../main/webapp/app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from '../../../../../../main/webapp/app/shared/components/shared-component.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
-import { MockModule } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('SwitchEditModeButtonComponent', () => {
     let fixture: ComponentFixture<SwitchEditModeButtonComponent>;
     let comp: SwitchEditModeButtonComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [SwitchEditModeButtonComponent],
-            declarations: [MockModule(ArtemisSharedCommonModule), MockModule(ArtemisSharedComponentModule)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
-                comp = fixture.componentInstance;
+            declarations: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+        }).compileComponents();
 
-                fixture.componentRef.setInput('isSimpleMode', false);
-            });
+        fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
+        comp = fixture.componentInstance;
+
+        fixture.componentRef.setInput('isSimpleMode', false);
     });
 
     it('should initialize', () => {

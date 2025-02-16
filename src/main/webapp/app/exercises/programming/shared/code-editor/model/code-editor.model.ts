@@ -54,6 +54,18 @@ export enum DomainType {
 }
 
 /**
+ * Enumeration specifying the repository type
+ */
+export enum RepositoryType {
+    ASSIGNMENT = 'ASSIGNMENT', // The ASSIGNMENT repository is the USER repository of an instructor for an exercise
+    TEMPLATE = 'TEMPLATE',
+    SOLUTION = 'SOLUTION',
+    TESTS = 'TESTS',
+    AUXILIARY = 'AUXILIARY',
+    USER = 'USER',
+}
+
+/**
  * Enumeration defining whether there is a conflict while checking out.
  */
 export enum RepositoryError {
