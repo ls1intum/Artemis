@@ -10,6 +10,8 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
@@ -19,13 +21,13 @@ describe('TutorLeaderboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 MockProvider(AccountService),
                 {
                     provide: Router,
                     useClass: MockRouter,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(TutorLeaderboardComponent);
