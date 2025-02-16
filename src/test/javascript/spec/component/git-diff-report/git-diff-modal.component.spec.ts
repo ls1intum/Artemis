@@ -5,9 +5,12 @@ import { GitDiffReportModalComponent } from '../../../../../main/webapp/app/exer
 import { ProgrammingExerciseService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('GitDiffReportModalComponent', () => {
     let comp: GitDiffReportModalComponent;
@@ -25,8 +28,14 @@ describe('GitDiffReportModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffReportComponent)],
+            imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(NgbActiveModal),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(ProgrammingExerciseParticipationService),
+                MockProvider(FeatureToggleService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportModalComponent);
         comp = fixture.componentInstance;
