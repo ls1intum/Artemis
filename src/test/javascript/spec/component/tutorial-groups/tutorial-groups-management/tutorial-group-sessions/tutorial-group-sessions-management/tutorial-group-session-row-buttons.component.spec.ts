@@ -12,6 +12,9 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;
@@ -22,8 +25,11 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     let tutorialGroupSession: TutorialGroupSession;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(TutorialGroupSessionService),
+            ],
         })
             .compileComponents()
             .then(() => {
