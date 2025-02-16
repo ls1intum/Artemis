@@ -19,6 +19,9 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
 import '@angular/localize/init';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -68,6 +71,8 @@ describe('AssessmentHeaderComponent', () => {
                         return [gradeStep1, gradeStep2];
                     },
                 }),
+                MockProvider(TextAssessmentAnalytics),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
     });
