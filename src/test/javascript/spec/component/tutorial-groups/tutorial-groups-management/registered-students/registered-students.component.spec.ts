@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -16,6 +16,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { LocalStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -58,7 +62,6 @@ describe('Registered Students Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 RegisteredStudentsComponent,
                 LoadingIndicatorContainerStubComponent,
@@ -66,7 +69,17 @@ describe('Registered Students Component', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(CourseManagementService), MockProvider(NgbActiveModal), MockProvider(LocalStorageService)],
+            providers: [
+                MockProvider(TutorialGroupsService),
+                MockProvider(CourseManagementService),
+                MockProvider(NgbActiveModal),
+                MockProvider(LocalStorageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
