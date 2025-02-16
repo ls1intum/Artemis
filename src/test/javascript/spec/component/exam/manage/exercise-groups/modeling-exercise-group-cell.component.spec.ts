@@ -3,13 +3,15 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('Modeling Exercise Group Cell Component', () => {
     let comp: ModelingExerciseGroupCellComponent;
     let fixture: ComponentFixture<ModelingExerciseGroupCellComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [] })
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);
