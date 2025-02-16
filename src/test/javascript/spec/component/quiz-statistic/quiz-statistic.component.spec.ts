@@ -37,7 +37,6 @@ describe('QuizExercise Statistic Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
         })
             .overrideComponent(QuizStatisticComponent, {
@@ -50,6 +49,7 @@ describe('QuizExercise Statistic Component', () => {
                         { provide: Router, useClass: MockRouter },
                         { provide: AccountService, useClass: MockAccountService },
                         MockProvider(ChangeDetectorRef),
+                        MockProvider(QuizExerciseService),
                     ],
                 },
             })
