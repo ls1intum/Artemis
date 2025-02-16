@@ -1,6 +1,6 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -37,7 +37,6 @@ describe('CourseArchiveComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseArchiveComponent,
                 SearchFilterPipe,
@@ -53,6 +52,14 @@ describe('CourseArchiveComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                // MockProvider(AlertService),
+                // { provide: AccountService, useClass: MockAccountService },
+                // {
+                //     provide: ProfileService,
+                //     useClass: MockProfileService,
+                // },
+                provideHttpClientTesting(),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
