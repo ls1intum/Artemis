@@ -8,6 +8,8 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -73,8 +75,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [MockProvider(ArtemisNavigationUtilService)],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
