@@ -165,6 +165,7 @@ public class ExampleSubmissionResource {
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
             Optional<TextSubmission> textSubmission = textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE))
                     .getSubmissionForExampleSubmission(exampleSubmission.getSubmission().getId());
+            textSubmission.ifPresent(exampleSubmission::setSubmission);
         }
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
