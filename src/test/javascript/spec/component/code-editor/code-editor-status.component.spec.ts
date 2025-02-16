@@ -5,7 +5,8 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
@@ -15,6 +16,7 @@ describe('CodeEditorStatusComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
             declarations: [CodeEditorStatusComponent, TranslatePipeMock],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
