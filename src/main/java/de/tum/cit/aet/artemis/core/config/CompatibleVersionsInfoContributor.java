@@ -19,6 +19,6 @@ public class CompatibleVersionsInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-        builder.withDetail("compatible-versions", versionsConfiguration);
+        builder.withDetail("compatibleVersions", versionsConfiguration);
     }
 }
