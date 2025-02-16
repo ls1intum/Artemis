@@ -4,6 +4,10 @@ import { MockPipe } from 'ng-mocks';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CompetencySearchComponent', () => {
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
@@ -12,7 +16,7 @@ describe('CompetencySearchComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
