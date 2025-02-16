@@ -5,6 +5,12 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 
 describe('ProgrammingExercise Re-Evaluate Button Component', () => {
     const course = { id: 123 } as Course;
@@ -18,10 +24,13 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
+                MockProvider(AlertService),
+                MockProvider(FeatureToggleService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

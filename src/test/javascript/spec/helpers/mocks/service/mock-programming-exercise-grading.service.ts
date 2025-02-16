@@ -62,4 +62,7 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
     importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
         return of();
     }
+    reEvaluate(exerciseId: number): Observable<number> {
+        return of();
+    }
 }
