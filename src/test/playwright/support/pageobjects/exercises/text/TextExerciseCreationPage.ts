@@ -1,36 +1,11 @@
-import { Locator, Page } from '@playwright/test';
-import { Dayjs } from 'dayjs';
-import { enterDate } from '../../../utils';
+import { Locator } from '@playwright/test';
 import { TEXT_EXERCISE_BASE } from '../../../constants';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-export class TextExerciseCreationPage {
-    private readonly page: Page;
-
+export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly PROBLEM_STATEMENT_SELECTOR = '#problemStatement';
     private readonly EXAMPLE_SOLUTION_SELECTOR = '#exampleSolution';
     private readonly ASSESSMENT_INSTRUCTIONS_SELECTOR = '#gradingInstructions';
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async typeTitle(title: string) {
-        const titleField = this.page.locator('#field_title');
-        await titleField.clear();
-        await titleField.fill(title);
-    }
-
-    async setReleaseDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-releaseDate', date);
-    }
-
-    async setDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-dueDate', date);
-    }
-
-    async setAssessmentDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-assessmentDueDate', date);
-    }
 
     async typeMaxPoints(maxPoints: number) {
         await this.page.locator('#field_points').fill(maxPoints.toString());
@@ -80,12 +55,6 @@ export class TextExerciseCreationPage {
 
     private getTextEditorLocator(selector: string) {
         return this.page.locator(selector).locator('.monaco-editor');
-    }
-
-    private async clearText(textEditor: Locator) {
-        await textEditor.click();
-        await textEditor.press('Control+a');
-        await textEditor.press('Delete');
     }
 
     private async typeText(textEditor: Locator, text: string) {

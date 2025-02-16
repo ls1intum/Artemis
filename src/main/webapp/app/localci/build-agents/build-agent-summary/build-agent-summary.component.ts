@@ -14,12 +14,13 @@ import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agents/build
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
