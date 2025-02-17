@@ -12,6 +12,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-lifecycle-buttons.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Lifecycle Buttons Component', () => {
     let comp: QuizExerciseLifecycleButtonsComponent;
@@ -30,13 +31,13 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                MockProvider(QuizExerciseService),
             ],
         })
             .overrideTemplate(QuizExerciseLifecycleButtonsComponent, '')
