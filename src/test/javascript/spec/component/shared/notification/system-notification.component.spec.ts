@@ -10,6 +10,9 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;
@@ -47,6 +50,8 @@ describe('System Notification Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(SystemNotificationService),
             ],
         })
             .compileComponents()
