@@ -10,6 +10,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { MockComponent } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
@@ -18,11 +20,11 @@ describe('RatingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [RatingComponent, MockComponent(StarRatingComponent)],
             providers: [
                 { provide: RatingService, useClass: MockRatingService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
