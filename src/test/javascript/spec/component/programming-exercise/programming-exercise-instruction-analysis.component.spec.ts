@@ -6,6 +6,8 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -28,12 +30,12 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
                 providers: [
                     {
                         provide: ProgrammingExerciseInstructionAnalysisService,
                         useClass: MockProgrammingExerciseInstructionAnalysisService,
                     },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .compileComponents()
