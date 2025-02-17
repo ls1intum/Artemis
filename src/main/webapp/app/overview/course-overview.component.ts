@@ -626,6 +626,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.controlsSubscription =
                 this.controlConfiguration.subject?.subscribe(async (controls: TemplateRef<any>) => {
                     this.controls = controls;
+                    this.tryRenderControls();
                     await firstValueFrom(provider.controlsRendered);
                     this.tryRenderControls();
                 }) || undefined;
