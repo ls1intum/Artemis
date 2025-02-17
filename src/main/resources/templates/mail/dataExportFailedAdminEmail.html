@@ -12,7 +12,6 @@
     <span th:text="#{email.dataExportFailedAdmin.text}">A data export creation failed. </span>
     <span class="bold-text" th:text="${dataExportFailedContent.exportUsername}">Username</span>
     <span th:text="#{email.dataExportFailedAdmin.textFailed}">failed</span>
-
     <p th:text="#{email.dataExportFailedAdmin.reason(${dataExportFailedContent.reason})}">The error message </p>
     <p
         th:text="#{email.dataExportFailedAdmin.actionItemList}">

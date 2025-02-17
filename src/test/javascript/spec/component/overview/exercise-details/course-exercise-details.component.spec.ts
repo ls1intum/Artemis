@@ -33,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
@@ -72,6 +72,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ElementRef, signal } from '@angular/core';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -130,6 +131,11 @@ describe('CourseExerciseDetailsComponent', () => {
         parent: parentRoute,
         queryParams: of({ welcome: '' }),
     } as any as ActivatedRoute;
+
+    MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+    MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+    // @ts-ignore
+    MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 import org.apache.sshd.common.util.threads.ThreadUtils;
@@ -67,7 +66,7 @@ public class SshConfiguration {
         }
         else {
             // this is a simple solution for development, the host key will be generated during the first ssh operation in case it does not exist
-            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Paths.get("tmp", "hostkey.ser")));
+            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("tmp", "hostkey.ser")));
         }
         sshd.setCommandFactory(
                 sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
