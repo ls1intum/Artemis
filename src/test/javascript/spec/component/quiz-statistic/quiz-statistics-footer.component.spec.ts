@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizStatisticsFooterComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -17,6 +17,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -36,8 +37,15 @@ describe('QuizExercise Statistic Footer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: Router, useClass: MockRouter }, QuizStatisticUtil, ShortAnswerQuestionUtil],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                QuizStatisticUtil,
+                ShortAnswerQuestionUtil,
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .overrideComponent(QuizStatisticsFooterComponent, {
                 set: {
