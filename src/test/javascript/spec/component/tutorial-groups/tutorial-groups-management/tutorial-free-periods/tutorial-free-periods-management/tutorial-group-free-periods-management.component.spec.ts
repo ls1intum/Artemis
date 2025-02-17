@@ -25,6 +25,9 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodsManagementComponent>;
@@ -45,7 +48,6 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     const router = new MockRouter();
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TutorialGroupFreePeriodsManagementComponent,
                 LoadingIndicatorContainerStubComponent,
@@ -63,6 +65,8 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 SortService,
                 { provide: Router, useValue: router },
                 mockedActivatedRoute({}, {}, { course }, {}),
+                MockProvider(TutorialGroupFreePeriodService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
