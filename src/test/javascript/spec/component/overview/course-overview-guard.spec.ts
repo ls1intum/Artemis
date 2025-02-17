@@ -10,6 +10,9 @@ import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview/courses.route';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
@@ -32,7 +35,7 @@ describe('CourseOverviewGuard', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }, MockProvider(ArtemisServerDateService)],
         });
         guard = TestBed.inject(CourseOverviewGuard);
         courseStorageService = TestBed.inject(CourseStorageService);

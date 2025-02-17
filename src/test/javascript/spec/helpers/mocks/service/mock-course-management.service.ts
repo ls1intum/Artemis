@@ -3,7 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
+import { EntityArrayResponseType, EntityResponseType } from 'app/course/manage/course-management.service';
 
 export class MockCourseManagementService {
     find = (courseId: number) => of([{ id: 456 } as Course]);
@@ -41,5 +41,8 @@ export class MockCourseManagementService {
 
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
         return of(3);
+    }
+    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
+        return of();
     }
 }
