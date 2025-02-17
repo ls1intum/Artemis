@@ -36,25 +36,23 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     localVC = false;
 
     ngOnInit(): void {
-        if (!this.commits) {
-            if (this.participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
-                    if (commits) {
-                        this.commits = commits;
-                        this.setCommitDetails();
-                        this.groupCommits();
-                    }
-                });
-            }
-        } else {
-            this.setCommitDetails();
-            this.groupCommits();
-        }
         // Get active profiles, to distinguish between VC systems, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+
+        if (!this.commits) {
+            if (this.participationId) {
+                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+                    if (commits) {
+                        this.commits = commits;
+                    }
+                });
+            }
+        }
+        this.setCommitDetails();
+        this.groupCommits();
     }
 
     ngOnDestroy(): void {
