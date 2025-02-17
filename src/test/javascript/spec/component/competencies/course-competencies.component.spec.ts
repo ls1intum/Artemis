@@ -17,6 +17,8 @@ import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 class MockActivatedRoute {
     parent: any;
@@ -49,7 +51,6 @@ describe('CourseCompetencies', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CourseCompetenciesComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideHttpClient(),
@@ -68,6 +69,7 @@ describe('CourseCompetencies', () => {
                         getFeatureToggleActive: () => of(true),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         })
