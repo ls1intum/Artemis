@@ -12,7 +12,7 @@ import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exerc
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -21,6 +21,11 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -61,6 +66,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
