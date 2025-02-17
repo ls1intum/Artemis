@@ -124,7 +124,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Use which to find all java installations on Linux
         var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
         for (String path : javaInstallations) {
-            File binFolder = new File(path).getParentFile();
+            File binFolder = Path.of(path).toFile().getParentFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -139,8 +139,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static void findAndSetJava17Mac() throws Exception {
         var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
         for (String path : alternativeInstallations) {
-            File binFolder = new File(path).getParentFile();
-            binFolder = new File(binFolder, "Home/bin");
+            File binFolder = Path.of(path).toFile().getParentFile();
+            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }

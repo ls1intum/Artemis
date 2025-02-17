@@ -41,8 +41,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     ],
 })
 export class TextExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService);
-    protected textExerciseService = inject(TextExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected textExerciseService = inject(TextExerciseService); // needed in html code
     private router = inject(Router);
     private courseExerciseService = inject(CourseExerciseService);
     private modalService = inject(NgbModal);
@@ -87,10 +87,10 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a text exercise in the collection
+     * @param _index of a text exercise in the collection
      * @param item current text exercise
      */
-    trackId(index: number, item: TextExercise) {
+    trackId(_index: number, item: TextExercise) {
         return item.id;
     }
 

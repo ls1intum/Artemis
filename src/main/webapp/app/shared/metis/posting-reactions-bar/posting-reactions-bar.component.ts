@@ -81,7 +81,7 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private accountService = inject(AccountService);
 
     pinEmojiId: string = PIN_EMOJI_ID;
@@ -220,7 +220,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
 
             if (lastReadDate && creationDate) {
                 const lastReadDateDayJs = dayjs(lastReadDate);
-                // @ts-ignore
                 if (!isAuthor && creationDate.isAfter(lastReadDateDayJs)) {
                     showIcon = true;
                 }
@@ -416,6 +415,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    /**
+     * Checks whether the post is pinned.
+     * Used in posting.directive.ts to determine the pin status for the dropdown menu.
+     *
+     * @returns {DisplayPriority} The display priority of the post.
+     */
     checkIfPinned(): DisplayPriority {
         return this.displayPriority;
     }

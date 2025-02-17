@@ -23,12 +23,12 @@ plugins {
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.5.6"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.0.1"
+    id "org.owasp.dependencycheck" version "12.0.2"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.10.0"
+version = "7.10.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -47,7 +47,6 @@ node {
 }
 
 apply from: "gradle/liquibase.gradle"
-apply from: "gradle/test.gradle"
 apply from: "gradle/spotless.gradle"
 
 if (project.hasProperty("prod")) {
@@ -80,7 +79,7 @@ modernizer {
 }
 
 configurations {
-    providedRuntime
+    mockitoAgent
 }
 
 repositories {
@@ -155,8 +154,8 @@ configurations.configureEach {
 dependencies {
 
     // Required by Spring cloud
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.2"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.3"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
@@ -190,7 +189,7 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.3"
 
     // Used for LTI (e.g. Moodle --> Artemis)
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.0"
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.2"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
@@ -299,15 +298,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
-    implementation "org.springframework.data:spring-data-ldap:3.4.2"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
+    implementation "org.springframework.data:spring-data-ldap:3.4.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty:1.2.2"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.3"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -363,7 +362,7 @@ dependencies {
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
-    implementation "com.google.code.gson:gson:2.11.0"
+    implementation "com.google.code.gson:gson:2.12.1"
 
     // explicitly only use this at runtime, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.10"
@@ -418,16 +417,20 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
+    // needed to add mockito as agent and avoid its warning
+    mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {
+        transitive = false
+    }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.12"
+    testImplementation "org.gradle:gradle-tooling-api:8.12.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
-    testImplementation "com.tngtech.archunit:archunit:1.3.0"
+    testImplementation "com.tngtech.archunit:archunit:1.4.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
     // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
@@ -440,6 +443,10 @@ dependencies {
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
+
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
+apply from: "gradle/test.gradle"
+
 
 dependencyManagement {
     imports {

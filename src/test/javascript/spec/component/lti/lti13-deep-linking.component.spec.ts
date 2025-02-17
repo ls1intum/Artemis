@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { Lti13DeepLinkingComponent } from 'app/lti/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
@@ -27,7 +27,7 @@ describe('Lti13DeepLinkingComponent', () => {
     const routerMock = { navigate: jest.fn() };
     const httpMock = { post: jest.fn() };
     const courseManagementServiceMock = { findWithExercises: jest.fn() };
-    const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
+    const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn(), hasAnyAuthority: jest.fn().mockResolvedValue(true) };
     const sortServiceMock = { sortByProperty: jest.fn() };
     const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
 
@@ -193,5 +193,10 @@ describe('Lti13DeepLinkingComponent', () => {
             observe: 'response',
             params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
+    });
+
+    it('should invoke account service using jhiHasAnyAuthority directive', () => {
+        fixture.detectChanges();
+        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     });
 });

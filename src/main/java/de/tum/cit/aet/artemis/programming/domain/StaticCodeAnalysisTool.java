@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static java.util.Map.entry;
+
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -12,23 +14,25 @@ import java.util.Optional;
 public enum StaticCodeAnalysisTool {
 
     // @formatter:off
-    SPOTBUGS("spotbugsXml.xml"),
     CHECKSTYLE("checkstyle-result.xml"),
+    GCC("gcc.xml"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
-    SWIFTLINT("swiftlint-result.xml"),
-    GCC("gcc.xml"),
+    RUBOCOP("rubocop.sarif"),
     RUFF("ruff.sarif"),
+    SPOTBUGS("spotbugsXml.xml"),
+    SWIFTLINT("swiftlint-result.xml"),
     OTHER(null),
     ;
     // @formatter:on
 
     // @formatter:off
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.of(
-        ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD),
-        ProgrammingLanguage.SWIFT, List.of(SWIFTLINT),
-        ProgrammingLanguage.C, List.of(GCC),
-        ProgrammingLanguage.PYTHON, List.of(RUFF)
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.ofEntries(
+        entry(ProgrammingLanguage.C, List.of(GCC)),
+        entry(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD)),
+        entry(ProgrammingLanguage.PYTHON, List.of(RUFF)),
+        entry(ProgrammingLanguage.RUBY, List.of(RUBOCOP)),
+        entry(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT))
     ));
     // @formatter:on
 
