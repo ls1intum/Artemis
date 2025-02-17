@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -265,21 +266,26 @@ public class ExerciseSharingService {
     }
 
     /**
-     * TODO: check usage
      * Retrieves the Exercise-Details file from a Sharing basket
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
      */
-    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
+    public ProgrammingExercise getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+
         try {
-            String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
-            return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
+            String exerciseDetailString = this.getEntryFromBasket(pattern, sharingInfo);
+            ProgrammingExercise exerciseDetails = objectMapper.readValue(new StringReader(exerciseDetailString), ProgrammingExercise.class);
+            exerciseDetails.setId(null);
+            return exerciseDetails;
         }
         catch (Exception e) {
-            throw new NotFoundException("Could not retrieve exercise details from imported exercise");
+            throw new NotFoundException("Could not retrieve exercise details from imported exercise", null, e);
         }
     }
 

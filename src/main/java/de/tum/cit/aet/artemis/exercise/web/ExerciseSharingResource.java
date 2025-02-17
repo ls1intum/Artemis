@@ -129,12 +129,12 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
     @PostMapping("/sharing/import/basket/exerciseDetails")
-    public ResponseEntity<String> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
+    public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
         if(!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
             return ResponseEntity.badRequest().body(null);
         }
-        String exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
-        return ResponseEntity.ok().body(org.apache.commons.text.StringEscapeUtils.escapeHtml4(exerciseDetails));
+        ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+        return ResponseEntity.ok().body(exerciseDetails);
     }
 
     /**

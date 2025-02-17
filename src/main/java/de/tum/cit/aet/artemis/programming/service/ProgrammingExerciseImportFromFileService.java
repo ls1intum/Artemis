@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -116,23 +115,6 @@ public class ProgrammingExerciseImportFromFileService {
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkRepositoriesExist(importExerciseDir);
-
-            if (isImportFromSharing) {
-                // ACL
-                ObjectMapper mapper = new ObjectMapper();
-                var exerciseJsonPath = retrieveExerciseJsonPath(importExerciseDir);
-
-                Map<String, Object> json = mapper.readValue(exerciseJsonPath.toFile(), Map.class);
-
-                if (json.get("type").toString().contains("programming")) {
-                    json.put("type", "programming");
-                }
-
-                // Write back into the file
-                try (FileWriter file = new FileWriter(exerciseJsonPath.toFile())) {
-                    file.write(json.toString());
-                }
-            }
 
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
