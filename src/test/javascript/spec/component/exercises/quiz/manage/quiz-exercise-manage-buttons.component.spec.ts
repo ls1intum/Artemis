@@ -11,6 +11,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -35,6 +36,8 @@ describe('QuizExercise Management Buttons Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(QuizExerciseService),
+                MockProvider(ExerciseService),
             ],
         })
             .overrideTemplate(QuizExerciseManageButtonsComponent, '')
