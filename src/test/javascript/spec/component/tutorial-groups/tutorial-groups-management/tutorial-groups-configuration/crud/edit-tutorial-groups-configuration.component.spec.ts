@@ -16,6 +16,8 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ArtemisDatePipe } from '../../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
@@ -44,6 +46,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
                     { course },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(EditTutorialGroupsConfigurationComponent);
