@@ -11,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import { of } from 'rxjs';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Submission Export Dialog Component', () => {
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
@@ -32,11 +33,12 @@ describe('Submission Export Dialog Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [
                 { provide: SubmissionExportService, useValue: MockProvider(SubmissionExportService) },
                 { provide: ExerciseService, useClass: MockExerciseService },
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
             ],
         })
             .compileComponents()
