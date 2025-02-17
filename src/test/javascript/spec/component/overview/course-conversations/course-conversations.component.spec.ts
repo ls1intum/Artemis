@@ -12,7 +12,7 @@ import { ConversationMessagesComponent } from 'app/overview/course-conversations
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -42,7 +42,8 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
-import { ElementRef, signal } from '@angular/core';
+import { ElementRef, runInInjectionContext, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -84,6 +85,9 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
+        const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
+        MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -269,9 +273,23 @@ examples.forEach((activeConversation) => {
         });
 
         it('should update thread in post', fakeAsync(() => {
+            // Ensure the thread is rendered
+            component.postInThread = { id: 1, conversation: { id: 1 } } as Post;
             fixture.detectChanges();
+
+            // Get the sidebar component instance
+            const sidebarDebugEl = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
+            if (sidebarDebugEl) {
+                const sidebarComponent = sidebarDebugEl.componentInstance as ConversationThreadSidebarComponent;
+                // Override the threadContainer signal manually
+                // (Using bracket notation to bypass read-only restrictions)
+                sidebarComponent['threadContainer'] = signal(new ElementRef(document.createElement('div')));
+            }
+
+            // Now update the post content
             component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
             fixture.detectChanges();
+
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
             tick();

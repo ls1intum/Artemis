@@ -22,7 +22,7 @@ import { NgClass } from '@angular/common';
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
-    threadContainer = viewChild<ElementRef<HTMLDivElement>>('threadContainer');
+    threadContainer = viewChild<ElementRef>('threadContainer');
 
     @Input()
     readOnlyMode = false;
