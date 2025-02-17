@@ -11,6 +11,8 @@ import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { CourseGroupComponent } from '../../../../../main/webapp/app/shared/course-group/course-group.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('Course Group Membership Component', () => {
     let comp: CourseGroupMembershipComponent;
@@ -26,9 +28,13 @@ describe('Course Group Membership Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CourseGroupMembershipComponent, MockComponent(CourseGroupComponent), MockDirective(TranslateDirective)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(CourseManagementService), MockProvider(UserService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                MockProvider(CourseManagementService),
+                MockProvider(UserService),
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {
