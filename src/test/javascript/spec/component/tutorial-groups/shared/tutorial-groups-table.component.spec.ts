@@ -17,6 +17,9 @@ import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detect
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -62,7 +65,6 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -78,7 +80,7 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(SortService)],
+            providers: [MockProvider(SortService), { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         })
             .compileComponents()
             .then(() => {
