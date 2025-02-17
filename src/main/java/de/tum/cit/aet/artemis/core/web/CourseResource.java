@@ -795,12 +795,8 @@ public class CourseResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
-        Optional<Course> courseOptional = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId);
-        if (courseOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Course course = courseOptional.get();
-        return ResponseEntity.ok(course);
+        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
