@@ -11,6 +11,8 @@ import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-a
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
@@ -36,6 +38,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(VcsAccessTokensSettingsComponent);
