@@ -19,12 +19,12 @@
 @if (exercise) {
     <div class="h-100">
         <div class="d-flex align-items-center justify-content-end mb-1">
-            @if (!!selectedParticipation && selectedRepository !== REPOSITORY.TEST) {
+            @if (!!selectedParticipation && selectedRepository !== RepositoryType.TESTS) {
                 <jhi-updating-result
                     [exercise]="exercise"
                     [participation]="selectedParticipation!"
                     [showUngradedResults]="true"
-                    [showBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                    [showBadge]="selectedRepository === RepositoryType.ASSIGNMENT"
                     [personalParticipation]="false"
                     class="me-2"
                 />
@@ -44,7 +44,7 @@
                         [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                         (click)="selectTemplateParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? '#3e8acc' : 'transparent'"
                     >
                         <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                     </button>
@@ -52,7 +52,7 @@
                         [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                     >
                         <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
@@ -61,16 +61,16 @@
                         [disabled]="!exercise"
                         (click)="selectTestRepository()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.TESTS ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
                 </div>
             </div>
-            @if (selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedRepository !== RepositoryType.TESTS) {
                 <jhi-programming-exercise-student-trigger-build-button class="me-3" [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
             }
             <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()" />
-            @if (selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedRepository !== RepositoryType.TESTS) {
                 <jhi-ide-button
                     class="ms-1"
                     [buttonLoading]="orionState.building"

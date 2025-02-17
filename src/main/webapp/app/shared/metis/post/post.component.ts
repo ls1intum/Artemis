@@ -3,17 +3,15 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
     HostListener,
-    Input,
     OnChanges,
     OnInit,
-    Output,
     Renderer2,
-    ViewChild,
-    ViewContainerRef,
     inject,
     input,
+    model,
+    output,
+    viewChild,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
@@ -26,10 +24,7 @@ import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,6 +36,7 @@ import { MessageInlineInputComponent } from '../message/message-inline-input/mes
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-post',
@@ -79,22 +75,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() readOnlyMode: boolean;
-    @Input() previewMode: boolean;
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
-    @Input() modalRef?: NgbModalRef;
-    @Input() showAnswers: boolean;
+    modalRef = input<NgbModalRef | undefined>(undefined);
+    showAnswers = model<boolean>(false);
 
-    @Output() openThread = new EventEmitter<void>();
+    openThread = output<void>();
 
-    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
-    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
-    @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
-    @ViewChild(PostingReactionsBarComponent) protected reactionsBarComponent!: PostingReactionsBarComponent<Post>;
+    postFooterComponent = viewChild<PostingFooterComponent>('postFooter');
+    reactionsBarComponent = viewChild.required<PostingReactionsBarComponent<Post>>(PostingReactionsBarComponent);
 
     static activeDropdownPost: PostComponent | undefined = undefined;
 
@@ -128,7 +120,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     dropdownPosition = { x: 0, y: 0 };
 
     get reactionsBar() {
-        return this.reactionsBarComponent;
+        return this.reactionsBarComponent();
     }
 
     isPinned(): boolean {
@@ -240,7 +232,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
-            this.modalRef?.dismiss();
+            this.modalRef()?.dismiss();
             this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
         }
     }
@@ -249,14 +241,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
-        this.postFooterComponent.openCreateAnswerPostModal();
+        this.postFooterComponent()?.openCreateAnswerPostModal();
     }
 
     /**
      * Close create answer modal
      */
     closeCreateAnswerPostModal() {
-        this.postFooterComponent.closeCreateAnswerPostModal();
+        this.postFooterComponent()?.closeCreateAnswerPostModal();
     }
 
     /**

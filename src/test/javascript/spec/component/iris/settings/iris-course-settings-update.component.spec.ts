@@ -62,7 +62,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(6);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(7);
     });
 
     it('Can deactivate correctly', () => {

@@ -88,7 +88,9 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.templateParticipation!.repositoryUri! }}" target="_blank">Template</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TEMPLATE')"><fa-icon [icon]="faDownload" /> Template</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE)"
+                                                ><fa-icon [icon]="faDownload" /> Template</a
+                                            >
                                         }
                                     </span>
                                 }
@@ -106,7 +108,9 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.solutionParticipation!.repositoryUri! }}" target="_blank">Solution</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'SOLUTION')"><fa-icon [icon]="faDownload" /> Solution</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.SOLUTION)"
+                                                ><fa-icon [icon]="faDownload" /> Solution</a
+                                            >
                                         }
                                     </span>
                                 }
@@ -124,7 +128,7 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TESTS')"><fa-icon [icon]="faDownload" /> Test</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TESTS)"><fa-icon [icon]="faDownload" /> Test</a>
                                         }
                                     </span>
                                 }
@@ -227,6 +231,7 @@
                                                 'programming-exercises',
                                                 programmingExercise.id,
                                                 'code-editor',
+                                                RepositoryType.TEMPLATE,
                                                 programmingExercise.templateParticipation.id,
                                             ]"
                                             class="btn btn-warning btn-sm me-1 mb-1"

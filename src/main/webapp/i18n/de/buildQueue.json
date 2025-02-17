@@ -34,11 +34,15 @@
                     "cancelled": "Abgebrochen",
                     "failed": "Fehlgeschlagen",
                     "error": "Fehler",
-                    "successful": "Erfolgreich"
+                    "successful": "Erfolgreich",
+                    "queued": "In Warteschlange",
+                    "missing": "Fehlend",
+                    "building": "In Bearbeitung",
+                    "timeout": "Zeitüberschreitung"
                 },
                 "buildAgentAddress": "Build Agent Adresse",
-                "buildStartDate": {
-                    "title": "Build Startdatum",
+                "buildSubmissionDate": {
+                    "title": "Build Abgabedatum",
                     "from": "Von",
                     "to": "Bis",
                     "invalidDate": "Von-Datum muss vor dem Bis-Datum liegen"
@@ -71,6 +75,10 @@
                 "failedBuildsPercentage": "Fehlgeschlagene Builds %:",
                 "cancelledBuilds": "Abgebrochene Builds:",
                 "cancelledBuildsPercentage": "Abgebrochene Builds %:",
+                "missingBuilds": "Fehlende Builds:",
+                "missingBuildsPercentage": "Fehlende Builds %:",
+                "timeoutBuilds": "Zeitüberschreitende Builds:",
+                "timeoutBuildsPercentage": "Zeitüberschreitende Builds %:",
                 "daySpan": "1 Tag",
                 "weekSpan": "7 Tage",
                 "monthSpan": "30 Tage"
@@ -79,7 +87,8 @@
                 "title": "Build Logs für Job",
                 "download": "Herunterladen",
                 "noLogs": "Keine Logs verfügbar",
-                "errorFetchingLogs": "Fehler beim Abrufen von Build-Log-Einträgen für Build-Job"
+                "errorFetchingLogs": "Fehler beim Abrufen von Build-Log-Einträgen für Build-Job",
+                "downloadError": "Fehler beim Herunterladen von Build-Log des Build-Jobs"
             }
         }
     }
