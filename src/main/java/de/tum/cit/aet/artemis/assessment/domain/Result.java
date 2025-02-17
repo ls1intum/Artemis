@@ -713,6 +713,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @return True if the result is automatic, or if it is manual and an assessment has been submitted, false otherwise.
      */
+    @JsonIgnore
     public boolean isAssessmentComplete() {
         return completionDate != null && (isManual() || isAutomatic() || isAthenaBased());
     }

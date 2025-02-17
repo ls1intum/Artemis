@@ -41,6 +41,9 @@ public class ParticipationFilterService {
      */
     public Set<StudentParticipation> findStudentParticipationsInExercise(Set<StudentParticipation> participationsAcrossAllExercises, Exercise exercise) {
         // only consider participations in the given exercise
+        if (participationsAcrossAllExercises == null || participationsAcrossAllExercises.isEmpty()) {
+            return Set.of();
+        }
         var participationsInExercise = participationsAcrossAllExercises.stream().filter(p -> p.getExercise() != null && p.getExercise().equals(exercise))
                 .collect(Collectors.toSet());
 
@@ -94,29 +97,11 @@ public class ParticipationFilterService {
         participation.setExercise(null);
     }
 
-    /*
-     * optionalSubmission.ifPresentOrElse(submission -> {
-     * participation.setSubmissions(Set.of(submission));
-     * Result latestResult = submission.getLatestResult();
-     * if (latestResult == null) {
-     * return;
-     * }
-     * latestResult.setParticipation(null);
-     * if (isStudent) {
-     * latestResult.filterSensitiveInformation();
-     * }
-     * participation.setResults(Set.of(latestResult));
-     * submission.setResults(List.of(latestResult));
-     * }, () -> participation.setSubmissions(null));
-     * participation.setExercise(null);
-     */
-
     private Set<StudentParticipation> findStudentParticipationsForProgrammingExercises(Set<StudentParticipation> participations) {
         var gradedParticipations = participations.stream().filter(p -> !p.isPracticeMode()).collect(Collectors.toSet());
         if (gradedParticipations.size() > 1) {
             throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming exercises");
         }
-
         var practiceParticipations = participations.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
         if (practiceParticipations.size() > 1) {
             throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming exercises");
