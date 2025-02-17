@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningPathService {
 
