@@ -3,6 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('ArtemisTimeAgoPipe', () => {
     let pipe: ArtemisTimeAgoPipe;
@@ -11,8 +12,7 @@ describe('ArtemisTimeAgoPipe', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [ArtemisTimeAgoPipe, { provide: ChangeDetectorRef, useValue: cdRef }],
+            providers: [ArtemisTimeAgoPipe, { provide: ChangeDetectorRef, useValue: cdRef }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');

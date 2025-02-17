@@ -6,6 +6,7 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('Test case distribution chart', () => {
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -67,8 +68,7 @@ describe('Test case distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [MockProvider(ArtemisNavigationUtilService)],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
