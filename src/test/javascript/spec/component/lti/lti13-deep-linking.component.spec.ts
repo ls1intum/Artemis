@@ -77,13 +77,13 @@ describe('Lti13DeepLinkingComponent', () => {
     it('should retrieve course details and exercises on init when user is authenticated', fakeAsync(() => {
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
         accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUserUser));
-        courseManagementServiceMock.findWithExercises.mockReturnValue(of(new HttpResponse({ body: course })));
+        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
         tick(1000);
 
         expect(accountServiceMock.identity).toHaveBeenCalled();
-        expect(courseManagementServiceMock.findWithExercises).toHaveBeenCalledWith(course.id);
+        expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(course.id);
         expect(component.courseId).toBe(123);
         expect(component.course).toEqual(course);
         expect(component.exercises).toContainAllValues(course.exercises!);
@@ -125,7 +125,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         expect(component.isLinking).toBeFalse();
         expect(accountServiceMock.identity).not.toHaveBeenCalled();
-        expect(courseManagementServiceMock.findWithExercises).not.toHaveBeenCalled();
+        expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).not.toHaveBeenCalled();
         expect(component.courseId).toBeNaN();
     }));
 
