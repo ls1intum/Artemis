@@ -114,13 +114,13 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set hasUserAcceptedExternalLLMUsage to false if user has not accepted the policy', () => {
+    it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
         accountMock.userIdentity.externalLLMUsageAccepted = undefined;
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
 
-    it('should set hasUserAcceptedExternalLLMUsage to true if user has accepted the policy', () => {
+    it('should set userAccepted to true if user has accepted the external LLM usage policy', () => {
         component.ngOnInit();
         expect(component.userAccepted).toBeTrue();
     });
