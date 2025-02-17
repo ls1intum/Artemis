@@ -715,7 +715,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      */
     @JsonIgnore
     public boolean isAssessmentComplete() {
-        return completionDate != null && (isManual() || isAutomatic() || isAthenaBased());
+        return completionDate != null;
     }
 
     @Override

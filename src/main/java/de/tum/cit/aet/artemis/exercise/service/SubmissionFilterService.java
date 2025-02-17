@@ -131,7 +131,7 @@ public class SubmissionFilterService {
             if (result == null) {
                 return false;
             }
-            return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null;
+            return Boolean.TRUE.equals(result.isRated()) && result.isAssessmentComplete();
         }
     }
 }
