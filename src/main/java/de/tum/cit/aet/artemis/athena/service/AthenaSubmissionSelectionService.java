@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -15,8 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * The default choice if Athena does not respond is to choose a random submission.
  */
 @Service
-@ConditionalOnBean(AthenaConfiguration.class)
+@Conditional(AthenaEnabled.class)
 public class AthenaSubmissionSelectionService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);

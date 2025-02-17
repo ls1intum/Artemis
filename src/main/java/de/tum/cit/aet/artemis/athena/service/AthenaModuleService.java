@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Service to get the URL for an Athena module, depending on the type of exercise.
  */
 @Service
-@ConditionalOnBean(AthenaConfiguration.class)
+@Conditional(AthenaEnabled.class)
 public class AthenaModuleService {
 
     @Value("${artemis.athena.url}")

@@ -8,7 +8,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,9 +17,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.athena.config.AthenaConfiguration;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
+import de.tum.cit.aet.artemis.core.config.conditions.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
  * so that Athena can later give feedback suggestions on new submissions.
  */
 @Service
-@ConditionalOnBean(AthenaConfiguration.class)
+@Conditional(AthenaEnabled.class)
 public class AthenaSubmissionSendingService {
 
     private static final int SUBMISSIONS_PER_REQUEST = 100;
