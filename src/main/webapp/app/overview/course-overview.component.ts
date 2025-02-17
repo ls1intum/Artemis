@@ -69,6 +69,7 @@ import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
 import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -162,6 +163,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     communicationRouteLoaded: boolean;
+    atlasEnabled = false;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
@@ -254,6 +256,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -382,7 +385,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem: SidebarItem = this.getCompetenciesItems();
             sidebarItems.push(competenciesItem);
             if (this.course?.learningPathsEnabled) {

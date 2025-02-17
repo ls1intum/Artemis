@@ -298,8 +298,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         LinkedMultiValueMap<String, String> searchParams = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
         searchParams.add("buildStatus", "FAILED");
-        searchParams.add("startDate", jobTimingInfo.buildStartDate().minusSeconds(10).toString());
-        searchParams.add("endDate", jobTimingInfo.buildCompletionDate().plusSeconds(10).toString());
+        searchParams.add("startDate", jobTimingInfo.submissionDate().minusSeconds(10).toString());
+        searchParams.add("endDate", jobTimingInfo.submissionDate().plusSeconds(10).toString());
         searchParams.add("searchTerm", "short");
         searchParams.add("buildDurationLower", "120");
         searchParams.add("buildDurationUpper", "600");
