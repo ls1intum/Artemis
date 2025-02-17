@@ -630,7 +630,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[0], false);
 
         var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
-        verifyNavigationResult(result, textUnit, secondTextUnit, thirdTextUnit);
+        verifyNavigationResult(result, List.of(textUnit), List.of(secondTextUnit, thirdTextUnit), List.of(secondTextUnit, thirdTextUnit));
     }
 
     @Test
@@ -678,6 +678,24 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
             assertThat(actualObject).isNotNull();
             assertThat(actualObject.type()).isEqualTo(getLearningObjectType(expectedObject));
             assertThat(actualObject.id()).isEqualTo(expectedObject.getId());
+        }
+    }
+
+    private void verifyNavigationResult(LearningPathNavigationDTO result, List<LearningObject> expectedPredecessors, List<LearningObject> expectedCurrents,
+            List<LearningObject> expectedSuccessors) {
+        verifyNavigationObjectResult(expectedPredecessors, result.predecessorLearningObject());
+        verifyNavigationObjectResult(expectedCurrents, result.currentLearningObject());
+        verifyNavigationObjectResult(expectedSuccessors, result.successorLearningObject());
+    }
+
+    private void verifyNavigationObjectResult(List<LearningObject> expectedObjects, LearningPathNavigationObjectDTO actualObject) {
+        if (expectedObjects.isEmpty()) {
+            assertThat(actualObject).isNull();
+        }
+        else {
+            assertThat(actualObject).isNotNull();
+            assertThat(expectedObjects).anyMatch(expectedObject -> actualObject.type() == getLearningObjectType(expectedObject));
+            assertThat(expectedObjects).anyMatch(expectedObject -> actualObject.id() == expectedObject.getId());
         }
     }
 
