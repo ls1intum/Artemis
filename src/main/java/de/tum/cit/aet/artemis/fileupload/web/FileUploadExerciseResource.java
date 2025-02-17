@@ -107,14 +107,14 @@ public class FileUploadExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyProgressApi competencyProgressApi) {
+            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -160,7 +160,7 @@ public class FileUploadExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
-        competencyProgressApi.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -287,7 +287,7 @@ public class FileUploadExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise)));
 
         return ResponseEntity.ok(updatedExercise);
     }

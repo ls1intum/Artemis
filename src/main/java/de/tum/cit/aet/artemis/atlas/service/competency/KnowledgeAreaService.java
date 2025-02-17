@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 /**
  * Service for managing {@link KnowledgeArea} entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class KnowledgeAreaService {
 
