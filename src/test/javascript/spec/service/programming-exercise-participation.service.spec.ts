@@ -7,6 +7,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
@@ -20,8 +21,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         })
             .compileComponents()
             .then(() => {
