@@ -48,11 +48,14 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
                     if (commits) {
                         this.commits = commits;
                     }
+                    this.setCommitDetails();
+                    this.groupCommits();
                 });
             }
+        } else {
+            this.setCommitDetails();
+            this.groupCommits();
         }
-        this.setCommitDetails();
-        this.groupCommits();
     }
 
     ngOnDestroy(): void {
