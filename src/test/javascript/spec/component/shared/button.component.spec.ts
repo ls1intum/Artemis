@@ -5,10 +5,12 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ButtonComponent', () => {
     let comp: ButtonComponent;
@@ -19,9 +21,12 @@ describe('ButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
-            providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
+            providers: [
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
