@@ -747,6 +747,10 @@ describe('GuidedTourService', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: Router, useClass: MockRouterWithEvents },
+                    { provide: AccountService, useClass: MockAccountService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             })
                 .compileComponents()
