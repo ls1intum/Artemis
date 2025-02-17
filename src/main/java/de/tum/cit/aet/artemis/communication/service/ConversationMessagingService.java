@@ -420,6 +420,9 @@ public class ConversationMessagingService extends PostingService {
     }
 
     public List<Post> getMessageByIds(List<Long> sourcePostIds) {
+        if (sourcePostIds == null || sourcePostIds.isEmpty()) {
+            throw new BadRequestAlertException("Source post IDs cannot be null or empty", METIS_POST_ENTITY_NAME, "sourcepostidsinvalid");
+        }
         return postRepository.findByIdIn(sourcePostIds);
     }
 

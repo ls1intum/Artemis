@@ -705,7 +705,6 @@ examples.forEach((activeConversation) => {
 
             it('should do nothing if post.id is undefined', () => {
                 const post = {} as Posting;
-                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
                 component.onTriggerNavigateToPost(post);
 
@@ -741,7 +740,6 @@ examples.forEach((activeConversation) => {
                     id: 1,
                     conversation: { id: 999 },
                 } as Posting;
-                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
                 component.onTriggerNavigateToPost(post);
 
@@ -753,7 +751,6 @@ examples.forEach((activeConversation) => {
                     id: undefined,
                     conversation: {},
                 } as Posting;
-                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
                 component.onTriggerNavigateToPost(post);
 
@@ -769,7 +766,6 @@ examples.forEach((activeConversation) => {
                         id: 444,
                     },
                 } as Posting;
-                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
                 component.onTriggerNavigateToPost(post);
 

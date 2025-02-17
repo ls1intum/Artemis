@@ -223,6 +223,10 @@ public class ConversationMessageResource {
             throw new BadRequestAlertException("Post IDs cannot be null or empty", conversationMessagingService.getEntityName(), "invalidPostIds");
         }
 
+        if (postIds.stream().anyMatch(id -> id <= 0)) {
+            throw new BadRequestAlertException("Invalid post ID found", conversationMessagingService.getEntityName(), "invalidPostId");
+        }
+
         List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
 
         if (posts.isEmpty()) {

@@ -223,21 +223,25 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     fetchForwardedMessages(): void {
-        if (this.forwardedPosts().length > 0) {
-            const forwardedMessage = this.forwardedPosts()[0];
+        try {
+            if (this.forwardedPosts().length > 0) {
+                const forwardedMessage = this.forwardedPosts()[0];
 
-            if (forwardedMessage) {
-                this.originalPostDetails = forwardedMessage;
-                this.changeDetector.markForCheck();
+                if (forwardedMessage?.id) {
+                    this.originalPostDetails = forwardedMessage;
+                    this.changeDetector.markForCheck();
+                }
             }
-        }
-        if (this.forwardedAnswerPosts().length > 0) {
-            const forwardedMessage = this.forwardedAnswerPosts()[0];
+            if (this.forwardedAnswerPosts().length > 0) {
+                const forwardedMessage = this.forwardedAnswerPosts()[0];
 
-            if (forwardedMessage) {
-                this.originalPostDetails = forwardedMessage;
-                this.changeDetector.markForCheck();
+                if (forwardedMessage?.id) {
+                    this.originalPostDetails = forwardedMessage;
+                    this.changeDetector.markForCheck();
+                }
             }
+        } catch (error) {
+            throw new Error(error.toString());
         }
     }
 

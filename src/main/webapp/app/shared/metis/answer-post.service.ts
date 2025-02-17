@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { map } from 'rxjs/operators';
-import { Post } from 'app/entities/metis/post.model';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 
@@ -62,7 +61,9 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      */
     getSourceAnswerPostsByIds(courseId: number, answerPostIds: number[]): Observable<AnswerPost[]> {
         const params = new HttpParams().set('answerPostIds', answerPostIds.join(','));
-        return this.http.get<Post[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+        return this.http
+            .get<AnswerPost[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, { params, observe: 'response' })
+            .pipe(map((response) => response.body!));
     }
 
     private static getResourceEndpoint(param: AnswerPost): string {
