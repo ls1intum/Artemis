@@ -1,11 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from '../../helpers/stubs/unreferenced-feedback-detail-stub.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 describe('UnreferencedFeedbackComponent', () => {
     let comp: UnreferencedFeedbackComponent;
@@ -14,8 +17,8 @@ describe('UnreferencedFeedbackComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [UnreferencedFeedbackComponent, UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(FeedbackService)],
         })
             .compileComponents()
             .then(() => {
