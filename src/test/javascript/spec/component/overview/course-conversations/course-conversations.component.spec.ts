@@ -42,7 +42,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
-import { ElementRef, runInInjectionContext, signal } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 const examples: (ConversationDTO | undefined)[] = [
