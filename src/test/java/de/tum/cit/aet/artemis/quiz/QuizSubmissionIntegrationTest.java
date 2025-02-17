@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -419,7 +418,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmitPractice_badRequest_exam() throws Exception {
+    void testQuizSubmitPractice_accessForbidden_exam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
@@ -428,8 +427,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
+        Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.FORBIDDEN);
         assertThat(result).isNull();
         verifyNoWebsocketMessageForExercise(quizExerciseServer);
     }
@@ -548,7 +546,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = courseUtilService.createCourse();
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
-        var initialReleaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
+        var initialReleaseDate = ZonedDateTime.now().plusSeconds(2);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(initialReleaseDate));
         quizExercise.duration(60);

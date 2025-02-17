@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -6,23 +6,22 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { ButtonType } from 'app/shared/components/button.component';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -49,15 +48,34 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        ButtonComponent,
+        DocumentationButtonComponent,
+        CourseDescriptionFormComponent,
+        TranslateDirective,
+        CompetencyRecommendationDetailComponent,
+    ],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+    private courseManagementService = inject(CourseManagementService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private competencyService = inject(CompetencyService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+    private modalService = inject(NgbModal);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private websocketService = inject(WebsocketService);
+
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
     courseId: number;
     isLoading = false;
-    submitted: boolean = false;
+    submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
     //Icons
@@ -68,20 +86,6 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     //Other constants
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private courseCompetencyService: CourseCompetencyService,
-        private competencyService: CompetencyService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-        private modalService: NgbModal,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private translateService: TranslateService,
-        private jhiWebsocketService: JhiWebsocketService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -102,8 +106,8 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-                    this.jhiWebsocketService.subscribe(websocketTopic);
-                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                    this.websocketService.subscribe(websocketTopic);
+                    this.websocketService.receive(websocketTopic).subscribe({
                         next: (update: CompetencyGenerationStatusUpdate) => {
                             if (update.result) {
                                 for (const competency of update.result) {
@@ -116,13 +120,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
                             if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
-                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                this.websocketService.unsubscribe(websocketTopic);
                                 this.isLoading = false;
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
-                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            this.websocketService.unsubscribe(websocketTopic);
                             this.isLoading = false;
                         },
                     });
@@ -248,5 +252,19 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
     }
 }

@@ -204,7 +204,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND submission.participation.exercise.course.id = :courseId
-                """)
+            """)
     List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
@@ -330,7 +330,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Should be used for exam dashboard to ignore test run submissions
      *
      * @param exerciseIds the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     * @return a DTO with the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or
+     *         no
      *         exercise due date at all
      */
     @Query("""
@@ -442,25 +443,14 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
+        Submission submission = switch (exercise) {
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            case TextExercise ignored -> new TextSubmission();
+            case FileUploadExercise ignored -> new FileUploadSubmission();
+            case QuizExercise ignored -> new QuizSubmission();
+            case null, default -> throw new RuntimeException("Unsupported exercise type: " + exercise);
+        };
 
         submission.setType(submissionType);
         submission.setParticipation(participation);

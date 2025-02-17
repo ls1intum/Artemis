@@ -2,11 +2,15 @@ import { Component, effect, inject, input, output } from '@angular/core';
 import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PostingSummaryComponent } from '../posting-summary/posting-summary.component';
 
 @Component({
     selector: 'jhi-saved-posts',
     templateUrl: './saved-posts.component.html',
     styleUrls: ['./saved-posts.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
 export class SavedPostsComponent {
     readonly savedPostStatus = input<SavedPostStatus>();
@@ -19,7 +23,7 @@ export class SavedPostsComponent {
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
     protected savedPostStatusMap: SavedPostStatusMap = SavedPostStatusMap.PROGRESS;
-    protected isShowDeleteNotice: boolean = false;
+    protected isShowDeleteNotice = false;
 
     // Icons
     readonly faBookmark = faBookmark;

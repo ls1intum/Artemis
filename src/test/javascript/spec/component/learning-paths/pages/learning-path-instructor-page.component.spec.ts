@@ -108,6 +108,9 @@ describe('LearningPathInstructorPageComponent', () => {
     it('should enable learning paths', async () => {
         const enableLearningPathsSpy = jest.spyOn(learningPathApiService, 'enableLearningPaths').mockResolvedValue();
 
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         await clickEnableLearningPathsButton();
 
         expect(enableLearningPathsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
@@ -118,6 +121,9 @@ describe('LearningPathInstructorPageComponent', () => {
         const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
         jest.spyOn(learningPathApiService, 'enableLearningPaths').mockRejectedValue(new Error('Error'));
 
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         await clickEnableLearningPathsButton();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
@@ -125,6 +131,9 @@ describe('LearningPathInstructorPageComponent', () => {
 
     it('should set isLoading correctly on enable learning paths', async () => {
         const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         await clickEnableLearningPathsButton();
 

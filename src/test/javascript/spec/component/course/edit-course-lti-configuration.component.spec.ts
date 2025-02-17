@@ -17,13 +17,12 @@ import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import 'jest-extended';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
-    let ltiConfigService: { query: any };
 
     const router = new MockRouter();
 
@@ -54,7 +53,6 @@ describe('Edit Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
-                { provide: LtiConfigurationService, useValue: ltiConfigService },
             ],
         }).compileComponents();
 

@@ -1,15 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe],
 })
 export class HealthModalComponent {
-    health?: { key: HealthKey; value: HealthDetails };
+    private activeModal = inject(NgbActiveModal);
 
-    constructor(private activeModal: NgbActiveModal) {}
+    health?: { key: HealthKey; value: HealthDetails };
 
     readableValue(value: any): string {
         if (this.health?.key === 'diskSpace') {

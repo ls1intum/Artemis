@@ -1,27 +1,37 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/git-diff-report/git-diff-report-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
     templateUrl: './programming-exercise-exam-diff.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
+    imports: [IncludedInScoreBadgeComponent, CommitsInfoComponent, TranslateDirective, GitDiffLineStatComponent, NgbTooltip, ButtonComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit, OnDestroy {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modalService = inject(NgbModal);
+    private cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
+
     @Input() exercise: ProgrammingExercise;
     @Input() previousSubmission: ProgrammingSubmission | undefined;
     @Input() currentSubmission: ProgrammingSubmission;
@@ -30,6 +40,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     @Input() cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
     @Output() cachedDiffReportsChange = new EventEmitter<Map<string, ProgrammingExerciseGitDiffReport>>();
     @Input() exerciseIdSubject: Subject<number> = new Subject<number>();
+
     isLoadingDiffReport: boolean;
     addedLineCount: number;
     removedLineCount: number;
@@ -41,15 +52,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     readonly ButtonSize = ButtonSize;
     readonly faCodeCompare = faCodeCompare;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-
-    constructor(
-        protected changeDetectorReference: ChangeDetectorRef,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modalService: NgbModal,
-        private cachedRepositoryFilesService: CachedRepositoryFilesService,
-    ) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit() {
         // we subscribe to the exercise id because this allows us to avoid reloading the diff report every time the user switches between submission timestamps
@@ -130,14 +132,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
             this.cachedRepositoryFiles = cachedRepositoryFiles;
         });
-    }
-
-    getSubmission(): Submission | undefined {
-        return this.currentSubmission;
-    }
-
-    getExercise(): Exercise {
-        return this.exercise;
     }
 
     private calculateMapKey() {

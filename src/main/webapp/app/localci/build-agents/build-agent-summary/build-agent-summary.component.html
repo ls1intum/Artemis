@@ -13,9 +13,13 @@
                     <fa-icon [icon]="faPlay" />
                     <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
                 </button>
-                <button class="btn btn-danger" (click)="displayPauseBuildAgentModal(content)">
+                <button class="btn btn-danger" (click)="displayPauseBuildAgentModal()">
                     <fa-icon [icon]="faPause" />
                     <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+                </button>
+                <button class="btn btn-danger" (click)="displayClearDistributedDataModal()">
+                    <fa-icon [icon]="faTrash" />
+                    <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
                 </button>
             </div>
         </div>
@@ -128,28 +132,3 @@
         </jhi-data-table>
     }
 </div>
-
-<!-- Modal -->
-<ng-template #content let-modal>
-    <div class="modal-header">
-        <h5 class="modal-title">
-            <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-        </h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
-    </div>
-    <div class="modal-body">
-        <div>
-            <span jhiTranslate="artemisApp.buildAgents.pauseAllWarning"></span>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.close()">
-            <fa-icon [icon]="faTimes" />
-            <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
-        </button>
-        <button type="button" class="btn btn-danger" (click)="pauseAllBuildAgents(modal)">
-            <fa-icon [icon]="faPause" />
-            <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-        </button>
-    </div>
-</ng-template>

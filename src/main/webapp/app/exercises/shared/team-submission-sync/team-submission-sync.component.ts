@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { throttleTime } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,6 +17,10 @@ import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/entities/s
     template: '',
 })
 export class TeamSubmissionSyncComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private teamSubmissionWebsocketService = inject(WebsocketService);
+    private alertService = inject(AlertService);
+
     // Sync settings
     readonly THROTTLE_TIME = 2000; // ms
 
@@ -31,11 +35,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     currentUser: User;
     websocketTopic: string;
 
-    constructor(
-        private accountService: AccountService,
-        private teamSubmissionWebsocketService: JhiWebsocketService,
-        private alertService: AlertService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 
@@ -76,14 +76,14 @@ export class TeamSubmissionSyncComponent implements OnInit {
                     submission.participation.exercise = undefined;
                     submission.participation.submissions = [];
                 }
-                this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), submission);
+                this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
             },
             error: (error) => this.onError(error),
         });
 
         this.submissionPatchObservable?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
-                this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/patch'), submissionPatch);
+                this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), submissionPatch);
             },
             error: (error) => this.onError(error),
         });

@@ -4,10 +4,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgModel } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -34,7 +30,6 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseInstructorTriggerBuildButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

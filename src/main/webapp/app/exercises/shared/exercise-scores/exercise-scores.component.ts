@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -24,9 +24,28 @@ import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { ExerciseScoresExportButtonComponent } from './exercise-scores-export-button.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from '../../programming/assess/repo-export/programming-assessment-repo-export-button.component';
+import { SubmissionExportButtonComponent } from '../submission-export/submission-export-button.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ResultComponent } from '../result/result.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons.component';
+import { DecimalPipe, KeyValuePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Filter properties for a result
@@ -46,13 +65,50 @@ export enum FilterProp {
     templateUrl: './exercise-scores.component.html',
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        FaIconComponent,
+        NgbDropdownMenu,
+        FormsModule,
+        RouterLink,
+        ExternalSubmissionButtonComponent,
+        ExerciseActionButtonComponent,
+        NgbPopover,
+        ExerciseScoresExportButtonComponent,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        SubmissionExportButtonComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        ResultComponent,
+        NgbTooltip,
+        CodeButtonComponent,
+        FeatureToggleLinkDirective,
+        ManageAssessmentButtonsComponent,
+        DecimalPipe,
+        KeyValuePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private resultService = inject(ResultService);
+    private profileService = inject(ProfileService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private participationService = inject(ParticipationService);
+
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
     readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
+
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
         new Range(0, 10),
@@ -98,16 +154,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     farFileCode = faFileCode;
     faFilter = faFilter;
     faComment = faComment;
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private resultService: ResultService,
-        private profileService: ProfileService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private participationService: ParticipationService,
-    ) {}
 
     /**
      * Fetches the course and exercise from the server

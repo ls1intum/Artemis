@@ -109,7 +109,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [ProgrammingExerciseDetailComponent],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),

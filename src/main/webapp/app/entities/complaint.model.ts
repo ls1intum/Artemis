@@ -21,6 +21,4 @@ export class Complaint implements BaseEntity {
     public team?: Team;
     public complaintType?: ComplaintType;
     public complaintResponse?: ComplaintResponse;
-
-    constructor() {}
 }

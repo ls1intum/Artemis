@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
+import { AppComponent } from '../../../../../main/webapp/app/app.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,13 +22,13 @@ class MockThemeService {
 }
 
 describe('JhiMainComponent', () => {
-    let fixture: ComponentFixture<JhiMainComponent>;
-    let comp: JhiMainComponent;
+    let fixture: ComponentFixture<AppComponent>;
+    let comp: AppComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, RouterModule.forRoot([])],
-            declarations: [JhiMainComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
+            declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -38,7 +38,7 @@ describe('JhiMainComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(JhiMainComponent);
+                fixture = TestBed.createComponent(AppComponent);
                 comp = fixture.componentInstance;
                 fixture.detectChanges();
             });

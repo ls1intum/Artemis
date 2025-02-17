@@ -42,7 +42,6 @@ describe('AuditsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [AuditsComponent],
             providers: [
                 {
                     provide: ActivatedRoute,

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -10,6 +10,14 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -18,20 +26,28 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     styleUrls: ['./modeling-exam-submission.component.scss'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FullscreenComponent,
+        ModelingEditorComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;
 
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
+    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: ModelingSubmission;
+    @Input() studentSubmission: ModelingSubmission;
     problemStatementHtml: string;
 
-    @Input()
-    exercise: ModelingExercise;
+    @Input() exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon+
 
     // explicitly needed to track if submission.isSynced is changed, otherwise component
@@ -45,10 +61,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // Icons
     protected readonly faListAlt = faListAlt;
-
-    constructor(changeDetectorReference: ChangeDetectorRef) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit(): void {
         // show submission answers in UI
@@ -121,8 +133,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    modelChanged(model: UMLModel) {
+    modelChanged(_model: UMLModel) {
         this.studentSubmission.isSynced = false;
     }
 

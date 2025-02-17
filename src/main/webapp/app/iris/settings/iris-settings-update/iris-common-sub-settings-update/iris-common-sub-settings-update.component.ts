@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,12 +11,36 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
     templateUrl: './iris-common-sub-settings-update.component.html',
+    imports: [
+        TranslateDirective,
+        NgClass,
+        FormsModule,
+        FaIconComponent,
+        NgbTooltip,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        ArtemisTranslatePipe,
+    ],
 })
 export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
+    private irisSettingsService = inject(IrisSettingsService);
+    private courseManagementService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+
     @Input()
     subSettings?: IrisSubSettings;
 
@@ -68,13 +92,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         [IrisEventType.PROGRESS_STALLED]: 'artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.label',
     };
 
-    constructor(
-        accountService: AccountService,
-        private irisSettingsService: IrisSettingsService,
-        private courseManagementService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-    ) {
+    constructor() {
+        const accountService = inject(AccountService);
+
         this.isAdmin = accountService.isAdmin();
     }
 

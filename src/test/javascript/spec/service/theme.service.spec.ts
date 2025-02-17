@@ -57,6 +57,7 @@ describe('ThemeService', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        documentGetElementMock.mockRestore();
         windowMatchMediaSpy.mockRestore();
     });
 
@@ -149,10 +150,11 @@ describe('ThemeService', () => {
         const initialDisplayClass = 'someDisplayClass';
 
         const winSpy = jest.spyOn(window, 'print').mockImplementation();
-        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass } };
+        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: jest.fn() };
         const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
 
         service.print();
+        TestBed.flushEffects();
 
         expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);

@@ -7,14 +7,15 @@ import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Location } from '@angular/common';
+import { captureException } from '@sentry/angular';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server
  */
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
-    protected assessmentsService = inject(TextAssessmentService);
-    protected accountService = inject(AccountService);
+    private assessmentsService = inject(TextAssessmentService);
+    private accountService = inject(AccountService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
 
@@ -59,7 +60,7 @@ export class TextAssessmentAnalytics {
             this.eventToSend.setFeedbackType(feedbackType);
             this.eventToSend.setSegmentType(textBlockType);
             this.assessmentsService.addTextAssessmentEvent(this.eventToSend).subscribe({
-                error: (e) => console.error('Error sending statistics: ' + e.message),
+                error: (e) => captureException('Error sending statistics: ' + e.message),
             });
         }
     }

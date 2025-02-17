@@ -33,7 +33,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach

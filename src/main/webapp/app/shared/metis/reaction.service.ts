@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -9,15 +9,15 @@ type EntityResponseType = HttpResponse<Reaction>;
 
 @Injectable({ providedIn: 'root' })
 export class ReactionService {
-    public resourceUrl = 'api/courses/';
+    private http = inject(HttpClient);
 
-    constructor(protected http: HttpClient) {}
+    public resourceUrl = 'api/courses/';
 
     /**
      * creates a reaction
-     * @param {number} courseId
-     * @param {Reaction} reaction
-     * @return {Observable<EntityResponseType>}
+     * @param courseId
+     * @param reaction
+     * @return the create reaction
      */
     create(courseId: number, reaction: Reaction): Observable<EntityResponseType> {
         return this.http

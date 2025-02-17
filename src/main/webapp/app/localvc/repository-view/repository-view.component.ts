@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -13,17 +13,44 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
+    imports: [
+        CodeEditorContainerComponent,
+        TranslateDirective,
+        ButtonComponent,
+        ResultComponent,
+        RouterLink,
+        FaIconComponent,
+        CodeButtonComponent,
+        ProgrammingExerciseStudentRepoDownloadComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    domainService = inject(DomainService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private router = inject(Router);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -44,8 +71,9 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     routeCommitHistory: string;
     vcsAccessLogRoute: string;
     repositoryUri: string;
-    repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
+    repositoryType: RepositoryType;
     enableVcsAccessLog = false;
+    isInCourseManagement = false;
     allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;
@@ -55,16 +83,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
     differentParticipationSub: Subscription;
-
-    constructor(
-        private accountService: AccountService,
-        public domainService: DomainService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private router: Router,
-    ) {}
 
     /**
      * Unsubscribe from all subscriptions when the component is destroyed
@@ -90,14 +108,13 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
-            const participationId = Number(params['participationId']);
             const repositoryId = Number(params['repositoryId']);
-            this.repositoryType = participationId ? 'USER' : params['repositoryType'];
+            this.repositoryType = params['repositoryType'] ?? RepositoryType.USER;
             this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
-            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
-            if (this.repositoryType === 'USER') {
-                this.loadStudentParticipation(participationId);
-            } else if (this.repositoryType === 'AUXILIARY') {
+            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== RepositoryType.TESTS;
+            if (this.repositoryType === RepositoryType.USER) {
+                this.loadStudentParticipation(repositoryId);
+            } else if (this.repositoryType === RepositoryType.AUXILIARY) {
                 this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
@@ -115,21 +132,21 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * @param repositoryType The instructor repository type.
      * @param exerciseId The id of the exercise
      */
-    private loadDifferentParticipation(repositoryType: ProgrammingExerciseInstructorRepositoryType, exerciseId: number) {
+    private loadDifferentParticipation(repositoryType: RepositoryType, exerciseId: number) {
         this.differentParticipationSub = this.programmingExerciseService
             .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(
                 tap((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    if (repositoryType === 'TEMPLATE') {
+                    if (repositoryType === RepositoryType.TEMPLATE) {
                         this.participation = this.exercise.templateParticipation!;
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
                         this.repositoryUri = this.participation.repositoryUri!;
-                    } else if (repositoryType === 'SOLUTION') {
+                    } else if (repositoryType === RepositoryType.SOLUTION) {
                         this.participation = this.exercise.solutionParticipation!;
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
                         this.repositoryUri = this.participation.repositoryUri!;
-                    } else if (repositoryType === 'TESTS') {
+                    } else if (repositoryType === RepositoryType.TESTS) {
                         this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         this.repositoryUri = this.exercise.testRepositoryUri!;
                     } else {

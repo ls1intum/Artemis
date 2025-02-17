@@ -6,7 +6,6 @@ import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-online-unit',
-    standalone: true,
     imports: [LectureUnitComponent],
     templateUrl: './online-unit.component.html',
 })

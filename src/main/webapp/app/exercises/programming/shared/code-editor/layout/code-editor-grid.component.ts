@@ -1,18 +1,22 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, Renderer2, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, Renderer2, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [FaIconComponent],
 })
 export class CodeEditorGridComponent implements AfterViewInit {
+    private renderer = inject(Renderer2);
+
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
@@ -47,8 +51,6 @@ export class CodeEditorGridComponent implements AfterViewInit {
     // Icons
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
-
-    constructor(private renderer: Renderer2) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,

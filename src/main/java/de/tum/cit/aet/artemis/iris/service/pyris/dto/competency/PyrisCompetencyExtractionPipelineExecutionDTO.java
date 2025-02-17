@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 
 /**
- * DTO to execute the Iris competency extraction pipeline on Pyris
+ * DTO to execute the Iris rewriting pipeline on Pyris
  *
  * @param execution           The pipeline execution details
  * @param courseDescription   The description of the course

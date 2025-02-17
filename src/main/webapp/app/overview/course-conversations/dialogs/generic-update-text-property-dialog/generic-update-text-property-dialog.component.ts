@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
-import { FormGroup, Validators } from '@angular/forms';
+import { Component, Input, inject } from '@angular/core';
+import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface GenericUpdateTextPropertyTranslationKeys {
     labelKey: string;
@@ -20,25 +21,18 @@ export interface GenericUpdateTextPropertyTranslationKeys {
 @Component({
     selector: 'jhi-generic-update-text-property-dialog',
     templateUrl: './generic-update-text-property-dialog.component.html',
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
-    @Input()
-    propertyName: string;
+    private fb = inject(FormBuilder);
 
-    @Input()
-    isRequired = false;
+    @Input() propertyName: string;
+    @Input() isRequired = false;
+    @Input() regexPattern: RegExp | undefined;
+    @Input() maxPropertyLength: number;
+    @Input() initialValue: string | undefined;
+    @Input() translationKeys: GenericUpdateTextPropertyTranslationKeys;
 
-    @Input()
-    regexPattern: RegExp | undefined;
-
-    @Input()
-    maxPropertyLength: number;
-
-    @Input()
-    initialValue: string | undefined;
-
-    @Input()
-    translationKeys: GenericUpdateTextPropertyTranslationKeys;
     form: FormGroup;
 
     initialize() {
@@ -55,12 +49,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
     get control() {
         return this.form.get(this.propertyName);
     }
-    constructor(
-        private fb: FormBuilder,
-        activeModal: NgbActiveModal,
-    ) {
-        super(activeModal);
-    }
+
     private initializeForm() {
         if (this.form) {
             return;

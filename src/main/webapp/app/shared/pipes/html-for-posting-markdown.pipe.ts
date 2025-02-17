@@ -4,7 +4,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Pipe({
     name: 'htmlForPostingMarkdown',
-    standalone: true,
 })
 export class HtmlForPostingMarkdownPipe implements PipeTransform {
     private readonly markdownService = inject(ArtemisMarkdownService);

@@ -5,7 +5,9 @@ configurations {
 }
 
 dependencies {
-    implementation "org.liquibase:liquibase-core:${liquibase_version}"
+    implementation("org.liquibase:liquibase-core:${liquibase_version}") {
+        exclude group: 'com.opencsv', module: 'opencsv'
+    }
     liquibaseRuntime "org.liquibase:liquibase-core:${liquibase_version}"
     // Dependency required to parse options. Refer to https://github.com/liquibase/liquibase-gradle-plugin/tree/Release_2.2.0#news.
     liquibaseRuntime "info.picocli:picocli:4.7.6"

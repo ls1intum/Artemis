@@ -1,34 +1,35 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess, facSaveWarning } from '../../../../../content/icons/icons';
 import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, NgClass, UpdatingResultComponent, ArtemisTranslatePipe],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
+    private examParticipationService = inject(ExamParticipationService);
+
     @Input() studentExam: StudentExam;
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    readonly ExerciseButtonStatus = ExerciseButtonStatus;
     showResultWidth = 10;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-
-    constructor(
-        protected changeDetectorReference: ChangeDetectorRef,
-        private examParticipationService: ExamParticipationService,
-    ) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit() {
         this.studentExam.exercises?.forEach((exercise) => {

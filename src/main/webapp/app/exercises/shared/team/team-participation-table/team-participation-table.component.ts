@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -18,6 +18,14 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -39,8 +47,24 @@ class ExerciseForTeam extends Exercise {
     templateUrl: './team-participation-table.component.html',
     styleUrls: ['./team-participation-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        AssessmentWarningComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        NgbTooltip,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TeamParticipationTableComponent implements OnInit {
+    private teamService = inject(TeamService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
@@ -57,13 +81,6 @@ export class TeamParticipationTableComponent implements OnInit {
     // Icons
     faFolderOpen = faFolderOpen;
     faFlag = faFlag;
-
-    constructor(
-        private teamService: TeamService,
-        private alertService: AlertService,
-        private router: Router,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * Loads all needed data from the server for this component

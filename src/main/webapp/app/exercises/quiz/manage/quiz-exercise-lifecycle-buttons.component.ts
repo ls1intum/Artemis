@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -6,12 +6,19 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective],
 })
 export class QuizExerciseLifecycleButtonsComponent {
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+
     protected readonly QuizMode = QuizMode;
     protected readonly QuizStatus = QuizStatus;
     protected readonly ActionType = ActionType;
@@ -39,11 +46,6 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     @Output()
     handleNewQuizExercise = new EventEmitter<QuizExercise>();
-
-    constructor(
-        private quizExerciseService: QuizExerciseService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Set the quiz open for practice

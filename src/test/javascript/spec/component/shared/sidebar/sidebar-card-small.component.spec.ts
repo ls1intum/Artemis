@@ -74,30 +74,28 @@ describe('SidebarCardSmallComponent', () => {
    */
 
     it('should navigate to the item URL on click', async () => {
-        const mockFn = jest.fn();
-        component.emitStoreAndRefresh = mockFn;
+        jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
         await fixture.whenStable();
-        expect(mockFn).toHaveBeenCalledWith('testId');
-        expect(router.navigateByUrl).toHaveBeenCalled();
-        const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../communication');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(router.navigate).toHaveBeenCalled();
+        const navigationArray = router.navigate.mock.calls[1][0];
+        expect(navigationArray).toStrictEqual(['./testId']);
     });
 
     it('should navigate to the when no item was selected before', async () => {
-        const mockFn = jest.fn();
-        component.emitStoreAndRefresh = mockFn;
+        jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
         await fixture.whenStable();
-        expect(mockFn).toHaveBeenCalledWith('testId');
-        expect(router.navigateByUrl).toHaveBeenCalled();
-        const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('./communication');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(router.navigate).toHaveBeenCalled();
+        const navigationArray = router.navigate.mock.calls[1][0];
+        expect(navigationArray).toStrictEqual(['', 'testId']);
     });
 });

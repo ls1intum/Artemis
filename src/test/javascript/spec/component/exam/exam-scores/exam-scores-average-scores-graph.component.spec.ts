@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
@@ -8,12 +9,10 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterModule } from '@angular/router';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
@@ -54,8 +53,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule), RouterModule.forRoot([])],
-            declarations: [ExamScoresAverageScoresGraphComponent, MockDirective(TranslateDirective)],
+            imports: [ArtemisTestModule, BrowserAnimationsModule, RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
                     find: () => {

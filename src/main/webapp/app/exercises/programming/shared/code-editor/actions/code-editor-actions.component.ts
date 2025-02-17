@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -12,15 +13,30 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, Connectio
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExternalLink, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 import { Participation } from 'app/entities/participation/participation.model';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getLocalRepositoryLink } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
+    imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+    private modalService = inject(NgbModal);
+    private submissionService = inject(CodeEditorSubmissionService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     CommitState = CommitState;
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
@@ -48,6 +64,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     editorStateValue: EditorState;
     commitStateValue: CommitState;
     isResolvingConflict = false;
+    routerLink: string;
+    repositoryLink: string[];
+    isInCourseManagement = false;
 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
@@ -61,6 +80,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     faCircleNotch = faCircleNotch;
     faSync = faSync;
     farPlayCircle = faPlayCircle;
+    faExternalLink = faExternalLink;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
@@ -72,15 +92,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         this.editorStateChange.emit(editorState);
     }
 
-    constructor(
-        private repositoryService: CodeEditorRepositoryService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private conflictService: CodeEditorConflictStateService,
-        private modalService: NgbModal,
-        private submissionService: CodeEditorSubmissionService,
-    ) {}
-
     ngOnInit(): void {
+        this.route.params.subscribe((params) => {
+            const repositoryType = params['repositoryType'] ?? 'USER';
+            const courseId = Number(params['courseId']);
+            const repositoryId = Number(params['repositoryId']);
+            const exerciseId = Number(params['exerciseId']);
+            const examId = Number(params['examId']);
+            const exerciseGroupId = Number(params['exerciseGroupId']);
+            this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId);
+        });
+        this.isInCourseManagement = this.router.url.includes('course-management');
+
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
             // This is why a timeout of 0 is set to make sure the template is rendered before setting the commitState.
@@ -171,7 +194,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     /**
-     * @function saveFiles
+     * @param andCommit whether the saved changed in the files should be committed or not
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(andCommit = false): Observable<any> {

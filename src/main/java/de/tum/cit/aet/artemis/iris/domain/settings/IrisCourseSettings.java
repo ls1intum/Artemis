@@ -40,6 +40,14 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_lecture_ingestion_settings_id")
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_lecture_chat_settings_id")
+    private IrisLectureChatSubSettings irisLectureChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_faq_ingestion_settings_id")
+    private IrisFaqIngestionSubSettings irisFaqIngestionSettings;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
@@ -83,6 +91,16 @@ public class IrisCourseSettings extends IrisSettings {
     }
 
     @Override
+    public IrisLectureChatSubSettings getIrisLectureChatSettings() {
+        return irisLectureChatSettings;
+    }
+
+    @Override
+    public void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings) {
+        this.irisLectureChatSettings = irisLectureChatSettings;
+    }
+
+    @Override
     public IrisCourseChatSubSettings getIrisCourseChatSettings() {
         return irisCourseChatSettings;
     }
@@ -100,5 +118,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
         this.irisCompetencyGenerationSettings = irisCompetencyGenerationSubSettings;
+    }
+
+    @Override
+    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
+        return irisFaqIngestionSettings;
+    }
+
+    @Override
+    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
+        this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
     }
 }

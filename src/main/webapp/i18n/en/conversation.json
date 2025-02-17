@@ -102,6 +102,18 @@
                 "warning": "This member will not be able to access this channel anymore unless they join again.",
                 "remove": "Remove user"
             },
+            "publicChannel": {
+                "title": "Change to a public channel?",
+                "question": "Do you really want to change this channel to public?",
+                "description": "Keep in mind that making a channel public allows anyone in the course to join, and new members will be able to see past messages.",
+                "confirmButton": "Change to public"
+            },
+            "privateChannel": {
+                "title": "Change to a private channel?",
+                "question": "Do you really want to change this channel to private?",
+                "description": "Keep in mind that when you make a channel private, its history and members won’t change, and messages sent up to this point will remain visible to existing members.",
+                "confirmButton": "Change to private"
+            },
             "removeUserGroupChat": {
                 "title": "Remove user from group chat?",
                 "question": "Remove {{ userName }} from group chat?",
@@ -112,8 +124,11 @@
                 "settingsUnavailable": "No settings possible",
                 "actions": {
                     "leave": "Leave Conversation",
-                    "archiveChannel": "Archive Channel",
-                    "unarchiveChannel": "Unarchive Channel"
+                    "archiveChannel": "Archive channel for everyone",
+                    "unarchiveChannel": "Unarchive channel for everyone",
+                    "publicChannel": "Change to a public channel",
+                    "privateChannel": "Change to a private channel",
+                    "deleteChannel": "Delete channel"
                 }
             },
             "conversationDetail": {
@@ -208,6 +223,7 @@
             "createChannel": {
                 "titlePublicChannel": "Create a public",
                 "titlePrivateChannel": "Create a private",
+                "titleCourseWideChannel": "course-wide",
                 "titleAnnouncementChannel": "announcement channel",
                 "titleRegularChannel": "channel",
                 "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want. You will become the first channel moderator. You will not be able to leave the channel.",
@@ -235,6 +251,12 @@
                         "explanation": "Only instructors and channel moderators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
                         "true": "Announcement Channel",
                         "false": "Unrestricted Channel"
+                    },
+                    "isCourseWideChannelInput": {
+                        "label": "Channel Scope",
+                        "explanation": "In a course-wide channel, all users in the course are automatically added. In a selective channel, you can manually select the users to be added after creation.",
+                        "true": "Course-wide Channel",
+                        "false": "Selective Channel"
                     },
                     "createButton": "Create Channel"
                 }

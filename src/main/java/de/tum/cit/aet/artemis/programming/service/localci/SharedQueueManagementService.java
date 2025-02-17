@@ -38,10 +38,12 @@ import com.hazelcast.topic.ITopic;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 
 /**
@@ -60,6 +62,8 @@ public class SharedQueueManagementService {
     private final ProfileService profileService;
 
     private IQueue<BuildJobQueueItem> queue;
+
+    private IQueue<ResultQueueItem> resultQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
@@ -100,6 +104,7 @@ public class SharedQueueManagementService {
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
         this.updateBuildAgentCapacity();
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
     }
 
     /**
@@ -137,6 +142,14 @@ public class SharedQueueManagementService {
     public List<BuildJobQueueItem> getProcessingJobs() {
         // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(processingJobs.values());
+    }
+
+    /**
+     * @return a list of processing job ids
+     */
+    public List<String> getProcessingJobIds() {
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return new ArrayList<>(processingJobs.keySet());
     }
 
     public int getProcessingJobsSize() {
@@ -205,6 +218,7 @@ public class SharedQueueManagementService {
                 }
             }
             queue.removeAll(toRemove);
+            updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
             // Cancel build job if it is currently being processed
@@ -212,6 +226,12 @@ public class SharedQueueManagementService {
             if (buildJob != null) {
                 triggerBuildJobCancellation(buildJobId);
             }
+        }
+    }
+
+    private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
+        for (BuildJobQueueItem queuedJob : queuedJobs) {
+            buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
         }
     }
 
@@ -231,7 +251,9 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
+        List<BuildJobQueueItem> queuedJobs = getQueuedJobs();
         queue.clear();
+        updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
     /**
@@ -267,6 +289,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
     /**
@@ -297,6 +320,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = getProcessingJobs();
         for (BuildJobQueueItem runningJob : runningJobs) {
@@ -304,6 +328,18 @@ public class SharedQueueManagementService {
                 cancelBuildJob(runningJob.id());
             }
         }
+    }
+
+    /**
+     * Clear all build related data from the distributed data structures.
+     * This method should only be called by an admin user.
+     */
+    public void clearDistributedData() {
+        queue.clear();
+        processingJobs.clear();
+        dockerImageCleanupInfo.clear();
+        resultQueue.clear();
+        buildAgentInformation.clear();
     }
 
     /**
@@ -407,7 +443,6 @@ public class SharedQueueManagementService {
             return 0;
         }
         return Duration.between(now, estimatedCompletionDate).toSeconds();
-
     }
 
     private class BuildAgentListener

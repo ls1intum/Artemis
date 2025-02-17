@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { BuildAction, ScriptAction } from 'app/entities/programming/build.action';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -6,13 +6,21 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, NgClass, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
+    private aeolusService = inject(AeolusService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -23,11 +31,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
 
-    constructor(private aeolusService: AeolusService) {}
-
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
-    isScriptAction: boolean = false;
+    isScriptAction = false;
 
     private _editor?: MonacoEditorComponent;
 

@@ -1,21 +1,17 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
-import { NgModel } from '@angular/forms';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Subject, of } from 'rxjs';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -29,50 +25,40 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [
-                ProgrammingExerciseLifecycleComponent,
-                MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
-                MockDirective(NgModel),
-                TranslatePipeMock,
-            ],
+            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
                         url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
                     },
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
+        comp = fixture.componentInstance;
 
-                exercise = {
-                    id: 42,
-                    dueDate: nextDueDate,
-                    startDate,
-                    buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
-                    exampleSolutionPublicationDate,
-                } as ProgrammingExercise;
+        exercise = {
+            id: 42,
+            dueDate: nextDueDate,
+            startDate,
+            buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
+            exampleSolutionPublicationDate,
+        } as ProgrammingExercise;
 
-                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-                    releaseDate: true,
-                    startDate: true,
-                    dueDate: true,
-                    runTestsAfterDueDate: true,
-                    assessmentDueDate: true,
-                    exampleSolutionPublicationDate: true,
-                    complaintOnAutomaticAssessment: true,
-                    manualFeedbackRequests: true,
-                    showTestNamesToStudents: true,
-                    includeTestsIntoExampleSolution: true,
-                });
-            });
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            releaseDate: true,
+            startDate: true,
+            dueDate: true,
+            runTestsAfterDueDate: true,
+            assessmentDueDate: true,
+            exampleSolutionPublicationDate: true,
+            complaintOnAutomaticAssessment: true,
+            manualFeedbackRequests: true,
+            showTestNamesToStudents: true,
+            includeTestsIntoExampleSolution: true,
+        });
     });
 
     afterEach(() => {

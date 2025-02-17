@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { captureException } from '@sentry/angular';
 
 @Component({
     template: '',
@@ -46,7 +47,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         return getPositiveAndCappedTotalScore(totalScore, maxPoints);
     }
 
-    protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+    protected handleSaveOrSubmitSuccessWithAlert(_response: HttpResponse<Result>, translationKey: string): void {
         this.alertService.success(translationKey);
     }
 
@@ -76,15 +77,15 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
             // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
             if (!ref && previousIndex > nextIndex) {
-                console.error('Illegal State: previous index cannot be greater than the last index!');
+                captureException('Illegal State: previous index cannot be greater than the last index!');
 
                 // new text block starts before previous one ended (overlap)
             } else if (previousIndex > nextIndex) {
                 const previousRef = textBlockRefs.pop();
                 if (!previousRef) {
-                    console.error('Overlapping Text Blocks with nothing?', previousRef, ref);
+                    captureException('Overlapping Text Blocks with nothing? previousRef: ' + previousRef + ' ref: ' + ref);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
-                    console.error('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
+                    captureException('Overlapping AUTOMATIC Text Blocks! previousRef: ' + previousRef + ' ref: ' + ref);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     // Make sure to select a TextBlockRef that has a feedback.
                     let selectedRef = ref;

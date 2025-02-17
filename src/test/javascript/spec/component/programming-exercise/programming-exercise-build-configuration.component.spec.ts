@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { of } from 'rxjs';
 import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
@@ -22,8 +21,7 @@ describe('ProgrammingExercise Docker Image', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ArtemisProgrammingExerciseUpdateModule],
-            declarations: [ProgrammingExerciseBuildConfigurationComponent],
+            imports: [ArtemisTestModule, FormsModule],
             providers: [{ provide: ProfileService, useValue: profileServiceMock }],
         })
             .compileComponents()

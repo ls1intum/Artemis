@@ -8,7 +8,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-about-iris',
     templateUrl: './about-iris.component.html',
     styleUrls: ['about-iris.component.scss'],
-    standalone: true,
     imports: [IrisLogoComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class AboutIrisComponent {

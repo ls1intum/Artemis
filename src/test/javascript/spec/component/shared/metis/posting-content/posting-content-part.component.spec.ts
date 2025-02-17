@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
@@ -9,8 +9,6 @@ import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../h
 import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
@@ -24,7 +22,6 @@ describe('PostingContentPartComponent', () => {
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
-    let enlargeImageSpy: jest.SpyInstance;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
@@ -33,13 +30,7 @@ describe('PostingContentPartComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                MatDialogModule,
-                MatMenuModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-            ],
-            declarations: [
-                PostingContentPartComponent,
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
@@ -59,7 +50,6 @@ describe('PostingContentPartComponent', () => {
         fileService = TestBed.inject(FileService);
         navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
@@ -67,57 +57,61 @@ describe('PostingContentPartComponent', () => {
     describe('For posting without reference', () => {
         it('should not contain a reference but only markdown content', () => {
             const postingContent = 'I do not want to reference a Post.';
-            component.postingContentPart = {
-                contentBeforeReference: postingContent,
-                linkToReference: undefined,
-                queryParams: undefined,
-                referenceStr: undefined,
-                contentAfterReference: undefined,
-            } as PostingContentPart;
-            fixture.detectChanges();
-            const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
-            expect(markdownRenderedTexts).toHaveLength(1);
-            expect(markdownRenderedTexts![0].innerHTML).toBe('<p class="inline-paragraph">' + postingContent + '</p>');
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: postingContent,
+                    linkToReference: undefined,
+                    queryParams: undefined,
+                    referenceStr: undefined,
+                    contentAfterReference: undefined,
+                } as PostingContentPart);
+                fixture.detectChanges();
+                const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
+                expect(markdownRenderedTexts).toHaveLength(1);
+                expect(markdownRenderedTexts![0].innerHTML).toBe('<p class="inline-paragraph">' + postingContent + '</p>');
 
-            const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBeNull();
+                const referenceLink = getElement(debugElement, '.reference-hash');
+                expect(referenceLink).toBeNull();
+            });
         });
     });
 
     describe('For posting with reference', () => {
         it('should contain a post reference with icon and markdown content before and after', () => {
             const referenceStr = '#7';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/whatever'],
-                queryParams: { searchText: referenceStr },
-                referenceStr: '#7',
-                referenceType: ReferenceType.POST,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-            const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
-            expect(markdownRenderedTexts).toHaveLength(2);
-            // check that the paragraph right before the reference and the paragraph right after have the class `inline-paragraph`
-            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p><strong>Be aware</strong></p>');
-            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post</p>'); // last paragraph before reference
-            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
-            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference,
+                    linkToReference: ['/whatever'],
+                    queryParams: { searchText: referenceStr },
+                    referenceStr: '#7',
+                    referenceType: ReferenceType.POST,
+                    contentAfterReference,
+                } as PostingContentPart);
+                fixture.detectChanges();
+                const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
+                expect(markdownRenderedTexts).toHaveLength(2);
+                // check that the paragraph right before the reference and the paragraph right after have the class `inline-paragraph`
+                expect(markdownRenderedTexts![0].innerHTML).toInclude('<p><strong>Be aware</strong></p>');
+                expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post</p>'); // last paragraph before reference
+                expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
+                expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
 
-            // should display post number to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+                // should display post number to user
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // should display relevant icon for post
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-message');
+                // should display relevant icon for post
+                const icon = getElement(debugElement, 'fa-icon');
+                expect(icon).not.toBeNull();
+                expect(icon.innerHTML).toInclude('fa fa-message');
 
-            // on click should navigate to referenced post within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).not.toHaveBeenCalled();
+                // on click should navigate to referenced post within current tab
+                referenceLink.click();
+                expect(navigateByUrlSpy).toHaveBeenCalledOnce();
+                expect(openAttachmentSpy).not.toHaveBeenCalled();
+            });
         });
 
         it.each([
@@ -129,101 +123,113 @@ describe('PostingContentPartComponent', () => {
             ['Exercise', '/courses/1/exercises/28', undefined, 'fa fa-paperclip'],
             ['Test Lecture', '/courses/1/lectures/1/', ReferenceType.LECTURE, 'fa fa-chalkboard-user'],
         ])('should contain a reference to artifact with icon', (referenceStr, linkToReference, referenceType, faIcon) => {
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: [linkToReference],
-                referenceStr,
-                referenceType,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference,
+                    linkToReference: [linkToReference],
+                    referenceStr,
+                    referenceType,
+                    contentAfterReference,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            // should display artifact name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+                // should display artifact name to user
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // should display relevant icon for artifact according to its type
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude(faIcon);
+                // should display relevant icon for artifact according to its type
+                const icon = getElement(debugElement, 'fa-icon');
+                expect(icon).not.toBeNull();
+                expect(icon.innerHTML).toInclude(faIcon);
 
-            // on click should navigate to referenced artifact within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).not.toHaveBeenCalled();
+                // on click should navigate to referenced artifact within current tab
+                referenceLink.click();
+                expect(navigateByUrlSpy).toHaveBeenCalledOnce();
+                expect(openAttachmentSpy).not.toHaveBeenCalled();
+            });
         });
 
         it('should contain a reference to attachment with icon', () => {
             const referenceStr = 'Lecture 1 - Slide';
             const attachmentURL = '/api/files/attachments/lecture/1/Lecture-1.pdf';
-            component.postingContentPart = {
-                contentBeforeReference,
-                referenceStr,
-                referenceType: ReferenceType.ATTACHMENT,
-                attachmentToReference: attachmentURL,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference,
+                    referenceStr,
+                    referenceType: ReferenceType.ATTACHMENT,
+                    attachmentToReference: attachmentURL,
+                    contentAfterReference,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            // should display file name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+                // should display file name to user
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // should display relevant icon for attachment
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-file');
+                // should display relevant icon for attachment
+                const icon = getElement(debugElement, 'fa-icon');
+                expect(icon).not.toBeNull();
+                expect(icon.innerHTML).toInclude('fa fa-file');
 
-            // on click should open referenced attachment within new tab
-            referenceLink.click();
-            expect(openAttachmentSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+                // on click should open referenced attachment within new tab
+                referenceLink.click();
+                expect(openAttachmentSpy).toHaveBeenCalledOnce();
+                expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+            });
         });
 
         it('should contain a reference to lecture unit', () => {
             const referenceStr = 'Lecture Unit 1';
             const attachmentURL = '/api/files/attachments/attachment-unit/1/LectureUnit1.pdf';
-            component.postingContentPart = {
-                contentBeforeReference,
-                referenceStr,
-                referenceType: ReferenceType.ATTACHMENT_UNITS,
-                attachmentToReference: attachmentURL,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference,
+                    referenceStr,
+                    referenceType: ReferenceType.ATTACHMENT_UNITS,
+                    attachmentToReference: attachmentURL,
+                    contentAfterReference,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            // should display attachment unit file name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+                // should display attachment unit file name to user
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // on click should open referenced attachment unit within new tab
-            referenceLink.click();
-            expect(openAttachmentSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+                // on click should open referenced attachment unit within new tab
+                referenceLink.click();
+                expect(openAttachmentSpy).toHaveBeenCalledOnce();
+                expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+            });
         });
 
         it('should contain a reference to lecture unit slide image', () => {
             const referenceStr = 'Lecture Unit1_SLIDE_1';
             const imageURL = '/api/files/attachments/slides/attachment-unit/1/AttachmentUnitSlide_2023-04-03T02-21-44-124_9ffe48ee.png';
-            component.postingContentPart = {
-                referenceStr,
-                referenceType: ReferenceType.SLIDE,
-                slideToReference: imageURL,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    referenceStr,
+                    referenceType: ReferenceType.SLIDE,
+                    slideToReference: imageURL,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            // should display attachment unit slide name and link to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+                // should display attachment unit slide name and link to user
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // on click should open referenced attachment unit slide
-            referenceLink.click();
-            expect(enlargeImageSpy).toHaveBeenCalledOnce();
-            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+                component.enlargeImage = jest.fn();
+
+                const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+
+                // on click should open referenced attachment unit slide
+                referenceLink.click();
+                expect(enlargeImageSpy).toHaveBeenCalledOnce();
+                expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+            });
         });
 
         it('should trigger userReferenceClicked event for different user logins', () => {
@@ -275,19 +281,21 @@ describe('PostingContentPartComponent', () => {
         it('should process content before and after reference with escaped numbered and unordered lists', () => {
             const contentBefore = '1. This is a numbered list\n2. Another item\n- This is an unordered list';
             const contentAfter = '1. Numbered again\n- Unordered again';
-            component.postingContentPart = {
-                contentBeforeReference: contentBefore,
-                contentAfterReference: contentAfter,
-                linkToReference: undefined,
-                queryParams: undefined,
-                referenceStr: undefined,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: contentBefore,
+                    contentAfterReference: contentAfter,
+                    linkToReference: undefined,
+                    queryParams: undefined,
+                    referenceStr: undefined,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            component.processContent();
+                component.processContent();
 
-            expect(component.processedContentBeforeReference).toBe('1\\.  This is a numbered list\n2\\.  Another item\n\\- This is an unordered list');
-            expect(component.processedContentAfterReference).toBe('1\\.  Numbered again\n\\- Unordered again');
+                expect(component.processedContentBeforeReference).toBe('1\\.  This is a numbered list\n2\\.  Another item\n\\- This is an unordered list');
+                expect(component.processedContentAfterReference).toBe('1\\.  Numbered again\n\\- Unordered again');
+            });
         });
 
         it('should escape numbered lists correctly', () => {
@@ -319,41 +327,43 @@ describe('PostingContentPartComponent', () => {
 
     describe('PostingContentPart Reactivity', () => {
         it('should update display when postingContentPart changes', () => {
-            component.postingContentPart = {
-                contentBeforeReference: 'Initial content',
-                linkToReference: undefined,
-                queryParams: undefined,
-                referenceStr: undefined,
-                contentAfterReference: undefined,
-            } as PostingContentPart;
-            fixture.detectChanges();
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: 'Initial content',
+                    linkToReference: undefined,
+                    queryParams: undefined,
+                    referenceStr: undefined,
+                    contentAfterReference: undefined,
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            const initialMarkdownElements = getElements(debugElement, '.markdown-preview');
-            expect(initialMarkdownElements).toHaveLength(1);
-            expect(initialMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Initial content</p>');
+                const initialMarkdownElements = getElements(debugElement, '.markdown-preview');
+                expect(initialMarkdownElements).toHaveLength(1);
+                expect(initialMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Initial content</p>');
 
-            fixture.componentRef.setInput('postingContentPart', {
-                contentBeforeReference: 'Updated content before',
-                linkToReference: ['/course/1'],
-                queryParams: { searchText: '#123' },
-                referenceStr: '#123',
-                referenceType: ReferenceType.POST,
-                contentAfterReference: 'Updated content after',
-            } as PostingContentPart);
-            fixture.detectChanges();
+                fixture.componentRef.setInput('postingContentPart', {
+                    contentBeforeReference: 'Updated content before',
+                    linkToReference: ['/course/1'],
+                    queryParams: { searchText: '#123' },
+                    referenceStr: '#123',
+                    referenceType: ReferenceType.POST,
+                    contentAfterReference: 'Updated content after',
+                } as PostingContentPart);
+                fixture.detectChanges();
 
-            const updatedMarkdownElements = getElements(debugElement, '.markdown-preview');
-            expect(updatedMarkdownElements).toHaveLength(2);
-            expect(updatedMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Updated content before</p>');
-            expect(updatedMarkdownElements![1].innerHTML).toBe('<p class="inline-paragraph">Updated content after</p>');
+                const updatedMarkdownElements = getElements(debugElement, '.markdown-preview');
+                expect(updatedMarkdownElements).toHaveLength(2);
+                expect(updatedMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Updated content before</p>');
+                expect(updatedMarkdownElements![1].innerHTML).toBe('<p class="inline-paragraph">Updated content after</p>');
 
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude('#123');
+                const referenceLink = getElement(debugElement, '.reference');
+                expect(referenceLink).not.toBeNull();
+                expect(referenceLink.innerHTML).toInclude('#123');
 
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-message');
+                const icon = getElement(debugElement, 'fa-icon');
+                expect(icon).not.toBeNull();
+                expect(icon.innerHTML).toInclude('fa fa-message');
+            });
         });
     });
 });

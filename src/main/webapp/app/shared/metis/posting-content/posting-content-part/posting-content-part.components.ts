@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -21,16 +21,24 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
+    imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe],
 })
 export class PostingContentPartComponent implements OnInit, OnChanges {
-    @Input() postingContentPart: PostingContentPart;
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+    private fileService = inject(FileService);
+    private dialog = inject(MatDialog);
+    private accountService = inject(AccountService);
+
+    postingContentPart = input<PostingContentPart>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
 
     imageNotFound = false;
     hasClickedUserReference = false;
@@ -49,12 +57,6 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     protected readonly ReferenceType = ReferenceType;
     processedContentBeforeReference: string;
     processedContentAfterReference: string;
-
-    constructor(
-        private fileService: FileService,
-        private dialog: MatDialog,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         this.processContent();
@@ -78,13 +80,13 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     }
 
     processContent() {
-        if (this.postingContentPart.contentBeforeReference) {
-            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart.contentBeforeReference);
+        if (this.postingContentPart()?.contentBeforeReference) {
+            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
             this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
         }
 
-        if (this.postingContentPart.contentAfterReference) {
-            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart.contentAfterReference);
+        if (this.postingContentPart()?.contentAfterReference) {
+            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
             this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
         }
     }

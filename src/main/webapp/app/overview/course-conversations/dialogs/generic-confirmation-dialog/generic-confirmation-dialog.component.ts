@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface GenericConfirmationTranslationKeys {
     titleKey: string;
@@ -11,23 +12,13 @@ export interface GenericConfirmationTranslationKeys {
 @Component({
     selector: 'jhi-generic-confirmation-dialog',
     templateUrl: './generic-confirmation-dialog.component.html',
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
-    @Input()
-    translationParameters = {};
-
-    @Input()
-    translationKeys: GenericConfirmationTranslationKeys;
-
-    @Input()
-    canBeUndone = true;
-
-    @Input()
-    isDangerousAction = false;
-
-    constructor(activeModal: NgbActiveModal) {
-        super(activeModal);
-    }
+    @Input() translationParameters = {};
+    @Input() translationKeys: GenericConfirmationTranslationKeys;
+    @Input() canBeUndone = true;
+    @Input() isDangerousAction = false;
 
     initialize() {
         super.initialize(['translationKeys']);

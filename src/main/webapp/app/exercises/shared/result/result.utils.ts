@@ -125,12 +125,16 @@ export const getManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined)
 };
 
 /**
- * searches for all automatic unreferenced feedback in an array of feedbacks of a result
+ * searches for all unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
  */
-export const getAutomaticUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
-    return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.AUTOMATIC) : undefined;
+export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
+    return feedbacks
+        ? feedbacks.filter(
+              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED || feedbackElement.type === FeedbackType.AUTOMATIC),
+          )
+        : undefined;
 };
 
 export function isAIResultAndFailed(result: Result | undefined): boolean {

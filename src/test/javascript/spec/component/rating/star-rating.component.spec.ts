@@ -6,9 +6,7 @@ describe('StarRatingComponent', () => {
     let fixture: ComponentFixture<StarRatingComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [StarRatingComponent],
-        }).compileComponents();
+        TestBed.configureTestingModule({}).compileComponents();
     });
 
     beforeEach(() => {

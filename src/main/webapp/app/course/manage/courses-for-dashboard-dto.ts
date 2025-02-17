@@ -4,6 +4,4 @@ import { Exam } from 'app/entities/exam/exam.model';
 export class CoursesForDashboardDTO {
     courses: CourseForDashboardDTO[];
     activeExams: Exam[];
-
-    constructor() {}
 }

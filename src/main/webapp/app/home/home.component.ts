@@ -16,7 +16,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -26,8 +26,7 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    standalone: true,
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ArtemisSharedModule],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
     private router = inject(Router);

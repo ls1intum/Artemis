@@ -2,6 +2,12 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from '../feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 /**
  * enum for button types
@@ -46,6 +52,7 @@ export enum TooltipPlacement {
 @Component({
     selector: 'jhi-button',
     templateUrl: './button.component.html',
+    imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;

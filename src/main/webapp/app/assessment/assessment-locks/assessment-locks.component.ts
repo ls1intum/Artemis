@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -14,12 +14,27 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { combineLatest } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class AssessmentLocksComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private courseService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+
     readonly ExerciseType = ExerciseType;
 
     course: Course;
@@ -40,17 +55,8 @@ export class AssessmentLocksComponent implements OnInit {
     faBan = faBan;
     faFolderOpen = faFolderOpen;
 
-    constructor(
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        translateService: TranslateService,
-        private courseService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 

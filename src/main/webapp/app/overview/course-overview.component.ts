@@ -14,7 +14,7 @@ import {
     ViewContainerRef,
     inject,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
     IconDefinition,
     faChalkboardUser,
@@ -39,9 +39,9 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -57,7 +57,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
-import { facSidebar } from '../../content/icons/icons';
+import { facSidebar } from 'app/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
@@ -69,6 +69,14 @@ import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
+import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { SecuredImageComponent } from '../shared/image/secured-image.component';
+import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
+import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
 
 interface CourseActionItem {
     title: string;
@@ -95,8 +103,48 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
+    imports: [
+        NgClass,
+        MatSidenavContainer,
+        MatSidenav,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgTemplateOutlet,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        MatSidenavContent,
+        NgStyle,
+        RouterLink,
+        RouterOutlet,
+        SecuredImageComponent,
+        OrionFilterDirective,
+        RouterLinkActive,
+        FeatureToggleHideDirective,
+        SlicePipe,
+    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseService = inject(CourseManagementService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private teamService = inject(TeamService);
+    private websocketService = inject(WebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private examParticipationService = inject(ExamParticipationService);
+    private ltiService = inject(LtiService);
+
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
@@ -115,10 +163,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     communicationRouteLoaded: boolean;
+    atlasEnabled = false;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
-    hasSidebar: boolean = false;
+    hasSidebar = false;
     sidebarItems: SidebarItem[];
     courseActionItems: CourseActionItem[];
     isNotManagementView: boolean;
@@ -126,7 +175,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
-    showRefreshButton: boolean = false;
+    showRefreshButton = false;
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
@@ -189,25 +238,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
-    constructor(
-        private courseService: CourseManagementService,
-        private courseExerciseService: CourseExerciseService,
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private examParticipationService: ExamParticipationService,
-        private ltiService: LtiService,
-    ) {}
-
     async ngOnInit() {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed = true;
@@ -226,6 +256,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -354,7 +385,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem: SidebarItem = this.getCompetenciesItems();
             sidebarItems.push(competenciesItem);
             if (this.course?.learningPathsEnabled) {
@@ -754,7 +785,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.teamAssignmentUpdateListener.unsubscribe();
         }
         if (this.quizExercisesChannel) {
-            this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
+            this.websocketService.unsubscribe(this.quizExercisesChannel);
         }
         this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
@@ -777,8 +808,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
-            this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.subscribe(this.quizExercisesChannel);
+            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {

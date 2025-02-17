@@ -721,3 +721,83 @@ Verify the exercise configuration
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
     :width: 160
+
+.. _feedback_analysis:
+
+Feedback Analysis
+^^^^^^^^^^^^^^^^^
+
+After verifying the exercise configuration, Artemis provides an advanced **Feedback Analysis** feature to help instructors and tutors **identify common mistakes** among students and improve grading efficiency.
+
+**Accessing Feedback Analysis**
+
+- Navigate to the **Exercise Management** page.
+- Open a programming exercise and navigate to the grading section. Click on the **Feedback Analysis** tab.
+
+- A structured table provides an **overview of feedback occurrences**, categorized by **test cases, tasks, and error types**.
+
+    .. figure:: programming/feedback-analysis-overview.png
+          :align: center
+          :scale: 50%
+
+          *Feedback Analysis Overview*
+
+**Key Features**
+
+1. **Filtering and Sorting**
+    - **Filter feedback** by:
+        - **Tasks**
+        - **Test Cases**
+        - **Error Categories** (e.g., Student Errors, System Errors)
+        - **Occurrence Frequency**
+
+    - **Sort feedback** based on occurrence count or relevance.
+
+    .. figure:: programming/feedback-analysis-filters.png
+          :align: center
+          :scale: 50%
+
+          *Filtering Options for Feedback Analysis*
+
+2. **Affected Students Overview**
+    - View a **list of students** affected by specific feedback messages.
+    - Open **individual repositories** for further review and correction of low-quality feedback.
+
+    .. figure:: programming/feedback-analysis-affected-students.png
+          :align: center
+          :scale: 50%
+
+          *Affected Students View*
+
+3. **Aggregated Feedback Overview**
+    - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+    - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+
+4. **Detailed Feedback Inspection**
+    - Click on any feedback entry to view **detailed feedback inspection**.
+    - Open a **modal window** to inspect for example feedback detailtexts which were too long and therefore had to be cut off in the table entry.
+
+    .. figure:: programming/feedback-analysis-detail.png
+          :align: center
+          :scale: 50%
+
+          *Detailed Feedback View*
+
+5. **Communication & Collaboration**
+    - Create **discussion channels** directly from the feedback analysis view.
+    - Enable **collaborative discussions** among tutors to streamline grading.
+
+    .. figure:: programming/feedback-analysis-channel.png
+          :align: center
+          :scale: 50%
+
+          *Creating a Feedback Discussion Channel*
+
+- To get a better understanding of the feature, you can watch the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
+

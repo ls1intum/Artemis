@@ -1,10 +1,10 @@
 import {
     ResultTemplateStatus,
     breakCircularResultBackReferences,
-    getAutomaticUnreferencedFeedback,
     getManualUnreferencedFeedback,
     getResultIconClass,
     getTextColorClass,
+    getUnreferencedFeedback,
     isOnlyCompilationTested,
 } from 'app/exercises/shared/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -31,16 +31,17 @@ describe('ResultUtils', () => {
         expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.MANUAL_UNREFERENCED }]);
     });
 
-    it('should filter out all non unreferenced feedbacks that do not have type AUTOMATIC', () => {
+    it('should filter out all non unreferenced feedbacks', () => {
         const feedbacks = [
             { reference: 'foo' },
             { reference: 'foo', type: FeedbackType.AUTOMATIC },
             { type: FeedbackType.AUTOMATIC },
             { type: FeedbackType.MANUAL_UNREFERENCED },
+            { reference: 'foo', type: FeedbackType.AUTOMATIC_ADAPTED },
             {},
         ];
-        const unreferencedFeedbacks = getAutomaticUnreferencedFeedback(feedbacks);
-        expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }]);
+        const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);
+        expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }, { type: FeedbackType.MANUAL_UNREFERENCED }]);
     });
 
     it.each([

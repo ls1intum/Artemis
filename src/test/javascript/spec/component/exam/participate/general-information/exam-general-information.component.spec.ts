@@ -1,15 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { ArtemisTestModule } from '../../../../test.module';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -35,14 +30,7 @@ describe('ExamGeneralInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            declarations: [
-                ExamGeneralInformationComponent,
-                MockComponent(StudentExamWorkingTimeComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisDurationFromSecondsPipe),
-            ],
-            providers: [provideRouter([])],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

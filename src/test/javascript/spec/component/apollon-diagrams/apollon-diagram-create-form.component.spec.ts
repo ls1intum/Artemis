@@ -25,8 +25,7 @@ describe('ApollonDiagramCreateForm Component', () => {
         diagram.id = 1;
 
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ApollonDiagramCreateFormComponent],
+            imports: [ApollonDiagramCreateFormComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

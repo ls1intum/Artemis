@@ -1,17 +1,20 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, OnChanges, OnInit, input } from '@angular/core';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PostTagSelectorComponent } from './post-tag-selector/post-tag-selector.component';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -23,9 +26,19 @@ export interface ContextSelectorOption {
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
     styleUrls: ['../../metis.component.scss'],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        PostTagSelectorComponent,
+        PostingMarkdownEditorComponent,
+        PostingButtonComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
-    @Input() isCommunicationPage: boolean;
+    isCommunicationPage = input<boolean>(false);
 
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -45,15 +58,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        private router: Router,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
-
     /**
      * on initialization: reset all input field of the modal, determine the post context;
      * subscribe to the form control changes of the context selector in order to show the Announcement info box on selection;
@@ -72,7 +76,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     /**
      * on initialization: reset all input field of the modal, determine the post context;
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         super.ngOnChanges();
     }
 

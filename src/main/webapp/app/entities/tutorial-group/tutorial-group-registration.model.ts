@@ -12,6 +12,4 @@ export class TutorialGroupRegistration implements BaseEntity {
     public student?: User;
     public tutorialGroup?: TutorialGroup;
     public type?: TutorialGroupRegistrationType;
-
-    constructor() {}
 }

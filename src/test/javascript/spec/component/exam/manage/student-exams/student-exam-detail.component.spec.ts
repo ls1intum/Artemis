@@ -3,16 +3,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgForm, NgModel, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -21,18 +17,9 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import { ArtemisTestModule } from '../../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
@@ -127,22 +114,8 @@ describe('StudentExamDetailComponent', () => {
         } as StudentExamWithGradeDTO;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), RouterModule.forRoot([])],
-            declarations: [
-                StudentExamDetailComponent,
-                MockComponent(DataTableComponent),
-                MockComponent(StudentExamWorkingTimeComponent),
-                MockComponent(WorkingTimeControlComponent),
-                MockDirective(NgForm),
-                MockDirective(NgModel),
-                MockPipe(ArtemisDatePipe),
-                MockTranslateValuesDirective,
-                MockPipe(ArtemisTranslatePipe),
-                StudentExamDetailTableRowComponent,
-            ],
+            imports: [ArtemisTestModule],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 MockProvider(StudentExamService, {
                     updateWorkingTime: () => {
                         return of(
@@ -161,8 +134,6 @@ describe('StudentExamDetailComponent', () => {
                         );
                     },
                 }),
-                MockProvider(AlertService),
-                MockDirective(TranslateDirective),
                 {
                     provide: ActivatedRoute,
                     useValue: {

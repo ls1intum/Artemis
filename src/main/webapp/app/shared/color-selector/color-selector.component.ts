@@ -1,5 +1,6 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2 } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2, inject } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { NgStyle } from '@angular/common';
 
 export interface Coordinates {
     left: number;
@@ -29,18 +30,17 @@ const DEFAULT_COLORS = [
     selector: 'jhi-color-selector',
     templateUrl: './color-selector.component.html',
     styleUrls: ['./color-selector.scss'],
+    imports: [NgStyle],
 })
 export class ColorSelectorComponent implements OnInit {
+    private elementRef = inject(ElementRef);
+    private renderer = inject(Renderer2);
+
     colorSelectorPosition: Coordinates;
     showColorSelector = false;
     height = 220;
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
-
-    constructor(
-        private elementRef: ElementRef,
-        private renderer: Renderer2,
-    ) {}
 
     /**
      * set default position on init

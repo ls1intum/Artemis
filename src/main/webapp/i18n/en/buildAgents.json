@@ -24,13 +24,22 @@
                 "buildAgentResumeFailed": "Failed to resume build agent.",
                 "buildAgentWithoutName": "Build agent name is required.",
                 "buildAgentsPaused": "Pause request sent to all build agents. The agents will not accept new build jobs and will gracefully finish the current build jobs or will cancel them after a configurable seconds.",
-                "buildAgentsResumed": "Resume request sent to all build agents. The agents will start accepting new build jobs."
+                "buildAgentsResumed": "Resume request sent to all build agents. The agents will start accepting new build jobs.",
+                "distributedDataCleared": "Distributed data cleared successfully.",
+                "distributedDataClearFailed": "Failed to clear distributed data."
             },
             "pause": "Pause",
             "resume": "Resume",
             "pauseAll": "Pause All Agents",
             "resumeAll": "Resume All Agents",
-            "pauseAllWarning": "You are about to pause all build agents. This will prevent them from processing any new build jobs.\nAre you sure you want to proceed?"
+            "pauseAllWarning": "You are about to pause all build agents. This will prevent them from processing any new build jobs.\nAre you sure you want to proceed?",
+            "clearDistributedData": {
+                "title": "Clear Distributed Data",
+                "descriptionFirst": "This action will clear all distributed data. This includes the buildJob queue, the processingJobs map, the dockerImageCleanUp map, the buildAgents map, and the buildJobResults queue.",
+                "descriptionSecond": "This action is irreversible and will lead in data loss. The system will take a few minutes to return to normal operation.",
+                "descriptionThird": "If you are sure you want to proceed, please type 'CLEAR DATA' in the input field below and click the 'Clear Data' button.",
+                "clearData": "Clear Data"
+            }
         }
     }
 }

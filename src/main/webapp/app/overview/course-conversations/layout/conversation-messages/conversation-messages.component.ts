@@ -5,24 +5,26 @@ import {
     ElementRef,
     EventEmitter,
     Input,
+    OnChanges,
     OnDestroy,
     OnInit,
     Output,
     QueryList,
-    Renderer2,
+    SimpleChanges,
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
     effect,
     inject,
     input,
+    output,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Subject, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
-import { DisplayPriority, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -36,6 +38,13 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { NgClass } from '@angular/common';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface PostGroup {
     author: User | undefined;
@@ -47,8 +56,22 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        InfiniteScrollDirective,
+        NgClass,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        MessageInlineInputComponent,
+        ArtemisTranslatePipe,
+    ],
 })
-export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    cdr = inject(ChangeDetectorRef);
+
     private ngUnsubscribe = new Subject<void>();
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
@@ -62,19 +85,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
-    @ViewChild('searchInput')
-    searchInput: ElementRef;
+    @ViewChild('searchInput') searchInput: ElementRef;
+    @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
+    @ViewChild('container') content: ElementRef;
 
-    @ViewChildren('postingThread')
-    messages: QueryList<PostingThreadComponent>;
-    @ViewChild('container')
-    content: ElementRef;
-    @Input()
-    course?: Course;
-    @Input()
-    searchbarCollapsed = false;
-    @Input()
-    contentHeightDev: boolean = false;
+    @Input() course?: Course;
+    @Input() searchbarCollapsed = false;
+    @Input() contentHeightDev = false;
+    showOnlyPinned = input<boolean>(false);
+    pinnedCount = output<number>();
+    pinnedPosts: Post[] = [];
+
     readonly focusPostId = input<number | undefined>(undefined);
     readonly openThreadOnFocus = input<boolean>(false);
 
@@ -93,6 +114,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     elementsAtScrollPosition: PostingThreadComponent[];
     newPost?: Post;
     posts: Post[] = [];
+    allPosts: Post[] = [];
     groupedPosts: PostGroup[] = [];
     totalNumberOfPosts = 0;
     page = 1;
@@ -106,20 +128,30 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
     focusOnPostId: number | undefined = undefined;
-    isOpenThreadOnFocus: boolean = false;
+    isOpenThreadOnFocus = false;
 
     private layoutService: LayoutService = inject(LayoutService);
-    private renderer = inject(Renderer2);
 
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        public cdr: ChangeDetectorRef,
-    ) {
+    constructor() {
         effect(() => {
             this.focusOnPostId = this.focusPostId();
             this.isOpenThreadOnFocus = this.openThreadOnFocus();
         });
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['showOnlyPinned'] && !changes['showOnlyPinned'].firstChange) {
+            this.setPosts();
+        }
+    }
+
+    applyPinnedMessageFilter(): void {
+        if (this.showOnlyPinned()) {
+            this.posts = this.pinnedPosts;
+        } else {
+            this.posts = [...this.allPosts];
+        }
+        this.cdr.detectChanges();
     }
 
     ngOnInit(): void {
@@ -128,13 +160,23 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToActiveConversation();
         this.setupScrollDebounce();
         this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
-
         this.layoutService
             .subscribeToLayoutChanges()
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe(() => {
                 this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
             });
+
+        this.metisService
+            .getPinnedPosts()
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((pinnedPosts) => {
+                this.pinnedPosts = pinnedPosts;
+                this.pinnedCount.emit(pinnedPosts.length);
+                this.cdr.detectChanges();
+            });
+
+        this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
         this.cdr.detectChanges();
     }
 
@@ -216,12 +258,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
+            this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe({
+                next: (pinnedPosts: Post[]) => {
+                    this.pinnedPosts = pinnedPosts;
+                    this.pinnedCount.emit(pinnedPosts.length);
+                },
+            });
         }
     }
 
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
-            this.setPosts(posts);
+            this.allPosts = posts;
+            this.setPosts();
             this.isFetchingPosts = false;
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -248,11 +297,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        // Separate pinned posts into their own group
-        const pinnedPosts = this.posts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
-        const unpinnedPosts = this.posts.filter((post) => post.displayPriority !== DisplayPriority.PINNED);
-
-        const sortedPosts = unpinnedPosts.sort((a, b) => {
+        const sortedPosts = this.posts.sort((a, b) => {
             const aDate = (a as any).creationDateDayjs;
             const bDate = (b as any).creationDateDayjs;
             return aDate?.valueOf() - bDate?.valueOf();
@@ -289,21 +334,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         groups.push(currentGroup);
 
-        // Only add pinned group if pinned posts exist
-        if (pinnedPosts.length > 0) {
-            groups.unshift({ author: undefined, posts: pinnedPosts });
-        }
-
         this.groupedPosts = groups;
         this.cdr.detectChanges();
     }
 
-    setPosts(posts: Post[]): void {
+    setPosts(): void {
         if (this.content) {
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
 
-        this.posts = posts
+        this.applyPinnedMessageFilter();
+
+        this.posts = this.posts
             .slice()
             .reverse()
             .map((post) => {
@@ -365,9 +407,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         return this.metisService.createEmptyPostForContext(conversation);
     }
 
-    postsGroupTrackByFn = (index: number, post: PostGroup): string => 'grp_' + post.posts.map((p) => p.id?.toString()).join('_');
+    postsGroupTrackByFn = (_index: number, post: PostGroup): string => 'grp_' + post.posts.map((p) => p.id?.toString()).join('_');
 
-    postsTrackByFn = (index: number, post: Post): string => 'post_' + post.id!;
+    postsTrackByFn = (_index: number, post: Post): string => 'post_' + post.id!;
 
     setPostForThread(post: Post) {
         this.openThread.emit(post);
