@@ -177,12 +177,12 @@ public class CourseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final LearningPathApi learningPathApi;
+    private final Optional<LearningPathApi> learningPathApi;
 
     private final ExamRepository examRepository;
 
@@ -195,9 +195,9 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
-            GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi, ConductAgreementService conductAgreementService,
+            GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
-            LearnerProfileApi learnerProfileApi) {
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -324,11 +324,11 @@ public class CourseResource {
         Course result = courseRepository.save(courseUpdate);
 
         // if learning paths got enabled, generate learning paths for students
-        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
+        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
-            learnerProfileApi.createCourseLearnerProfiles(courseWithCompetencies, students);
-            learningPathApi.generateLearningPaths(courseWithCompetencies);
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
+            learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null

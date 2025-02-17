@@ -1,3 +1,5 @@
+.. _repository-types-and-access:
+
 If you are a student, and want to know how to use the Artemis Version Control for checking out repositories locally, :ref:`checkout this guide.<local-vc>`
 
 The following tables lists the different types of repositories and gives an overview of the access rights different users have.
