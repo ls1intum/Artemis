@@ -17,6 +17,7 @@ class DataExportFailedMailTest extends AbstractMailContentTest {
         // Arrange:
         User recipient = createMinimalMailRecipientUser();
         recipient.setLogin("test_login");
+        String subject = createExpectedSubject(recipient, "email.dataExportFailedAdmin.title", "test_subject");
 
         User dataExporSubjecttUser = new User();
         dataExporSubjecttUser.setLogin("test_subject");
@@ -30,7 +31,7 @@ class DataExportFailedMailTest extends AbstractMailContentTest {
         mailService.sendDataExportFailedEmailToAdmin(recipient, dataExport, reason);
 
         // Assert:
-        String capturedContent = getGeneratedEmailTemplateText();
+        String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_login");
         assertThat(capturedContent).contains("test_subject");
         assertThat(capturedContent).contains("test_reason");

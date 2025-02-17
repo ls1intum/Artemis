@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.communication.notifications.service.mail;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+
+import java.util.Locale;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
@@ -36,7 +39,7 @@ class AbstractMailContentTest extends AbstractSpringIntegrationIndependentTest {
     private SpringTemplateEngine templateEngine;
 
     @Autowired
-    private MessageSource messageSource;
+    protected MessageSource messageSource;
 
     @Autowired
     private MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
@@ -58,12 +61,18 @@ class AbstractMailContentTest extends AbstractSpringIntegrationIndependentTest {
         return recipient;
     }
 
+    protected String createExpectedSubject(User recipient, String titleMessageKey, Object... args) {
+        return messageSource.getMessage(titleMessageKey, args, Locale.forLanguageTag(recipient.getLangKey()));
+    }
+
     /**
      * Retrieve the content of the interpreted thymeleaf template, which represents the mail content.
+     *
+     * @param expectedSubject The expected subject of the mail
      */
-    protected String getGeneratedEmailTemplateText() {
+    protected String getGeneratedEmailTemplateText(String expectedSubject) {
         ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mailSendingService).sendEmail(any(), any(String.class), contentCaptor.capture(), anyBoolean(), anyBoolean());
+        verify(mailSendingService).sendEmail(any(), eq(expectedSubject), contentCaptor.capture(), anyBoolean(), anyBoolean());
         return contentCaptor.getValue();
     }
 }

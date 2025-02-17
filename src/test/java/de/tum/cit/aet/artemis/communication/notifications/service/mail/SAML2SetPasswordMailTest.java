@@ -17,12 +17,13 @@ class SAML2SetPasswordMailTest extends AbstractMailContentTest {
         User recipient = createMinimalMailRecipientUser();
         recipient.setLogin("test_login");
         recipient.setResetKey("test_reset_key");
+        String subject = createExpectedSubject(recipient, "email.saml.title");
 
         // Act:
         mailService.sendSAML2SetPasswordMail(recipient);
 
         // Assert:
-        String capturedContent = getGeneratedEmailTemplateText();
+        String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_login");
         assertThat(capturedContent).contains("test_reset_key");
     }

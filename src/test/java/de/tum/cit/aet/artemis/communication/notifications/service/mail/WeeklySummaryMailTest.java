@@ -58,7 +58,7 @@ class WeeklySummaryMailTest extends AbstractMailContentTest {
         mailService.sendWeeklySummaryEmail(recipient, exercises);
 
         // Assert:
-        String capturedContent = getGeneratedEmailTemplateText();
+        String capturedContent = getGeneratedEmailTemplateText("Weekly Summary");
         for (Exercise e : exercises) {
             String dueDateFormat = timeService.convertToHumanReadableDate(e.getDueDate());
             String releaseDateFormat = timeService.convertToHumanReadableDate(e.getReleaseDate());

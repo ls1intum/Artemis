@@ -17,12 +17,13 @@ class ActivationMailTest extends AbstractMailContentTest {
         User recipient = createMinimalMailRecipientUser();
         recipient.setLogin("test_student");
         recipient.setActivationKey("test_key");
+        String subject = createExpectedSubject(recipient, "email.activation.title");
 
         // Act:
         mailService.sendActivationEmail(recipient);
 
         // Assert:
-        String capturedContent = getGeneratedEmailTemplateText();
+        String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_student");
         assertThat(capturedContent).contains("test_key");
     }

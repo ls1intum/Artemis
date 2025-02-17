@@ -20,13 +20,15 @@ class DataExportSuccessfulMailTest extends AbstractMailContentTest {
         User recipient = createMinimalMailRecipientUser();
         recipient.setLogin("test_login");
         recipient.setResetKey("test_reset_key");
+        String subject = createExpectedSubject(recipient, "email.successfulDataExportCreationsAdmin.title");
+
         Set<DataExport> dataExports = createThreeDataExportsWithThreeDifferentUsers();
 
         // Act:
         mailService.sendSuccessfulDataExportsEmailToAdmin(recipient, dataExports);
 
         // Assert:
-        String capturedContent = getGeneratedEmailTemplateText();
+        String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_subject_1");
         assertThat(capturedContent).contains("test_subject_2");
         assertThat(capturedContent).contains("test_subject_3");
