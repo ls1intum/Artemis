@@ -22,6 +22,7 @@ import { NgClass } from '@angular/common';
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
+    threadContainer = viewChild<ElementRef<HTMLDivElement>>('threadContainer');
 
     @Input()
     readOnlyMode = false;
@@ -66,6 +67,9 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     }
 
     toggleExpand(): void {
+        if (this.threadContainer()) {
+            this.threadContainer()!.nativeElement.style.width = '';
+        }
         this.isExpanded = !this.isExpanded;
         this.expandTooltip()?.close();
     }
