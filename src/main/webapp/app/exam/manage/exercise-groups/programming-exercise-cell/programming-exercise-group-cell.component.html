@@ -1,100 +1,100 @@
-@if (programmingExercise) {
-    @if (displayShortName) {
+@if (exercise()) {
+    @if (displayShortName()) {
         <div>
-            {{ programmingExercise.shortName || '' }}
+            {{ exercise().shortName || '' }}
         </div>
     }
-    @if (displayRepositoryUri) {
+    @if (displayRepositoryUri()) {
         <div>
             <div>
-                @if (programmingExercise.templateParticipation?.repositoryUri) {
+                @if (exercise().templateParticipation?.repositoryUri) {
                     <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                             the links/clone-buttons are disabled--->
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
+                            <a href="{{ exercise().templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload" /> Template </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TEMPLATE)"> <fa-icon [icon]="faDownload" /> Template </a>
                     }
                 }
-                @if (programmingExercise.templateParticipation?.results?.length) {
+                @if (exercise().templateParticipation?.results?.length) {
                     <jhi-programming-exercise-instructor-status
                         [participationType]="participationType.TEMPLATE"
-                        [participation]="programmingExercise.templateParticipation!"
-                        [exercise]="programmingExercise"
+                        [participation]="exercise().templateParticipation!"
+                        [exercise]="exercise()"
                     />
                 }
             </div>
             <div>
-                @if (programmingExercise.solutionParticipation?.repositoryUri) {
+                @if (exercise().solutionParticipation?.repositoryUri) {
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
+                            <a href="{{ exercise().solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload" /> Solution </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.SOLUTION)"> <fa-icon [icon]="faDownload" /> Solution </a>
                     }
                 }
-                @if (programmingExercise.solutionParticipation?.results?.length) {
+                @if (exercise().solutionParticipation?.results?.length) {
                     <jhi-programming-exercise-instructor-status
                         [participationType]="participationType.SOLUTION"
-                        [participation]="programmingExercise.solutionParticipation!"
-                        [exercise]="programmingExercise"
+                        [participation]="exercise().solutionParticipation!"
+                        [exercise]="exercise()"
                     />
                 }
             </div>
             <div>
-                @if (programmingExercise.testRepositoryUri) {
+                @if (exercise().testRepositoryUri) {
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
+                            <a href="{{ exercise().testRepositoryUri }}" target="_blank">Test</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload" /> Test </a>
+                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TESTS)"> <fa-icon [icon]="faDownload" /> Test </a>
                     }
                 }
             </div>
         </div>
     }
-    @if (displayTemplateUrls) {
+    @if (displayTemplateUrls()) {
         <div>
-            @if (programmingExercise.templateParticipation?.buildPlanId) {
+            @if (exercise().templateParticipation?.buildPlanId) {
                 <span>
                     @if (!localVCEnabled) {
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+                        <a target="_blank" rel="noreferrer" href="{{ exercise().templateParticipation!.buildPlanUrl }}">Template</a>
                     } @else {
-                        {{ programmingExercise.templateParticipation!.buildPlanId }}
+                        {{ exercise().templateParticipation!.buildPlanId }}
                     }
                 </span>
             }
             <br />
-            @if (programmingExercise.solutionParticipation?.buildPlanId) {
+            @if (exercise().solutionParticipation?.buildPlanId) {
                 <span>
                     @if (!localVCEnabled) {
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+                        <a target="_blank" rel="noreferrer" href="{{ exercise().solutionParticipation!.buildPlanUrl }}">Solution</a>
                     } @else {
-                        {{ programmingExercise.solutionParticipation!.buildPlanId }}
+                        {{ exercise().solutionParticipation!.buildPlanId }}
                     }
                 </span>
             }
             <br />
         </div>
     }
-    @if (displayEditorModus) {
+    @if (displayEditorModus()) {
         <div>
             <div class="d-flex justify-content-between">
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
-                <span [jhiTranslate]="programmingExercise.allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                <span [jhiTranslate]="exercise().allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
             <div class="d-flex justify-content-between">
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
-                <span [jhiTranslate]="programmingExercise.allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                <span [jhiTranslate]="exercise().allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
             @if (onlineIdeEnabled) {
                 <div class="d-flex justify-content-between">
                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
-                    <span [jhiTranslate]="programmingExercise.allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                    <span [jhiTranslate]="exercise().allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                 </div>
             }
         </div>

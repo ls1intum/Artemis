@@ -3,8 +3,8 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
+import { repositorySubRoutes } from 'app/exercises/programming/shared/routes/programming-exercise-repository.route';
 
 export const routes: Routes = [
     {
@@ -119,102 +119,11 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/repository/:repositoryType',
-        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        children: repositorySubRoutes,
     },
     {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId',
-        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/commit-history',
-        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId/commit-history',
-        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
-        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId/vcs-access-log',
-        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/repository/:repositoryType/commit-history/:commitHash',
-        loadComponent: () => import('app/localvc/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/participations/:participationId/repository',
-        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
-        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/participations/:participationId/repository/vcs-access-log',
-        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
-        loadComponent: () => import('app/localvc/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.repository.title',
-        },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        path: 'programming-exercises/:exerciseId/repository/:repositoryType/:repositoryId',
+        children: repositorySubRoutes,
     },
     {
         path: 'programming-exercises/:exerciseId/submissions/:submissionId',
