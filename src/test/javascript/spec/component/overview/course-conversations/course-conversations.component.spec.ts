@@ -273,23 +273,9 @@ examples.forEach((activeConversation) => {
         });
 
         it('should update thread in post', fakeAsync(() => {
-            // Ensure the thread is rendered
-            component.postInThread = { id: 1, conversation: { id: 1 } } as Post;
             fixture.detectChanges();
-
-            // Get the sidebar component instance
-            const sidebarDebugEl = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
-            if (sidebarDebugEl) {
-                const sidebarComponent = sidebarDebugEl.componentInstance as ConversationThreadSidebarComponent;
-                // Override the threadContainer signal manually
-                // (Using bracket notation to bypass read-only restrictions)
-                sidebarComponent['threadContainer'] = signal(new ElementRef(document.createElement('div')));
-            }
-
-            // Now update the post content
             component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
             fixture.detectChanges();
-
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
             tick();
