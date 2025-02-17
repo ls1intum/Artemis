@@ -32,7 +32,7 @@ test.describe('Text exercise management', { tag: '@fast' }, () => {
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
-        await textExerciseCreation.typeTitle(exerciseTitle);
+        await textExerciseCreation.setTitle(exerciseTitle);
         await textExerciseCreation.setReleaseDate(dayjs());
         await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
