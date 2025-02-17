@@ -6,6 +6,8 @@ import { MockComponent } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 
 describe('RemoveAuxiliaryRepositoryButton', () => {
     let comp: RemoveAuxiliaryRepositoryButtonComponent;
@@ -14,7 +16,7 @@ describe('RemoveAuxiliaryRepositoryButton', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
-            providers: [],
+            providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
             .compileComponents()
             .then(() => {
