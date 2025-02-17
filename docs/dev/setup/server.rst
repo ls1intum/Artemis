@@ -44,6 +44,7 @@ You can override the following configuration options in this file.
            user: <username>    # e.g. ga12abc
            password: <password>
            token: <token>                 # VCS API token giving Artemis full Admin access.
+           repository-authentication-mechanisms: password,token,ssh # the order of authentication mechanisms shown to the user in the code button
        continuous-integration:
            url: https://jenkins.ase.in.tum.de
            user: <username>    # e.g. ga12abc
@@ -215,7 +216,7 @@ The Artemis server should startup by running the main class
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling
 
 If you use IntelliJ (Community or Ultimate) you can set the active
 profiles by
@@ -223,7 +224,7 @@ profiles by
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
-  ``-Dspring.profiles.active=dev,jenkins,gitlab,artemis,scheduling``
+  ``-Dspring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""
@@ -244,4 +245,4 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 .. code:: bash
 
-   ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling'
+   ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling'
