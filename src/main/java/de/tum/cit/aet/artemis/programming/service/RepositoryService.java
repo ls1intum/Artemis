@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -153,12 +151,13 @@ public class RepositoryService {
      * This method filters out all non-file type entries and reads the content of each file.
      * Note: If an I/O error occurs reading any file, this exception is caught internally and logged.
      *
-     * @param repository The repository from which files are to be fetched.
+     * @param repository   The repository from which files are to be fetched.
+     * @param omitBinaries omit binary files for brevity and reducing size
      * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
      *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
      */
-    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
-        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
+        var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
@@ -170,6 +169,10 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
+        return getFilesContentFromWorkingCopy(repository, false);
     }
 
     /**
@@ -245,7 +248,7 @@ public class RepositoryService {
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
-        InputStream inputStream = new FileInputStream(file.get());
+        InputStream inputStream = Files.newInputStream(file.get().toPath());
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
@@ -332,7 +335,7 @@ public class RepositoryService {
      */
     private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
-        Path unknownInputPath = Paths.get(unescapedPath).normalize();
+        Path unknownInputPath = Path.of(unescapedPath).normalize();
         Path absoluteRepositoryPath = repository.getLocalPath().normalize().toAbsolutePath();
         Path absoluteInputPath = absoluteRepositoryPath.resolve(unknownInputPath).normalize();
         if (!absoluteInputPath.startsWith(absoluteRepositoryPath)) {

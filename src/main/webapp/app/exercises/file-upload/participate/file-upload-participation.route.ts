@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
@@ -17,9 +16,3 @@ export const routes: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisFileUploadParticipationRoutingModule {}

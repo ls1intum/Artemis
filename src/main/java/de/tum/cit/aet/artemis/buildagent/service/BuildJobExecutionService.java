@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -584,7 +583,7 @@ public class BuildJobExecutionService {
     private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            Path repositoryPathForDeletion = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            Path repositoryPathForDeletion = commitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";

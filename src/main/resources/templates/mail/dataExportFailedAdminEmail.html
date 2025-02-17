@@ -13,7 +13,7 @@
     <span class="bold-text" th:text="${user.login}">Username</span>
     <span th:text="#{email.dataExportFailedAdmin.textFailed}">failed</span>
 
-    <p th:text="#{email.dataExportFailedAdmin.reason(${reason.getMessage()})}">The error message </p>
+    <p th:text="#{email.dataExportFailedAdmin.reason(${reason})}">The error message </p>
     <p
         th:text="#{email.dataExportFailedAdmin.actionItemList}">
     </p>
