@@ -43,7 +43,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private guidedTourService = inject(GuidedTourService);
     private teamService = inject(TeamService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
 
@@ -78,7 +78,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         if (this.quizExercisesChannels) {
-            this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
+            this.quizExercisesChannels.forEach((channel) => this.websocketService.unsubscribe(channel));
         }
         this.courseService.disableCourseOverviewBackground();
     }

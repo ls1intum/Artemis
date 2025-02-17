@@ -391,6 +391,7 @@
                         "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
                         "requiredValidationErrorDescription": "The channel description is required.",
                         "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "dueDate": "The exercise due date has not passed yet. Keep in mind that this means the result is not final, and the affected students may change in the future. Additionally, the feedback might not be visible to students yet if there are hidden test cases in the exercise. Please verify if you still intend to create a feedback channel!",
                         "confirmationModal": {
                             "header": "Confirm Channel Creation",
                             "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
@@ -741,6 +742,11 @@
                     "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
                     "addEnvVar": "Add Environment Variable",
                     "removeEnvVar": "Remove"
+                }
+            },
+            "artemisIntelligence": {
+                "consistencyCheckAlert": {
+                    "title": "Consistency Check Result"
                 }
             }
         },

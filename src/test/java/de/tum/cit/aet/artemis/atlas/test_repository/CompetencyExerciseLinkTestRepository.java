@@ -12,6 +12,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 public interface CompetencyExerciseLinkTestRepository extends CompetencyExerciseLinkRepository {
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteAllByExerciseId(long exerciseId);
 }

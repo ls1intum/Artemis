@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
@@ -17,7 +16,6 @@ interface DeletionServiceInterface {
     template: '',
 })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
-    protected translateService = inject(TranslateService);
     protected eventManager = inject(EventManager);
     private courseService = inject(CourseManagementService);
     private route = inject(ActivatedRoute);

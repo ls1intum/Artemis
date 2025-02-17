@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 
 @Component({
     template: '',
@@ -10,16 +10,16 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
 
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
-    @Input() item: TreeviewItem<string>;
+    @Input() item: TreeViewItem<string>;
     @Input() hasError = false;
     @Input() hasUnsavedChanges = false;
     @Input() isBeingRenamed = false;
 
-    @Output() onNodeSelect = new EventEmitter<TreeviewItem<string>>();
-    @Output() onSetRenamingNode = new EventEmitter<TreeviewItem<string>>();
+    @Output() onNodeSelect = new EventEmitter<TreeViewItem<string>>();
+    @Output() onSetRenamingNode = new EventEmitter<TreeViewItem<string>>();
     @Output() onClearRenamingNode = new EventEmitter<void>();
-    @Output() onRenameNode = new EventEmitter<{ item: TreeviewItem<string>; newFileName: string }>();
-    @Output() onDeleteNode = new EventEmitter<TreeviewItem<string>>();
+    @Output() onRenameNode = new EventEmitter<{ item: TreeViewItem<string>; newFileName: string }>();
+    @Output() onDeleteNode = new EventEmitter<TreeViewItem<string>>();
 
     /**
      * Check if the node is being renamed now, if so, focus the input when the view is rendered.

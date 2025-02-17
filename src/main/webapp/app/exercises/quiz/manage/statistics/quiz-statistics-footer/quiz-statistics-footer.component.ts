@@ -36,7 +36,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizExerciseService = inject(QuizExerciseService);
     private quizStatisticUtil = inject(QuizStatisticUtil);
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
 
     @Input() isQuizPointStatistic: boolean;
@@ -119,7 +119,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**

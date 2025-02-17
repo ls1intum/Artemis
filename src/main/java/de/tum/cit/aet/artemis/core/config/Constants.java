@@ -243,9 +243,7 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
-    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "useVersionControlAccessToken";
-
-    public static final String INFO_SHOW_CLONE_URL_WITHOUT_TOKEN = "showCloneUrlWithoutToken";
+    public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
@@ -340,6 +338,11 @@ public final class Constants {
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_ATHENA = "athena";
+
+    /**
+     * The name of the Spring profile used for Atlas functionality.
+     */
+    public static final String PROFILE_ATLAS = "atlas";
 
     /**
      * The name of the Spring profile used for Athena functionality.
