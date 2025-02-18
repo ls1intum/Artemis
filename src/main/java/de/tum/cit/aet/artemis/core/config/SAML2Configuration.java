@@ -20,6 +20,7 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -27,10 +28,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.saml2.core.Saml2X509Credential;
+import org.springframework.security.saml2.provider.service.metadata.OpenSamlMetadataResolver;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
+import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
+import org.springframework.security.saml2.provider.service.web.RelyingPartyRegistrationResolver;
+import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -65,82 +70,17 @@ public class SAML2Configuration {
      * @return the RelyingPartyRegistrationRepository used by SAML2 configuration.
      */
     @Bean
-    RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
-        final List<RelyingPartyRegistration> relyingPartyRegistrations = new ArrayList<>();
-        for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
-            // @formatter:off
-            relyingPartyRegistrations.add(RelyingPartyRegistrations
-                .fromMetadataLocation(config.getMetadata())
-                .registrationId(config.getRegistrationId())
-                .entityId(config.getEntityId())
-                .decryptionX509Credentials(credentialsSink -> this.addDecryptionInformation(credentialsSink, config))
-                .signingX509Credentials(credentialsSink -> this.addSigningInformation(credentialsSink, config))
-                .build());
-            // @formatter:on
-        }
-
-        return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
+    RelyingPartyRegistrationResolver relyingPartyRegistrationResolver(
+        RelyingPartyRegistrationRepository registrations) {
+        return new DefaultRelyingPartyRegistrationResolver(registrations);
     }
 
-    private void addDecryptionInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
-        if (!this.checkFiles(config)) {
-            return;
-        }
-
-        try {
-            Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
-            credentialsSink.add(credentials);
-        }
-        catch (IOException | CertificateException e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    private void addSigningInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
-        if (!this.checkFiles(config)) {
-            return;
-        }
-
-        try {
-            Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
-            credentialsSink.add(credentials);
-        }
-        catch (IOException | CertificateException e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    private boolean checkFiles(SAML2Properties.RelyingPartyProperties config) {
-        if (config.getCertFile() == null || config.getKeyFile() == null || config.getCertFile().isBlank() || config.getKeyFile().isBlank()) {
-            log.debug("No Config for SAML2");
-            return false;
-        }
-
-        Path keyFile = Path.of(config.getKeyFile());
-        Path certFile = Path.of(config.getCertFile());
-
-        if (!Files.exists(keyFile) || !Files.exists(certFile)) {
-            log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
-            return false;
-        }
-
-        return true;
-    }
-
-    private static X509Certificate readPublicCert(String filepath) throws IOException, CertificateException {
-        try (InputStream inStream = Files.newInputStream(Path.of(filepath))) {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            return (X509Certificate) cf.generateCertificate(inStream);
-        }
-    }
-
-    private RSAPrivateKey readPrivateKey(String filepath) throws IOException {
-        // Read PKCS#8 File!
-        try (var keyReader = Files.newBufferedReader(Path.of(filepath), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
-            return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
-        }
+    @Bean
+    FilterRegistrationBean<Saml2MetadataFilter> metadata(RelyingPartyRegistrationResolver registrations) {
+        Saml2MetadataFilter metadata = new Saml2MetadataFilter(registrations, new OpenSamlMetadataResolver());
+        FilterRegistrationBean<Saml2MetadataFilter> filter = new FilterRegistrationBean<>(metadata);
+        filter.setOrder(-101);
+        return filter;
     }
 
     /**
