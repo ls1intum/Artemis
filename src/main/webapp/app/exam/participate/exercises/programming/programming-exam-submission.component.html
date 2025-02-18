@@ -1,36 +1,36 @@
 <h3 class="text-align-left fw-normal">
     <span>
-        {{ exercise.exerciseGroup?.title }}
+        {{ exercise().exerciseGroup?.title }}
     </span>
     <span
-        [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-        [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+        [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+        [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
     >
     </span>
-    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+    @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
     }
 </h3>
 <hr />
 <!-- ngIf online-code-editor -->
-@if (exercise.allowOnlineEditor) {
+@if (exercise().allowOnlineEditor) {
     <div>
         <jhi-code-editor-container
             [editable]="!repositoryIsLocked"
-            [participation]="studentParticipation"
+            [participation]="studentParticipation()"
             [showEditorInstructions]="showEditorInstructions"
-            [course]="getCourseFromExercise(exercise)"
+            [course]="getCourseFromExercise(exercise())"
             [disableAutoSave]="true"
             (onCommitStateChange)="onCommitStateChange($event)"
             (onFileChanged)="onFileChanged()"
         >
             <div submissionPolicy class="ps-2">
-                <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" />
+                <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount" />
             </div>
             <div editorTitleActions>
-                @if (exercise.allowOfflineIde) {
+                @if (exercise().allowOfflineIde) {
                     <div [style.align-self]="'flex-start'">
-                        <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise" [courseId]="courseId" />
+                        <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise()" [courseId]="courseId()" />
                     </div>
                 }
             </div>
@@ -38,25 +38,30 @@
                 @if (repositoryIsLocked) {
                     <jhi-code-editor-repository-is-locked class="me-3" />
                 }
-                @if (studentParticipation) {
+                @if (studentParticipation()) {
                     <jhi-updating-result
-                        [exercise]="exercise"
+                        [exercise]="exercise()"
                         [showUngradedResults]="true"
                         [showBadge]="true"
-                        [participation]="studentParticipation"
+                        [participation]="studentParticipation()"
                         [personalParticipation]="true"
                         [showProgressBar]="true"
                         [showProgressBarBorder]="true"
                         class="me-2"
                     />
                 }
-                <jhi-programming-exercise-student-trigger-build-button class="me-2" [exercise]="exercise" [participation]="studentParticipation" [btnSize]="ButtonSize.MEDIUM" />
+                <jhi-programming-exercise-student-trigger-build-button
+                    class="me-2"
+                    [exercise]="exercise()"
+                    [participation]="studentParticipation()"
+                    [btnSize]="ButtonSize.MEDIUM"
+                />
             </div>
             <jhi-programming-exercise-instructions
                 editorSidebar
                 (onNoInstructionsAvailable)="showEditorInstructions = false"
-                [exercise]="exercise"
-                [participation]="studentParticipation"
+                [exercise]="exercise()"
+                [participation]="studentParticipation()"
                 [personalParticipation]="true"
                 class="instructions-wrapper__content card-body p-0"
             />
@@ -64,31 +69,31 @@
     </div>
 }
 <!-- ngIf Offline IDE code button start -->
-@if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
+@if (!exercise().allowOnlineEditor && exercise().allowOfflineIde) {
     <div>
         <div class="d-flex my-3 ms-1 align-items-center justify-content-between">
             <div class="d-flex gap-3 align-items-center">
-                <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
-                <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
+                <jhi-exercise-details-student-actions [exercise]="exercise()" [courseId]="courseId()" [examMode]="true" />
+                <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount" class="flex-grow-1" />
             </div>
             <div class="d-flex gap-3 align-items-center">
                 @if (repositoryIsLocked) {
                     <jhi-code-editor-repository-is-locked class="me-1" />
                 }
-                @if (studentParticipation) {
+                @if (studentParticipation()) {
                     <jhi-updating-result
-                        [exercise]="exercise"
+                        [exercise]="exercise()"
                         [showUngradedResults]="true"
                         [showBadge]="true"
-                        [participation]="studentParticipation"
+                        [participation]="studentParticipation()"
                         [personalParticipation]="true"
                         class="me-1"
                     />
                 }
             </div>
         </div>
-        @if (exercise) {
-            <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="studentParticipation" [personalParticipation]="true" />
+        @if (exercise()) {
+            <jhi-programming-exercise-instructions [exercise]="exercise()" [participation]="studentParticipation()" [personalParticipation]="true" />
         }
     </div>
 }
