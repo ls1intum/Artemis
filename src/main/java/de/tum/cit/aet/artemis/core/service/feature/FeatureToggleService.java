@@ -157,12 +157,10 @@ public class FeatureToggleService {
     public List<AbstractFeature> enabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(entry -> Boolean.TRUE.equals(entry.getValue())) // Nur aktivierte Features
-                        .map(entry -> {
-                            AbstractFeature feature = getFeatureByName(entry.getKey());
-                            return feature != null ? feature : null;
-                        }).filter(feature -> feature != null) // Null-Werte vermeiden
-                        .toList();
+                return features.entrySet().stream().filter(entry -> Boolean.TRUE.equals(entry.getValue())).map(entry -> {
+                    AbstractFeature feature = getFeatureByName(entry.getKey());
+                    return feature != null ? feature : null;
+                }).filter(feature -> feature != null).toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -179,12 +177,10 @@ public class FeatureToggleService {
     public List<AbstractFeature> disabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(entry -> Boolean.FALSE.equals(entry.getValue())) // Nur deaktivierte Features
-                        .map(entry -> {
-                            AbstractFeature feature = getFeatureByName(entry.getKey());
-                            return feature != null ? feature : null;
-                        }).filter(feature -> feature != null) // Null-Werte vermeiden
-                        .toList();
+                return features.entrySet().stream().filter(entry -> Boolean.FALSE.equals(entry.getValue())).map(entry -> {
+                    AbstractFeature feature = getFeatureByName(entry.getKey());
+                    return feature != null ? feature : null;
+                }).filter(feature -> feature != null).toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {

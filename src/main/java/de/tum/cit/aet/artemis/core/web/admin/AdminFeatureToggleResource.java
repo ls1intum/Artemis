@@ -50,4 +50,9 @@ public class AdminFeatureToggleResource {
         return new ResponseEntity<>(CommunicationFeature.values(), HttpStatus.OK);
     }
 
+    @GetMapping("communication-feature")
+    public ResponseEntity<CommunicationFeature[]> getAllConfigurableCommunicationFeatures() {
+        return new ResponseEntity<>(CommunicationFeature.getConfigurableFeatures(), HttpStatus.OK);
+    }
+
 }
