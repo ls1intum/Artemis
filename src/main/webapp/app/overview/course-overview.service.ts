@@ -352,7 +352,7 @@ export class CourseOverviewService {
     mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
-            id: (exam.testExam ? exam.id + '/test-exam/' + 'start' : exam.id) ?? '',
+            id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,

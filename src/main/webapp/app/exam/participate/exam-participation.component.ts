@@ -50,7 +50,6 @@ import { ExamParticipationCoverComponent } from './exam-cover/exam-participation
 import { AsyncPipe, NgClass } from '@angular/common';
 import { ExamBarComponent } from './exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from './exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { QuizExamSubmissionComponent } from './exercises/quiz/quiz-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from './exercises/file-upload/file-upload-exam-submission.component';
 import { TextExamSubmissionComponent } from './exercises/text/text-exam-submission.component';
@@ -74,7 +73,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
-        ExamExerciseOverviewPageComponent,
         QuizExamSubmissionComponent,
         FileUploadExamSubmissionComponent,
         TextExamSubmissionComponent,
@@ -221,12 +219,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
-            if (params['studentExamId']) {
-                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
+            const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
+            if (studentExamId) {
                 this.testExam = true;
-                if (params['studentExamId'] !== 'start') {
-                    this.studentExamId = parseInt(params['studentExamId'], 10);
-                }
+                this.studentExamId = parseInt(studentExamId, 10);
             }
             this.loadingExam = true;
             if (this.testRunId) {
