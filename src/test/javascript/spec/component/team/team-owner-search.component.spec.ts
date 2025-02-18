@@ -5,6 +5,8 @@ import { MockCourseManagementService } from '../../helpers/mocks/service/mock-co
 import { User } from 'app/core/user/user.model';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Owner Search Component', () => {
     let comp: TeamOwnerSearchComponent;
@@ -15,8 +17,10 @@ describe('Team Owner Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }],
+            providers: [
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TeamOwnerSearchComponent);
