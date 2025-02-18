@@ -453,8 +453,9 @@ public class SingleUserNotificationService {
                 .forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
-        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
+        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved) && !userInvolved.getId().equals(author.getId())).forEach(userInvolved -> {
+            notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv));
+        });
     }
 
     /**
