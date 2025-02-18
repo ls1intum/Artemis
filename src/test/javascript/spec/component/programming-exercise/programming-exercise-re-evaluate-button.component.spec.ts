@@ -7,10 +7,10 @@ import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/prog
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Re-Evaluate Button Component', () => {
     const course = { id: 123 } as Course;
@@ -29,8 +29,8 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 MockProvider(AlertService),
-                MockProvider(FeatureToggleService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         }).compileComponents();
 
