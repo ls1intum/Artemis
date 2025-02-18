@@ -23,6 +23,7 @@ export type ChannelGroupCategory =
     | 'groupChats'
     | 'directMessages'
     | 'examChannels'
+    | 'feedbackDiscussion'
     | 'savedPosts'
     | 'hiddenChannels';
 export type CollapseState = {

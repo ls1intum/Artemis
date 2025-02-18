@@ -57,7 +57,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 
@@ -82,14 +82,14 @@ describe('FeedbackDetailChannelModalComponent', () => {
                 isHidden: undefined,
                 isMember: undefined,
                 isMuted: undefined,
-                isPublic: true,
+                isPublic: false,
                 lastMessageDate: undefined,
                 lastReadDate: undefined,
                 name: 'channel',
                 numberOfMembers: undefined,
                 subType: undefined,
                 subTypeReferenceId: undefined,
-                topic: undefined,
+                topic: 'FeedbackDiscussion',
                 tutorialGroupId: undefined,
                 tutorialGroupTitle: undefined,
                 type: 'channel',
@@ -106,7 +106,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: false,
             isAnnouncementChannel: false,
         });
 
@@ -132,7 +132,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 

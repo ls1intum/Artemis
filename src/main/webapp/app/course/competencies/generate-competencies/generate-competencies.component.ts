@@ -7,21 +7,20 @@ import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 
 export type CompetencyFormControlsWithViewed = {
@@ -49,7 +48,15 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, FormsModule, ReactiveFormsModule, CourseDescriptionFormComponent, CompetencyRecommendationDetailComponent],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        ButtonComponent,
+        DocumentationButtonComponent,
+        CourseDescriptionFormComponent,
+        TranslateDirective,
+        CompetencyRecommendationDetailComponent,
+    ],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);

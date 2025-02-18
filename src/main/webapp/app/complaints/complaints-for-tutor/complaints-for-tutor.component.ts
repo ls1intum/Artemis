@@ -15,16 +15,16 @@ import { Course } from 'app/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, ArtemisTranslatePipe, TextareaCounterComponent],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, ArtemisDatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     private alertService = inject(AlertService);

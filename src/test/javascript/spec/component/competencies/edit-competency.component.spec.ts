@@ -15,6 +15,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
@@ -56,6 +57,11 @@ describe('EditCompetencyComponent', () => {
             ],
             schemas: [],
         }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
         editCompetencyComponent = editCompetencyComponentFixture.componentInstance;
     });
