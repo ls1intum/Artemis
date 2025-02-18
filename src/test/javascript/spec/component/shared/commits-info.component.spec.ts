@@ -14,6 +14,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('CommitsInfoComponent', () => {
     let component: CommitsInfoComponent;
@@ -69,6 +72,8 @@ describe('CommitsInfoComponent', () => {
                 MockProvider(ProgrammingExerciseParticipationService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         });
         fixture = TestBed.createComponent(CommitsInfoComponent);
