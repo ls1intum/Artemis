@@ -130,8 +130,7 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [MockProvider(SortService), MockProvider(ActivatedRoute)],
+            providers: [MockProvider(SortService), MockProvider(ActivatedRoute), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
