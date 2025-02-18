@@ -144,4 +144,8 @@ export class PlagiarismCasesService extends BaseApiHttpService {
         const exerciseId = exercise!.id;
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
     }
+
+    public informInstructorAboutPostReply(postId: number): Promise<void> {
+        return this.get<void>(`posts/${postId}/inform-instructor`);
+    }
 }

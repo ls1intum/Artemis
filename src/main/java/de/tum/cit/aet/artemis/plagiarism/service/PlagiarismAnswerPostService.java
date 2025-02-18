@@ -39,17 +39,13 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final PlagiarismPostService plagiarismPostService;
-
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
-            PlagiarismPostService plagiarismPostService) {
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.plagiarismPostService = plagiarismPostService;
     }
 
     /**
@@ -89,8 +85,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course, null);
-
-        plagiarismPostService.informInstructorAboutPostReply(savedAnswerPost.getId());
 
         return savedAnswerPost;
     }

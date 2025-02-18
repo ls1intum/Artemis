@@ -329,6 +329,12 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testInformInstructorAboutPostReply_asStudent() throws Exception {
+        request.get("/api/posts/" + existingPosts.getFirst().getId() + "/inform-instructor", HttpStatus.OK, Void.class);
+    }
+
     // HELPER METHODS
 
     private Post createPostWithoutContext() {
