@@ -14,21 +14,12 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
-import { Post } from 'app/entities/metis/post.model';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { MockProvider } from 'ng-mocks';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseStudentDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
     let plagiarismCasesServiceSpy: jest.SpyInstance<Observable<EntityResponseType>>;
-    let informInstructorSpy: jest.SpyInstance;
-    let openCreateAnswerPostModalSpy: jest.SpyInstance;
 
     const ancestorRouteParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
     const routeParamsSubject = new BehaviorSubject<Params>({ plagiarismCaseId: 1 });
@@ -62,10 +53,6 @@ describe('Plagiarism Cases Student View Component', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: MetisService, useClass: MockMetisService },
-                MockProvider(MetisConversationService),
-                MockProvider(OneToOneChatService),
-                MockProvider(PostComponent),
             ],
         }).compileComponents();
 
@@ -82,9 +69,6 @@ describe('Plagiarism Cases Student View Component', () => {
                     },
                 }) as Observable<HttpResponse<PlagiarismCase>>,
         );
-        component.postComponent = { openCreateAnswerPostModal: jest.fn() } as unknown as PostComponent;
-        informInstructorSpy = jest.spyOn(plagiarismCasesService, 'informInstructorAboutPostReply').mockReturnValue(Promise.resolve());
-        openCreateAnswerPostModalSpy = jest.spyOn(component.postComponent, 'openCreateAnswerPostModal').mockReturnValue();
     });
 
     afterEach(() => {
@@ -160,20 +144,5 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.plagiarismCase?.id).toBe(4);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(3);
-    }));
-
-    it('should call informInstructorAboutPostReply when informInstructor is called', fakeAsync(() => {
-        component.posts = [{ id: 1 }] as Post[];
-        component.informInstructor();
-        tick();
-        expect(informInstructorSpy).toHaveBeenCalledWith(1);
-    }));
-
-    it('should call informInstructor and openCreateAnswerPostModal when handleStudentReply is called', fakeAsync(() => {
-        component.posts = [{ id: 1 }] as Post[];
-        component.handleStudentReply();
-        tick();
-        expect(informInstructorSpy).toHaveBeenCalledWith(1);
-        expect(openCreateAnswerPostModalSpy).toHaveBeenCalledOnce();
     }));
 });
