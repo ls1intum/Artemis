@@ -14,14 +14,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
 import '@angular/localize/init';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -46,7 +49,6 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: AlertService,
@@ -71,8 +73,10 @@ describe('AssessmentHeaderComponent', () => {
                         return [gradeStep1, gradeStep2];
                     },
                 }),
-                MockProvider(TextAssessmentAnalytics),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
             ],
         }).compileComponents();
     });
