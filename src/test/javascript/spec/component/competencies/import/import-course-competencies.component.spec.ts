@@ -1,13 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
@@ -25,7 +29,6 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -33,6 +36,9 @@ describe('ImportCourseCompetenciesComponent', () => {
                         snapshot: { paramMap: convertToParamMap({ courseId: 1 }) },
                     } as ActivatedRoute,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
