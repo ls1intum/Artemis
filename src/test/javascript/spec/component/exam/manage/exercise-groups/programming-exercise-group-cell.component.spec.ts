@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -13,6 +13,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { RepositoryType } from '../../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -53,8 +55,9 @@ describe('Programming Exercise Group Cell Component', () => {
             providers: [
                 { provide: ProfileService, useValue: mockedProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
-                MockProvider(ProgrammingExerciseService),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
