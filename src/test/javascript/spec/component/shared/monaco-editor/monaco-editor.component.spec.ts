@@ -395,9 +395,9 @@ describe('MonacoEditorComponent', () => {
     it('should place the cursor correctly after deleting an emoji', fakeAsync(() => {
         fixture.detectChanges();
 
-        const text = 'Hello 👋';
-        comp.setText(text);
-        comp.setPosition({ lineNumber: 1, column: text.length + 1 });
+        const fullText = 'Hello 👋 World!';
+        comp.setText(fullText);
+        comp.setPosition({ lineNumber: 1, column: 9 });
 
         const commandId = comp.getCustomBackspaceCommandId();
         comp['_editor'].trigger('keyboard', commandId!, null);

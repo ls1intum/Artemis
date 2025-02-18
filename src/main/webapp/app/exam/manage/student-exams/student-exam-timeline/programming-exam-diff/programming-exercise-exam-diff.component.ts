@@ -6,12 +6,11 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/git-diff-report/git-diff-report-modal.component';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -20,6 +19,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Submission } from 'app/entities/submission.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
@@ -27,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
     imports: [IncludedInScoreBadgeComponent, CommitsInfoComponent, TranslateDirective, GitDiffLineStatComponent, NgbTooltip, ButtonComponent, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modalService = inject(NgbModal);
     private cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
@@ -45,6 +46,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     addedLineCount: number;
     removedLineCount: number;
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+    exerciseType = ExerciseType.PROGRAMMING;
 
     private exerciseIdSubscription: Subscription;
 
@@ -137,4 +139,28 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     private calculateMapKey() {
         return JSON.stringify([this.previousSubmission?.id, this.currentSubmission.id!]);
     }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
+    }
+
+    getSubmission(): Submission | undefined {
+        return this.currentSubmission;
+    }
+
+    hasUnsavedChanges(): boolean {
+        return false;
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+    }
+
+    updateSubmissionFromView(): void {}
+
+    updateViewFromSubmission(): void {}
 }
