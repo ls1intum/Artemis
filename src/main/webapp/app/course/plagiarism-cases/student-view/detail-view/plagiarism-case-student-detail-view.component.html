@@ -85,7 +85,11 @@
                                             "
                                         ></h5>
                                     }
-                                    <jhi-button [btnType]="ButtonType.WARNING" (click)="handleStudentReply()" title="artemisApp.plagiarism.replyToAccusation" />
+                                    <jhi-button
+                                        [btnType]="ButtonType.WARNING"
+                                        (click)="postComponent.openCreateAnswerPostModal()"
+                                        title="artemisApp.plagiarism.replyToAccusation"
+                                    />
                                 </div>
                             }
                             <div class="mt-3"></div>

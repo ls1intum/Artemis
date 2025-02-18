@@ -91,22 +91,6 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Informs the instructor about a reply to a post.
-     *
-     * @param postId the ID of the post to inform the instructor about
-     * @throws BadRequestAlertException if the post does not belong to a plagiarism case
-     */
-    public void informInstructorAboutPostReply(long postId) {
-        Post post = postRepository.findPostByIdElseThrow(postId);
-        if (post.getPlagiarismCase() != null) {
-            plagiarismCaseService.informInstructorAboutPostReply(post);
-        }
-        else {
-            throw new BadRequestAlertException("Post does not belong to a plagiarism case", METIS_POST_ENTITY_NAME, "noPlagiarismCase");
-        }
-    }
-
-    /**
      * Persists the continuous plagiarism control plagiarism case post,
      * and sends a notification to affected user groups
      *

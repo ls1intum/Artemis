@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{mail/notification/fragments :: head}"/>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <div class="notification-content">
+        <div>
+            <p th:utext="${notificationSubject.getPost().getAnswers().stream().findFirst().get().getContent()}">Reply Post Content</p>
+        </div>
+        <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    </div>
+</div>
+<!-- Message Body End -->
+</body>
+</html>
