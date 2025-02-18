@@ -5,16 +5,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { VideoUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('EditVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditVideoUnitComponent>;
@@ -24,7 +25,6 @@ describe('EditVideoUnitComponent', () => {
         await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
-                MockProvider(VideoUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -56,7 +56,8 @@ describe('EditVideoUnitComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(CourseCompetencyService),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
             schemas: [],
         }).compileComponents();
