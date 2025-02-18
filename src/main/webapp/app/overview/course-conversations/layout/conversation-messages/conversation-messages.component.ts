@@ -253,12 +253,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private groupPosts(): void {
+        // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
             return;
         }
 
-        // Separate pinned posts from others.
+        // Separate pinned posts from the rest.
         const pinnedPosts = this.posts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
         const unpinnedPosts = this.posts.filter((post) => post.displayPriority !== DisplayPriority.PINNED);
 
@@ -269,60 +270,50 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return aDate?.valueOf() - bDate?.valueOf();
         });
 
-        // Build updated groups for non-pinned posts.
         const updatedGroups: PostGroup[] = [];
-        if (sortedPosts.length > 0) {
-            let currentGroup: PostGroup = {
-                author: sortedPosts[0].author,
-                posts: [{ ...sortedPosts[0], isConsecutive: false }],
-            };
-            for (let i = 1; i < sortedPosts.length; i++) {
-                const currentPost = sortedPosts[i];
-                const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
-                const currentDate = (currentPost as any).creationDateDayjs;
-                const lastDate = (lastPostInGroup as any).creationDateDayjs;
-                let timeDiff = Number.MAX_SAFE_INTEGER;
-                if (currentDate && lastDate) {
-                    timeDiff = currentDate.diff(lastDate, 'minute');
-                }
-                if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                    currentGroup.posts.push({ ...currentPost, isConsecutive: true });
+        let currentGroup: PostGroup | null = null;
+
+        // Group posts that are by the same author and have less than 5 minutes difference.
+        sortedPosts.forEach((post) => {
+            if (!currentGroup) {
+                // Start new group if none exists.
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+            } else {
+                const lastPost = currentGroup.posts[currentGroup.posts.length - 1];
+                const currentDate = (post as any).creationDateDayjs;
+                const lastDate = (lastPost as any).creationDateDayjs;
+                const timeDiff = currentDate && lastDate ? currentDate.diff(lastDate, 'minute') : Number.MAX_SAFE_INTEGER;
+                // Check if current post should be added to the current group.
+                if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
+                    currentGroup.posts.push({ ...post, isConsecutive: true });
                 } else {
+                    // Finalize current group and start a new one.
                     updatedGroups.push(currentGroup);
-                    currentGroup = {
-                        author: currentPost.author,
-                        posts: [{ ...currentPost, isConsecutive: false }],
-                    };
+                    currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
                 }
             }
+        });
+        // Add the final group if exists.
+        if (currentGroup) {
             updatedGroups.push(currentGroup);
         }
 
-        if (pinnedPosts.length > 0) {
+        // Prepend pinned posts as a separate group if any exist.
+        if (pinnedPosts.length) {
             updatedGroups.unshift({ author: undefined, posts: pinnedPosts });
         }
 
-        const groupsEqual = (groupA: PostGroup, groupB: PostGroup): boolean => {
-            if (!groupA.author && !groupB.author) return true;
-            if (!groupA.author || !groupB.author) return false;
-            return groupA.author.id === groupB.author.id;
-        };
-
-        for (let i = 0; i < updatedGroups.length; i++) {
-            if (this.groupedPosts[i] && groupsEqual(this.groupedPosts[i], updatedGroups[i])) {
-                this.groupedPosts[i].posts = updatedGroups[i].posts;
-            } else {
-                if (this.groupedPosts[i]) {
-                    this.groupedPosts[i] = updatedGroups[i];
-                } else {
-                    this.groupedPosts.push(updatedGroups[i]);
-                }
-            }
-        }
-        while (this.groupedPosts.length > updatedGroups.length) {
-            this.groupedPosts.pop();
-        }
+        // Update the groupedPosts property and trigger change detection.
+        this.groupedPosts = updatedGroups;
         this.cdr.detectChanges();
+    }
+
+    private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
+        // Both groups are equal if neither has an author; otherwise, they are not
+        if (!groupA.author || !groupB.author) {
+            return !groupA.author && !groupB.author;
+        }
+        return groupA.author.id === groupB.author.id;
     }
 
     setPosts(posts: Post[]): void {
