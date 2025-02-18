@@ -4,6 +4,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
@@ -11,13 +13,13 @@ describe('UpcomingExamsAndExercisesComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 {
                     provide: ExamManagementService,
                     useClass: MockExamManagementService,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
