@@ -28,6 +28,7 @@ describe('ConfirmEntityNameComponent', () => {
         beforeEach(async () => {
             await TestBed.configureTestingModule({
                 imports: [ReactiveFormsModule, ConfirmEntityNameComponent],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             }).compileComponents();
             fixture = TestBed.createComponent(ConfirmEntityNameHostComponent);
 
