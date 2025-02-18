@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -20,7 +20,6 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -84,7 +83,8 @@ describe('FaqUpdateComponent', () => {
                     getProfileInfo: () => of(mockProfileInfo),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(ArtemisIntelligenceService),
+                MockProvider(AlertService),
+                provideHttpClient(),
             ],
         }).compileComponents();
 
