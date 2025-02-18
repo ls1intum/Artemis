@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;
@@ -26,7 +27,7 @@ describe('PasswordResetInitComponent', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(PasswordResetInitService),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
