@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -36,8 +37,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
 /**
  * REST controller for managing grading scale
@@ -60,18 +61,18 @@ public class GradingScaleResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
     public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, CourseRepository courseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
     }
@@ -175,14 +176,16 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         validateGradingScale(existingGradingScale, gradingScale);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         if (gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
             exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
-            examRepository.save(exam);
+            api.save(exam);
         }
         gradingScale.setExam(exam);
 
@@ -227,15 +230,17 @@ public class GradingScaleResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
         if (gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
             exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
-            examRepository.save(exam);
+            api.save(exam);
         }
         gradingScale.setExam(exam);
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);

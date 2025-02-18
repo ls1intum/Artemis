@@ -24,14 +24,15 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -54,7 +55,7 @@ public class GradeStepResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final UserRepository userRepository;
 
@@ -63,13 +64,13 @@ public class GradeStepResource {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
             StudentParticipationRepository studentParticipationRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -106,9 +107,11 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
@@ -213,10 +216,12 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {

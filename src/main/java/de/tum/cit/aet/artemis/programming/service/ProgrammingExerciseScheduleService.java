@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
 
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -40,15 +42,16 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -92,11 +95,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final GitService gitService;
 
@@ -105,9 +108,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, ExamRepository examRepository,
-            StudentExamRepository studentExamRepository, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, Optional<ExamDateApi> examDateApi,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, Optional<ExamRepositoryApi> examRepositoryApi,
+            Optional<StudentExamApi> studentExamApi, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -117,9 +120,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingTriggerService = programmingTriggerService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseDateService = exerciseDateService;
-        this.examRepository = examRepository;
-        this.studentExamRepository = studentExamRepository;
-        this.examDateService = examDateService;
+        this.examRepositoryApi = examRepositoryApi;
+        this.studentExamApi = studentExamApi;
+        this.examDateApi = examDateApi;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
@@ -415,7 +418,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         // The common unlock date of the exam's programming exercises
-        ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exercise);
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+        ZonedDateTime unlockDate = api.getExamProgrammingExerciseUnlockDate(exercise);
 
         // BEFORE EXAM
         if (now.isBefore(unlockDate)) {
@@ -424,7 +428,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositoriesAndParticipations(exercise))));
         }
         // DURING EXAM
-        else if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+        else if (now.isBefore(api.getLatestIndividualExamEndDate(exam))) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             // TODO: Christian Femers: this can lead to a weird edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
@@ -864,7 +868,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param examId the id of the exam
      */
     public void rescheduleExamDuringConduction(Long examId) {
-        Exam exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(examId).orElseThrow(NoSuchElementException::new);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        Exam exam = api.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(examId).orElseThrow(NoSuchElementException::new);
 
         // get all programming exercises in the exam
         exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
@@ -893,7 +898,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param studentExamId the id of the student exam
      */
     public void rescheduleStudentExamDuringConduction(Long studentExamId) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+        StudentExam studentExam = api.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
 
         // iterate over all programming exercises and its student participation in the student's exam
         studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {

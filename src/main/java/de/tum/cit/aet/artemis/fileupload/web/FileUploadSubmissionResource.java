@@ -27,11 +27,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -78,20 +78,20 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
+    public FileUploadSubmissionResource(SubmissionRepository submissionRepository, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
+            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             SingleUserNotificationService singleUserNotificationService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -129,10 +129,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions)
+            fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
