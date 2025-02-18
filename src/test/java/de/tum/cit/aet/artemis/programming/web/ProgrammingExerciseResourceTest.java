@@ -8,14 +8,17 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -45,6 +48,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     @Autowired
     protected ParticipationUtilService participationUtilService;
 
+    @Autowired
+    protected RequestUtilService request;
+
     protected Course course;
 
     protected ProgrammingExercise programmingExercise;
@@ -65,15 +71,17 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         course = courseRepository.save(course);
 
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testBuildConfigOnlyReturnsRestrictedSetOfInformation() {
-        var buildConfig = programmingExerciseResource.getBuildConfig(programmingExercise.getId());
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testBuildConfigOnlyReturnsRestrictedSetOfInformation() throws Exception {
+        ProgrammingExerciseBuildConfigDTO buildConfig = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-config", HttpStatus.OK,
+                ProgrammingExerciseBuildConfigDTO.class);
 
-        // Count the number of fields in the record
+        // Count the number of fields in the record, this makes sure that only the expected fields are returned
         assertThat(buildConfig.getClass().getDeclaredFields().length).isEqualTo(1);
     }
 }
