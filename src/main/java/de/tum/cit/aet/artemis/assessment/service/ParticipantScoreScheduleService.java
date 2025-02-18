@@ -75,7 +75,7 @@ public class ParticipantScoreScheduleService {
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -97,7 +97,7 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, CompetencyProgressApi competencyProgressApi,
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.scheduler = scheduler;
@@ -338,7 +338,8 @@ public class ParticipantScoreScheduleService {
             if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
             }
-            competencyProgressApi.updateProgressByLearningObjectSync(score.getExercise(), scoreParticipant.getParticipants());
+            Participant finalScoreParticipant = scoreParticipant;
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectSync(score.getExercise(), finalScoreParticipant.getParticipants()));
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

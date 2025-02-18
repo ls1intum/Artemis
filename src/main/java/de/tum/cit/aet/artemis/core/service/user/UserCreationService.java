@@ -75,11 +75,11 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository, LearnerProfileApi learnerProfileApi) {
+            OrganizationRepository organizationRepository, Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -147,7 +147,8 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
-        learnerProfileApi.createProfile(newUser);
+        final User finalNewUser = newUser;
+        learnerProfileApi.ifPresent(api -> api.createProfile(finalNewUser));
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -201,7 +202,7 @@ public class UserCreationService {
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileApi.createProfile(user);
+        learnerProfileApi.ifPresent(api -> api.createProfile(user));
 
         log.debug("Created Information for User: {}", user);
         return user;
