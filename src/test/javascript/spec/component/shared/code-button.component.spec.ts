@@ -487,10 +487,10 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalled();
-        expect(windowOpenSpy).toHaveBeenCalledWith('', '_blank');
-        expect(documentAppendChildSpy).toHaveBeenCalled();
-        expect(formSubmitSpy).toHaveBeenCalled();
+        expect(getToolTokenSpy).toHaveBeenCalledOnce();
+        expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
+        expect(documentAppendChildSpy).toHaveBeenCalledOnce();
+        expect(formSubmitSpy).toHaveBeenCalledOnce();
 
         const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
         if (!form) {
