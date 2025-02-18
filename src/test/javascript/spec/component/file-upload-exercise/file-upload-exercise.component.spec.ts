@@ -12,6 +12,16 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
@@ -27,12 +37,17 @@ describe('FileUploadExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(EventManager),
             ],
         }).compileComponents();
 
