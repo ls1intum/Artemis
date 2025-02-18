@@ -80,15 +80,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
 
-                // if (!this.cpuCount) {
-                //     this.cpuCount = profileInfo.defaultContainerCpuCount;
-                // }
-                // if (!this.memory) {
-                //     this.memory = profileInfo.defaultContainerMemoryLimitInMB;
-                // }
-                // if (!this.memorySwap) {
-                //     this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
-                // }
+                if (!this.cpuCount) {
+                    this.cpuCount = profileInfo.defaultContainerCpuCount;
+                }
+                if (!this.memory) {
+                    this.memory = profileInfo.defaultContainerMemoryLimitInMB;
+                }
+                if (!this.memorySwap) {
+                    this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
+                }
             }
         });
 

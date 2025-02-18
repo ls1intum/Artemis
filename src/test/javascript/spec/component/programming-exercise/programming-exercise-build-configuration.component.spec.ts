@@ -57,7 +57,7 @@ describe('ProgrammingExercise Docker Image', () => {
                 buildTimeoutDefault: undefined,
                 defaultContainerCpuCount: undefined,
                 defaultContainerMemoryLimitInMB: undefined,
-                defaultContainerMemorySwapInMB: undefined,
+                defaultContainerMemorySwapLimitInMB: undefined,
             }),
         );
 
@@ -76,7 +76,7 @@ describe('ProgrammingExercise Docker Image', () => {
                 buildTimeoutDefault: 60,
                 defaultContainerCpuCount: 1,
                 defaultContainerMemoryLimitInMB: 1024,
-                defaultContainerMemorySwapInMB: 2048,
+                defaultContainerMemorySwapLimitInMB: 2048,
             }),
         );
         comp.ngOnInit();
