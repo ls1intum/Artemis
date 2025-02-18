@@ -9,6 +9,9 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
@@ -23,8 +26,12 @@ describe('External Submission Dialog', () => {
             update: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [{ provide: NgbActiveModal, useValue: activeModal }],
+            providers: [
+                { provide: NgbActiveModal, useValue: activeModal },
+                MockProvider(ExternalSubmissionService),
+                MockProvider(EventManager),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
