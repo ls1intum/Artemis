@@ -7,6 +7,12 @@
 <div id="message-body">
     <div class="notification-content">
         <div>
+            <p th:utext="${'The Plagiarism Case for '
+    + notificationSubject.getPost().getAnswers().stream().findFirst().get().getAuthor().getName()
+    + ' from the Programming Exercise '
+    + notificationSubject.getPost().getPlagiarismCase().getExercise().getTitle()
+    + ' received following reply.'}">
+            </p>
             <p th:utext="${notificationSubject.getPost().getAnswers().stream().findFirst().get().getContent()}">Reply Post Content</p>
         </div>
         <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
