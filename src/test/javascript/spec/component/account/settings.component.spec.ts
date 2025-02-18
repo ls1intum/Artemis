@@ -10,6 +10,8 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { HttpResponse } from '@angular/common/http';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;
@@ -37,6 +39,7 @@ describe('SettingsComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideTemplate(SettingsComponent, '')
