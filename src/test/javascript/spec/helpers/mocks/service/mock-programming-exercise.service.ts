@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseResetOptions } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseResetOptions } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { RepositoryType } from '../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
