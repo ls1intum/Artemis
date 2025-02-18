@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
@@ -274,21 +273,5 @@ public class PlagiarismCaseResource {
         Optional.ofNullable(plagiarismCase.getExercise().getPlagiarismDetectionConfig()).ifPresent(PlagiarismDetectionConfig::filterSensitiveInformation);
 
         return getPlagiarismCaseResponseEntity(plagiarismCase);
-    }
-
-    /**
-     * Informs the instructor about a reply to a plagiarism post by a student.
-     *
-     * @param postId the ID of the post
-     * @return a ResponseEntity with status 200 (OK)
-     */
-    @GetMapping("posts/{postId}/inform-instructor")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> informInstructorAboutPostReply(@PathVariable Long postId) {
-        log.debug("GET informInstructorAboutPostReply invoked for post {}", postId);
-        long start = System.nanoTime();
-        plagiarismPostService.informInstructorAboutPostReply(postId);
-        log.info("informInstructorAboutPostReply took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok().build();
     }
 }
