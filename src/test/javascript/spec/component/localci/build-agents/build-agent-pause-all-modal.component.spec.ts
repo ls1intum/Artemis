@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuildAgentPauseAllModalComponent } from '../../../../../../main/webapp/app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentPauseAllModalComponent', () => {
     let component: BuildAgentPauseAllModalComponent;
@@ -15,7 +17,10 @@ describe('BuildAgentPauseAllModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildAgentPauseAllModalComponent],
-            providers: [{ provide: NgbActiveModal, useValue: activeModal }],
+            providers: [
+                { provide: NgbActiveModal, useValue: activeModal },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentPauseAllModalComponent);
