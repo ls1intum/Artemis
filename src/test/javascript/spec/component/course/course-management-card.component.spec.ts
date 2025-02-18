@@ -18,6 +18,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -67,6 +69,7 @@ describe('CourseManagementCardComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(TranslateService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()

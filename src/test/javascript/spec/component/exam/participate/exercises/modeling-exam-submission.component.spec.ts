@@ -15,6 +15,11 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -45,7 +50,13 @@ describe('ModelingExamSubmissionComponent', () => {
                 MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(ChangeDetectorRef),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ModelingExamSubmissionComponent);
