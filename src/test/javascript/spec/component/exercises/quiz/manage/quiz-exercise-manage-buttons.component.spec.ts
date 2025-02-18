@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -36,8 +37,8 @@ describe('QuizExercise Management Buttons Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(QuizExerciseService),
-                MockProvider(ExerciseService),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(QuizExerciseManageButtonsComponent, '')
