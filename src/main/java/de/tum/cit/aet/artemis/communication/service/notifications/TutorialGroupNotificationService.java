@@ -69,7 +69,7 @@ public class TutorialGroupNotificationService {
     }
 
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {
-        var api = tutorialGroupNotificationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupNotificationApi.class, PROFILE_CORE));
+        TutorialGroupNotificationApi api = tutorialGroupNotificationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupNotificationApi.class, PROFILE_CORE));
         api.save(notification);
         sendNotificationViaWebSocket(notification);
         sendInstantNotification(notification, notifyTutor);
@@ -92,7 +92,7 @@ public class TutorialGroupNotificationService {
     }
 
     private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
-        var api = tutorialGroupRegistrationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupRegistrationApi.class, PROFILE_CORE));
+        TutorialGroupRegistrationApi api = tutorialGroupRegistrationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupRegistrationApi.class, PROFILE_CORE));
 
         var tutorialGroup = notification.getTutorialGroup();
         // ToDo: Adapt to the type of registration in the future
