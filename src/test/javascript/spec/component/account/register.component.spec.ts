@@ -12,6 +12,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('Register Component Tests', () => {
     describe('RegisterComponent', () => {
@@ -28,6 +29,7 @@ describe('Register Component Tests', () => {
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    MockProvider(RegisterService),
                 ],
             })
                 .overrideTemplate(RegisterComponent, '')
