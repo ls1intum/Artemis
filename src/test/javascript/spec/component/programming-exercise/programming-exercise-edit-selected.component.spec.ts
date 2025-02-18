@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -16,7 +16,6 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
     let comp: ProgrammingExerciseEditSelectedComponent;
@@ -31,8 +30,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 MockProvider(NgbActiveModal),
-                MockProvider(ProgrammingExerciseService),
-                MockProvider(ExerciseService),
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(ProgrammingExerciseEditSelectedComponent, '')
