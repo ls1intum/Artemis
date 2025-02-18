@@ -6,11 +6,12 @@ import { mockSettings } from './mock-settings';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
-import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('IrisEnabledComponent', () => {
     let comp: IrisEnabledComponent;
@@ -26,7 +27,7 @@ describe('IrisEnabledComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisEnabledComponent, TranslatePipeMock],
-            providers: [provideRouter([]), MockProvider(IrisSettingsService)],
+            providers: [provideRouter([]), MockProvider(IrisSettingsService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
