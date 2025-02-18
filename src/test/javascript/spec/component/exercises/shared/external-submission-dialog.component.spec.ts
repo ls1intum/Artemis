@@ -3,7 +3,7 @@ import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { Result } from 'app/entities/result.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -28,9 +28,9 @@ describe('External Submission Dialog', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: NgbActiveModal, useValue: activeModal },
-                MockProvider(ExternalSubmissionService),
                 MockProvider(EventManager),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
