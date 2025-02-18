@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ActivateComponent', () => {
     let comp: ActivateComponent;
@@ -22,7 +22,7 @@ describe('ActivateComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(ActivateService),
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(ActivateComponent, '')
