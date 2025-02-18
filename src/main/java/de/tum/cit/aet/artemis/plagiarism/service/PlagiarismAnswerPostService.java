@@ -85,6 +85,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course, null);
+
         return savedAnswerPost;
     }
 
