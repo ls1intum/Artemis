@@ -332,18 +332,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         // Update existing groups in place if possible.
         if (this.groupedPosts.length === computedGroups.length) {
-            for (let i = 0; i < computedGroups.length; i++) {
+            computedGroups.forEach((group, i) => {
                 // If the group belongs to the same author, update its posts array in place.
-                if (this.groupedPosts[i].author?.id === computedGroups[i].author?.id) {
+                if (this.groupedPosts[i].author?.id === group.author?.id) {
                     // Replace entire posts array so that deletions are applied without recreating the group.
-                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...computedGroups[i].posts);
+                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...group.posts);
                 } else {
                     // If group identity has changed, replace the group.
-                    this.groupedPosts[i] = computedGroups[i];
+                    this.groupedPosts[i] = group;
                 }
-            }
+            });
         } else {
-            // If the number of groups has changed, replace the groupedPosts array.
             this.groupedPosts = computedGroups;
         }
         // Trigger Angular change detection.
