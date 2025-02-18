@@ -344,7 +344,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         return groupA.author.id === groupB.author.id;
     }
 
-    setPosts(posts: Post[]): void {
+    setPosts(): void {
         if (this.content) {
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
