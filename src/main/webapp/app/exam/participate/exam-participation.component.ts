@@ -60,6 +60,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -85,6 +86,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ExamExerciseOverviewPageComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
