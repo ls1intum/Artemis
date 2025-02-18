@@ -711,7 +711,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Checks if this result has been assessed.
      *
-     * @return True if the result is automatic, or if it is manual and an assessment has been submitted, false otherwise.
+     * @return true if there is a completion date, false otherwise
      */
     @JsonIgnore
     public boolean isAssessmentComplete() {

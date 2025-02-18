@@ -19,6 +19,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
+/**
+ * A service that filters the submissions of a participation mainly for the course dashboard. Different logic is
+ * required for the different types of exercises.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class SubmissionFilterService {
