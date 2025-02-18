@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
@@ -58,7 +59,7 @@ describe('Notification Popup Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
