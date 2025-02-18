@@ -292,6 +292,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private groupPosts(): void {
+        // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
             return;
@@ -303,39 +304,44 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return aDate?.valueOf() - bDate?.valueOf();
         });
 
-        const groups: PostGroup[] = [];
-        let currentGroup: PostGroup = {
-            author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
-        };
+        const updatedGroups: PostGroup[] = [];
+        let currentGroup: PostGroup | null = null;
 
-        for (let i = 1; i < sortedPosts.length; i++) {
-            const currentPost = sortedPosts[i];
-            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
-
-            const currentDate = (currentPost as any).creationDateDayjs;
-            const lastDate = (lastPostInGroup as any).creationDateDayjs;
-
-            let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentDate && lastDate) {
-                timeDiff = currentDate.diff(lastDate, 'minute');
-            }
-
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+        // Group posts that are by the same author and have less than 5 minutes difference.
+        sortedPosts.forEach((post) => {
+            if (!currentGroup) {
+                // Start new group if none exists.
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
             } else {
-                groups.push(currentGroup);
-                currentGroup = {
-                    author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
-                };
+                const lastPost = currentGroup.posts[currentGroup.posts.length - 1];
+                const currentDate = (post as any).creationDateDayjs;
+                const lastDate = (lastPost as any).creationDateDayjs;
+                const timeDiff = currentDate && lastDate ? currentDate.diff(lastDate, 'minute') : Number.MAX_SAFE_INTEGER;
+                // Check if current post should be added to the current group.
+                if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
+                    currentGroup.posts.push({ ...post, isConsecutive: true });
+                } else {
+                    // Finalize current group and start a new one.
+                    updatedGroups.push(currentGroup);
+                    currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                }
             }
+        });
+        // Add the final group if exists.
+        if (currentGroup) {
+            updatedGroups.push(currentGroup);
         }
 
-        groups.push(currentGroup);
-
-        this.groupedPosts = groups;
+        this.groupedPosts = updatedGroups;
         this.cdr.detectChanges();
+    }
+
+    private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
+        // Both groups are equal if neither has an author; otherwise, they are not
+        if (!groupA.author || !groupB.author) {
+            return !groupA.author && !groupB.author;
+        }
+        return groupA.author.id === groupB.author.id;
     }
 
     setPosts(): void {
@@ -353,6 +359,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return post;
             });
 
+        // Incrementally update the grouped posts.
         this.groupPosts();
     }
 
