@@ -66,7 +66,20 @@ public class AthenaFeedbackSendingService {
      */
     @Async
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
-        sendFeedback(exercise, submission, feedbacks, 1);
+        sendFeedback(exercise, submission, feedbacks, 1, "/feedbacks");
+    }
+
+    /**
+     * Calls the remote Athena service to submit feedback given by a tutor
+     * We send the feedback asynchronously because it's not important for the user => quicker response
+     *
+     * @param exercise   the exercise the feedback is given for
+     * @param submission the submission the feedback is given for
+     * @param feedbacks  the feedback given by the tutor
+     */
+    @Async
+    public void sendFeedbackWithICL(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
+        sendFeedback(exercise, submission, feedbacks, 1, "/feed_feedbacks");
     }
 
     /**
@@ -77,9 +90,10 @@ public class AthenaFeedbackSendingService {
      * @param submission the submission the feedback is given for
      * @param feedbacks  the feedback given by the tutor
      * @param maxRetries number of retries before the request will be canceled
+     * @param endpoint   the endpoint to send to
      */
     @Async
-    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries, String endpoint) {
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
@@ -97,7 +111,7 @@ public class AthenaFeedbackSendingService {
             // Only send manual feedback from tutors to Athena
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedbacks", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + endpoint, request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {

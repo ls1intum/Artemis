@@ -51,9 +51,34 @@ export class TextAssessmentService {
      * @param assessmentNote of the result
      */
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, false, assessmentNote);
+    }
+
+    /**
+     * Submits the passed feedback items of the assessment and sends feedback to Athena.
+     * @param participationId the assessed submission was made to of type {number}
+     * @param resultId of the corresponding result of type {number}
+     * @param feedbacks made during assessment of type {Feedback[]}
+     * @param textBlocks of type {TextBlock[]}
+     * @param assessmentNote of the result
+     */
+    public submitWithAthena(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, true, assessmentNote);
+    }
+
+    private submitFeedback(
+        participationId: number,
+        resultId: number,
+        feedbacks: Feedback[],
+        textBlocks: TextBlock[],
+        sendFeedback: boolean,
+        assessmentNote?: string,
+    ): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
-            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
+            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/submit-text-assessment?sendFeedback=${sendFeedback}`, body, {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 

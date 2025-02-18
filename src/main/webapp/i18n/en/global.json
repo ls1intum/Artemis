@@ -231,6 +231,7 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
+            "submitWithAthena": "Submit And Send To Athena",
             "continueSubmission": "Continue",
             "viewTimeline": "View Timeline",
             "hideTimeline": "Hide Timeline",

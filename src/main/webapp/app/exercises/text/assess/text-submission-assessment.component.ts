@@ -379,7 +379,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     submit(): void {
         if (!this.result?.id) {
-            return; // We need to have saved the result before
+            return;
         }
 
         if (!this.assessmentsAreValid) {
@@ -392,6 +392,28 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
+    }
+
+    /**
+     * Submit the assessment and Send to Athena for llm learning
+     */
+    submitAndSendToAthena(): void {
+        if (!this.result?.id) {
+            return;
+        }
+
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        this.submitBusy = true;
+        this.assessmentsService
+            .submitWithAthena(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note)
+            .subscribe({
+                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+                error: (error: HttpErrorResponse) => this.handleError(error),
+            });
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

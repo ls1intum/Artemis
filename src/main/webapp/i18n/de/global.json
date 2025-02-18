@@ -232,6 +232,7 @@
             "purge": "Löschen",
             "archive": "Archivieren",
             "submit": "Absenden",
+            "submitWithAthena": "Absenden Und An Athena Schicken",
             "continueSubmission": "Weitermachen",
             "viewTimeline": "Verlauf Anzeigen",
             "hideTimeline": "Verlauf Ausblenden",

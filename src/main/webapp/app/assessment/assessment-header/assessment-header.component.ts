@@ -62,6 +62,7 @@ export class AssessmentHeaderComponent {
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
+    @Output() sendToAthena = new EventEmitter<void>();
 
     private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;

@@ -124,6 +124,14 @@
                         }
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
+                    @if (exercise && exercise.type === ExerciseType.TEXT && exercise.allowFeedbackRequests) {
+                        <button class="btn m-1 btn-secondary" (click)="sendToAthena.emit()" [disabled]="submitDisabled">
+                            @if (submitBusy) {
+                                <fa-icon [icon]="faSpinner" animation="spin" />
+                            }
+                            <span jhiTranslate="entity.action.submitWithAthena"></span>
+                        </button>
+                    }
                     @if (!isTestRun) {
                         <button
                             class="btn m-1 btn-danger"

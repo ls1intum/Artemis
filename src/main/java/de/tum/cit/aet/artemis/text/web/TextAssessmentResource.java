@@ -233,14 +233,16 @@ public class TextAssessmentResource extends AssessmentResource {
      * POST participations/:participationId/results/:resultId/submit-text-assessment : Submits manual textAssessments for a given result
      * and notify the user if it's before the Assessment Due Date
      *
-     * @param participationId the participationId of the participation whose assessment shall be saved
-     * @param resultId        the resultId the assessment belongs to
-     * @param textAssessment  the assessments which should be submitted
+     * @param participationId          the participationId of the participation whose assessment shall be saved
+     * @param resultId                 the resultId the assessment belongs to
+     * @param textAssessment           the assessments which should be submitted
+     * @param useForContinuousLearning whether the feedback should be used by the llm to learn
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment,
+            @RequestParam(defaultValue = "false") boolean sendFeedback) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
@@ -262,9 +264,13 @@ public class TextAssessmentResource extends AssessmentResource {
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
+            if (sendFeedback) {
+                sendFeedbackToAthenaWithICL(exercise, textSubmission, feedbacksWithIds);
+            }
+            else {
+                sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
+            }
         }
-
         return response;
     }
 
@@ -522,6 +528,17 @@ public class TextAssessmentResource extends AssessmentResource {
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
         if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
+
         }
     }
+
+    /**
+     * Send feedback to Athena with ICL (if enabled for both the Artemis instance and the exercise).
+     */
+    private void sendFeedbackToAthenaWithICL(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
+            athenaFeedbackSendingService.get().sendFeedbackWithICL(exercise, textSubmission, feedbacks);
+        }
+    }
+
 }
