@@ -10,8 +10,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;
@@ -37,7 +39,14 @@ describe('ConsistencyCheckComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockComponent(NgbHighlight)],
             declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
-            providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
+            providers: [
+                MockProvider(TranslateService),
+                MockProvider(AlertService),
+                MockProvider(ConsistencyCheckService),
+                MockProvider(NgbActiveModal),
+                MockProvider(ConsistencyCheckService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
