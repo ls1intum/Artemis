@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -80,7 +81,12 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(SortService), { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [
+                MockProvider(SortService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {
