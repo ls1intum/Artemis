@@ -1116,7 +1116,7 @@ public class ProgrammingExerciseService {
             }
         }
 
-        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY) {
+        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY && dockerFlagsDTO.memory() != 0) {
             throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY + "MB", "Exercise", "memoryLimitInvalid");
         }
 

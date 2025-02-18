@@ -9,7 +9,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL, ProgrammingLanguage.EMPTY];
+const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
 interface DockerFlags {
     network?: string;
@@ -80,15 +80,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
 
-                if (!this.cpuCount) {
-                    this.cpuCount = profileInfo.defaultContainerCpuCount;
-                }
-                if (!this.memory) {
-                    this.memory = profileInfo.defaultContainerMemoryLimitInMB;
-                }
-                if (!this.memorySwap) {
-                    this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
-                }
+                // if (!this.cpuCount) {
+                //     this.cpuCount = profileInfo.defaultContainerCpuCount;
+                // }
+                // if (!this.memory) {
+                //     this.memory = profileInfo.defaultContainerMemoryLimitInMB;
+                // }
+                // if (!this.memorySwap) {
+                //     this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
+                // }
             }
         });
 

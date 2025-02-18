@@ -97,7 +97,7 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap, int cpuCount, int memory, int memorySwap) {
-        if (network == null && environmentMap == null) {
+        if (network == null && environmentMap == null && cpuCount == 0 && memory == 0 && memorySwap == 0) {
             return null;
         }
         List<String> environmentStrings = new ArrayList<>();

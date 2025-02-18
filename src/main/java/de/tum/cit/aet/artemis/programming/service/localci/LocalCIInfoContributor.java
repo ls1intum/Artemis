@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 
 @Component
 @Profile(PROFILE_LOCALCI)
-@ConfigurationProperties(prefix = "artemis.continuous-integration.build.default-docker-flags")
 public class LocalCIInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.build-timeout-seconds.min:10}")
