@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -21,6 +21,7 @@ import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/en
 import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
+import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -383,7 +384,7 @@ describe('ProgrammingExercise Service', () => {
 
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
-        service.exportInstructorRepository(exerciseId, 'AUXILIARY', undefined).subscribe();
+        service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
@@ -436,7 +437,14 @@ describe('ProgrammingExercise Service', () => {
             }
             functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
-            const req = httpMock.expectOne({ method: 'GET', url });
+
+            // Custom matcher function
+            const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+
+            const req = httpMock.expectOne((request) => {
+                return request.method === 'GET' && urlMatcher(request.url);
+            });
+
             req.flush({});
             tick();
         })(),

@@ -17,7 +17,6 @@ import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { firstValueFrom } from 'rxjs';
 
@@ -51,7 +50,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), ArtemisMarkdownEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(DragDropModule), MockDirective(NgbCollapse)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

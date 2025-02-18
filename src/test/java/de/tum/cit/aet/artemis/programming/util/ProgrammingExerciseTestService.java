@@ -526,12 +526,11 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {
         exercise.setProgrammingLanguage(language);
-        if (programmingLanguageFeature.packageNameRequired() && language != JAVA && language != KOTLIN) {
-            exercise.setPackageName("testPackage");
-        }
+        exercise.setPackageName(ProgrammingExerciseFactory.generatePackageName(language));
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
+        assertThat(programmingLanguageFeature.packageNameRequired()).isEqualTo(exercise.getPackageName() != null);
         validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
