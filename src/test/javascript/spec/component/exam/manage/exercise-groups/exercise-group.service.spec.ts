@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;
@@ -9,7 +9,7 @@ describe('Exercise Group Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [provideHttpClient()],
         });
 
         service = TestBed.inject(ExerciseGroupService);
