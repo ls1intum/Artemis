@@ -63,8 +63,7 @@
                             </div>
                             @if (
                                 !this.posts[0].answers?.length &&
-                                (!this.plagiarismCase.createdByContinuousPlagiarismControl || (this.plagiarismCase.createdByContinuousPlagiarismControl && this.isAfterDueDate)) &&
-                                isButtonVisible
+                                (!this.plagiarismCase.createdByContinuousPlagiarismControl || (this.plagiarismCase.createdByContinuousPlagiarismControl && this.isAfterDueDate))
                             ) {
                                 <div class="alert alert-warning my-2">
                                     @if (posts[0].creationDate) {
