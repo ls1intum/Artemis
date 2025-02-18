@@ -12,7 +12,8 @@
                     "nextLearningObjectOnPathLabel": "Nächste",
                     "unreleasedLearningObjectLabel": "Unveröffentlichte Lerneinheit"
                 },
-                "recapLabel": "Lerneinheiten wiederholen"
+                "recapLabel": "Lerneinheiten wiederholen",
+                "repeatedTest": "Wiederholung: {{name}}"
             },
             "competencyGraphModal": {
                 "title": "Abhängigkeiten der Lernpfadkompetenzen",
