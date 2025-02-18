@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -78,13 +78,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final PlagiarismService plagiarismService;
+    private final Optional<PlagiarismApi> plagiarismApi;
 
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
-            PlagiarismService plagiarismService) {
+            Optional<PlagiarismApi> plagiarismApi) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -95,7 +95,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
-        this.plagiarismService = plagiarismService;
+        this.plagiarismApi = plagiarismApi;
     }
 
     /**
@@ -170,7 +170,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(), textSubmission.getParticipation());
+            plagiarismApi.ifPresent(api -> api.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(), textSubmission.getParticipation()));
             return ResponseEntity.ok(textSubmission);
         }
 

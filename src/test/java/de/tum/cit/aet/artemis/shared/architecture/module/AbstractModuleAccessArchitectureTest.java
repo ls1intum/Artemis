@@ -1,9 +1,13 @@
 package de.tum.cit.aet.artemis.shared.architecture.module;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.belongToAnyOf;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackages;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
@@ -21,20 +25,22 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     @Test
     void shouldOnlyAccessApiDomainDto() {
-        noClasses().that().resideOutsideOfPackage(getModuleWithSubpackage()).should()
-                .dependOnClassesThat(
-                        resideInAPackage(getModuleWithSubpackage()).and(resideOutsideOfPackages(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage())))
+        noClasses().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideOutsideOfPackage(getModuleWithSubpackage()).should()
+                .dependOnClassesThat(resideInAPackage(getModuleWithSubpackage())
+                        .and(resideOutsideOfPackages(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage(), getModuleExceptionsSubpackage())))
                 .check(productionClasses);
     }
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class)
+                .check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage())
+                .should(beAbstractOrAnnotatedWithController()).check(productionClasses);
     }
 
     protected String getModuleApiSubpackage() {
@@ -47,6 +53,14 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     protected String getModuleDtoSubpackage() {
         return getModulePackage() + ".dto..";
+    }
+
+    protected String getModuleExceptionsSubpackage() {
+        return getModulePackage() + ".exception..";
+    }
+
+    protected Set<Class<?>> getIgnoredClasses() {
+        return Set.of();
     }
 
     private static ArchCondition<JavaClass> beAbstractOrAnnotatedWithController() {

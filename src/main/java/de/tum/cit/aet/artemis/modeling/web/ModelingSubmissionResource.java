@@ -32,8 +32,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -56,7 +54,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -69,8 +67,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
-
-    private final ResultRepository resultRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -85,23 +81,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final PlagiarismService plagiarismService;
-
-    private final ResultService resultService;
+    private final Optional<PlagiarismApi> plagiarismApi;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ResultService resultService, ResultRepository resultRepository) {
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<PlagiarismApi> plagiarismApi) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.plagiarismService = plagiarismService;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
+        this.plagiarismApi = plagiarismApi;
     }
 
     /**
@@ -213,7 +205,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), studentParticipation);
+            ModelingSubmission finalModelingSubmission = modelingSubmission;
+            plagiarismApi.ifPresent(api -> api.checkAccessAndAnonymizeSubmissionForStudent(finalModelingSubmission, userRepository.getUser().getLogin(), studentParticipation));
             return ResponseEntity.ok(modelingSubmission);
         }
 
