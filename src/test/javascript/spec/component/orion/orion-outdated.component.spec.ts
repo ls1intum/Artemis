@@ -6,6 +6,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionOutdatedComponent', () => {
     let comp: OrionOutdatedComponent;
@@ -13,11 +15,11 @@ describe('OrionOutdatedComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 MockPipe(ArtemisTranslatePipe),
                 { provide: ActivatedRoute, useValue: { queryParams: of({ versionString: 'version' }) } },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
