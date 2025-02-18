@@ -157,6 +157,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should send assessment event on dismiss button click', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.MANUAL;
+        //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
         fixture.detectChanges();
@@ -177,6 +178,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should set correctionStatus of the feedback to undefined on connection of feedback with the grading instruction', () => {
         // given
         component.feedback.correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
+        //@ts-ignore
         jest.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
@@ -188,6 +190,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     it('should send assessment event if feedback type changed', () => {
         component.feedback.text = 'FeedbackSuggestion:accepted:Test';
+        //@ts-ignore
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).toHaveBeenCalledOnce();
