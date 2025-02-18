@@ -7,6 +7,11 @@ import { Course } from 'app/entities/course.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockProvider } from 'ng-mocks';
+import { QuizReEvaluateService } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
@@ -20,7 +25,12 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                MockProvider(NgbActiveModal),
+                MockProvider(QuizExerciseService),
+                MockProvider(QuizReEvaluateService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
