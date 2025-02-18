@@ -4,7 +4,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
@@ -17,19 +17,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { NotificationService } from '../../../../../main/webapp/app/shared/notification/notification.service';
-import { PostService } from 'app/shared/metis/post.service';
 import { MockProvider } from 'ng-mocks';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { ReactionService } from 'app/shared/metis/reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
-import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
-import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
-import { MockConversationService } from '../../helpers/mocks/service/mock-conversation.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -62,13 +54,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: PostService, useClass: MockPostService },
-                { provide: AnswerPostService, useClass: MockAnswerPostService },
-                { provide: ReactionService, useClass: MockReactionService },
-                { provide: ConversationService, useClass: MockConversationService },
-                MockProvider(SavedPostService),
-                MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
