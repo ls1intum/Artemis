@@ -9,8 +9,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -56,7 +54,6 @@ describe('TutorEffortStatisticsComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(ExerciseService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
