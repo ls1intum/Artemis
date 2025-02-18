@@ -70,8 +70,8 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    if (submission?.results && submission?.results.filter((result) => result && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
-        return submission.results.filter((result) => result && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
+    if (submission?.results && submission?.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
+        return submission.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
     }
     return undefined;
 }
