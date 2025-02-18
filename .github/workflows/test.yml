@@ -16,16 +16,8 @@ on:
     - develop
     - main
     - release/*
+    - chore/test-helios
     tags: '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'docs/**'
-    - '.github/**'
-    - '!.github/workflows/test.yml'
   release:
     types:
     - created
