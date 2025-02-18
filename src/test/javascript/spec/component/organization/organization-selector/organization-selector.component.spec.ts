@@ -7,6 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Organization } from 'app/entities/organization.model';
 import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -18,8 +19,8 @@ describe('OrganizationSelectorComponent', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(OrganizationManagementService),
                 MockProvider(NgbActiveModal),
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
