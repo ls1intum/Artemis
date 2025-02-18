@@ -123,7 +123,13 @@
                 "addUserGroupChat": "You have been added to a group chat",
                 "createGroupChat": "New group chat",
                 "dataExportCreated": "Data export created",
-                "dataExportFailed": "Data export failed"
+                "dataExportFailed": "Data export failed",
+                "sshKeyAdded": "New SSH key added",
+                "sshKeyExpiresSoon": "SSH key will expire soon",
+                "sshKeyHasExpired": "SSH key has expired",
+                "vcsAccessTokenAdded": "New VCS access token added",
+                "vcsAccessTokenExpired": "VCS access token has expired",
+                "vcsAccessTokenExpiresSoon": "VCS access token will expire soon"
             },
             "text": {
                 "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
@@ -150,7 +156,13 @@
                 "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "dataExportCreated": "Your data export has been created and can be downloaded.",
-                "dataExportFailed": "Your data export could not be created. Please try again later."
+                "dataExportFailed": "Your data export could not be created. Please try again later.",
+                "sshKeyAdded": "You have successfully added a new SSH key",
+                "sshKeyExpiresSoon": "Your SSH key with the label \"{{ placeholderValues.0 }}\" will expire on {{ placeholderValues.1 }}.",
+                "sshKeyHasExpired": "Your SSH key with the label \"{{ placeholderValues.0 }}\" has expired on {{ placeholderValues.1 }}.",
+                "vcsAccessTokenAdded": "You have successfully added a new VCS access token",
+                "vcsAccessTokenExpired": "Your personal version control access token has expired.",
+                "vcsAccessTokenExpiresSoon": "Your personal version control access token will expire in one week."
             }
         },
         "tutorialGroupNotification": {

@@ -13,6 +13,9 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR;
@@ -20,6 +23,9 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_CHANNEL_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_GROUP_CHAT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
@@ -71,6 +77,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
@@ -145,6 +152,9 @@ public class SingleUserNotificationService {
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
+            case SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED -> createNotification((UserSshPublicKey) notificationSubject, notificationType, typeSpecificInformation);
+            case VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON ->
+                createNotification(typeSpecificInformation.getVcsAccessToken(), notificationType, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
     }
@@ -254,6 +264,63 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutDataExportFailure(DataExport dataExport) {
         notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_FAILED, dataExport.getUser(), null);
+    }
+
+    /**
+     * Notify user about the addition of an SSH key in the settings
+     *
+     * @param recipient the user to whose account the SSH key was added
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutNewlyAddedSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_ADDED, recipient, null);
+    }
+
+    /**
+     * Notify user about an upcoming expiry of an SSH key
+     *
+     * @param recipient the user of whose account the SSH key will expire soon
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutSoonExpiringSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_EXPIRES_SOON, recipient, null);
+    }
+
+    /**
+     * Notify user about the expiration of an SSH key
+     *
+     * @param recipient the user to whose account the SSH key was added
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_HAS_EXPIRED, recipient, null);
+    }
+
+    /**
+     * Notify user about the addition of a VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutNewlyAddedVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_ADDED, recipient, null);
+    }
+
+    /**
+     * Notify user about the expiration of the VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRED, recipient, null);
+    }
+
+    /**
+     * Notify user about the upcoming expiry of the VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutSoonExpiringVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRES_SOON, recipient, null);
     }
 
     /**

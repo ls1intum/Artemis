@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{mail/notification/fragments :: head}"/>
+
+<body>
+<!-- Message Body Start -->
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+    <span th:text="#{email.notification.vcsAccessTokenExpiry.title}">Your VCS access token has expired</span>
+    </p>
+
+    <p>
+        <span th:text="#{email.notification.vcsAccessTokenExpiry.renew}">You can renew it here</span>
+
+        <a th:with="url=(@{|${baseUrl}/user-settings/vcs-token|})" th:href="${url}" th:text="${url}">Login
+            link</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+</body>
+</html>
