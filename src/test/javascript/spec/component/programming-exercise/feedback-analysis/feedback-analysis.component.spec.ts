@@ -6,9 +6,9 @@ import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } fro
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
-import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
-import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AlertService } from 'app/core/util/alert.service';
