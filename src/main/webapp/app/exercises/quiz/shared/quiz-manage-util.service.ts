@@ -37,7 +37,7 @@ export function isQuizEditable(quizExercise: QuizExercise): boolean {
 }
 
 export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionUtil: DragAndDropQuestionUtil, shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {
-    if (question.points == undefined || question.points < 1 || question.points > MAX_QUIZ_QUESTION_POINTS) {
+    if (question.points == undefined || question.points <= 0 || question.points > MAX_QUIZ_QUESTION_POINTS) {
         return false;
     }
     if (question.explanation && question.explanation.length > MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD) {
@@ -125,7 +125,7 @@ export function computeQuizQuestionInvalidReason(
             translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
             translateValues: { index: index + 1 },
         });
-    } else if (question.points < 1 || question.points > MAX_QUIZ_QUESTION_POINTS) {
+    } else if (question.points <= 0 || question.points > MAX_QUIZ_QUESTION_POINTS) {
         invalidReasons.push({
             translateKey: 'artemisApp.quizExercise.invalidReasons.questionScoreInvalid',
             translateValues: { index: index + 1 },
