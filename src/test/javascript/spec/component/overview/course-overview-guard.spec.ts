@@ -5,14 +5,15 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview/courses.route';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
@@ -35,7 +36,7 @@ describe('CourseOverviewGuard', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }, MockProvider(ArtemisServerDateService)],
+            providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
         });
         guard = TestBed.inject(CourseOverviewGuard);
         courseStorageService = TestBed.inject(CourseStorageService);
