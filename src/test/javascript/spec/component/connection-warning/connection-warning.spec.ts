@@ -3,6 +3,8 @@ import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ConnectionWarning', () => {
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
@@ -12,7 +14,6 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: WebsocketService,
@@ -20,6 +21,7 @@ describe('ConnectionWarning', () => {
                         connectionState: subject.asObservable(),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
