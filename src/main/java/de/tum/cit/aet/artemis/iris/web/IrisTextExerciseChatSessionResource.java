@@ -98,7 +98,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
@@ -120,7 +120,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?

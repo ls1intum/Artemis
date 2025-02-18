@@ -320,7 +320,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The current Iris session
      */
     public IrisExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
     }
@@ -341,7 +341,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     public IrisExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);

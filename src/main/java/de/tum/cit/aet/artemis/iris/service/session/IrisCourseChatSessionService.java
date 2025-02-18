@@ -76,7 +76,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getCourse(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
@@ -137,7 +137,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             return;
         }
         var user = competencyJol.getUser();
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
     }
@@ -152,7 +152,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The current Iris session
      */
     public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
     }
@@ -182,7 +182,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The created Iris session
      */
     public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         return createSessionInternal(course, user, sendInitialMessage);
     }

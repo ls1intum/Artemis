@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "popUpMessage": "Indem du fortfährst, bestätigst du, dass du mind. 18 Jahre alt bist und dass du damit einverstanden bist, dass deine Interaktionen mit Iris und die notwendigen kontextbezogenen Daten, z.B. dein Code, von Microsoft und OpenAI (d.h. außerhalb unseres Universitätsrechenzentrums) verarbeitet werden.",
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",

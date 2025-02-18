@@ -210,8 +210,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "iris_accepted")
-    private ZonedDateTime irisAccepted = null;
+    @Column(name = "external_llm_usage_accepted")
+    private ZonedDateTime externalLLMUsageAccepted = null;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
@@ -533,25 +533,25 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getIrisAcceptedTimestamp() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
+    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
-    public boolean hasAcceptedIris() {
-        return irisAccepted != null;
+    public boolean hasAcceptedExternalLLMUsage() {
+        return externalLLMUsageAccepted != null;
     }
 
     /**
-     * Checks if the user has accepted the Iris privacy policy.
+     * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedIrisElseThrow() {
-        if (irisAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+    public void hasAcceptedExternalLLMUsageElseThrow() {
+        if (externalLLMUsageAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }
 

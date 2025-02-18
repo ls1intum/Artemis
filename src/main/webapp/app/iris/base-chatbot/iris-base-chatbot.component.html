@@ -149,7 +149,7 @@
     <jhi-chat-status-bar [stages]="stages" />
     @if (!userAccepted) {
         <div class="p-chat">
-            <div class="message-text" jhiTranslate="artemisApp.exerciseChatbot.popUpMessage"></div>
+            <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
             <div class="button-container">
                 <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
                 <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
