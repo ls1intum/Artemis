@@ -242,23 +242,11 @@ public class LtiDeepLinkingService {
     }
 
     private Map<String, Object> createLectureContentItem(Lecture lecture, String url) {
-
-        Map<String, Object> item = new HashMap<>();
-        item.put("type", "ltiResourceLink");
-        item.put("title", lecture.getTitle());
-        item.put("url", url);
-
-        return item;
+        return Map.of("type", "ltiResourceLink", "title", lecture.getTitle(), "url", url);
     }
 
     private Map<String, Object> createSingleUnitContentItem(String url) {
-
-        Map<String, Object> item = new HashMap<>();
-        item.put("type", "ltiResourceLink");
-        item.put("title", "competency");
-        item.put("url", url);
-
-        return item;
+        return Map.of("type", "ltiResourceLink", "title", "competency", "url", url);
     }
 
     private void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {

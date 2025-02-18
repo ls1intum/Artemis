@@ -161,7 +161,7 @@ public class Lti13Service {
             Exercise exercise = targetExercise.get();
             handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
         }
-        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl) || targetLecture.isPresent() || getIrisFromTargetLink(targetLinkUrl)) {
+        else if (hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture)) {
             handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
         }
         else {
@@ -373,10 +373,17 @@ public class Lti13Service {
     }
 
     /**
-     * Returns an Optional of a Course that was referenced by targetLinkUrl.
+     * Retrieves an Optional of a Course referenced by the given targetLinkUrl.
+     * This method extracts the course ID from the URL using predefined path patterns
+     * and then fetches the corresponding Course from the repository.
+     * Returns an empty Optional in the following cases:
+     * - The targetLinkUrl is malformed and cannot be parsed.
+     * - The URL does not match any known path pattern.
+     * - The extracted path does not contain a "courseId" variable.
+     * - No Course with the extracted ID exists in the repository.
      *
      * @param targetLinkUrl the target link URL to retrieve a Course
-     * @return the Course or nothing otherwise
+     * @return an Optional containing the Course if found, or an empty Optional otherwise
      */
     public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
@@ -425,7 +432,7 @@ public class Lti13Service {
      * @param targetLinkUrl the target link URL
      * @return true if the target link URL references a competency, false otherwise
      */
-    private boolean getCompetencyFromTargetLink(String targetLinkUrl) {
+    private boolean targetLinkHasCompetency(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;
@@ -452,7 +459,7 @@ public class Lti13Service {
      * @param targetLinkUrl the target link URL
      * @return true if the target link URL references a learning path, false otherwise
      */
-    private boolean getLearningPathFromTargetLink(String targetLinkUrl) {
+    private boolean targetLinkHasLearningPath(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;
@@ -479,7 +486,7 @@ public class Lti13Service {
      * @param targetLinkUrl the target link URL
      * @return true if the target link URL matches the IRIS course dashboard pattern, false otherwise
      */
-    private boolean getIrisFromTargetLink(String targetLinkUrl) {
+    private boolean targetLinkHasIris(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;
@@ -561,6 +568,10 @@ public class Lti13Service {
     private String getSanitizedUsername(String username) {
         // Remove \r and LF \n characters to prevent HTTP response splitting
         return username.replaceAll("[\r\n]", "");
+    }
+
+    private boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
+        return targetLinkHasCompetency(targetLinkUrl) || targetLinkHasLearningPath(targetLinkUrl) || targetLecture.isPresent() || targetLinkHasIris(targetLinkUrl);
     }
 
     /**
