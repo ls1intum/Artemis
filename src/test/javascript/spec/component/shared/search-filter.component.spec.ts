@@ -4,6 +4,8 @@ import { MockModule } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SearchFilterComponent', () => {
     let component: SearchFilterComponent;
@@ -13,6 +15,7 @@ describe('SearchFilterComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
             declarations: [SearchFilterComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
     });
 
