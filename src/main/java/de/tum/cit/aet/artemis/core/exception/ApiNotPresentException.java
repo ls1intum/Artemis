@@ -1,4 +1,3 @@
-
 package de.tum.cit.aet.artemis.core.exception;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;

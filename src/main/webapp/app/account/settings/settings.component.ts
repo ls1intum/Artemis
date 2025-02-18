@@ -6,13 +6,13 @@ import { LANGUAGES } from 'app/core/language/language.constants';
 import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe],
 })
 export class SettingsComponent implements OnInit {
     private accountService = inject(AccountService);

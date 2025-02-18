@@ -3,7 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileBadge, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorFileBrowserBadgeComponent } from './code-editor-file-browser-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,7 +19,7 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
     @Input() isCompressed = false;
     @Input() disableActions: boolean;
     @Input() badges: FileBadge[] = [];
-    @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem<string>; fileType: FileType }>();
+    @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeViewItem<string>; fileType: FileType }>();
 
     // Icons
     faTrash = faTrash;

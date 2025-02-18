@@ -20,7 +20,11 @@
     </div>
 
     <h5 class="mb-3" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
-    <p>{{ feedbackDetail().detailTexts[0] }}</p>
+    @if (longFeedbackText()) {
+        <p>{{ longFeedbackText() }}</p>
+    } @else {
+        <p>{{ feedbackDetail().detailTexts[0] }}</p>
+    }
 </div>
 
 <ng-template #detailTemplate let-label="label" let-value="value">

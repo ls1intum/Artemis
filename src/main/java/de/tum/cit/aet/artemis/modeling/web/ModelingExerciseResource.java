@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.modeling.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,8 +83,6 @@ public class ModelingExerciseResource {
 
     private static final String ENTITY_NAME = "modelingExercise";
 
-    private final CompetencyProgressApi competencyProgressApi;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -122,13 +120,15 @@ public class ModelingExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
             Optional<PlagiarismDetectionApi> plagiarismDetectionApi, ChannelService channelService, ChannelRepository channelRepository,
-            CompetencyProgressApi competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -184,7 +184,7 @@ public class ModelingExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
-        competencyProgressApi.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -255,7 +255,7 @@ public class ModelingExerciseResource {
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 
         return ResponseEntity.ok(updatedModelingExercise);
     }
@@ -394,8 +394,8 @@ public class ModelingExerciseResource {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        File zipFile = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
-        return ResponseUtil.ok(zipFile);
+        Path zipFilePath = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFilePath);
     }
 
     /**
