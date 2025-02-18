@@ -13,8 +13,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { MockProvider } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ManualTextSelectionComponent', () => {
     let component: ManualTextSelectionComponent;
@@ -44,7 +43,7 @@ describe('ManualTextSelectionComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(TextAssessmentAnalytics),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
