@@ -299,7 +299,7 @@ public class SingleUserNotificationService {
     /**
      * Notify user about the addition of a VCS access token
      *
-     * @param recipient the user to whose account the SSH key was added
+     * @param recipient the user to whose account the VCS access token was added
      */
     public void notifyUserAboutNewlyAddedVcsAccessToken(User recipient) {
         notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_ADDED, recipient, null);
@@ -308,7 +308,7 @@ public class SingleUserNotificationService {
     /**
      * Notify user about the expiration of the VCS access token
      *
-     * @param recipient the user to whose account the SSH key was added
+     * @param recipient the user to whose account the VCS access token was added
      */
     public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
         notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRED, recipient, null);
@@ -317,7 +317,7 @@ public class SingleUserNotificationService {
     /**
      * Notify user about the upcoming expiry of the VCS access token
      *
-     * @param recipient the user to whose account the SSH key was added
+     * @param recipient the user to whose account the VCS access token was added
      */
     public void notifyUserAboutSoonExpiringVcsAccessToken(User recipient) {
         notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRES_SOON, recipient, null);
