@@ -1,7 +1,7 @@
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -14,6 +14,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
@@ -32,7 +33,7 @@ describe('PrivacyComponent', () => {
                 },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(LegalDocumentService),
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PrivacyComponent);

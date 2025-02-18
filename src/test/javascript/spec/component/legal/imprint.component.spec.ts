@@ -1,5 +1,5 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
@@ -12,6 +12,7 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ImprintComponent', () => {
     let component: ImprintComponent;
@@ -20,7 +21,6 @@ describe('ImprintComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             declarations: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
@@ -29,7 +29,7 @@ describe('ImprintComponent', () => {
                     useClass: MockSyncStorage,
                 },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                MockProvider(LegalDocumentService),
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);
