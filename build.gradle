@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.10.1"
+version = "7.10.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -47,7 +47,6 @@ node {
 }
 
 apply from: "gradle/liquibase.gradle"
-apply from: "gradle/test.gradle"
 apply from: "gradle/spotless.gradle"
 
 if (project.hasProperty("prod")) {
@@ -80,7 +79,7 @@ modernizer {
 }
 
 configurations {
-    providedRuntime
+    mockitoAgent
 }
 
 repositories {
@@ -299,8 +298,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
-    implementation "org.springframework.data:spring-data-ldap:3.4.2"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
+    implementation "org.springframework.data:spring-data-ldap:3.4.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
@@ -418,6 +417,10 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
+    // needed to add mockito as agent and avoid its warning
+    mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {
+        transitive = false
+    }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
     testImplementation "io.github.classgraph:classgraph:4.8.179"
@@ -440,6 +443,10 @@ dependencies {
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
+
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
+apply from: "gradle/test.gradle"
+
 
 dependencyManagement {
     imports {

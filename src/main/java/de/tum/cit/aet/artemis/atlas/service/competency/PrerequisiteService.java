@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 /**
  * Service for managing prerequisites.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class PrerequisiteService extends CourseCompetencyService {
 
