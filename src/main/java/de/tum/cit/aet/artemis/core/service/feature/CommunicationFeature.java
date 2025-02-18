@@ -39,6 +39,6 @@ public enum CommunicationFeature implements AbstractFeature {
     }
 
     public static CommunicationFeature[] getConfigurableFeatures() {
-        return new CommunicationFeature[] { SAVE_MESSAGE_FOR_LATER, ADD_WHOLE_GROUPS };
+        return new CommunicationFeature[] {};
     }
 }

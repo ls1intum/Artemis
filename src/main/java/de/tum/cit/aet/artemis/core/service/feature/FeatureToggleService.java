@@ -189,6 +189,14 @@ public class FeatureToggleService {
         return List.of();
     }
 
+    public CommunicationFeature[] getAllCommunicationFeatures() {
+        return CommunicationFeature.values();
+    }
+
+    public CommunicationFeature[] getAllConfigurableCommunicationFeatures() {
+        return CommunicationFeature.getConfigurableFeatures();
+    }
+
     private boolean isHazelcastRunning() {
         return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
     }
