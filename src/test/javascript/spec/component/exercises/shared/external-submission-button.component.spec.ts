@@ -4,10 +4,9 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
@@ -17,7 +16,7 @@ describe('External Submission Dialog', () => {
     beforeEach(() => {
         modalService = { open: jest.fn() } as any as NgbModal;
         TestBed.configureTestingModule({
-            providers: [{ provide: NgbModal, useValue: modalService }, MockProvider(FeatureToggleService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: NgbModal, useValue: modalService }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {
