@@ -3,6 +3,8 @@ import { Course } from 'app/entities/course.model';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ScoreDisplayComponent', () => {
     let fixture: ComponentFixture<ScoreDisplayComponent>;
@@ -12,8 +14,8 @@ describe('ScoreDisplayComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ScoreDisplayComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
