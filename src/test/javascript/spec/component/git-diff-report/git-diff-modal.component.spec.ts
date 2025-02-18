@@ -10,7 +10,6 @@ import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -34,7 +33,6 @@ describe('GitDiffReportModalComponent', () => {
             imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(NgbActiveModal),
-                MockProvider(FeatureToggleService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
