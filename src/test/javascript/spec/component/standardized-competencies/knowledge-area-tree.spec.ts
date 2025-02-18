@@ -4,8 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { MatTreeModule } from '@angular/material/tree';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 describe('KnowledgeAreaTreeComponent', () => {
     let componentFixture: ComponentFixture<KnowledgeAreaTreeComponent>;
@@ -13,7 +11,7 @@ describe('KnowledgeAreaTreeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [KnowledgeAreaTreeComponent, ArtemisTestModule, ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule],
+            imports: [KnowledgeAreaTreeComponent, ArtemisTestModule, MatTreeModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })

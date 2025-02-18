@@ -1,8 +1,8 @@
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, ReplaySubject, of } from 'rxjs';
+import { BehaviorSubject, of, ReplaySubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
@@ -17,7 +17,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -60,14 +60,8 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-            declarations: [
-                NotificationSidebarComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockRouterLinkDirective,
-                MockComponent(DocumentationButtonComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), ArtemisTranslatePipe],
+            declarations: [NotificationSidebarComponent, MockRouterLinkDirective, MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

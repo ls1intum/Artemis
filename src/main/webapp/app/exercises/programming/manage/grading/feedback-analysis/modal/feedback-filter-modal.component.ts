@@ -2,8 +2,9 @@ import { Component, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { LocalStorageService } from 'ngx-webstorage';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export interface FilterData {
     tasks: string[];
@@ -15,7 +16,7 @@ export interface FilterData {
 @Component({
     selector: 'jhi-feedback-filter-modal',
     templateUrl: './feedback-filter-modal.component.html',
-    imports: [RangeSliderComponent, ArtemisSharedCommonModule],
+    imports: [RangeSliderComponent, TranslateDirective],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackFilterModalComponent {

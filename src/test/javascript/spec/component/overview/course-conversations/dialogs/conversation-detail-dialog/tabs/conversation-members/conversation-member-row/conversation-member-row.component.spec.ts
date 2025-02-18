@@ -24,6 +24,7 @@ import { By } from '@angular/platform-browser';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 
 const memberTemplate = {
     id: 1,
@@ -57,6 +58,7 @@ examples.forEach((activeConversation) => {
         const canGrantChannelModeratorRole = jest.fn();
         const canRevokeChannelModeratorRole = jest.fn();
         const canRemoveUsersFromConversation = jest.fn();
+        let translateService: TranslateService;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -101,6 +103,8 @@ examples.forEach((activeConversation) => {
             component.canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
             component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
+            translateService = TestBed.inject(TranslateService) as TranslateService;
+            jest.spyOn(translateService, 'instant').mockImplementation((key: string) => key);
         });
 
         afterEach(() => {
@@ -275,6 +279,71 @@ examples.forEach((activeConversation) => {
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();
             }
         }));
+
+        it('should emit userId when another user clicks the name', fakeAsync(() => {
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            component.idOfLoggedInUser = loggedInUser.id!;
+            const userNameClickedSpy = jest.spyOn(component.onUserNameClicked, 'emit');
+            component.userNameClicked();
+
+            expect(userNameClickedSpy).toHaveBeenCalledWith(conversationMember.id);
+        }));
+
+        it('should set isCurrentUser to true if conversation member is the logged-in user', fakeAsync(() => {
+            loggedInUser.id = conversationMember.id!;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.isCurrentUser).toBeTrue();
+        }));
+
+        it('should set isCurrentUser to false if conversation member is NOT the logged-in user', fakeAsync(() => {
+            loggedInUser.id = 999;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.isCurrentUser).toBeFalse();
+        }));
+
+        it('should prevent removal action if the user is the current user', fakeAsync(() => {
+            loggedInUser.id = conversationMember.id!;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.canBeRemovedFromConversation).toBeFalse();
+        }));
+
+        it.each`
+            role                           | isInstructor | isEditor | isTeachingAssistant | expectedIcon      | expectedTooltip
+            ${'instructor'}                | ${true}      | ${false} | ${false}            | ${faUserGraduate} | ${'artemisApp.metis.userAuthorityTooltips.instructor'}
+            ${'editor (tutor)'}            | ${false}     | ${true}  | ${false}            | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
+            ${'teachingAssistant (tutor)'} | ${false}     | ${false} | ${true}             | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
+            ${'regular student (default)'} | ${false}     | ${false} | ${false}            | ${faUser}         | ${'artemisApp.metis.userAuthorityTooltips.student'}
+        `('should set correct icon and tooltip when role = $role', ({ isInstructor, isEditor, isTeachingAssistant, expectedIcon, expectedTooltip }) => {
+            const updatedMember: ConversationUserDTO = {
+                id: 123,
+                isInstructor,
+                isEditor,
+                isTeachingAssistant,
+            } as ConversationUserDTO;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.conversationMember = input<ConversationUserDTO>(updatedMember);
+                component.setUserAuthorityIconAndTooltip();
+                expect(component.userIcon).toBe(expectedIcon);
+                expect(component.userTooltip).toBe(expectedTooltip);
+            });
+        });
+
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {

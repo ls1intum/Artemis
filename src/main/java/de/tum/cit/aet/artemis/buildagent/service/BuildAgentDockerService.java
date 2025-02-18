@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -353,8 +354,8 @@ public class BuildAgentDockerService {
 
         try {
             // Get the Docker root directory to check disk space.
-            File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
-            long usableSpace = dockerRootDirectory.getUsableSpace();
+            Path dockerRootDirectory = Path.of(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+            long usableSpace = Files.getFileStore(dockerRootDirectory).getUsableSpace();
 
             long threshold = convertMegabytesToBytes(imageCleanupDiskSpaceThresholdMb);
 
@@ -385,7 +386,7 @@ public class BuildAgentDockerService {
                     log.info("Remove oldest docker image {} to cleanup disk space to avoid filling up the hard disk", oldestImage.getKey());
                     try {
                         dockerClient.removeImageCmd(oldestImage.getKey()).exec();
-                        usableSpace = dockerRootDirectory.getUsableSpace();
+                        usableSpace = Files.getFileStore(dockerRootDirectory).getUsableSpace();
                         deleteAttempts--;
                     }
                     catch (NotFoundException e) {
