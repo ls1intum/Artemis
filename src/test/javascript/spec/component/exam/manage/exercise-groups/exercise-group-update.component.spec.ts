@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { EntityResponseType } from 'app/complaints/complaint.service';
@@ -44,9 +44,9 @@ describe('ExerciseGroupUpdateComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: mockRouter },
-                MockProvider(ExerciseGroupService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         }).compileComponents();
 
