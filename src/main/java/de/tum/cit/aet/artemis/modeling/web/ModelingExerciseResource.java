@@ -65,7 +65,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
-import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
@@ -411,7 +410,7 @@ public class ModelingExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
-        var api = plagiarismResultApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismPostApi.class, PROFILE_CORE));
+        PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismResultApi.class, PROFILE_CORE));
 
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
@@ -436,7 +435,7 @@ public class ModelingExerciseResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
             @RequestParam int minimumScore, @RequestParam int minimumSize) {
-        var api = plagiarismDetectionApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismDetectionApi.class, PROFILE_CORE));
+        PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismDetectionApi.class, PROFILE_CORE));
 
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);

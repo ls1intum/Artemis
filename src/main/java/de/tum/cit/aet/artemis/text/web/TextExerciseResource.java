@@ -579,7 +579,7 @@ public class TextExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
-        var api = plagiarismResultApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismResultApi.class, PROFILE_CORE));
+        PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismResultApi.class, PROFILE_CORE));
 
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
@@ -604,7 +604,7 @@ public class TextExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
             @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException {
-        var api = plagiarismDetectionApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismDetectionApi.class, PROFILE_CORE));
+        PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new ApiNotPresentException(PlagiarismDetectionApi.class, PROFILE_CORE));
 
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);

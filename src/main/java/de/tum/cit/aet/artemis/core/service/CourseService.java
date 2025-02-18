@@ -341,7 +341,7 @@ public class CourseService {
             return;
         }
 
-        var api = plagiarismCaseApi.get();
+        PlagiarismCaseApi api = plagiarismCaseApi.get();
         Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = api.findByStudentIdAndExerciseIds(userId, exerciseIds);
         for (Exercise exercise : exercises) {

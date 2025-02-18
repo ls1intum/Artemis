@@ -409,7 +409,7 @@ public class DataExportExerciseCreationService {
             return;
         }
 
-        var api = plagiarismCaseApi.get();
+        PlagiarismCaseApi api = plagiarismCaseApi.get();
         var plagiarismCaseOptional = api.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         List<String> headers = new ArrayList<>();
         var dataStreamBuilder = Stream.builder();
