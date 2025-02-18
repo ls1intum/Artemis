@@ -7,6 +7,9 @@
                 [maxContentLength]="maxContentLength"
                 [isInputLengthDisplayed]="false"
                 (keydown.enter)="confirm()"
+                [isButtonLoading]="isLoading"
+                [isFormGroupValid]="formGroup.valid"
+                [editType]="editType"
             />
             <div class="col mt-1 text-end">
                 <button jhi-posting-button [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate" class="btn btn-sm btn-outline-secondary" (click)="close()"></button>
@@ -16,7 +19,7 @@
                     [disabled]="isLoading || !formGroup.valid"
                     [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
                     id="save"
-                    class="btn btn-sm btn-outline-secondary"
+                    class="btn btn-sm btn-outline-primary"
                     type="submit"
                 ></button>
             </div>

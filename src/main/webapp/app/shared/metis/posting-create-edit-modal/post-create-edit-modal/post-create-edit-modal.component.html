@@ -37,20 +37,30 @@
                     <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
                 </div>
                 <div class="row mb-2">
-                    <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [suppressNewlineOnEnter]="false" />
+                    <jhi-posting-markdown-editor
+                        formControlName="content"
+                        [editorHeight]="editorHeight"
+                        [maxContentLength]="maxContentLength"
+                        [suppressNewlineOnEnter]="false"
+                        [isButtonLoading]="isLoading"
+                        [isFormGroupValid]="formGroup.valid"
+                        [editType]="editType"
+                    />
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="isLoading || !formGroup.valid"
-                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-                id="save"
-                class="btn btn-sm btn-outline-secondary"
-                type="submit"
-            ></button>
-        </div>
+        @if (editType === EditType.UPDATE) {
+            <div class="modal-footer">
+                <button
+                    jhi-posting-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                    class="btn btn-sm btn-outline-primary"
+                    id="save"
+                    type="submit"
+                ></button>
+            </div>
+        }
     </form>
 </ng-template>
