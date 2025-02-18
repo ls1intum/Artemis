@@ -315,10 +315,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-
-        return this.currentPageComponents.find((submissionComponent: ExamSubmissionComponent) => {
-            return (submissionComponent as ExamSubmissionComponent).exercise.id === this.activeExamPage.exercise?.id;
-        });
+        return this.currentPageComponents.find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
     }
 
     /**

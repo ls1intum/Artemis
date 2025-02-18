@@ -7,7 +7,6 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 @Directive()
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract exerciseType: ExerciseType;
-    abstract exercise: Exercise;
     /**
      * checks whether the component has unsaved changes.
      * It is called in the periodic update timer to determine, if the component needs an update
