@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -8,14 +7,15 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -31,11 +31,9 @@ describe('RequestFeedbackButtonComponent', () => {
             imports: [RequestFeedbackButtonComponent],
             providers: [
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(HttpClient),
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(CourseExerciseService),
-                MockProvider(ExerciseService),
-                MockProvider(ParticipationService),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
