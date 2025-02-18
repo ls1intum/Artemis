@@ -46,16 +46,7 @@
                                     <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                 </a>
                                 @if (editType !== EditType.UPDATE) {
-                                    <button
-                                        jhi-posting-button
-                                        [buttonIcon]="faPaperPlane"
-                                        [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
-                                        [buttonLoading]="isButtonLoading"
-                                        [disabled]="isButtonLoading || !isFormGroupValid"
-                                        class="ms-1 col-auto btn btn-sm btn-outline-secondary"
-                                        id="save"
-                                        type="submit"
-                                    ></button>
+                                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
                                 }
                             </div>
                         }
@@ -84,16 +75,8 @@
                             }
                         </ng-content>
                         @if (editType !== EditType.UPDATE) {
-                            <button
-                                jhi-posting-button
-                                [buttonIcon]="faPaperPlane"
-                                [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
-                                [buttonLoading]="isButtonLoading"
-                                [disabled]="isButtonLoading || !isFormGroupValid"
-                                class="float-end btn btn-sm btn-outline-secondary"
-                                id="save"
-                                type="submit"
-                            ></button>
+                            <!-- <ng-container *ngTemplateOutlet="sendButton; context: {text: 'hallo'}" /> -->
+                            <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                         }
                     </div>
                 </ng-template>
@@ -288,4 +271,18 @@
 
 <ng-template #noItemsAvailable>
     <button class="ps-1 me-1" mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
+</ng-template>
+
+<ng-template #sendButton let-extraClass="extraClass" let-testId="testId">
+    <button
+        jhi-posting-button
+        [buttonIcon]="faPaperPlane"
+        [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
+        [buttonLoading]="isButtonLoading"
+        [disabled]="isButtonLoading || !isFormGroupValid"
+        class="btn btn-sm btn-outline-secondary"
+        [ngClass]="extraClass ?? ''"
+        id="testId ?? ''"
+        type="submit"
+    ></button>
 </ng-template>

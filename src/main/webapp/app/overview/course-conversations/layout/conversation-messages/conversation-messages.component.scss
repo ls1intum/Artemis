@@ -83,9 +83,8 @@
     .envelope {
         text-align: center;
         opacity: 0.75;
-        height: 250px;
-        padding-top: 100px;
-        padding-bottom: 100px;
+        margin-top: auto;
+        margin-bottom: auto;
     }
 
     .conversation-messages-message-list.is-fetching-posts {
@@ -116,7 +115,10 @@ jhi-posting-thread {
 }
 
 .channel-content {
-    height: calc(100vh - 15px - var(--header-height) - var(--message-input-height-dev) - var(--channel-header-height));
+    height: calc(100vh - 1rem - var(--header-height) - var(--message-input-height-dev) - var(--channel-header-height));
+    @include media-breakpoint-down(md) {
+        height: calc(100vh - var(--header-height) - var(--message-input-height-dev) - var(--channel-header-height));
+    }
     display: flex;
     flex-direction: column;
     justify-content: space-between;
