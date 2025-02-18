@@ -1,9 +1,9 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { MockComponent, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
+import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
@@ -12,8 +12,8 @@ import { ConversationMessagesComponent } from 'app/overview/course-conversations
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -24,14 +24,12 @@ import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-serv
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -130,7 +128,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(ProfileService),
                     { provide: LayoutService, useValue: MockLayoutService },
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
 
             const metisService = new MockMetisService();
@@ -661,6 +659,39 @@ examples.forEach((activeConversation) => {
                 component.onConversationSelected(invalidStatus);
                 expect(component.selectedSavedPostStatus).toBeNull();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
+            });
+
+            it('should toggle the value of showOnlyPinned', () => {
+                expect(component.showOnlyPinned).toBe(false);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(true);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(false);
+            });
+
+            it('should update pinnedCount when onPinnedCountChanged is called', () => {
+                const newPinnedCount = 5;
+
+                component.onPinnedCountChanged(newPinnedCount);
+                expect(component.pinnedCount).toBe(newPinnedCount);
+            });
+
+            it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(0);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+
+            it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(5);
+                expect(component.showOnlyPinned).toBeTrue();
+
+                component.showOnlyPinned = false;
+                component.onPinnedCountChanged(10);
+                expect(component.showOnlyPinned).toBeFalse();
             });
         });
     });

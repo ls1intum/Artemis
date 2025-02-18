@@ -45,6 +45,9 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
 
+    @Column(name = "build_submission_date")
+    private ZonedDateTime buildSubmissionDate;
+
     @Column(name = "build_start_date")
     private ZonedDateTime buildStartDate;
 
@@ -89,6 +92,7 @@ public class BuildJob extends DomainObject {
         this.participationId = queueItem.participationId();
         this.result = result;
         this.buildAgentAddress = queueItem.buildAgent().memberAddress();
+        this.buildSubmissionDate = queueItem.jobTimingInfo().submissionDate();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
         this.repositoryType = queueItem.repositoryInfo().repositoryType();
@@ -155,6 +159,14 @@ public class BuildJob extends DomainObject {
 
     public void setBuildAgentAddress(String buildAgentAddress) {
         this.buildAgentAddress = buildAgentAddress;
+    }
+
+    public ZonedDateTime getBuildSubmissionDate() {
+        return buildSubmissionDate;
+    }
+
+    public void setBuildSubmissionDate(ZonedDateTime buildSubmissionDate) {
+        this.buildSubmissionDate = buildSubmissionDate;
     }
 
     public ZonedDateTime getBuildStartDate() {

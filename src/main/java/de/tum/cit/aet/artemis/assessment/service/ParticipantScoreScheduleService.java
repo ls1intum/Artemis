@@ -55,7 +55,8 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  * <p>
  * The approach is two-sided, to make the participant scores eventually consistent within seconds without overloading the database.
  * Using a listener on the {@link Result} entity, changes are detected and forwarded (via the broker if not on the main instance) to this service.
- * This method is fast, but not 100% reliable. Therefore, a cron job regularly checks for invalid participant scores and updates them.
+ * This method is fast, but not 100% reliable. For example, network outages could cause this service to miss result updates.
+ * Therefore, a cron job regularly checks for invalid participant scores and updates them.
  * In all cases, using asynchronous scheduled tasks speeds up all requests that modify results.
  *
  * @see ResultListener
@@ -70,11 +71,11 @@ public class ParticipantScoreScheduleService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -96,7 +97,7 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, CompetencyProgressApi competencyProgressApi,
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.scheduler = scheduler;
@@ -156,6 +157,7 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Every minute, query for modified results and schedule a task to update the participant scores.
+     * This is used as a fallback in case Result updates are lost for any reason.
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
@@ -223,17 +225,17 @@ public class ParticipantScoreScheduleService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
-        final int participantScoreHash = new ParticipantScoreId(exerciseId, participantId).hashCode();
-        var task = scheduledTasks.get(participantScoreHash);
+        final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
+        var task = scheduledTasks.get(participantScoreId);
         if (task != null) {
             // If a task is already scheduled, cancel it and reschedule it with the latest result
             task.cancel(true);
-            scheduledTasks.remove(participantScoreHash);
+            scheduledTasks.remove(participantScoreId);
         }
 
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
-        scheduledTasks.put(participantScoreHash, future);
+        scheduledTasks.put(participantScoreId, future);
         log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
@@ -336,13 +338,14 @@ public class ParticipantScoreScheduleService {
             if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
             }
-            competencyProgressApi.updateProgressByLearningObjectSync(score.getExercise(), scoreParticipant.getParticipants());
+            Participant finalScoreParticipant = scoreParticipant;
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectSync(score.getExercise(), finalScoreParticipant.getParticipants()));
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
         }
         finally {
-            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
+            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId));
         }
         long end = System.currentTimeMillis();
         log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);

@@ -34,8 +34,6 @@ import { SubmissionVersionService } from 'app/exercises/shared/submission-versio
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
-import { ArtemisFormsModule } from '../../../../../../../main/webapp/app/forms/artemis-forms.module';
-
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
@@ -62,7 +60,7 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),
@@ -165,6 +163,9 @@ describe('Student Exam Timeline Component', () => {
             exerciseIdSubject: {
                 next() {},
             },
+            studentSubmission: {
+                update() {},
+            },
         } as unknown as ExamSubmissionComponent);
         let expectedSubmission = submission;
         // set the current timestamp needed to find the closest submission if no submission is set
@@ -192,7 +193,7 @@ describe('Student Exam Timeline Component', () => {
             exercise: exercise,
             submission: submission,
         });
-        fixture.detectChanges();
+
         expect(component.currentSubmission).toEqual(expectedSubmission);
         expect(component.currentExercise).toEqual(exercise);
         // text exercise has the submission version

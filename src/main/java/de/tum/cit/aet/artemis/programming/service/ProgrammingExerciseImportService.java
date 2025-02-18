@@ -263,7 +263,7 @@ public class ProgrammingExerciseImportService {
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));

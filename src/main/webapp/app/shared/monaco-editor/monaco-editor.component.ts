@@ -10,7 +10,7 @@ import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
-import GraphemeSplitter from 'grapheme-splitter';
+import Graphemer from 'graphemer';
 
 import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
@@ -173,12 +173,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 const lineContent = model.getLineContent(lineNumber);
 
                 const textBeforeCursor = lineContent.substring(0, column - 1);
-                const splitter = new GraphemeSplitter();
+                const splitter = new Graphemer();
                 const graphemes = splitter.splitGraphemes(textBeforeCursor);
 
                 if (graphemes.length === 0) return;
 
-                graphemes.pop();
+                const lastGrapheme = graphemes.pop();
+                const deletedLength = lastGrapheme?.length ?? 1;
                 const newTextBeforeCursor = graphemes.join('');
                 const textAfterCursor = lineContent.substring(column - 1);
 
@@ -193,6 +194,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     ],
                     () => null,
                 );
+                const newCursorPosition = column - deletedLength;
+                this._editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
             }) || undefined;
     }
 
