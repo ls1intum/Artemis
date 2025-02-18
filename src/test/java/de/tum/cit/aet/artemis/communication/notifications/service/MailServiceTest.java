@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.activation_mail.ActivationMailRecipientDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TimeService;
@@ -88,6 +89,7 @@ class MailServiceTest {
         student1.setId(555L);
         student1.setEmail("benige8246@omibrown.com");
         student1.setLangKey("de");
+        student1.setActivationKey("1234");
 
         student2 = new User();
         student2.setLogin("student2");
@@ -127,7 +129,7 @@ class MailServiceTest {
      */
     @Test
     void testSendEmail() {
-        mailSendingService.sendEmail(student1, subject, content, false, true);
+        mailSendingService.sendEmail(ActivationMailRecipientDTO.of(student1), subject, content, false, true);
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -137,7 +139,7 @@ class MailServiceTest {
     @Test
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
+        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(ActivationMailRecipientDTO.of(student1), subject, content, false, true));
     }
 
     /**
