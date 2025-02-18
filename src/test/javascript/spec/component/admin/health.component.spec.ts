@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 import { HealthComponent } from 'app/admin/health/health.component';
@@ -7,7 +7,7 @@ import { HealthService } from 'app/admin/health/health.service';
 import { Health } from 'app/admin/health/health.model';
 import { By } from '@angular/platform-browser';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -24,7 +24,7 @@ describe('HealthComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [HealthComponent, MockComponent(HealthModalComponent), TranslatePipeMock, MockComponent(JhiConnectionStatusComponent), MockDirective(TranslateDirective)],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }, MockProvider(HealthService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: NgbModal, useClass: MockNgbModalService }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {
