@@ -17,9 +17,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/shared/components/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/entities/programming/programming-exercise-theia.config';
 
