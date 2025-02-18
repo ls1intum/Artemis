@@ -87,6 +87,9 @@ public class BuildJobContainerService {
      * @param image           the Docker image to use for the container
      * @param buildScript     the build script to be executed in the container
      * @param exerciseEnvVars the environment variables provided by the instructor
+     * @param cpuCount        the number of CPUs to allocate to the container
+     * @param memory          the memory limit in MB to allocate to the container
+     * @param memorySwap      the memory swap limit in MB to allocate to the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars, int cpuCount, int memory,
