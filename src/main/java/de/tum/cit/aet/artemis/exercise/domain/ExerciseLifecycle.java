@@ -8,6 +8,19 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 public enum ExerciseLifecycle implements IExerciseLifecycle {
+    SHORTLY_BEFORE_RELEASE {
+
+        @Override
+        public ZonedDateTime getDateFromExercise(Exercise exercise) {
+            return exercise.getReleaseDate() != null ? exercise.getReleaseDate().minusSeconds(15) : null;
+        }
+
+        @Override
+        public ZonedDateTime getDateFromQuizBatch(QuizBatch quizBatch, QuizExercise quizExercise) {
+            return getDateFromExercise(quizExercise);
+        }
+    },
+
     RELEASE {
 
         @Override

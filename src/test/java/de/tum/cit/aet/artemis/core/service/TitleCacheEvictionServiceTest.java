@@ -212,19 +212,19 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
 
         for (var modifier : entityModifiers) {
             var objInCache = idTitleSupplier.get();
-            cache.put(objInCache.x(), objInCache.y());
-            var cacheValueWrapper = cache.get(objInCache.x());
+            cache.put(objInCache.first(), objInCache.second());
+            var cacheValueWrapper = cache.get(objInCache.first());
             assertThat(cacheValueWrapper).isNotNull();
-            assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.y());
+            assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.second());
 
             boolean shouldEvict = modifier.get();
-            cacheValueWrapper = cache.get(objInCache.x());
+            cacheValueWrapper = cache.get(objInCache.first());
             if (shouldEvict) {
                 assertThat(cacheValueWrapper).isNull();
             }
             else {
                 assertThat(cacheValueWrapper).isNotNull();
-                assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.y());
+                assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.second());
             }
         }
     }

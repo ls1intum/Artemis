@@ -114,13 +114,13 @@ public class NotificationScheduleService {
     private void scheduleNotificationForReleasedExercise(Exercise exercise) {
         try {
             checkSecurityUtils();
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.RELEASE, () -> {
                 checkSecurityUtils();
                 Exercise foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getReleaseDate())) {
                     groupNotificationService.notifyAllGroupsAboutReleasedExercise(foundCurrentVersionOfScheduledExercise);
                 }
-            });
+            }, "notify about release exercise");
             log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
         }
         catch (Exception exception) {
@@ -155,13 +155,13 @@ public class NotificationScheduleService {
     private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise) {
         try {
             checkSecurityUtils();
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
                 checkSecurityUtils();
                 Exercise foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getAssessmentDueDate())) {
                     singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(foundCurrentVersionOfScheduledExercise);
                 }
-            });
+            }, "notify about assessed exercise submission");
             log.debug("Scheduled notify about assessed exercise submission after assessment due date for exercise '{}' (#{}) at {}.", exercise.getTitle(), exercise.getId(),
                     exercise.getAssessmentDueDate());
         }

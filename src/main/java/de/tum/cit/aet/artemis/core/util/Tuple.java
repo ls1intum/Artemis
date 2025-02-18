@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.io.Serializable;
+
 /**
  * Immutable tuple object.
  *
- * @param <X> first param.
- * @param <Y> second param.
+ * @param <F> first param.
+ * @param <S> second param.
  */
-public record Tuple<X, Y>(X x, Y y) {
+public record Tuple<F, S>(F first, S second) implements Serializable {
 }
