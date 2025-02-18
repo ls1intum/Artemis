@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('DifficultyLevelComponent', () => {
     let component: DifficultyLevelComponent;
@@ -9,6 +11,7 @@ describe('DifficultyLevelComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [DifficultyLevelComponent, NgbTooltipModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(DifficultyLevelComponent);
         component = fixture.componentInstance;
