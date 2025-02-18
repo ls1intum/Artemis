@@ -53,7 +53,7 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeViewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/tree-view.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
@@ -109,7 +109,7 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
-                TreeviewComponent,
+                TreeViewComponent,
             ],
             providers: [
                 JhiLanguageHelper,

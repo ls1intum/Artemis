@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { AppComponent } from '../../../../../main/webapp/app/app.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,7 +28,7 @@ describe('JhiMainComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

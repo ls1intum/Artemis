@@ -213,6 +213,9 @@ describe('Student Exam Timeline Component', () => {
             exerciseIdSubject: {
                 next() {},
             },
+            studentSubmission: {
+                update() {},
+            },
         } as unknown as ExamSubmissionComponent);
         let expectedSubmission = submission;
         // set the current timestamp needed to find the closest submission if no submission is set
@@ -240,7 +243,7 @@ describe('Student Exam Timeline Component', () => {
             exercise: exercise,
             submission: submission,
         });
-        fixture.detectChanges();
+
         expect(component.currentSubmission).toEqual(expectedSubmission);
         expect(component.currentExercise).toEqual(exercise);
         // text exercise has the submission version

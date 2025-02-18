@@ -8,7 +8,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, FileType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
@@ -65,7 +65,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -214,9 +213,9 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
     });
 
-    const initContainer = (exercise: ProgrammingExercise) => {
+    const initContainer = (exercise: ProgrammingExercise, routeParams?: any) => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId: 1 });
+        routeSubject.next({ exerciseId: 1, ...routeParams });
         expect(comp.codeEditorContainer).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
@@ -253,7 +252,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(comp.exercise).toEqual(exercise);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEMPLATE);
+        expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState).toBe(comp.LOADING_STATE.CLEAR);
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
@@ -308,16 +307,16 @@ describe('CodeEditorInstructorIntegration', () => {
         } as ProgrammingExercise;
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/test');
+        (comp.router as MockRouter).setUrl(`code-editor/TESTS`);
         comp.ngOnDestroy();
-        initContainer(exercise);
+        initContainer(exercise, { repositoryType: 'TESTS' });
 
         findWithParticipationsSubject.next({ body: exercise });
 
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(comp.selectedParticipation).toEqual(exercise.templateParticipation);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEST);
+        expect(comp.selectedRepository).toBe(RepositoryType.TESTS);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
 
@@ -331,7 +330,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.SOLUTION);
+        expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
         expect(comp.selectedParticipation).toEqual(exercise.solutionParticipation);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
@@ -357,14 +356,15 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // Start with assignment repository
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/2');
+        (comp.router as MockRouter).setUrl(`code-editor/USER/2`);
+
         comp.ngOnInit();
-        routeSubject.next({ exerciseId: 1, participationId: 2 });
+        routeSubject.next({ exerciseId: 1, repositoryId: 2, repositoryType: 'USER' });
         findWithParticipationsSubject.next({ body: exercise });
 
         containerFixture.detectChanges();
 
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.ASSIGNMENT);
+        expect(comp.selectedRepository).toBe(RepositoryType.ASSIGNMENT);
         expect(comp.selectedParticipation).toEqual(exercise.studentParticipations[0]);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
@@ -375,8 +375,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // New select solution repository
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/4');
-        routeSubject.next({ exerciseId: 1, participationId: 4 });
+        (comp.router as MockRouter).setUrl('code-editor/SOLUTION/4');
+        routeSubject.next({ exerciseId: 1, repositoryId: 4 });
 
         containerFixture.detectChanges();
 
@@ -432,73 +432,65 @@ describe('CodeEditorInstructorIntegration', () => {
         });
 
         it('should navigate to template participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectTemplateParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.templateParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TEMPLATE, exercise.templateParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to template participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectTemplateParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.templateParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TEMPLATE, exercise.templateParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to solution participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectSolutionParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.solutionParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, exercise.solutionParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to solution participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectSolutionParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.solutionParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, exercise.solutionParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to assignment participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectAssignmentParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.studentParticipations![0].id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.USER, exercise.studentParticipations![0].id], expect.any(Object));
         });
 
         it('should navigate to assignment participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectAssignmentParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.studentParticipations![0].id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.USER, exercise.studentParticipations![0].id], expect.any(Object));
         });
 
         it('should navigate to test repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectTestRepository();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', 'test'], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.any(Object));
         });
 
         it('should navigate to test repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectTestRepository();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', 'test'], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.any(Object));
         });
 
         it('should navigate to auxiliary repository with provided repositoryId', () => {
             const repositoryId = 4;
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectAuxiliaryRepository(repositoryId);
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', 'auxiliary', repositoryId], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.AUXILIARY, repositoryId], expect.any(Object));
         });
 
         it('should navigate to auxiliary repository from test repository', () => {
             const repositoryId = 4;
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectAuxiliaryRepository(repositoryId);
-            expect(navigateSpy).toHaveBeenCalledWith(['..', 'auxiliary', repositoryId], expect.any(Object));
-        });
-
-        it('should return the correct navigation path based on selected repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
-            expect(comp.up()).toBe('../..');
-
-            comp.selectedRepository = REPOSITORY.TEST; // Or any other non-auxiliary value
-            expect(comp.up()).toBe('..');
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.AUXILIARY, repositoryId], expect.any(Object));
         });
     });
 });

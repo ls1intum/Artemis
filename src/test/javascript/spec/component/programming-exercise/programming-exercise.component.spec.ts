@@ -18,6 +18,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programm
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockProvider } from 'ng-mocks';
@@ -180,7 +181,7 @@ describe('ProgrammingExercise Management Component', () => {
         const alertSuccessStub = jest.spyOn(alertService, 'success');
 
         // WHEN
-        comp.downloadRepository(programmingExercise.id, 'TEMPLATE');
+        comp.downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE);
 
         // THEN
         expect(exportRepositoryStub).toHaveBeenCalledOnce();

@@ -39,7 +39,7 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -227,7 +227,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Data for file browser
         const treeItems = [
-            new TreeviewItem({
+            new TreeViewItem({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,

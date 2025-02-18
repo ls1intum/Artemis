@@ -45,7 +45,8 @@ describe('ProgrammingExamSubmissionComponent', () => {
     };
 
     it('should change state on commit', () => {
-        component.studentParticipation = newParticipation();
+        const studentParticipation = newParticipation();
+        fixture.componentRef.setInput('studentParticipation', studentParticipation);
 
         component.onCommitStateChange(CommitState.UNDEFINED);
         expect(component.hasSubmittedOnce).toBeFalse();
@@ -57,24 +58,25 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         component.onCommitStateChange(CommitState.CLEAN);
 
-        expect(component.studentParticipation.submissions![0].submitted).toBeTrue();
-        expect(component.studentParticipation.submissions![0].isSynced).toBeTrue();
+        expect(component.studentParticipation().submissions![0].submitted).toBeTrue();
+        expect(component.studentParticipation().submissions![0].isSynced).toBeTrue();
     });
 
     it('should not be synced on file change', () => {
-        component.studentParticipation = newParticipation();
+        const studentParticipation = newParticipation();
+        fixture.componentRef.setInput('studentParticipation', studentParticipation);
 
-        component.studentParticipation.submissions![0].isSynced = true;
+        component.studentParticipation().submissions![0].isSynced = true;
         component.onFileChanged();
 
-        expect(component.studentParticipation.submissions![0].isSynced).toBeFalse();
+        expect(component.studentParticipation().submissions![0].isSynced).toBeFalse();
     });
 
     it('should get submission', () => {
-        const participation = newParticipation();
-        component.studentParticipation = participation;
+        const studentParticipation = newParticipation();
+        fixture.componentRef.setInput('studentParticipation', studentParticipation);
 
-        expect(component.getSubmission()).toEqual(participation.submissions![0]);
+        expect(component.getSubmission()).toEqual(studentParticipation.submissions![0]);
     });
 
     it('should return false if no unsaved changes', () => {
@@ -82,7 +84,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         exercise.allowOfflineIde = true;
         exercise.allowOnlineEditor = false;
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         expect(component.hasUnsavedChanges()).toBeFalse();
     });

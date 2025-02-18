@@ -37,7 +37,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
 
         comp.ngOnInit();
-        expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(fixture.componentInstance.resultId, feedbackId);
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
     });
 
     it('should update feedback with SGI and emit to parent', () => {

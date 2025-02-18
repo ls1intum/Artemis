@@ -13,18 +13,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
-import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
-import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -64,9 +54,8 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ExerciseGroupsComponent],
             declarations: [
-                ExerciseGroupsComponent,
                 MockComponent(ExamExerciseRowButtonsComponent),
                 MockComponent(ProgrammingExerciseInstructorStatusComponent),
                 MockDirective(DeleteButtonDirective),
@@ -79,10 +68,9 @@ describe('Exercise Groups Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                provideRouter([]),
-                MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
+                MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -91,6 +79,7 @@ describe('Exercise Groups Component', () => {
                 provideHttpClientTesting(),
             ],
         })
+            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseGroupsComponent);
@@ -99,7 +88,7 @@ describe('Exercise Groups Component', () => {
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
-                modalService = TestBed.inject(NgbModal);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 

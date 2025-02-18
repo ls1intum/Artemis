@@ -3,7 +3,6 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -22,6 +21,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
@@ -72,7 +72,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         comp.applyDomainChange({}, {});
 
         expect(selectRepositorySpy).toHaveBeenCalledOnce();
-        expect(selectRepositorySpy).toHaveBeenCalledWith(REPOSITORY.TEST);
+        expect(selectRepositorySpy).toHaveBeenCalledWith(RepositoryType.TESTS);
     });
 
     it('ngOnInit should subscribe to orionState', () => {
@@ -105,7 +105,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         const exercise = { id: 5 } as any;
         const participation = { id: 10 } as any;
-        comp.selectedRepository = REPOSITORY.SOLUTION;
+        comp.selectedRepository = RepositoryType.SOLUTION;
         comp.exercise = exercise;
         comp.selectedParticipation = participation;
 

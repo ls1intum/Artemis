@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATLAS } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
@@ -25,6 +25,7 @@ import {
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
@@ -58,8 +59,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class CourseManagementCardComponent implements OnChanges {
+export class CourseManagementCardComponent implements OnInit, OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
+    private readonly profileService = inject(ProfileService);
 
     CachingStrategy = CachingStrategy;
     // TODO: can we merge the 3 courses here?
@@ -68,6 +71,8 @@ export class CourseManagementCardComponent implements OnChanges {
     @Input() courseWithExercises: Course | undefined;
     @Input() courseWithUsers: Course | undefined;
     @Input() isGuidedTour: boolean;
+
+    atlasEnabled = false;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
 
@@ -112,6 +117,10 @@ export class CourseManagementCardComponent implements OnChanges {
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
+
+    ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS)));
+    }
 
     ngOnChanges() {
         const targetCourseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;

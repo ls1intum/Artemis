@@ -18,7 +18,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -96,7 +96,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,

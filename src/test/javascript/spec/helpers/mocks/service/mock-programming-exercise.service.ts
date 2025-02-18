@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseResetOptions } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { RepositoryType } from '../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -12,7 +13,7 @@ export class MockProgrammingExerciseService {
     find = (exerciseId: number) => of({ body: { id: 4 } });
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
-    exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
+    exportInstructorRepository = (exerciseId: number, repositoryType: RepositoryType) => of({ body: undefined });
     exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
     getDiffReport = (exerciseId: number) => of({});

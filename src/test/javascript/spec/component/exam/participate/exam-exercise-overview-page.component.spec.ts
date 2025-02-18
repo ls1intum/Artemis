@@ -15,6 +15,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
     let comp: ExamExerciseOverviewPageComponent;
+    let studentExam: StudentExam;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,8 +30,8 @@ describe('ExamExerciseOverviewPageComponent', () => {
 
         fixture = TestBed.createComponent(ExamExerciseOverviewPageComponent);
         comp = fixture.componentInstance;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.exercises = [
+        studentExam = new StudentExam();
+        studentExam.exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -43,6 +44,7 @@ describe('ExamExerciseOverviewPageComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
+        fixture.componentRef.setInput('studentExam', studentExam);
     });
 
     beforeEach(fakeAsync(() => {
@@ -53,16 +55,15 @@ describe('ExamExerciseOverviewPageComponent', () => {
     it('should open the exercise', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
 
-        comp.openExercise(comp.studentExam.exercises![0]);
+        comp.openExercise(studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
     });
 
     it('jhi-updating-result component should be defined', () => {
-        const exerciseWithParticipations =
-            comp.studentExam !== undefined && comp.studentExam.exercises !== undefined
-                ? comp.studentExam.exercises.find((ex) => ex.studentParticipations && ex.studentParticipations.length > 0)
-                : undefined;
+        const studentExamValue = comp.studentExam?.(); // Optional chaining to handle potential undefined.
+
+        const exerciseWithParticipations = studentExamValue?.exercises?.find((ex) => ex.studentParticipations && ex.studentParticipations.length > 0);
         expect(exerciseWithParticipations).toBeDefined();
 
         fixture.detectChanges();
