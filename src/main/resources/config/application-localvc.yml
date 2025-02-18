@@ -12,3 +12,4 @@ artemis:
         url: http://localhost:8000
         build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc.
         build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc. You can also use an ssh key
+        build-agent-use-ssh: false # if true build agents will generate a key pair at startup and use ssh to clone repositories from core nodes. Also set ssh-template-clone-url and ssh-host-key-path for the build agents if true.
