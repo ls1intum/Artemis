@@ -8,6 +8,8 @@ import { EntityResponseType, ResultService } from 'app/exercises/shared/result/r
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;
@@ -15,8 +17,7 @@ describe('External Submission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(ExternalSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);
