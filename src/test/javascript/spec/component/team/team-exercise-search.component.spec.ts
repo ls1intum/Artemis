@@ -8,6 +8,8 @@ import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exer
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Exercise Search Component', () => {
     let comp: TeamExerciseSearchComponent;
@@ -15,11 +17,11 @@ describe('Team Exercise Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideTemplate(TeamExerciseSearchComponent, '')
