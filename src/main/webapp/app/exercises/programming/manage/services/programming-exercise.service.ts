@@ -22,8 +22,8 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseTheiaConfig } from 'app/entities/programming/programming-exercise-theia.config';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -619,8 +619,8 @@ export class ProgrammingExerciseService {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 
-    getBuildConfig(exerciseId: number): Observable<ProgrammingExerciseBuildConfig> {
-        return this.http.get<ProgrammingExerciseBuildConfig>(`${this.resourceUrl}/${exerciseId}/build-config`);
+    getTheiaConfig(exerciseId: number): Observable<ProgrammingExerciseTheiaConfig> {
+        return this.http.get<ProgrammingExerciseTheiaConfig>(`${this.resourceUrl}/${exerciseId}/theia-config`);
     }
 
     /** Imports a programming exercise from a given zip file **/

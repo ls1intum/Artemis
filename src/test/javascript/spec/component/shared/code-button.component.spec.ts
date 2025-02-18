@@ -21,6 +21,7 @@ import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/sh
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { ProgrammingExerciseTheiaConfig } from 'app/entities/programming/programming-exercise-theia.config';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -455,12 +456,12 @@ describe('CodeButtonComponent', () => {
             },
             false,
         ],
-    ])('%s', async (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
+    ])('%s', async (description, profileInfo, programmingExercise, theiaConfig, expectedVisibility) => {
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(of(profileInfo as ProfileInfo));
 
-        const getBuildconfigStub = jest.spyOn(programmingExerciseService, 'getBuildConfig');
-        getBuildconfigStub.mockReturnValue(of(buildConfig as ProgrammingExerciseBuildConfig));
+        const getTheiaConfigStub = jest.spyOn(programmingExerciseService, 'getTheiaConfig');
+        getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
         // Expand the programmingExercise by given properties
         fixture.componentRef.setInput('exercise', {

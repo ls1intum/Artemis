@@ -76,9 +76,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -500,18 +500,18 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/build-config : get the build config of "exerciseId" programmingExercise.
+     * GET /programming-exercises/:exerciseId/theia-config : get the theia config for the programmingExercise.
      *
-     * @param exerciseId the id of the programmingExercise to retrieve the config for
-     * @return the ResponseEntity with status 200 (OK) and with body the programmingExerciseBuildConfig, or with status 404 (Not Found)
+     * @param exerciseId the id of the programmingExercise to retrieve the configuration for
+     * @return the ResponseEntity with status 200 (OK) and with body the TheiaConfigDTO, or with status 404 (Not Found)
      */
-    @GetMapping("programming-exercises/{exerciseId}/build-config")
+    @GetMapping("programming-exercises/{exerciseId}/theia-config")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<ProgrammingExerciseBuildConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
-        log.debug("REST request to get build config of ProgrammingExercise : {}", exerciseId);
-        var buildConfig = new ProgrammingExerciseBuildConfigDTO(programmingExerciseBuildConfigRepository.getTheiaImageByProgrammingExerciseId(exerciseId));
+    public ResponseEntity<ProgrammingExerciseTheiaConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
+        log.debug("REST request to get theia image of ProgrammingExercise : {}", exerciseId);
+        var imageDTO = new ProgrammingExerciseTheiaConfigDTO(programmingExerciseBuildConfigRepository.getTheiaImageByProgrammingExerciseId(exerciseId));
 
-        return ResponseEntity.ok().body(buildConfig);
+        return ResponseEntity.ok().body(imageDTO);
     }
 
     /**

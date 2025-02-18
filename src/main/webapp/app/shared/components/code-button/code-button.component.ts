@@ -446,9 +446,10 @@ export class CodeButtonComponent implements OnInit {
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
             // Theia requires the Build Config of the programming exercise to be set
             // @ts-expect-error (The exercise is not undefined here)
-            this.programmingExerciseSerice.getBuildConfig(this.exercise().id!).subscribe((buildConfig) => {
+            this.programmingExerciseSerice.getTheiaConfig(this.exercise().id!).subscribe((theiaConfig) => {
+                // Merge the theiaConfig (containing the theiaImage) into the buildConfig
                 // @ts-expect-error (The exercise is not undefined here)
-                this.exercise().buildConfig = buildConfig;
+                this.exercise().buildConfig = { ...this.exercise()?.buildConfig, ...theiaConfig };
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';

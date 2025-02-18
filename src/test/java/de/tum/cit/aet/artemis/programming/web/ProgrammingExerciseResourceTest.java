@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -71,10 +71,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testBuildConfigOnlyReturnsRestrictedSetOfInformation() throws Exception {
-        ProgrammingExerciseBuildConfigDTO buildConfig = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-config", HttpStatus.OK,
-                ProgrammingExerciseBuildConfigDTO.class);
+        ProgrammingExerciseTheiaConfigDTO imageDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/theia-config", HttpStatus.OK,
+                ProgrammingExerciseTheiaConfigDTO.class);
 
         // Count the number of fields in the record, this makes sure that only the expected fields are returned
-        assertThat(buildConfig.getClass().getDeclaredFields().length).isEqualTo(1);
+        assertThat(imageDTO.getClass().getDeclaredFields().length).isEqualTo(1);
     }
 }
