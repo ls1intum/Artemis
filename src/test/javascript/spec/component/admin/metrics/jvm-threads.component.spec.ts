@@ -7,6 +7,8 @@ import { By } from '@angular/platform-browser';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('JvmThreadsComponent', () => {
     let comp: JvmThreadsComponent;
@@ -17,7 +19,10 @@ describe('JvmThreadsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(NgbProgressbar)],
             declarations: [JvmThreadsComponent],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(JvmThreadsComponent);
