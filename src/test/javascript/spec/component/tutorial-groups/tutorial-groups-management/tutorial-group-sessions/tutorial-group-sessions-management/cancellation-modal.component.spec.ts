@@ -8,6 +8,9 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CancellationModalComponent', () => {
     let fixture: ComponentFixture<CancellationModalComponent>;
@@ -21,7 +24,7 @@ describe('CancellationModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [MockProvider(TutorialGroupSessionService), MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
