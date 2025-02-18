@@ -8,14 +8,13 @@ import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/typ
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { Exercise } from 'app/entities/exercise.model';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
 export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
-export class PlagiarismCasesService extends BaseApiHttpService {
+export class PlagiarismCasesService {
     private http = inject(HttpClient);
 
     private resourceUrl = 'api/courses';
@@ -133,7 +132,6 @@ export class PlagiarismCasesService extends BaseApiHttpService {
             observe: 'response',
         });
     }
-
     public getNumberOfPlagiarismCasesForExercise(exercise: Exercise): Observable<number> {
         let courseId: number;
         if (exercise.exerciseGroup) {

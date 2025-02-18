@@ -52,7 +52,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     affectedExerciseRouterLink: (string | number)[];
 
     isAfterDueDate: boolean;
-    isButtonVisible = true;
 
     readonly dayjs = dayjs;
 

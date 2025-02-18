@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 /**
  * REST controller for managing AnswerPost.
@@ -37,14 +36,10 @@ public class PlagiarismAnswerPostResource {
 
     private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 
-    private final PlagiarismPostService plagiarismPostService;
-
     private final PlagiarismCaseService plagiarismCaseService;
 
-    public PlagiarismAnswerPostResource(PlagiarismAnswerPostService plagiarismAnswerPostService, PlagiarismPostService plagiarismPostService,
-            PlagiarismCaseService plagiarismCaseService) {
+    public PlagiarismAnswerPostResource(PlagiarismAnswerPostService plagiarismAnswerPostService, PlagiarismCaseService plagiarismCaseService) {
         this.plagiarismAnswerPostService = plagiarismAnswerPostService;
-        this.plagiarismPostService = plagiarismPostService;
         this.plagiarismCaseService = plagiarismCaseService;
     }
 

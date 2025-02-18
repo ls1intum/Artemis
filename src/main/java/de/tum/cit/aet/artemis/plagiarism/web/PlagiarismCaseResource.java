@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 /**
  * REST controller for managing Plagiarism Cases.
@@ -56,20 +55,17 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    private final PlagiarismPostService plagiarismPostService;
-
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
-            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismPostService plagiarismPostService) {
+            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
-        this.plagiarismPostService = plagiarismPostService;
     }
 
     /**
