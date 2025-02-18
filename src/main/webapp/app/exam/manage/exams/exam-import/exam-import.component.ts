@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, Input, ViewChild, inject } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -12,7 +13,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 
@@ -26,13 +26,12 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     private alertService = inject(AlertService);
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
-    @Input() subsequentExerciseGroupSelection: boolean;
+    subsequentExerciseGroupSelection = signal<boolean>(false);
     // Values to specify the target of the exercise group import
-    @Input() targetCourseId?: number;
-    @Input() targetExamId?: number;
+    targetCourseId = signal<number | undefined>(undefined);
+    targetExamId = signal<number | undefined>(undefined);
 
-    @ViewChild(ExamExerciseImportComponent)
-    examExerciseImportComponent: ExamExerciseImportComponent;
+    examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
     exam?: Exam;
     isImportingExercises = false;
@@ -51,7 +50,7 @@ export class ExamImportComponent extends ImportComponent<Exam> {
         this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
             next: (examRes: HttpResponse<Exam>) => {
                 this.exam = examRes.body!;
-                this.isImportInSameCourse = this.exam.course?.id === this.targetCourseId;
+                this.isImportInSameCourse = this.exam.course?.id === this.targetCourseId();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -63,16 +62,16 @@ export class ExamImportComponent extends ImportComponent<Exam> {
      * Called once when user is importing the exam
      */
     performImportOfExerciseGroups() {
-        if (this.subsequentExerciseGroupSelection && this.exam && this.targetExamId && this.targetCourseId) {
+        if (this.subsequentExerciseGroupSelection() && this.exam && this.targetExamId() && this.targetCourseId()) {
             // The validation of the selected exercises is only called when the user desires to import the exam
-            if (!this.examExerciseImportComponent.validateUserInput()) {
+            if (!this.examExerciseImportComponent().validateUserInput()) {
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
                 return;
             }
             this.isImportingExercises = true;
             // The child component provides us with the selected exercise groups and exercises
-            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
-            this.examManagementService.importExerciseGroup(this.targetCourseId, this.targetExamId, this.exam.exerciseGroups!).subscribe({
+            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+            this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, this.exam.exerciseGroups!).subscribe({
                 next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
                     this.isImportingExercises = false;
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
@@ -85,12 +84,12 @@ export class ExamImportComponent extends ImportComponent<Exam> {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
                         this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
                         // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
-                        this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToInvalidProjectKey();
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
                     } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
                         this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
-                        this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {
                         onError(this.alertService, httpErrorResponse);
@@ -102,6 +101,6 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     }
 
     protected override createOptions(): object {
-        return { withExercises: this.subsequentExerciseGroupSelection };
+        return { withExercises: this.subsequentExerciseGroupSelection() };
     }
 }

@@ -18,6 +18,7 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../../test.module';
+import { signal } from '@angular/core';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('Exercise Groups Component', () => {
@@ -256,9 +257,9 @@ describe('Exercise Groups Component', () => {
         const exerciseGroup = { id: 1 } as ExerciseGroup;
         const mockReturnValue = {
             componentInstance: {
-                subsequentExerciseGroupSelection: undefined,
-                targetCourseId: undefined,
-                targetExamId: undefined,
+                subsequentExerciseGroupSelection: signal<boolean>(false),
+                targetCourseId: signal<number | undefined>(undefined),
+                targetExamId: signal<number | undefined>(undefined),
             },
             result: Promise.resolve([exerciseGroup]),
         } as NgbModalRef;

@@ -291,9 +291,9 @@ export class ExerciseGroupsComponent implements OnInit {
             backdrop: 'static',
         });
         // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.subsequentExerciseGroupSelection = true;
-        examImportModalRef.componentInstance.targetCourseId = this.courseId;
-        examImportModalRef.componentInstance.targetExamId = this.examId;
+        examImportModalRef.componentInstance.subsequentExerciseGroupSelection.set(true);
+        examImportModalRef.componentInstance.targetCourseId.set(this.courseId);
+        examImportModalRef.componentInstance.targetExamId.set(this.examId);
 
         examImportModalRef.result.then((exerciseGroups: ExerciseGroup[]) => {
             if (exerciseGroups) {

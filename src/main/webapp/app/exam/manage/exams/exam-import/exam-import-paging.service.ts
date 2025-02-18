@@ -14,10 +14,6 @@ export class ExamImportPagingService extends PagingService<Exam> {
 
     private static readonly RESOURCE_URL = 'api/exams';
 
-    constructor() {
-        super();
-    }
-
     /**
      * Method to get (possible) exams for import from the server
      * @param pageable object specifying search parameters
