@@ -5,9 +5,11 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
@@ -20,8 +22,9 @@ describe('CourseDetailLineChartComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(CourseManagementService),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
