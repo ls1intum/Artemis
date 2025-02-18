@@ -50,6 +50,17 @@ public class AnswerPost extends Posting {
         return resolvesPost;
     }
 
+    @Column(name = "has_forwarded_messages")
+    private boolean hasForwardedMessages;
+
+    public boolean getHasForwardedMessages() {
+        return hasForwardedMessages;
+    }
+
+    public void setHasForwardedMessages(boolean hasForwardedMessages) {
+        this.hasForwardedMessages = hasForwardedMessages;
+    }
+
     public void setResolvesPost(Boolean resolvesPost) {
         this.resolvesPost = resolvesPost;
     }

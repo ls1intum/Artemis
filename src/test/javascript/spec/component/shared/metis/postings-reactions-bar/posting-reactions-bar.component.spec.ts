@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
@@ -35,7 +35,7 @@ import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -44,6 +44,9 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { of } from 'rxjs';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;
@@ -59,6 +62,8 @@ describe('PostingReactionsBarComponent', () => {
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
+    let consoleErrorSpy: jest.SpyInstance;
+    let createForwardedMessagesSpy: jest.SpyInstance;
 
     const SPEECH_BALLOON_UNICODE = '1F4AC';
     const ARCHIVE_EMOJI_UNICODE = '1F4C2';
@@ -87,6 +92,7 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
@@ -101,6 +107,8 @@ describe('PostingReactionsBarComponent', () => {
                 metisServiceUserIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserIsAuthorOfPostingStub = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
+                consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+                createForwardedMessagesSpy = jest.spyOn(metisService, 'createForwardedMessages');
                 post = new Post();
                 post.id = 1;
                 post.author = metisUser1;
@@ -133,6 +141,10 @@ describe('PostingReactionsBarComponent', () => {
 
     function getResolveButton(): DebugElement | null {
         return debugElement.query(By.css('#toggleElement'));
+    }
+
+    function getForwardButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
     }
 
     it('should initialize user authority and reactions correctly', () => {
@@ -604,5 +616,114 @@ describe('PostingReactionsBarComponent', () => {
         component.togglePin();
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.NONE);
         expect(component.displayPriority).toBe(DisplayPriority.NONE);
+    });
+
+    it('should display forward button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.isReadOnlyMode = input<boolean>(false);
+            component.isEmojiCount = input<boolean>(false);
+        });
+        fixture.detectChanges();
+        const forwardButton = getForwardButton();
+
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton?.nativeElement.click();
+        fixture.detectChanges();
+        expect(forwardMessageSpy).toHaveBeenCalled();
+    });
+
+    it('should call openForwardMessageView with originalPostDetails when posting content is empty', () => {
+        const openForwardMessageViewSpy = jest.spyOn(component, 'openForwardMessageView');
+        const originalPost = { id: 42, content: 'Original content' } as Posting;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(originalPost);
+            component.posting = input<Posting>({ id: 1, content: '' } as Post);
+            component.forwardMessage();
+
+            expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
+            expect(openForwardMessageViewSpy).toHaveBeenCalledWith(originalPost, false);
+        });
+    });
+
+    it('should call openForwardMessageView with posting when posting content is not empty', () => {
+        const openForwardMessageViewSpy = jest.spyOn(component, 'openForwardMessageView');
+        const postingWithContent = { id: 1, content: 'Non-empty content' } as Post;
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = input<Posting>(postingWithContent);
+        });
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
+        expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
+    });
+
+    it('should not call openForwardMessageView when course id is not set', fakeAsync(() => {
+        metisService.setCourse(undefined);
+
+        const modalServiceSpy = jest.spyOn(component['modalService'], 'open').mockReturnValue({
+            componentInstance: {
+                users: { set: jest.fn() },
+                channels: { set: jest.fn() },
+                postToForward: { set: jest.fn() },
+                courseId: { set: jest.fn() },
+            },
+            result: Promise.resolve({
+                channels: [{ id: 1, type: ConversationType.CHANNEL } as Conversation],
+                users: [],
+                messageContent: 'Forwarded content to convo 1',
+            }),
+        } as any);
+
+        component.forwardMessage();
+        tick();
+
+        expect(modalServiceSpy).not.toHaveBeenCalled();
+        expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should call createForwardedMessages with the correct arguments', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const content = 'Test content';
+        const isAnswer = true;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+
+        component.forwardPost(testPost, testConversation, content, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty content without logging errors', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const emptyContent = '';
+        const isAnswer = true;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        component.forwardPost(testPost, testConversation, emptyContent, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, emptyContent);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call createForwardedMessages with isAnswer set to false', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const content = 'my content';
+        const isAnswer = false;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        component.forwardPost(testPost, testConversation, content, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 });

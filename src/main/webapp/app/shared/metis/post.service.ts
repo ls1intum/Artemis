@@ -125,6 +125,17 @@ export class PostService extends PostingService<Post> {
     }
 
     /**
+     * gets source posts(original (forwarded) posts in posts) of posts
+     * @param {number} courseId
+     * @param {number[]} postIds
+     * @return {Observable<Post[]>}
+     */
+    getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
+        const params = new HttpParams().set('postIds', postIds.join(','));
+        return this.http.get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+    }
+
+    /**
      * takes an array of posts and converts the date from the server
      * @param res
      * @return the response with the converted date

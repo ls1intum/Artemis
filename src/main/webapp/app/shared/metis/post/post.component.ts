@@ -18,10 +18,10 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
-import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -37,6 +37,9 @@ import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
+import { Posting } from 'app/entities/metis/posting.model';
+import { throwError } from 'rxjs';
+import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
 
 @Component({
     selector: 'jhi-post',
@@ -67,6 +70,7 @@ import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions
         EmojiPickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        ForwardedMessageComponent,
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
@@ -106,6 +110,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit = false;
     mayDelete = false;
     canPin = false;
+    originalPostDetails: Post | AnswerPost | undefined = undefined;
+    readonly onNavigateToPost = output<Posting>();
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -115,9 +121,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
     readonly faBookmark = faBookmark;
+    readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
+    forwardedPosts = input<Post[]>([]);
+    forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
+    course: Course;
+
+    constructor() {
+        super();
+        this.course = this.metisService.getCourse() ?? throwError('Course not found');
+    }
 
     get reactionsBar() {
         return this.reactionsBarComponent();
@@ -204,6 +219,30 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
         this.assignPostingToPost();
+        this.fetchForwardedMessages();
+    }
+
+    fetchForwardedMessages(): void {
+        try {
+            if (this.forwardedPosts().length > 0) {
+                const forwardedMessage = this.forwardedPosts()[0];
+
+                if (forwardedMessage?.id) {
+                    this.originalPostDetails = forwardedMessage;
+                    this.changeDetector.markForCheck();
+                }
+            }
+            if (this.forwardedAnswerPosts().length > 0) {
+                const forwardedMessage = this.forwardedAnswerPosts()[0];
+
+                if (forwardedMessage?.id) {
+                    this.originalPostDetails = forwardedMessage;
+                    this.changeDetector.markForCheck();
+                }
+            }
+        } catch (error) {
+            throw new Error(error.toString());
+        }
     }
 
     /**
@@ -292,5 +331,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         if (this.posting && !(this.posting instanceof Post)) {
             this.posting = Object.assign(new Post(), this.posting);
         }
+    }
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
     }
 }

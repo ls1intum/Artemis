@@ -40,6 +40,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/button.compon
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -620,5 +621,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.searchElement()!.nativeElement.focus();
         }
+    }
+
+    onTriggerNavigateToPost(post: Posting) {
+        let id = (post as Post)?.conversation?.id;
+        this.focusPostId = post.id;
+        this.openThreadOnFocus = false;
+        if (post.id === undefined) {
+            return;
+        } else if ((post as Post)?.conversation?.id === undefined) {
+            this.openThreadOnFocus = true;
+            id = (post as AnswerPost)?.post?.conversation?.id;
+            this.focusPostId = (post as AnswerPost)?.post?.id;
+        }
+
+        this.metisConversationService.setActiveConversation(id);
+        this.changeDetector.detectChanges();
     }
 }

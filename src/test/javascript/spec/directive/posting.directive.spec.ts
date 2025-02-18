@@ -41,6 +41,7 @@ class MockReactionsBar {
     editPosting = jest.fn();
     togglePin = jest.fn();
     deletePosting = jest.fn();
+    forwardMessage = jest.fn();
     checkIfPinned = jest.fn().mockReturnValue(DisplayPriority.NONE);
     selectReaction = jest.fn();
 }
@@ -328,5 +329,10 @@ describe('PostingDirective', () => {
 
         expect(deletePostSpy).not.toHaveBeenCalled();
         expect(deleteAnswerPostSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call forwardMessage on reactionsBar', () => {
+        component.forwardMessage();
+        expect(mockReactionsBar.forwardMessage).toHaveBeenCalled();
     });
 });

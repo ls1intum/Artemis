@@ -11,7 +11,7 @@ import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.co
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../helpers/sample/metis-sample-data';
+import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from '../../../../helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
@@ -74,7 +74,7 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should group answer posts correctly', () => {
-        fixture.componentRef.setInput('sortedAnswerPosts', unsortedAnswerArray);
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2]);
         const mockContainerRef = { clear: jest.fn() } as any;
         const mockSignal = signal(mockContainerRef);
         fixture.detectChanges();
@@ -88,7 +88,7 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
-        fixture.componentRef.setInput('sortedAnswerPosts', unsortedAnswerArray);
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2]);
         const mockContainerRef = { clear: jest.fn() } as any;
         const mockSignal = signal(mockContainerRef);
         fixture.detectChanges();
@@ -201,11 +201,11 @@ describe('PostingFooterComponent', () => {
 
         const baseTime = dayjs();
 
-        const post1: AnswerPost = { id: 1, author: authorA, creationDate: baseTime.toDate() } as unknown as AnswerPost;
-        const post2: AnswerPost = { id: 2, author: authorA, creationDate: baseTime.add(3, 'minute').toDate() } as unknown as AnswerPost;
-        const post3: AnswerPost = { id: 3, author: authorA, creationDate: baseTime.add(10, 'minute').toDate() } as unknown as AnswerPost;
-        const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute').toDate() } as unknown as AnswerPost;
-        const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute').toDate() } as unknown as AnswerPost;
+        const post1: AnswerPost = { id: 1, author: authorA, creationDate: baseTime } as unknown as AnswerPost;
+        const post2: AnswerPost = { id: 2, author: authorA, creationDate: baseTime.add(3, 'minute') } as unknown as AnswerPost;
+        const post3: AnswerPost = { id: 3, author: authorA, creationDate: baseTime.add(10, 'minute') } as unknown as AnswerPost;
+        const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute') } as unknown as AnswerPost;
+        const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute') } as unknown as AnswerPost;
         fixture.componentRef.setInput('sortedAnswerPosts', [post3, post1, post5, post2, post4]);
         fixture.detectChanges();
         const mockContainerRef = { clear: jest.fn() } as any;
