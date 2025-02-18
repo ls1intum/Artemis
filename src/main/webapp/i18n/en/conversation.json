@@ -29,7 +29,9 @@
             "threadSideBar": {
                 "label": "Thread",
                 "close": "Close thread",
-                "reply": "Reply in thread"
+                "reply": "Reply in thread",
+                "expand": "Expand thread",
+                "collapse": "Collapse thread"
             },
             "conversationSelectionSideBar": {
                 "header": "Conversations",
