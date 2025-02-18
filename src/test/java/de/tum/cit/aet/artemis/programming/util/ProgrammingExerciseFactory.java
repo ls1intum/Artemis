@@ -353,6 +353,7 @@ public class ProgrammingExerciseFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case DART_ANALYZE -> "LINT";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
