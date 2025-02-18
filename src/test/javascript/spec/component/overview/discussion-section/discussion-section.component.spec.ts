@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -46,8 +46,8 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { LinkPreviewService } from '../../../../../../main/webapp/app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from '../../../../../../main/webapp/app/shared/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -313,7 +313,7 @@ describe('DiscussionSectionComponent', () => {
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');
-        component.content.nativeElement.dispatchEvent(scrolledUp);
+        component.content()!.nativeElement.dispatchEvent(scrolledUp);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
@@ -343,7 +343,7 @@ describe('DiscussionSectionComponent', () => {
         const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');
-        component.content.nativeElement.dispatchEvent(scrolledUp);
+        component.content()!.nativeElement.dispatchEvent(scrolledUp);
 
         expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
     }));
