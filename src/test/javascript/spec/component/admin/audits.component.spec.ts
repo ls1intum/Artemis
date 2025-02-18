@@ -9,6 +9,10 @@ import { Audit } from 'app/admin/audits/audit.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { MockProvider } from 'ng-mocks';
 
 function build2DigitsDatePart(datePart: number) {
     return `0${datePart}`.slice(-2);
@@ -40,7 +44,6 @@ describe('AuditsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -50,7 +53,9 @@ describe('AuditsComponent', () => {
                     provide: Router,
                     useClass: MockRouter,
                 },
-                AuditsService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                DatePipe,
+                MockProvider(AuditsService),
             ],
         })
             .overrideTemplate(AuditsComponent, '')
