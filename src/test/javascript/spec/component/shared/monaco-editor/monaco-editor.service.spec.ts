@@ -6,6 +6,7 @@ import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/lang
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
 import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorService', () => {
     let monacoEditorService: MonacoEditorService;
@@ -16,7 +17,7 @@ describe('MonacoEditorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [{ provide: ThemeService, useClass: MockThemeService }],
         });
         // Avoids an error with the diff editor, which uses a ResizeObserver.
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
