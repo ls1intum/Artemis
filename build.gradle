@@ -220,11 +220,8 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
-    // required by Saml2, should NOT be used in other places
-    implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.18.3"
-    implementation "commons-codec:commons-codec:1.18.0"   // needed for spring security saml2
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -324,12 +321,13 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
-    implementation "org.opensaml:opensaml-security-api:${opensaml_version}"
-    implementation "org.opensaml:opensaml-core:${opensaml_version}"
-    implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
-    implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+    constraints {
+        implementation "org.opensaml:opensaml-core:${opensaml_version}"
+        implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+        implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
+    }
+    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
