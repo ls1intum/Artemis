@@ -45,17 +45,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Profile(Constants.PROFILE_SAML2)
 public class SAML2Configuration {
 
-    private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
-
-    private final SAML2Properties properties;
-
     /**
      * Constructs a new instance.
-     *
-     * @param properties The SAML2 properties
      */
-    public SAML2Configuration(final SAML2Properties properties) {
-        this.properties = properties;
+    public SAML2Configuration() {
         // TODO: we should describe why this line is actually needed
         Security.addProvider(new BouncyCastleProvider());
     }
