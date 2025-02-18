@@ -11,6 +11,9 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
@@ -69,11 +72,12 @@ describe('Interval Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(GradingSystemService),
             ],
         })
             .compileComponents()
