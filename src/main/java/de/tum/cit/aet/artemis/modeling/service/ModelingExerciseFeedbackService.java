@@ -71,7 +71,7 @@ public class ModelingExerciseFeedbackService {
      */
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackApi.isPresent()) {
-            var api = athenaFeedbackApi.get();
+            AthenaFeedbackApi api = athenaFeedbackApi.get();
             api.checkRateLimitOrThrow(participation);
 
             Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
@@ -162,7 +162,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission) throws NetworkingException {
-        var api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
         return api.getModelingFeedbackSuggestions(modelingExercise, submission, false).stream().filter(feedbackItem -> feedbackItem.description() != null)
                 .map(this::convertToFeedback).toList();
     }

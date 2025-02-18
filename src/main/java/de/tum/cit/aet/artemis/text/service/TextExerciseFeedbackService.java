@@ -74,7 +74,7 @@ public class TextExerciseFeedbackService {
      */
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, TextExercise textExercise) {
         if (this.athenaFeedbackApi.isPresent()) {
-            var api = athenaFeedbackApi.get();
+            AthenaFeedbackApi api = athenaFeedbackApi.get();
             api.checkRateLimitOrThrow(participation);
 
             var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
@@ -119,7 +119,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            var api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
             var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
 
             Set<TextBlock> textBlocks = new HashSet<>();
