@@ -1,11 +1,10 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map, takeUntil } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
@@ -16,25 +15,18 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SortService } from 'app/shared/service/sort.service';
-import { Renderer2 } from '@angular/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        ArtemisSharedComponentModule,
-        ArtemisSharedModule,
-        CourseFaqAccordionComponent,
-        CustomExerciseCategoryBadgeComponent,
-        SearchFilterComponent,
-        ArtemisMarkdownModule,
-        NgbModule,
-    ],
+    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');

@@ -12,7 +12,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -217,7 +216,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void assertCommunicationDataCsvFile(Path courseDirPath) {
@@ -545,7 +544,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
@@ -571,7 +570,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     @Test
@@ -594,7 +593,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
@@ -650,7 +649,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private DataExport initDataExport() {

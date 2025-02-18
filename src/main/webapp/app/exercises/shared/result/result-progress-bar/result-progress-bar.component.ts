@@ -1,11 +1,16 @@
 import { Component, OnDestroy, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-result-progress-bar',
-    imports: [CommonModule, ArtemisSharedCommonModule],
+    imports: [CommonModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule, NgbTooltipModule],
     templateUrl: './result-progress-bar.component.html',
     styleUrl: './result-progress-bar.component.scss',
 })
