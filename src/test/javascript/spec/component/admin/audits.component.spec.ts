@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { advanceTo } from 'jest-date-mock';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
@@ -12,7 +12,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { MockProvider } from 'ng-mocks';
 
 function build2DigitsDatePart(datePart: number) {
     return `0${datePart}`.slice(-2);
@@ -55,7 +54,7 @@ describe('AuditsComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 DatePipe,
-                MockProvider(AuditsService),
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(AuditsComponent, '')
