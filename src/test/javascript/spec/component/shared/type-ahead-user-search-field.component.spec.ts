@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,6 +19,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule)],
             declarations: [TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
+            providers: [MockProvider(UserService)],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);
         component = fixture.componentInstance;
