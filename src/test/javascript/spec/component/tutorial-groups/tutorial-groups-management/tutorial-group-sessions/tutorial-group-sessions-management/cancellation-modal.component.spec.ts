@@ -5,7 +5,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { MockProvider } from 'ng-mocks';
@@ -24,7 +24,7 @@ describe('CancellationModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(TutorialGroupSessionService), MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

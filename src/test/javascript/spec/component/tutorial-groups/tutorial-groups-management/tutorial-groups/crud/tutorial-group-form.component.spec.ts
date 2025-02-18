@@ -9,7 +9,7 @@ import {
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -28,8 +28,6 @@ import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from '../../../../../helpers/mocks/service/mock-theme.service';
 
@@ -94,8 +92,7 @@ describe('TutorialGroupFormComponent', () => {
                 }),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(FileUploaderService),
-                MockProvider(ArtemisIntelligenceService),
+                provideHttpClient(),
                 { provide: ThemeService, useClass: MockThemeService },
             ],
         }).compileComponents();
