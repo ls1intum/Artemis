@@ -45,6 +45,8 @@ import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
@@ -62,11 +64,23 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
+    private static final String LECTURE_PATH_PATTERN = "/courses/{courseId}/lectures/{lectureId}";
+
+    private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
+
+    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/dashboard";
+
+    private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
+
+    private static final String COURSE_PATH_PATTERN = "/courses/{courseId}";
+
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final LectureRepository lectureRepository;
 
     private final CourseRepository courseRepository;
 
@@ -86,11 +100,13 @@ public class Lti13Service {
 
     private final RestTemplate restTemplate;
 
-    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
-            LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, CourseRepository courseRepository,
+            Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever,
+            OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.lectureRepository = lectureRepository;
         this.courseRepository = courseRepository;
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
@@ -112,17 +128,19 @@ public class Lti13Service {
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
-        if (targetExercise.isEmpty()) {
-            String message = "No exercise to launch at " + targetLinkUrl;
-            log.error(message);
-            throw new BadRequestAlertException("Exercise not found", "LTI", "ltiExerciseNotFound");
-        }
-        Exercise exercise = targetExercise.get();
+        Optional<Lecture> targetLecture = getLectureFromTargetLink(targetLinkUrl);
+        Optional<Course> targetCourse = getCourseFromTargetLink(targetLinkUrl);
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        if (targetCourse.isEmpty()) {
+            String message = "No course to launch at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        }
+
+        Course course = targetCourse.get();
+        OnlineCourseConfiguration onlineCourseConfiguration = courseRepository.findWithEagerOnlineCourseConfigurationById(course.getId()).getOnlineCourseConfiguration();
         if (onlineCourseConfiguration == null) {
-            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
+            String message = "LTI is not configured for course with target link URL: " + targetLinkUrl;
             log.error(message);
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
@@ -133,18 +151,24 @@ public class Lti13Service {
         if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
             SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
                     createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
-
         }
 
         String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
-        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
-        createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
-
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        if (targetExercise.isPresent()) {
+            Exercise exercise = targetExercise.get();
+            handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
+        }
+        else if (hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture)) {
+            handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
+        }
+        else {
+            String message = "No course content to launch at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
     }
 
     /**
@@ -311,6 +335,178 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
+    /**
+     * Returns an Optional of a Lecture that was referenced by targetLinkUrl.
+     *
+     * @param targetLinkUrl to retrieve a Lecture
+     * @return the Lecture or nothing otherwise
+     */
+    private Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        if (!matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract lecture from target link: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
+
+        String lectureId = pathVariables.get("lectureId");
+
+        Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
+
+        if (lectureOpt.isEmpty()) {
+            log.info("Could not find lecture for target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        return lectureOpt;
+    }
+
+    /**
+     * Retrieves an Optional of a Course referenced by the given targetLinkUrl.
+     * This method extracts the course ID from the URL using predefined path patterns
+     * and then fetches the corresponding Course from the repository.
+     * Returns an empty Optional in the following cases:
+     * - The targetLinkUrl is malformed and cannot be parsed.
+     * - The URL does not match any known path pattern.
+     * - The extracted path does not contain a "courseId" variable.
+     * - No Course with the extracted ID exists in the repository.
+     *
+     * @param targetLinkUrl the target link URL to retrieve a Course
+     * @return an Optional containing the Course if found, or an empty Optional otherwise
+     */
+    public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = null;
+        if (matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(COMPETENCY_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(LEARNING_PATH_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(IRIS_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(IRIS_PATH_PATTERN, targetLinkPath);
+        }
+
+        if (pathVariables == null || !pathVariables.containsKey("courseId")) {
+            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        String courseId = pathVariables.get("courseId");
+        return courseRepository.findById(Long.valueOf(courseId));
+    }
+
+    /**
+     * Checks if the target link URL references a competency.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL references a competency, false otherwise
+     */
+    private boolean targetLinkHasCompetency(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract competency from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("Competency link detected: {}", targetLinkUrl);
+        return true;
+    }
+
+    /**
+     * Checks if the target link URL references a learning path.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL references a learning path, false otherwise
+     */
+    private boolean targetLinkHasLearningPath(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract learning path from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("Learning path link detected: {}", targetLinkUrl);
+        return true;
+    }
+
+    /**
+     * Checks if the target link URL references an IRIS course dashboard.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL matches the IRIS course dashboard pattern, false otherwise
+     */
+    private boolean targetLinkHasIris(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(IRIS_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract IRIS course dashboard from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("IRIS course dashboard link detected: {}", targetLinkUrl);
+        return true;
+    }
+
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
                 launchRequest.deploymentId(), launchRequest.resourceLinkId());
@@ -330,6 +526,17 @@ public class Lti13Service {
         ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
 
         launchRepository.save(launch);
+    }
+
+    private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+
+        if (exercise != null) {
+            ltiService.onSuccessfulLtiAuthentication(user, exercise);
+        }
     }
 
     /**
@@ -361,6 +568,10 @@ public class Lti13Service {
     private String getSanitizedUsername(String username) {
         // Remove \r and LF \n characters to prevent HTTP response splitting
         return username.replaceAll("[\r\n]", "");
+    }
+
+    private boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
+        return targetLinkHasCompetency(targetLinkUrl) || targetLinkHasLearningPath(targetLinkUrl) || targetLecture.isPresent() || targetLinkHasIris(targetLinkUrl);
     }
 
     /**
