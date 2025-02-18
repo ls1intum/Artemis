@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -17,6 +17,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -48,7 +49,7 @@ describe('CourseManagementStatisticsComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
-                MockProvider(StatisticsService),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
