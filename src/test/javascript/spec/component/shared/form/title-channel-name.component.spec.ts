@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { MockDirective } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -13,7 +15,7 @@ describe('TitleChannelNameComponent', () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule],
             declarations: [TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
-            providers: [NgForm],
+            providers: [NgForm, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TitleChannelNameComponent);
