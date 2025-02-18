@@ -31,18 +31,16 @@
     <td class="p-2">
         {{ commit.timestamp | artemisDate: 'long' : true }}
     </td>
-    @if (isRepositoryView) {
-        <td class="p-2">
-            @if (commit.result) {
-                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
-            } @else if (groupCommitIndex === 0) {
-                <span class="text-body-secondary">
-                    <fa-icon [icon]="faCircle" size="lg" />&nbsp;
-                    <span jhiTranslate="artemisApp.result.noResult"></span>
-                </span>
-            }
-        </td>
-    }
+    <td class="p-2">
+        @if (commit.result) {
+            <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
+        } @else if (groupCommitIndex === 0) {
+            <span class="text-body-secondary">
+                <fa-icon [icon]="faCircle" size="lg" />&nbsp;
+                <span jhiTranslate="artemisApp.result.noResult"></span>
+            </span>
+        }
+    </td>
     <td class="p-2">
         {{ commit.message }}
         @if (currentSubmissionHash === commit.hash) {

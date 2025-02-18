@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -43,8 +43,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     exerciseType = ExerciseType.TEXT;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input() studentSubmission: TextSubmission;
-    @Input() exercise: Exercise;
+    studentSubmission = input.required<TextSubmission>();
+    exercise = input.required<Exercise>();
 
     saveCurrentExercise = output<void>();
 
@@ -64,16 +64,16 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
     getExerciseId(): number | undefined {
-        return this.exercise.id;
+        return this.exercise().id;
     }
 
     getExercise(): Exercise {
-        return this.exercise;
+        return this.exercise();
     }
 
     updateProblemStatement(newProblemStatementHtml: string): void {
@@ -82,24 +82,20 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     getSubmission(): Submission {
-        return this.studentSubmission;
+        return this.studentSubmission();
     }
 
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.text) {
-            this.answer = this.studentSubmission.text;
-        } else {
-            this.answer = '';
-        }
+        this.answer = this.studentSubmission().text ?? '';
     }
 
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     public updateSubmissionFromView(): void {
-        this.studentSubmission.text = this.answer;
-        this.studentSubmission.language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission().text = this.answer;
+        this.studentSubmission().language = this.textService.predictLanguage(this.answer);
     }
 
     get wordCount(): number {
@@ -111,7 +107,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onTextEditorInput(event: Event) {
-        this.studentSubmission.isSynced = false;
+        this.studentSubmission().isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
 
