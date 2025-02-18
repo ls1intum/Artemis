@@ -197,6 +197,12 @@ public abstract class PostingService {
         return course;
     }
 
+    /**
+     * Ensures that user is allowed to communicate or message in the given course
+     *
+     * @param user   that wants to communicate or message
+     * @param course the course in which the user wants to communicate or message
+     */
     public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
