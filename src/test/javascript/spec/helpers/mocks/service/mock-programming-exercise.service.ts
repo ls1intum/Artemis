@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseResetOptions } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
@@ -24,4 +24,5 @@ export class MockProgrammingExerciseService {
     unlockAllRepositories = (exerciseId: number) => of({});
     getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
     getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
+    reset = (exerciseId: number, options: ProgrammingExerciseResetOptions) => of();
 }

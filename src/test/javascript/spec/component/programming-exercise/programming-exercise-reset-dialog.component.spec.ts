@@ -12,6 +12,10 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
     let comp: ProgrammingExerciseResetDialogComponent;
@@ -27,11 +31,13 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                MockProvider(NgbActiveModal),
             ],
         }).compileComponents();
         // Ignore console errors
