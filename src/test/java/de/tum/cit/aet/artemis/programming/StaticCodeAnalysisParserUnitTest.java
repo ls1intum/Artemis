@@ -59,6 +59,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testDartAnalyzeParser() throws IOException {
+        testParserWithFile("dart_analyze.sarif", "dart_analyze.json");
+    }
+
+    @Test
     void testPMDCPDParser() throws IOException {
         testParserWithFile("cpd.xml", "pmd_cpd.txt");
     }

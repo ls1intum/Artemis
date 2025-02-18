@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -116,6 +116,7 @@ enum ChartBarTitle {
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+    controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
@@ -281,6 +282,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         // Send our controls template to parent so it will be rendered in the top bar
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
+            this.controlsRendered.emit();
         }
     }
 

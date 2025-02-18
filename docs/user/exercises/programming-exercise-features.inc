@@ -105,7 +105,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
   | Ruby                 | no                   | L: yes; J: no        | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
-  | Dart                 | no                   | no                   | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
+  | Dart                 | no                   | L: yes; J: no        | no                  | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.

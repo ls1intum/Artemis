@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.DartAnalyzeCategorizer;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RubocopCategorizer;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RubocopMessageProcessor;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RuffCategorizer;
@@ -30,6 +31,7 @@ public class ParserPolicy {
         return switch (tool) {
             case CHECKSTYLE -> new CheckstyleParser();
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
+            case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());
