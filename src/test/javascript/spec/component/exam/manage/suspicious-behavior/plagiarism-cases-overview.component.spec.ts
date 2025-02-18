@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { Exercise } from 'app/entities/exercise.model';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('PlagiarismCasesOverviewComponent', () => {
     let fixture: ComponentFixture<PlagiarismCasesOverviewComponent>;
@@ -36,7 +39,10 @@ describe('PlagiarismCasesOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+            ],
         });
         fixture = TestBed.createComponent(PlagiarismCasesOverviewComponent);
         router = TestBed.inject(Router);
