@@ -419,10 +419,12 @@ public class CourseUtilService {
             User user = userUtilService.getUserByLogin(userPrefix + "student1");
             StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
-            StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
             StudentParticipation participation4 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.FINISHED, programmingExercise, user);
             StudentParticipation participation5 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
             participation5.setPracticeMode(true);
+
+            User user2 = userUtilService.getUserByLogin(userPrefix + "student2");
+            StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user2);
 
             Submission modelingSubmission1 = ParticipationFactory.generateModelingSubmission("model1", true);
             Submission modelingSubmission2 = ParticipationFactory.generateModelingSubmission("model2", true);

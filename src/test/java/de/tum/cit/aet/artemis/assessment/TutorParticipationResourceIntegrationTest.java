@@ -39,7 +39,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 5, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         course1 = courses.getFirst();
         exercise = course1.getExercises().iterator().next();
