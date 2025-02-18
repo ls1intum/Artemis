@@ -6,7 +6,7 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, of } from 'rxjs';
+import { of } from 'rxjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -90,7 +90,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
     }
 
-    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)));
+    private readonly translationUpdateSignal = toSignal(this.translateService.stream(['']));
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -113,7 +113,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
     }
 
     tooltipText = computed(() => {
-        this.currentLanguage();
+        this.translationUpdateSignal();
         if (!this.fileName() && !this.name()) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError');
         }
