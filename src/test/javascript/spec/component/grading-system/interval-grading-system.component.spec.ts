@@ -13,7 +13,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
@@ -77,7 +77,7 @@ describe('Interval Grading System Component', () => {
                 MockProvider(ExamManagementService),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(GradingSystemService),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
