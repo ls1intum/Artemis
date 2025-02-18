@@ -298,16 +298,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const sortedPosts = this.posts.sort((a, b) => {
+        // Sort posts by creation date.
+        const sortedPosts = [...this.posts].sort((a, b) => {
             const aDate = (a as any).creationDateDayjs;
             const bDate = (b as any).creationDateDayjs;
             return aDate?.valueOf() - bDate?.valueOf();
         });
 
-        const updatedGroups: PostGroup[] = [];
+        // Compute new grouping based on current posts.
+        const computedGroups: PostGroup[] = [];
         let currentGroup: PostGroup | null = null;
-
-        // Group posts that are by the same author and have less than 5 minutes difference.
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
                 // Start new group if none exists.
@@ -317,22 +317,36 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 const currentDate = (post as any).creationDateDayjs;
                 const lastDate = (lastPost as any).creationDateDayjs;
                 const timeDiff = currentDate && lastDate ? currentDate.diff(lastDate, 'minute') : Number.MAX_SAFE_INTEGER;
-                // Check if current post should be added to the current group.
+                // Group post if same author and within 5 minutes.
                 if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
                     currentGroup.posts.push({ ...post, isConsecutive: true });
                 } else {
-                    // Finalize current group and start a new one.
-                    updatedGroups.push(currentGroup);
+                    computedGroups.push(currentGroup);
                     currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
                 }
             }
         });
-        // Add the final group if exists.
         if (currentGroup) {
-            updatedGroups.push(currentGroup);
+            computedGroups.push(currentGroup);
         }
 
-        this.groupedPosts = updatedGroups;
+        // Update existing groups in place if possible.
+        if (this.groupedPosts.length === computedGroups.length) {
+            for (let i = 0; i < computedGroups.length; i++) {
+                // If the group belongs to the same author, update its posts array in place.
+                if (this.groupedPosts[i].author?.id === computedGroups[i].author?.id) {
+                    // Replace entire posts array so that deletions are applied without recreating the group.
+                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...computedGroups[i].posts);
+                } else {
+                    // If group identity has changed, replace the group.
+                    this.groupedPosts[i] = computedGroups[i];
+                }
+            }
+        } else {
+            // If the number of groups has changed, replace the groupedPosts array.
+            this.groupedPosts = computedGroups;
+        }
+        // Trigger Angular change detection.
         this.cdr.detectChanges();
     }
 
