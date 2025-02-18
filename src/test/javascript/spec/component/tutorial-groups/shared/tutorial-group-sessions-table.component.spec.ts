@@ -3,7 +3,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
@@ -15,6 +15,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -117,7 +118,6 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
@@ -125,7 +125,7 @@ describe('TutorialGroupSessionTableComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideHttpClient()],
+            providers: [provideHttpClient(), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
