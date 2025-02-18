@@ -28,6 +28,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -754,6 +755,31 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(allPosts).hasSize(2);
         assertThat(allPosts).extracting(Post::getId).containsExactlyInAnyOrder(createdPinnedPost.getId(), createdUnpinnedPost.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindCourseWideMessages_IncludesDirectChatsAndNonCourseWideChannels() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        directPost.setContent("SearchTestDirect");
+        request.postWithResponseBody("/api/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "group-chat-test");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student1");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post groupPost = new Post();
+        groupPost.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        groupPost.setConversation(nonCourseWideChannel);
+        groupPost.setContent("SearchTestGroup");
+        request.postWithResponseBody("/api/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
+
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+                SortingOrder.DESCENDING);
+
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
+        List<Post> resultPosts = searchResults.getContent();
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect", "SearchTestGroup");
     }
 
     private long getUnreadMessagesCount(Conversation conversation, User user) {

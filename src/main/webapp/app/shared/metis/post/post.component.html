@@ -42,7 +42,7 @@
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode())) {
+                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
                     <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
