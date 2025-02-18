@@ -12,8 +12,8 @@ class CompatibleVersionsInfoConfigurationTest {
         ArtemisCompatibleVersionsConfiguration config = new ArtemisCompatibleVersionsConfiguration();
 
         ArtemisCompatibleVersionsConfiguration.Platform android = new ArtemisCompatibleVersionsConfiguration.Platform();
-        android.setMin("619");
-        android.setRecommended("619");
+        android.setMin("1.2.0");
+        android.setRecommended("1.2.0");
         config.setAndroid(android);
 
         ArtemisCompatibleVersionsConfiguration.Platform ios = new ArtemisCompatibleVersionsConfiguration.Platform();
@@ -34,8 +34,8 @@ class CompatibleVersionsInfoConfigurationTest {
 
         ArtemisCompatibleVersionsConfiguration resultConfig = (ArtemisCompatibleVersionsConfiguration) value;
 
-        assertThat(resultConfig.getAndroid().getMin()).isEqualTo("619");
-        assertThat(resultConfig.getAndroid().getRecommended()).isEqualTo("619");
+        assertThat(resultConfig.getAndroid().getMin()).isEqualTo("1.2.0");
+        assertThat(resultConfig.getAndroid().getRecommended()).isEqualTo("1.2.0");
 
         assertThat(resultConfig.getIos().getMin()).isEqualTo("1.6.1");
         assertThat(resultConfig.getIos().getRecommended()).isEqualTo("1.6.1");

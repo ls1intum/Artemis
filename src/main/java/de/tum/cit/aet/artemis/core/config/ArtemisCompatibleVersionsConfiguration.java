@@ -4,10 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 @Profile(PROFILE_CORE)
-@Component
 @ConfigurationProperties(prefix = "artemis.compatible-versions")
 public class ArtemisCompatibleVersionsConfiguration {
 

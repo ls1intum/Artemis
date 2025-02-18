@@ -121,8 +121,8 @@ artemis:
 
     compatible-versions:
       android:
-        min: "619"
-        recommended: "619"
+        min: "1.2.0"
+        recommended: "1.2.0"
       ios:
         min: "1.6.1"
         recommended: "1.6.1"
