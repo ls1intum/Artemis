@@ -11,6 +11,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
             </thead>
         </table>
     `,
+    imports: [SortDirective],
 })
 class TestSortDirectiveComponent {
     predicate?: string;
@@ -24,9 +25,7 @@ describe('Directive: SortDirective', () => {
     let tableRow: DebugElement;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TestSortDirectiveComponent, SortDirective],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestSortDirectiveComponent);

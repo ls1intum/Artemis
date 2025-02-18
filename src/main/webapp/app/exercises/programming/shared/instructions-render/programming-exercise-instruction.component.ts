@@ -41,32 +41,46 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
+    imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    private viewContainerRef = inject(ViewContainerRef);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
+    private programmingExercisePlantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseGradingService = inject(ProgrammingExerciseGradingService);
+    private sanitizer = inject(DomSanitizer);
+    private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    private appRef = inject(ApplicationRef);
+    private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
 
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
+
     // Emits an event if the instructions are not available via the problemStatement
-    @Output()
-    public onNoInstructionsAvailable = new EventEmitter();
+    @Output() public onNoInstructionsAvailable = new EventEmitter();
 
     @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
 
-    public problemStatement: string;
-    public participationSubscription?: Subscription;
+    private problemStatement: string;
+    private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue?: Result;
+    latestResultValue?: Result;
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
     public tasks: TaskArray;
@@ -77,7 +91,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     set latestResult(result: Result | undefined) {
         this.latestResultValue = result;
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue);
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
@@ -86,7 +100,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     markdownExtensions: PluginSimple[];
     private injectableContentFoundSubscription: Subscription;
-    private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
     private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
@@ -98,19 +111,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Icons
     faSpinner = faSpinner;
 
-    constructor(
-        public viewContainerRef: ViewContainerRef,
-        private resultService: ResultService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
-        private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        private sanitizer: DomSanitizer,
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private appRef: ApplicationRef,
-        private injector: EnvironmentInjector,
-    ) {
+    constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
     }
 
@@ -119,7 +120,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * subscription for the participation's result needs to be set up.
      * @param changes
      */
-    public ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges(changes: SimpleChanges) {
         if (this.exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
                 this.testCasesSubscription.unsubscribe();
@@ -232,10 +233,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * Render the markdown into html.
      */
-    updateMarkdown(): void {
+    updateMarkdown() {
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
-        this.latestResult = this.latestResult;
+        this.latestResult = this.latestResultValue;
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
@@ -304,7 +305,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
+            const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
             // Differences between UMLs are ignored, and we only inject the current one
             setTimeout(() => {
                 const injectUML = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
@@ -317,13 +319,31 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.injectableContentForMarkdownCallbacks = [];
             const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
+            const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
             setTimeout(() => {
                 this.injectableContentForMarkdownCallbacks.forEach((callback) => {
                     callback();
                 });
                 this.injectTasksIntoDocument();
             }, 0);
+        }
+    }
+
+    addStylesForTables(markdownWithoutTasks: string): string | undefined {
+        if (!markdownWithoutTasks?.includes('<table')) {
+            return;
+        } else {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(markdownWithoutTasks as string, 'text/html');
+            const tables = doc.querySelectorAll('table');
+
+            tables.forEach((table) => {
+                table.style.maxWidth = '100%';
+                table.style.overflowX = 'scroll';
+                table.style.display = 'block';
+            });
+            return doc.body.innerHTML;
         }
     }
 

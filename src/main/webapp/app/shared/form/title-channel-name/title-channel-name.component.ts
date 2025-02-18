@@ -1,12 +1,16 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, effect, input, signal, viewChild } from '@angular/core';
-import { ControlContainer, NgForm, NgModel } from '@angular/forms';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild, computed, effect, input, output, signal, viewChild } from '@angular/core';
+import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from '../../language/translate.directive';
+import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
+import { HelpIconComponent } from '../../components/help-icon.component';
 
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
+    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     @Input() title?: string;
@@ -26,8 +30,8 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @ViewChild('field_title') field_title: NgModel;
     field_channel_name = viewChild<NgModel>('field_channel_name');
 
-    @Output() titleChange = new EventEmitter<string>();
-    @Output() channelNameChange = new EventEmitter<string>();
+    titleChange = output<string>();
+    channelNameChange = output<string>();
 
     isFormValidSignal = signal<boolean>(false);
     /**

@@ -17,7 +17,6 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExerciseFeedbackSuggestionOptionsComponent],
             providers: [
                 MockProvider(AthenaService, {
                     isEnabled: () => of(true),

@@ -47,3 +47,12 @@ export const PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN =
 // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
 export const APP_NAME_PATTERN_FOR_SWIFT =
     '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
+// Go package name Regex derived from (https://go.dev/ref/spec#Package_clause) limited to ASCII. Package names are identifiers.
+// They allow letters, digits and underscore. They cannot start with a digit. The package name cannot be a keyword or "_".
+export const PACKAGE_NAME_PATTERN_FOR_GO =
+    '^(?!(?:break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var|_)$)[A-Za-z_][A-Za-z0-9_]*$';
+// Dart package name Regex derived from the pubspec file reference (https://dart.dev/tools/pub/pubspec#name).
+// The reserved words not usable as identifiers are derived from the Dart Programming Language Specification (https://spec.dart.dev/DartLangSpecDraft.pdf).
+// Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
+export const PACKAGE_NAME_PATTERN_FOR_DART =
+    '^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)[a-z_][a-z0-9_]*$';

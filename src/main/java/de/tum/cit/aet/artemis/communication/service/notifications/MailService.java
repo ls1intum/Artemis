@@ -131,7 +131,7 @@ public class MailService implements InstantNotificationService {
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
         Context context = createBaseContext(admin, locale);
         context.setVariable(DATA_EXPORT, dataExport);
-        context.setVariable(REASON, reason);
+        context.setVariable(REASON, reason.getMessage());
         prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
     }
 

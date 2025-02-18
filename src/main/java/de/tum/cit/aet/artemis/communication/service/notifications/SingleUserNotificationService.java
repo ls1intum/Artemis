@@ -391,6 +391,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
      * @param notificationType the type of notification to be sent
      */
+    // TODO: this should be Async
     public void notifyClientAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
         notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
     }
@@ -417,7 +418,7 @@ public class SingleUserNotificationService {
      * @param answerMessage the answerMessage of the user involved
      * @param author        the author of the message reply
      * @param conversation  conversation the message of the reply belongs to
-     * @return notification
+     * @return the created single user notification about the new message reply
      */
     public SingleUserNotification createNotificationAboutNewMessageReply(AnswerPost answerMessage, User author, Conversation conversation) {
         User authorWithHiddenData = new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null);
@@ -447,8 +448,9 @@ public class SingleUserNotificationService {
                 .forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
-        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
+        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved) && !userInvolved.getId().equals(author.getId())).forEach(userInvolved -> {
+            notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv));
+        });
     }
 
     /**

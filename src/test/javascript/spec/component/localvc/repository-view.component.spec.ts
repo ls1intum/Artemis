@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
@@ -19,6 +18,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -34,14 +34,13 @@ describe('RepositoryViewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [RepositoryViewComponent],
+            imports: [ArtemisTestModule],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DomainService, useValue: mockDomainService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
@@ -157,7 +156,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
@@ -196,7 +195,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.AUXILIARY_REPOSITORY, mockAuxiliaryRepository]);
@@ -205,7 +204,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 
@@ -342,7 +340,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 });

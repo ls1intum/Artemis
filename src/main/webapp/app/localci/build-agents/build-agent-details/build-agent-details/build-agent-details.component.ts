@@ -1,21 +1,35 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { ActivatedRoute } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
+    imports: [NgxDatatableModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private readonly websocketService = inject(WebsocketService);
+    private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgentInformation;
     agentName: string;
@@ -31,14 +45,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private route: ActivatedRoute,
-        private buildQueueService: BuildQueueService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.queryParams.subscribe((params) => {

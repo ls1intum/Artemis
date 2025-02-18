@@ -6,7 +6,6 @@ import { AuxiliaryRepository } from 'app/entities/programming/programming-exerci
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationConfig = {
-    appNamePatternForSwift: '',
     auxiliaryRepositoriesSupported: false,
     auxiliaryRepositoryDuplicateDirectories: false,
     auxiliaryRepositoryDuplicateNames: false,
@@ -52,7 +51,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     staticCodeAnalysisAllowed: false,
     supportedLanguages: [],
     templateParticipationResultLoaded: false,
-    testwiseCoverageAnalysisSupported: false,
     titleNamePattern: '',
     updateCategories(_categories: ExerciseCategory[]): void {},
     updateCheckoutDirectory(_editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {

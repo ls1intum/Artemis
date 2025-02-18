@@ -2,14 +2,17 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,12 +22,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -47,10 +53,13 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    TutorialGroupTestRepository tutorialGroupRepository;
+    private ConversationService conversationService;
 
     @Autowired
-    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private TutorialGroupTestRepository tutorialGroupRepository;
+
+    @Autowired
+    private TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -89,6 +98,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         }
     }
 
+    @AfterEach
+    void tearDown() {
+        var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation));
+    }
+
     @Override
     String getTestPrefix() {
         return TEST_PREFIX;
@@ -124,6 +139,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // when
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
@@ -158,6 +174,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectCreateForbidden(channelDTO);
 
@@ -176,6 +193,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectUpdateForbidden(1L, channelDTO);
 
@@ -221,6 +239,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // then
         expectCreateForbidden(channelDTO);
@@ -919,8 +938,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
 
@@ -936,22 +956,23 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFeedbackChannel_asInstructor_shouldCreateChannel() {
-        Long courseId = 1L;
-        Long exerciseId = 1L;
+        long courseId = 1L;
+        long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
         channelDTO.setName("feedback-channel");
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
 
         ChannelDTO response = null;
         try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), feedbackChannelRequest,
-                    ChannelDTO.class, HttpStatus.CREATED);
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
         }
         catch (Exception e) {
             fail("Failed to create feedback channel", e);
@@ -960,6 +981,54 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMarkAllChannelsAsReadWhenCallingResource() throws Exception {
+        // ensure there exist at least two channel with unread messages in the course
+        createChannel(true, "channel1");
+        createChannel(true, "channel2");
+        List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        channels.forEach(channel -> {
+            addUsersToConversation(channel.getId(), "instructor1");
+            conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).forEach(conversationParticipant -> {
+                conversationParticipant.setUnreadMessagesCount(1L);
+                conversationParticipantRepository.save(conversationParticipant);
+            });
+        });
+
+        User instructor1 = userTestRepository.getUser();
+        request.postWithoutLocation("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        updatedChannels.forEach(channel -> {
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+            });
+        });
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldToggleChannelPrivacy() throws Exception {
+        var initialChannel = createChannel(true, TEST_PREFIX + "togglePrivacy");
+        assertThat(initialChannel.getIsPublic()).isTrue();
+
+        // Toggle privacy
+        MultiValueMap<String, String> emptyParams = new LinkedMultiValueMap<>();
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep1 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep1.getIsPublic()).isFalse();
+
+        // Toggle privacy again
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep2 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep2.getIsPublic()).isTrue();
+
+        // cleanup
+        conversationRepository.deleteById(initialChannel.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

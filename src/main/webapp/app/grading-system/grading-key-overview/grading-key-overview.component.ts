@@ -1,30 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grade-key-overview',
     templateUrl: './grading-key-overview.component.html',
     styleUrls: ['./grading-key-overview.scss'],
+    imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class GradingKeyOverviewComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private themeService = inject(ThemeService);
+
     readonly faChevronLeft = faChevronLeft;
     readonly faPrint = faPrint;
 
     plagiarismGrade: string;
     noParticipationGrade: string;
-
-    constructor(
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private themeService: ThemeService,
-    ) {}
 
     isExam = false;
 

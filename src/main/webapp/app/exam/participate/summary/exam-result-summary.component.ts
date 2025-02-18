@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,6 +25,23 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { Course } from 'app/entities/course.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamGeneralInformationComponent } from '../general-information/exam-general-information.component';
+import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
+import { CollapsibleCardComponent } from './collapsible-card.component';
+import { ExamResultSummaryExerciseCardHeaderComponent } from './exercises/header/exam-result-summary-exercise-card-header.component';
+import { NgClass } from '@angular/common';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
+import { TextExamSummaryComponent } from './exercises/text-exam-summary/text-exam-summary.component';
+import { ModelingExamSummaryComponent } from './exercises/modeling-exam-summary/modeling-exam-summary.component';
+import { QuizExamSummaryComponent } from './exercises/quiz-exam-summary/quiz-exam-summary.component';
+import { FileUploadExamSummaryComponent } from './exercises/file-upload-exam-summary/file-upload-exam-summary.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ProgrammingExamSummaryComponent } from './exercises/programming-exam-summary/programming-exam-summary.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -50,8 +67,35 @@ type StateBeforeResetting = {
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        ExamGeneralInformationComponent,
+        ExamResultOverviewComponent,
+        CollapsibleCardComponent,
+        ExamResultSummaryExerciseCardHeaderComponent,
+        NgClass,
+        RouterLink,
+        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
+        NgbTooltip,
+        ExampleSolutionComponent,
+        TextExamSummaryComponent,
+        ModelingExamSummaryComponent,
+        QuizExamSummaryComponent,
+        FileUploadExamSummaryComponent,
+        ComplaintsStudentViewComponent,
+        ProgrammingExamSummaryComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamResultSummaryComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private serverDateService = inject(ArtemisServerDateService);
+    private themeService = inject(ThemeService);
+    private examParticipationService = inject(ExamParticipationService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private alertService = inject(AlertService);
+
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -95,8 +139,8 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
-    isGradingKeyCollapsed: boolean = true;
-    isBonusGradingKeyCollapsed: boolean = true;
+    isGradingKeyCollapsed = true;
+    isBonusGradingKeyCollapsed = true;
 
     @Input()
     instructorView = false;
@@ -132,15 +176,6 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     expandProblemStatement = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private serverDateService: ArtemisServerDateService,
-        private themeService: ThemeService,
-        private examParticipationService: ExamParticipationService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private alertService: AlertService,
-    ) {}
-
     /**
      * Initialise the courseId from the current url
      */
@@ -150,7 +185,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
         if (!this.studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }

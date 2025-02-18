@@ -10,7 +10,6 @@ describe('ColorSelectorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ColorSelectorComponent],
         })
             .compileComponents()
             .then(() => {

@@ -1,22 +1,30 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, Input, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
+    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     @Input() subsequentExerciseGroupSelection: boolean;
     // Values to specify the target of the exercise group import
@@ -30,15 +38,9 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     isImportingExercises = false;
     isImportInSameCourse = false;
 
-    constructor(
-        router: Router,
-        sortService: SortService,
-        activeModal: NgbActiveModal,
-        pagingService: ExamImportPagingService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-    ) {
-        super(router, sortService, activeModal, pagingService);
+    constructor() {
+        const pagingService = inject(ExamImportPagingService);
+        super(pagingService);
     }
 
     /**

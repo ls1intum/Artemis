@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { debounceTime, filter, finalize, map } from 'rxjs/operators';
@@ -13,17 +13,69 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-card.component';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
     templateUrl: './lecture-unit-management.component.html',
     styleUrls: ['./lecture-unit-management.component.scss'],
+    imports: [
+        TranslateDirective,
+        UnitCreationCardComponent,
+        CdkDropList,
+        CdkDrag,
+        AttachmentUnitComponent,
+        ExerciseUnitComponent,
+        VideoUnitComponent,
+        TextUnitComponent,
+        OnlineUnitComponent,
+        CompetenciesPopoverComponent,
+        NgClass,
+        NgbTooltip,
+        FaIconComponent,
+        RouterLink,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faEye = faEye;
+    protected readonly faFileExport = faFileExport;
+    protected readonly faRepeat = faRepeat;
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faSpinner = faSpinner;
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ActionType = ActionType;
+
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    protected readonly lectureUnitService = inject(LectureUnitService);
+
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
@@ -39,14 +91,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     updateOrderSubject: Subject<any>;
     viewButtonAvailable: Record<number, boolean> = {};
 
-    updateOrderSubjectSubscription: Subscription;
-    navigationEndSubscription: Subscription;
+    private updateOrderSubjectSubscription: Subscription;
+    private navigationEndSubscription: Subscription;
+    private activatedRouteSubscription?: Subscription;
+    private profileInfoSubscription: Subscription;
 
-    readonly LectureUnitType = LectureUnitType;
-    readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    private profileInfoSubscription: Subscription;
     irisEnabled = false;
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
@@ -56,40 +107,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         [LectureUnitType.ONLINE]: 'online-units',
     };
 
-    // Icons
-    readonly faTrash = faTrash;
-    readonly faPencilAlt = faPencilAlt;
-    readonly faEye = faEye;
-    readonly faFileExport = faFileExport;
-    readonly faRepeat = faRepeat;
-    readonly faCheckCircle = faCheckCircle;
-    readonly faSpinner = faSpinner;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private lectureService: LectureService,
-        private alertService: AlertService,
-        public lectureUnitService: LectureUnitService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {}
-
-    ngOnDestroy(): void {
-        this.updateOrder();
-        this.updateOrderSubjectSubscription.unsubscribe();
-        this.dialogErrorSource.unsubscribe();
-        this.navigationEndSubscription.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
-    }
-
     ngOnInit(): void {
         this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
         });
 
         this.updateOrderSubject = new Subject();
-        this.activatedRoute.parent!.params.subscribe((params) => {
+        this.activatedRouteSubscription = this.activatedRoute?.parent?.params.subscribe((params) => {
             this.lectureId ??= +params['lectureId'];
             if (this.lectureId) {
                 // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
@@ -101,6 +125,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
             this.updateOrder();
         });
+    }
+
+    ngOnDestroy(): void {
+        this.updateOrder();
+        this.updateOrderSubjectSubscription.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
+        this.navigationEndSubscription.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
+        this.activatedRouteSubscription?.unsubscribe();
     }
 
     loadData() {
@@ -285,8 +318,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     });
                 }
             },
-            error: (err: HttpErrorResponse) => {
-                console.error(`Error fetching ingestion states for lecture ${this.lecture.id}`, err);
+            error: () => {
                 this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
             },
         });
@@ -309,7 +341,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 } else {
                     this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
                 }
-                console.error('Failed to send lecture unit ingestion request', error);
             },
         });
     }

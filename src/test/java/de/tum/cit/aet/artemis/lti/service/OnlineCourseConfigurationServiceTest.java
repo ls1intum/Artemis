@@ -16,13 +16,13 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 class OnlineCourseConfigurationServiceTest {
 
@@ -65,7 +65,7 @@ class OnlineCourseConfigurationServiceTest {
 
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
 
-        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
+        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(LTIAuthorizationGrantType.IMPLICIT);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
         assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + "/api/public/lti13/auth-callback");

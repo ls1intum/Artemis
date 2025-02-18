@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -15,6 +15,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ResultComponent } from './result.component';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -25,8 +26,12 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     selector: 'jhi-updating-result',
     templateUrl: './updating-result.component.html',
     providers: [ResultService, RepositoryService],
+    imports: [ResultComponent],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private submissionService = inject(ProgrammingSubmissionService);
+
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = true;
@@ -35,6 +40,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
     @Input() showCompletion = true;
+    @Input() showProgressBar = false;
+    @Input() showProgressBarBorder = false;
     @Output() showResult = new EventEmitter<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
@@ -45,14 +52,13 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
+    isQueued: boolean;
+    estimatedCompletionDate?: dayjs.Dayjs;
+    buildStartDate?: dayjs.Dayjs;
+    showProgressBarInResult = false;
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
-
-    constructor(
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: ProgrammingSubmissionService,
-    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -67,6 +73,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             // Currently submissions are only used for programming exercises to visualize the build process.
             if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
+            }
+
+            if (this.submissionService.getIsLocalCIProfile()) {
+                this.showProgressBarInResult = this.showProgressBar;
             }
 
             if (this.result) {
@@ -134,7 +144,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
-                tap(({ submissionState }) => this.updateSubmissionState(submissionState)),
+                tap(({ submissionState, buildTimingInfo, submission }) => this.updateSubmissionState(submissionState, buildTimingInfo, submission?.submissionDate)),
             )
             .subscribe();
     }
@@ -169,15 +179,50 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
+     * @param buildTimingInfo object container the build start time and the estimated completion time.
+     * @param submissionDate the date when the submission was created.
      */
-    private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
+    private updateSubmissionState(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
+        this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+
+        if (this.submissionService.getIsLocalCIProfile()) {
+            this.updateBuildTimingInfo(submissionState, buildTimingInfo, submissionDate);
+        }
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
             this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
         } else {
             // everything ok, remove the warning
             this.missingResultInfo = MissingResultInformation.NONE;
+        }
+    }
+
+    /**
+     * Updates the build timing information based on the submission state.
+     *
+     * @param  submissionState - The current state of the submission.
+     * @param  [buildTimingInfo] - Optional object containing the build start time and the estimated completion time.
+     * @param  [submissionDate] - Optional date when the submission was created.
+     */
+    private updateBuildTimingInfo(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
+        if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
+            this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
+                if (releaseDate && !this.isBuilding) {
+                    this.estimatedCompletionDate = releaseDate;
+                    this.buildStartDate = submissionDate;
+                }
+            });
+        } else if (
+            submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION &&
+            buildTimingInfo &&
+            dayjs(buildTimingInfo?.estimatedCompletionDate).isAfter(dayjs())
+        ) {
+            this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
+            this.buildStartDate = buildTimingInfo?.buildStartDate;
+        } else {
+            this.estimatedCompletionDate = undefined;
+            this.buildStartDate = undefined;
         }
     }
 }

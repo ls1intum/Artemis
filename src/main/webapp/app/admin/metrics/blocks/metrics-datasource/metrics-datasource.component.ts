@@ -8,7 +8,6 @@ import { DecimalPipe } from '@angular/common';
     selector: 'jhi-metrics-datasource',
     templateUrl: './metrics-datasource.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, DecimalPipe],
 })
 export class MetricsDatasourceComponent {

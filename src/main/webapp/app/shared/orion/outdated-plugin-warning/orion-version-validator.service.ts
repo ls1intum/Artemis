@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { isOrion } from 'app/shared/orion/orion';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
@@ -11,14 +11,12 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
     providedIn: 'root',
 })
 export class OrionVersionValidator {
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
     isOrion = isOrion;
     private minVersion: string;
     private isValidVersion: boolean;
-
-    constructor(
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
 
     /**
      * Validates the installed Orion plugin version against the allowed version range. This will not validate anything

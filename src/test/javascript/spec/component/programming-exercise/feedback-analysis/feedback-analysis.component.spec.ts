@@ -2,17 +2,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
+import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
-import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
-import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -27,22 +28,24 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Test feedback 1 detail',
+            feedbackIds: [1],
+            detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
             relativeCount: 50,
             taskName: '1',
             errorCategory: 'Student Error',
+            hasLongFeedbackText: false,
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Test feedback 2 detail',
+            feedbackIds: [2],
+            detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
             relativeCount: 25,
             taskName: '2',
             errorCategory: 'AST Error',
+            hasLongFeedbackText: false,
         },
     ];
 
@@ -51,7 +54,8 @@ describe('FeedbackAnalysisComponent', () => {
         totalItems: 2,
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
-        errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
+        errorCategories: ['Student Error', 'Ares Error', 'AST Error'],
+        highestOccurrenceOfGroupedFeedback: 0,
     };
 
     beforeEach(async () => {
@@ -86,7 +90,6 @@ describe('FeedbackAnalysisComponent', () => {
             result: Promise.resolve(),
         } as any);
 
-        jest.spyOn(feedbackAnalysisService, 'getAffectedStudentCount').mockResolvedValue(10);
         createChannelSpy = jest.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
 
         jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
@@ -94,6 +97,23 @@ describe('FeedbackAnalysisComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
+        const previousState: FeedbackAnalysisState = {
+            page: 1,
+            pageSize: 25,
+            searchTerm: '',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'count',
+            filterErrorCategories: ['Student Error', 'Ares Error', 'AST Error'],
+        };
+        fixture.componentRef.instance.previousRequestState.set(previousState);
+        const previousFilters: FilterData = {
+            tasks: [],
+            testCases: [],
+            occurrence: [],
+            errorCategories: [],
+        };
+        fixture.componentRef.instance.previousRequestFilters.set(previousFilters);
+        fixture.componentRef.instance.previousRequestGroupFeedback.set(false);
 
         fixture.detectChanges();
     });
@@ -166,6 +186,38 @@ describe('FeedbackAnalysisComponent', () => {
             expect(modalInstance.exerciseId).toBe(component.exerciseId);
             expect(modalInstance.maxCount).toBe(component.maxCount);
         });
+
+        it('should open filter modal and pass correct form values and properties when grouped feedback is active', async () => {
+            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: {
+                    filterApplied: { subscribe: jest.fn() },
+                },
+            } as any);
+            jest.spyOn(localStorageService, 'retrieve')
+                .mockReturnValueOnce(['task1'])
+                .mockReturnValueOnce(['testCase1'])
+                .mockReturnValueOnce([component.minCount(), 5])
+                .mockReturnValueOnce(['Student Error']);
+
+            component.maxCount.set(5);
+            component.selectedFiltersCount.set(1);
+            component.groupFeedback.set(true);
+            await component.openFilterModal();
+
+            expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
+            const modalInstance = modalSpy.mock.results[0].value.componentInstance;
+            expect(modalInstance.filters).toEqual({
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [component.minCount(), 5],
+                errorCategories: ['Student Error'],
+            });
+            expect(modalInstance.taskArray).toBe(component.taskNames);
+            expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
+            expect(modalInstance.exerciseId).toBe(component.exerciseId);
+            expect(modalInstance.maxCount).toBe(component.maxCount);
+        });
     });
 
     describe('applyFilters', () => {
@@ -193,12 +245,12 @@ describe('FeedbackAnalysisComponent', () => {
             const filters = {
                 tasks: ['task1', 'task2'],
                 testCases: ['testCase1'],
-                occurrence: [component.minCount(), component.maxCount()],
+                occurrence: [component.minCount(), component.maxCount() - 1],
                 errorCategories: ['AST Error'],
             };
             const count = component.countAppliedFilters(filters);
 
-            expect(count).toBe(4);
+            expect(count).toBe(5);
         });
 
         it('should return 0 if no filters are applied', () => {
@@ -317,5 +369,56 @@ describe('FeedbackAnalysisComponent', () => {
         await component.openFeedbackDetailChannelModal(feedbackDetail);
         expect(component['isFeedbackDetailChannelModalOpen']).toBeTrue();
         expect(modalSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toggleGroupFeedback', () => {
+        it('should toggle groupFeedback and call loadData', () => {
+            const loadDataSpy = jest.spyOn(component, 'loadData' as any);
+            const initialGroupFeedback = component.groupFeedback();
+
+            component.toggleGroupFeedback();
+
+            expect(component.groupFeedback()).toBe(!initialGroupFeedback);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('updateCache', () => {
+        it('should restore cache if no new response is provided', () => {
+            component.previousResponseData.set(feedbackResponseMock);
+
+            const previousState: FeedbackAnalysisState = {
+                page: 1,
+                pageSize: 25,
+                searchTerm: '',
+                sortingOrder: SortingOrder.DESCENDING,
+                sortedColumn: 'count',
+                filterErrorCategories: ['Student Error', 'Ares Error', 'AST Error'],
+            };
+            component.previousRequestState.set(previousState);
+
+            const previousFilters: FilterData = {
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [0, 10],
+                errorCategories: ['Student Error'],
+            };
+            component.previousRequestFilters.set(previousFilters);
+            component.previousRequestGroupFeedback.set(false);
+
+            component.updateCache(component.previousResponseData()!, component.previousRequestState()!, component.previousRequestFilters()!);
+
+            expect(component.content().resultsOnPage).toEqual(feedbackResponseMock.feedbackDetails.resultsOnPage);
+            expect(component.totalItems()).toBe(feedbackResponseMock.totalItems);
+            expect(component.taskNames()).toEqual(feedbackResponseMock.taskNames);
+            expect(component.testCaseNames()).toEqual(feedbackResponseMock.testCaseNames);
+            expect(component.errorCategories()).toEqual(feedbackResponseMock.errorCategories);
+            expect(component.maxCount()).toBe(feedbackResponseMock.highestOccurrenceOfGroupedFeedback);
+
+            expect(component.previousResponseData()).toEqual(component.currentResponseData());
+            expect(component.previousRequestState()).toEqual(component.currentRequestState());
+            expect(previousFilters).toEqual(component.currentRequestFilters());
+            expect(component.previousRequestGroupFeedback()).toEqual(component.currentRequestGroupFeedback());
+        });
     });
 });

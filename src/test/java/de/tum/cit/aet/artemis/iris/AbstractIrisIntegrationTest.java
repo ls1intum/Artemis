@@ -59,9 +59,12 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         activateSubSettings(globalSettings.getIrisChatSettings());
+        activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+        activateSubSettings(globalSettings.getIrisCourseChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
-        activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+        activateSubSettings(globalSettings.getIrisLectureChatSettings());
+        activateSubSettings(globalSettings.getIrisFaqIngestionSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -80,12 +83,12 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
         activateSubSettings(courseSettings.getIrisChatSettings());
-
-        activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
-
-        activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
-
         activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
+        activateSubSettings(courseSettings.getIrisLectureChatSettings());
+        activateSubSettings(courseSettings.getIrisCourseChatSettings());
+        activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
+        activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
+        activateSubSettings(courseSettings.getIrisFaqIngestionSettings());
 
         irisSettingsRepository.save(courseSettings);
     }
@@ -94,6 +97,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+
         irisSettingsRepository.save(exerciseSettings);
     }
 
@@ -121,11 +125,11 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void verifyMessageWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<?> matcher) {
         // @formatter:off
         verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
-                .sendMessageToUser(
-                        eq(userLogin),
-                        eq("/topic/iris/" + topicSuffix),
-                        ArgumentMatchers.argThat(matcher)
-                );
+            .sendMessageToUser(
+                eq(userLogin),
+                eq("/topic/iris/" + topicSuffix),
+                ArgumentMatchers.argThat(matcher)
+            );
         // @formatter:on
     }
 
@@ -135,11 +139,11 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
         // @formatter:off
         verify(websocketMessagingService, times(numberOfCalls))
-                .sendMessageToUser(
-                        eq(userLogin),
-                        eq("/topic/iris/" + topicSuffix),
-                        any()
-                );
+            .sendMessageToUser(
+                eq(userLogin),
+                eq("/topic/iris/" + topicSuffix),
+                any()
+            );
         // @formatter:on
     }
 }

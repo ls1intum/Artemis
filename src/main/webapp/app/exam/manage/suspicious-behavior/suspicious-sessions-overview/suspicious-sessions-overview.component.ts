@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { cloneDeep } from 'lodash-es';
+import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-suspicious-sessions-overview',
     templateUrl: './suspicious-sessions-overview.component.html',
     styleUrls: ['./suspicious-sessions-overview.component.scss'],
+    imports: [SuspiciousSessionsComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SuspiciousSessionsOverviewComponent implements OnInit {
     suspiciousSessions: SuspiciousExamSessions[] = [];

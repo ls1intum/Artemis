@@ -16,7 +16,7 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
@@ -252,13 +252,11 @@ describe('BonusComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
             declarations: [
-                BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
                 MockComponent(ModePickerComponent),
                 MockPipe(GradeStepBoundsPipe),
                 MockComponent(DeleteDialogComponent),
-                MockDirective(NgModel),
                 MockDirective(DeleteButtonDirective),
             ],
             providers: [

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { Observable } from 'rxjs';
@@ -8,9 +8,9 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
-    private resourceUrl = 'api/aeolus';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/aeolus';
 
     /**
      * Fetches the aeolus template file for the given programming language
@@ -18,11 +18,10 @@ export class AeolusService {
      * @param {ProjectType} projectType (if available)
      * @param staticAnalysis (if available) whether static code analysis should be enabled
      * @param sequentialRuns (if available) whether sequential test runs should be enabled
-     * @param coverage (if available) whether test coverage should be enabled
      * @returns WindFile or undefined if no template is available
      */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
-        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
+    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): Observable<string> {
+        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns);
         return this.http.get<string>(`${this.resourceUrl}/templates/` + uriWithParams.uri, {
             responseType: 'text' as 'json',
             params: uriWithParams.params,
@@ -35,11 +34,10 @@ export class AeolusService {
      * @param {ProjectType} projectType (if available)
      * @param staticAnalysis (if available) whether static code analysis should be enabled
      * @param sequentialRuns (if available) whether sequential test runs should be enabled
-     * @param coverage (if available) whether test coverage should be enabled
      * @returns json test file
      */
-    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
-        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
+    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): Observable<string> {
+        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns);
         return this.http.get<string>(`${this.resourceUrl}/template-scripts/` + uriWithParams.uri, {
             responseType: 'text' as 'json',
             params: uriWithParams.params,
@@ -83,18 +81,11 @@ export class AeolusService {
         }
     }
 
-    buildURIWithParams(
-        language: ProgrammingLanguage,
-        projectType?: ProjectType,
-        staticAnalysis?: boolean,
-        sequentialRuns?: boolean,
-        coverage?: boolean,
-    ): { uri: string; params: any } {
+    buildURIWithParams(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): { uri: string; params: any } {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,
             sequentialRuns: !!sequentialRuns,
-            testCoverage: !!coverage,
         };
         return {
             uri: path,

@@ -13,8 +13,6 @@ describe('AssessmentWarningComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [AssessmentWarningComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

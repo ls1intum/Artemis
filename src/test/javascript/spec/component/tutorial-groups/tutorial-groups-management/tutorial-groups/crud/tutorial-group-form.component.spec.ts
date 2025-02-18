@@ -25,6 +25,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { ArtemisTestModule } from '../../../../../test.module';
+import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -61,7 +63,7 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
             declarations: [
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
@@ -87,16 +89,17 @@ describe('TutorialGroupFormComponent', () => {
                 }),
                 MockProvider(AlertService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupFormComponent);
-                validTeachingAssistant = new User();
-                validTeachingAssistant.login = 'testLogin';
-                component = fixture.componentInstance;
-                component.course = course;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorialGroupFormComponent);
+        validTeachingAssistant = new User();
+        validTeachingAssistant.login = 'testLogin';
+        component = fixture.componentInstance;
+        component.course = course;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -253,10 +256,11 @@ describe('TutorialGroupFormComponent', () => {
         it('should submit valid form', fakeAsync(() => {
             setValidFormValues();
             runOnPushChangeDetection(fixture);
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
-
-            clickSubmit(true);
+            fixture.whenStable().then(() => {
+                expect(component.form.valid).toBeTrue();
+                expect(component.isSubmitPossible).toBeTrue();
+                clickSubmit(true);
+            });
         }));
     });
 

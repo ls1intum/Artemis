@@ -20,7 +20,7 @@
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
-                                    [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
+                                    [routerLink]="[baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation.id!]"
                                     class="btn btn-warning btn-sm"
                                 >
                                     <fa-icon [icon]="faPencilAlt" />
@@ -38,15 +38,6 @@
                                 >
                                     <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editBuildPlan"></span>
-                                </a>
-                            }
-                            @if (programmingExercise.course && !isExamExercise) {
-                                <a
-                                    [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                                    class="btn btn-warning btn-sm position-relative"
-                                >
-                                    <fa-icon [icon]="faLightbulb" />
-                                    <span jhiTranslate="entity.action.hints"></span>
                                 </a>
                             }
                             <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
@@ -132,27 +123,6 @@
                                 >
                                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle"></span>
                                 </button>
-                            </span>
-                        }
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <span>
-                                @if (
-                                    (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
-                                        programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
-                                    programmingExercise.buildConfig?.testwiseCoverageEnabled
-                                ) {
-                                    <span class="me-1">
-                                        <button
-                                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                            type="button"
-                                            (click)="getAndShowTestwiseCoverage()"
-                                            class="btn btn-secondary btn-sm"
-                                            ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
-                                        >
-                                            <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button"></span>
-                                        </button>
-                                    </span>
-                                }
                             </span>
                         }
                         @if (programmingExercise.isAtLeastInstructor && !localVCEnabled) {

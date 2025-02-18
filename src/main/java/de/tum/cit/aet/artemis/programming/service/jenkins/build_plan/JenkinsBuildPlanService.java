@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,10 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.xml.transform.TransformerException;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,19 +18,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -48,36 +42,31 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 @Service
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
 
     @Value("${artemis.continuous-integration.url}")
-    protected URL serverUrl;
-
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
+    private URI jenkinsServerUri;
 
     private final RestTemplate restTemplate;
-
-    private final JenkinsServer jenkinsServer;
 
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
@@ -108,13 +97,12 @@ public class JenkinsBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-credentials}")
     private String vcsCredentials;
 
-    public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
+    public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
             BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.restTemplate = restTemplate;
-        this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.jenkinsJobService = jenkinsJobService;
         this.userRepository = userRepository;
@@ -184,8 +172,8 @@ public class JenkinsBuildPlanService {
             throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
         }
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP -> jenkinsBuildPlanCreator;
-            case VHDL, ASSEMBLER, OCAML, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, RUBY, DART -> jenkinsBuildPlanCreator;
+            case VHDL, ASSEMBLER, OCAML, SQL, MATLAB, POWERSHELL, ADA, PHP ->
                 throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
@@ -225,7 +213,7 @@ public class JenkinsBuildPlanService {
 
         // remove potential username from repo URI. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URI
         final var repoUri = newRepoUri.replaceAll("(https?://)(.*@)(.*)", "$1$3");
-        final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
+        final Document jobConfig = jenkinsJobService.getJobConfig(buildProjectKey, buildPlanKey);
 
         try {
             JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, existingRepoUri, repoUri);
@@ -234,7 +222,7 @@ public class JenkinsBuildPlanService {
             log.error("Pipeline Script not found", e);
         }
 
-        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+        jenkinsJobService.updateJob(buildProjectKey, buildPlanKey, jobConfig);
     }
 
     /**
@@ -261,25 +249,6 @@ public class JenkinsBuildPlanService {
         }
     }
 
-    private void postBuildPlanConfigChange(String buildPlanKey, String buildProjectKey, Document jobConfig) {
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
-        try {
-            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
-
-            final var headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_XML);
-
-            String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
-            final var entity = new HttpEntity<>(jobXmlString, headers);
-
-            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
-        }
-        catch (RestClientException | TransformerException e) {
-            log.error(errorMessage, e);
-            throw new JenkinsException(errorMessage, e);
-        }
-    }
-
     /**
      * Returns the build plan key from the specified test results.
      *
@@ -287,7 +256,7 @@ public class JenkinsBuildPlanService {
      * @return the build plan key
      */
     public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
-        final var nameParams = testResultsDTO.getFullName().split(" ");
+        final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
@@ -319,7 +288,7 @@ public class JenkinsBuildPlanService {
         final var cleanTargetName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
-        final var jobXml = jenkinsJobService.getJobConfigForJobInFolder(sourceProjectKey, sourcePlanKey);
+        final var jobXml = jenkinsJobService.getJobConfig(sourceProjectKey, sourcePlanKey);
 
         updateBuildPlanURLs(sourceExercise, targetExercise, jobXml);
 
@@ -340,37 +309,12 @@ public class JenkinsBuildPlanService {
      */
     public void triggerBuild(String projectKey, String planKey) {
         try {
-            jenkinsJobService.getJobInFolder(projectKey, planKey).build(useCrumb);
+            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
+            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
-        catch (JenkinsException | IOException e) {
+        catch (RestClientException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error triggering build: " + planKey, e);
-        }
-    }
-
-    /**
-     * Deletes the build plan
-     *
-     * @param projectKey the project key of the plan
-     * @param planKey    the plan key
-     */
-    public void deleteBuildPlan(String projectKey, String planKey) {
-        try {
-            var folderJob = jenkinsJobService.getFolderJob(projectKey);
-            if (folderJob != null) {
-                jenkinsServer.deleteJob(folderJob, planKey, useCrumb);
-            }
-        }
-        catch (HttpResponseException e) {
-            // We don't throw an exception if the build doesn't exist in Jenkins (404 status)
-            if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
-                log.error(e.getMessage(), e);
-                throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
-            }
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
         }
     }
 
@@ -383,26 +327,30 @@ public class JenkinsBuildPlanService {
      * @throws JenkinsException thrown in case of errors
      */
     public ContinuousIntegrationService.BuildStatus getBuildStatusOfPlan(String projectKey, String planKey) throws JenkinsException {
-        var job = jenkinsJobService.getJobInFolder(projectKey, planKey);
+        var job = jenkinsJobService.getJob(projectKey, planKey);
         if (job == null) {
             // Plan doesn't exist.
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
 
-        if (job.isInQueue()) {
+        if (job.inQueue()) {
             return ContinuousIntegrationService.BuildStatus.QUEUED;
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
-            var response = restTemplate.getForObject(uri, JsonNode.class);
-            var isJobBuilding = response.get("building").asBoolean();
-            return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
+            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
+            var buildStatus = restTemplate.getForObject(uri, JenkinsBuildStatusDTO.class);
+            return buildStatus != null && buildStatus.building ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
-        catch (NullPointerException | HttpClientErrorException e) {
+        catch (HttpClientErrorException e) {
             log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record JenkinsBuildStatusDTO(boolean building) {
     }
 
     /**
@@ -430,7 +378,7 @@ public class JenkinsBuildPlanService {
      */
     public boolean buildPlanExists(String projectKey, String buildPlanId) {
         try {
-            var planExists = jenkinsJobService.getJobInFolder(projectKey, buildPlanId);
+            var planExists = jenkinsJobService.getJob(projectKey, buildPlanId);
             return planExists != null;
         }
         catch (JenkinsException emAll) {
@@ -475,8 +423,8 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
-            restTemplate.postForEntity(uri, null, String.class);
+            URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
+            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (HttpClientErrorException e) {
             throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
@@ -507,8 +455,9 @@ public class JenkinsBuildPlanService {
                     buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,
-                    this.artemisAuthenticationTokenKey);
+            var metadata = new WindfileMetadata(programmingExercise.getProjectName(), buildPlanId, "planDescription", null, vcsCredentials, null, resultHookUrl,
+                    artemisAuthenticationTokenKey);
+            windfile = new Windfile(windfile, metadata, repositories);
             String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.JENKINS);
 
             if (generatedKey != null && generatedKey.contains("-")) {

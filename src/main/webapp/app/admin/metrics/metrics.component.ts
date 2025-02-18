@@ -19,7 +19,6 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [
         TranslateDirective,
         FaIconComponent,

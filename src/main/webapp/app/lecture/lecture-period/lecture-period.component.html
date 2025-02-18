@@ -1,0 +1,33 @@
+<div>
+    <h3 id="artemisApp.lecture.sections.period"><span jhiTranslate="artemisApp.lecture.sections.period"></span></h3>
+    <p><span jhiTranslate="artemisApp.lecture.sections.periodDescription"></span></p>
+    <div class="d-flex">
+        <div class="form-group flex-grow-1">
+            <jhi-date-time-picker
+                labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
+                [(ngModel)]="lecture().visibleDate"
+                (valueChange)="validateDatesFunction()"
+                name="visibleDate"
+                id="visible-date"
+            />
+        </div>
+        <div class="form-group flex-grow-1 ms-3">
+            <jhi-date-time-picker
+                labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
+                [(ngModel)]="lecture().startDate"
+                (valueChange)="validateDatesFunction()"
+                name="startDate"
+                id="start-date"
+            />
+        </div>
+        <div class="form-group flex-grow-1 ms-3">
+            <jhi-date-time-picker
+                labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
+                [(ngModel)]="lecture().endDate"
+                (valueChange)="validateDatesFunction()"
+                name="endDate"
+                id="end-date"
+            />
+        </div>
+    </div>
+</div>

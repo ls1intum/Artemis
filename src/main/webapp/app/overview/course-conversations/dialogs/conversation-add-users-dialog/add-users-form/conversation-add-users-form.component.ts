@@ -1,8 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, input } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
@@ -15,21 +20,27 @@ export interface AddUsersFormData {
 @Component({
     selector: 'jhi-conversation-add-users-form',
     templateUrl: './conversation-add-users-form.component.html',
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
+
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
+    @Input() activeConversation: ConversationDTO;
 
-    @Input()
-    activeConversation: ConversationDTO;
+    isLoading = input<boolean>(false);
 
     form: FormGroup;
+
+    // Icons
+    protected readonly faSpinner = faSpinner;
 
     getAsChannel = getAsChannelDTO;
 
     mode: 'individual' | 'group' = 'individual';
-    constructor(private fb: FormBuilder) {}
 
     get selectedUsersControl() {
         return this.form.get('selectedUsers');
@@ -37,8 +48,9 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         return (
-            (this.mode === 'individual' && !this.form.invalid) ||
-            (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllInstructors))
+            !this.isLoading() &&
+            ((this.mode === 'individual' && !this.form.invalid) ||
+                (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllInstructors)))
         );
     }
 
@@ -46,7 +58,7 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
     }
 

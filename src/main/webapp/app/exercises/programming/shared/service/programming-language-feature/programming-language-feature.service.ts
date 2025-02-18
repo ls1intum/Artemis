@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -14,15 +14,16 @@ export type ProgrammingLanguageFeature = {
     packageNameRequired: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
     projectTypes?: ProjectType[];
-    testwiseCoverageAnalysisSupported: boolean;
     auxiliaryRepositoriesSupported: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingLanguageFeatureService {
+    private profileService = inject(ProfileService);
+
     private programmingLanguageFeatures: Map<ProgrammingLanguage, ProgrammingLanguageFeature> = new Map<ProgrammingLanguage, ProgrammingLanguageFeature>();
 
-    constructor(private profileService: ProfileService) {
+    constructor() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             profileInfo.programmingLanguageFeatures.forEach((programmingLanguageFeature) => {
                 this.programmingLanguageFeatures.set(programmingLanguageFeature.programmingLanguage, programmingLanguageFeature);
@@ -30,8 +31,8 @@ export class ProgrammingLanguageFeatureService {
         });
     }
 
-    public getProgrammingLanguageFeature(programmingLanguage: ProgrammingLanguage): ProgrammingLanguageFeature {
-        return this.programmingLanguageFeatures.get(programmingLanguage)!;
+    public getProgrammingLanguageFeature(programmingLanguage: ProgrammingLanguage): ProgrammingLanguageFeature | undefined {
+        return this.programmingLanguageFeatures.get(programmingLanguage);
     }
 
     public supportsProgrammingLanguage(programmingLanguage: ProgrammingLanguage): boolean {

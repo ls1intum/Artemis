@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,7 +73,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
@@ -95,8 +95,6 @@ public class ProgrammingExerciseExportImportResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
-
-    private final CompetencyProgressApi competencyProgressApi;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -131,6 +129,8 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
@@ -139,7 +139,7 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
+            Optional<AthenaModuleService> athenaModuleService, Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -214,8 +214,7 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
-                        sourceExerciseId)
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
@@ -261,10 +260,9 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
             importedProgrammingExercise.setTemplateParticipation(null);
             importedProgrammingExercise.setSolutionParticipation(null);
-            importedProgrammingExercise.setExerciseHints(null);
             importedProgrammingExercise.setTasks(null);
 
-            competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
@@ -336,14 +334,14 @@ public class ProgrammingExerciseExportImportResource {
             log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
             throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
-        var finalZipFile = path.toFile();
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(finalZipFile));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(path));
 
         log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
-        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+        final var zipFile = path.toFile();
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
     /**
@@ -404,7 +402,7 @@ public class ProgrammingExerciseExportImportResource {
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.get().toPath()));
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(), exercise.getTitle(),
                 formatDurationFrom(startTime));
@@ -513,7 +511,7 @@ public class ProgrammingExerciseExportImportResource {
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
 
         log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
                 programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));

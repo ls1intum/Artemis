@@ -1,6 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Injectable } from '@angular/core';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
@@ -10,7 +9,6 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs/esm';
 
 export const mockTeamStudents = [
@@ -170,20 +168,5 @@ export class MockTeamService implements ITeamService {
     // helper method
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
-    }
-}
-
-@Injectable()
-export class TeamRequestInterceptorMock implements HttpInterceptor {
-    constructor() {}
-
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {
-            return of(new HttpResponse({ status: 200, body: mockTeamFromServer }));
-        }
-        if (request.url === `api/exercises/${mockExercise.id}`) {
-            return of(new HttpResponse({ status: 200, body: mockExercise }));
-        }
-        return next.handle(request);
     }
 }

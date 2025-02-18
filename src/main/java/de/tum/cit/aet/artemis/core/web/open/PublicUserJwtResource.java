@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.ServletException;
@@ -27,12 +28,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
@@ -64,12 +67,14 @@ public class PublicUserJwtResource {
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
+     * @param tool      optional Tool Token Type to define the scope of the token
      * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
+            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -83,10 +88,10 @@ public class PublicUserJwtResource {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
@@ -126,7 +131,7 @@ public class PublicUserJwtResource {
         }
 
         final boolean rememberMe = Boolean.parseBoolean(body);
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, null);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         return ResponseEntity.ok().build();

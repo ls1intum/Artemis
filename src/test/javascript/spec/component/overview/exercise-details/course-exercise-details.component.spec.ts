@@ -33,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
@@ -59,7 +59,6 @@ import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
@@ -71,24 +70,21 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ElementRef, signal } from '@angular/core';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let profileService: ProfileService;
     let exerciseService: ExerciseService;
-    let exerciseHintService: ExerciseHintService;
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
-    let getActivatedExerciseHintsMock: jest.SpyInstance;
-    let getAvailableExerciseHintsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let participationWebsockerBehaviourSubject: BehaviorSubject<Participation | undefined>;
@@ -136,6 +132,11 @@ describe('CourseExerciseDetailsComponent', () => {
         queryParams: of({ welcome: '' }),
     } as any as ActivatedRoute;
 
+    MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+    MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+    // @ts-ignore
+    MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockComponent(DiscussionSectionComponent)],
@@ -152,7 +153,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(ExerciseHintButtonOverlayComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
                 MockComponent(ProblemStatementComponent),
                 MockComponent(ResetRepoButtonComponent),
@@ -189,7 +189,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
-                MockProvider(ExerciseHintService),
             ],
         })
             .compileComponents()
@@ -230,10 +229,6 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
-
-                exerciseHintService = TestBed.inject(ExerciseHintService);
-                getActivatedExerciseHintsMock = jest.spyOn(exerciseHintService, 'getActivatedExerciseHints');
-                getAvailableExerciseHintsMock = jest.spyOn(exerciseHintService, 'getAvailableExerciseHints');
 
                 participationService = TestBed.inject(ParticipationService);
                 mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
@@ -335,16 +330,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should activate hint', () => {
-        comp.availableExerciseHints = [{ id: 1 }, { id: 2 }];
-        comp.activatedExerciseHints = [];
-
-        const activatedHint = comp.availableExerciseHints[0];
-        comp.onHintActivated(activatedHint);
-        expect(comp.availableExerciseHints).not.toContain(activatedHint);
-        expect(comp.activatedExerciseHints).toContain(activatedHint);
-    });
-
     it('should sort results by completion date in ascending order', () => {
         const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
         const result2 = { completionDate: dayjs().subtract(1, 'day') } as Result;
@@ -432,16 +417,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 }] };
 
-        getActivatedExerciseHintsMock.mockReturnValue(of({ body: [] }));
-        getAvailableExerciseHintsMock.mockReturnValue(of({ body: [] }));
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
         participationWebsockerBehaviourSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
-
-        tick();
-
-        expect(getActivatedExerciseHintsMock).toHaveBeenCalledOnce();
-        expect(getAvailableExerciseHintsMock).toHaveBeenCalledOnce();
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 /**
  * Service for importing learning objects related to competencies.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningObjectImportService {
 
@@ -261,7 +261,6 @@ public class LearningObjectImportService {
 
     private void clearProgrammingExerciseAttributes(ProgrammingExercise programmingExercise) {
         programmingExercise.setTasks(null);
-        programmingExercise.setExerciseHints(new HashSet<>());
         programmingExercise.setTestCases(new HashSet<>());
         programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>());
         programmingExercise.setTeams(new HashSet<>());

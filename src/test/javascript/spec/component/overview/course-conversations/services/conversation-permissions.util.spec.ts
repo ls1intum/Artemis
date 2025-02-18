@@ -19,39 +19,41 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 describe('ConversationPermissionUtils', () => {
     describe('channels', () => {
         describe('canCreateNewMessageInConversation', () => {
-            const channelsWhereNewMessageCanBeCreated = generateExampleChannelDTO({ isMember: true });
+            const channelsWhereNewMessageCanBeCreated = generateExampleChannelDTO({ isMember: true } as ChannelDTO);
 
             it('can create new message in channel where user is member', () => {
                 expect(canCreateNewMessageInConversation(channelsWhereNewMessageCanBeCreated)).toBeTrue();
             });
 
             it('can not create new message in channel where user is not member', () => {
-                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false }))).toBeFalse();
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false } as ChannelDTO))).toBeFalse();
             });
 
             it('can not create new message in an archived channel', () => {
-                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isArchived: true }))).toBeFalse();
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isArchived: true } as ChannelDTO))).toBeFalse();
             });
 
             it('can not create new message in a an announcement channel where user is not moderator', () => {
-                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false, isAnnouncementChannel: true }))).toBeFalse();
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false, isAnnouncementChannel: true } as ChannelDTO))).toBeFalse();
             });
 
             it('can create new message in a an announcement channel where user is moderator', () => {
-                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: true }))).toBeTrue();
+                expect(
+                    canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: true } as ChannelDTO)),
+                ).toBeTrue();
             });
 
             it('can create a new message in an announcement channel where user is not moderator but has moderation rights', () => {
                 expect(
                     canCreateNewMessageInConversation(
-                        generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: false, hasChannelModerationRights: true }),
+                        generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: false, hasChannelModerationRights: true } as ChannelDTO),
                     ),
                 ).toBeTrue();
             });
         });
 
         describe('canLeaveConversation', () => {
-            const channelsThatCanBeLeft = generateExampleChannelDTO({ isMember: true, isCreator: false });
+            const channelsThatCanBeLeft = generateExampleChannelDTO({ isMember: true, isCreator: false } as ChannelDTO);
             it('can leave channel', () => {
                 expect(canLeaveConversation(channelsThatCanBeLeft)).toBeTrue();
             });
@@ -70,7 +72,7 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('addUsersToConversation', () => {
-            const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false });
+            const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false } as ChannelDTO);
 
             it('can add users to channel', () => {
                 expect(canAddUsersToConversation(channelWhereUsersCanBeAdded)).toBeTrue();
@@ -96,7 +98,7 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('removeUsersFromConversation', () => {
-            const channelsWhereUsersCanBeRemoved = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false, isPublic: false });
+            const channelsWhereUsersCanBeRemoved = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false, isPublic: false } as ChannelDTO);
 
             it('can remove users to channel', () => {
                 expect(canRemoveUsersFromConversation(channelsWhereUsersCanBeRemoved)).toBeTrue();
@@ -128,7 +130,7 @@ describe('ConversationPermissionUtils', () => {
         });
         describe('canDeleteChannel', () => {
             const courseWithCorrectRights = { isAtLeastInstructor: true } as Course;
-            const channelWhereNoModerator = generateExampleChannelDTO({ hasChannelModerationRights: false, isChannelModerator: false, isCreator: false });
+            const channelWhereNoModerator = generateExampleChannelDTO({ hasChannelModerationRights: false, isChannelModerator: false, isCreator: false } as ChannelDTO);
 
             it('can delete any channel as instructor', () => {
                 expect(canDeleteChannel(courseWithCorrectRights, channelWhereNoModerator)).toBeTrue();
@@ -138,7 +140,7 @@ describe('ConversationPermissionUtils', () => {
                 expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereNoModerator)).toBeFalse();
             });
 
-            const channelWhereModerator = generateExampleChannelDTO({ hasChannelModerationRights: true, isChannelModerator: true, isCreator: true });
+            const channelWhereModerator = generateExampleChannelDTO({ hasChannelModerationRights: true, isChannelModerator: true, isCreator: true } as ChannelDTO);
             it('can delete self created channel as tutor', () => {
                 expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereModerator)).toBeTrue();
             });
@@ -149,14 +151,14 @@ describe('ConversationPermissionUtils', () => {
                 isCreator: false,
                 tutorialGroupId: 1,
                 tutorialGroupTitle: 'test',
-            });
+            } as ChannelDTO);
             it('can not delete tutorial group channel', () => {
                 expect(canDeleteChannel(courseWithCorrectRights, tutorialGroupChannel)).toBeFalse();
             });
         });
 
         describe('can grant channel moderator role', () => {
-            const channelWhereRoleCanBeGranted = generateExampleChannelDTO({ hasChannelModerationRights: true });
+            const channelWhereRoleCanBeGranted = generateExampleChannelDTO({ hasChannelModerationRights: true } as ChannelDTO);
 
             it('can grant moderator role', () => {
                 expect(canGrantChannelModeratorRole(channelWhereRoleCanBeGranted)).toBeTrue();
@@ -168,7 +170,7 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('can revoke channel moderator role', () => {
-            const channelWhereRoleCanBeRevoked = generateExampleChannelDTO({ hasChannelModerationRights: true });
+            const channelWhereRoleCanBeRevoked = generateExampleChannelDTO({ hasChannelModerationRights: true } as ChannelDTO);
 
             it('can revoke moderator role', () => {
                 expect(canRevokeChannelModeratorRole(channelWhereRoleCanBeRevoked)).toBeTrue();
@@ -180,7 +182,7 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('can change channel archival state', () => {
-            const channelThatCanBeArchived = generateExampleChannelDTO({ hasChannelModerationRights: true });
+            const channelThatCanBeArchived = generateExampleChannelDTO({ hasChannelModerationRights: true } as ChannelDTO);
 
             it('can archive channel', () => {
                 expect(canChangeChannelArchivalState(channelThatCanBeArchived)).toBeTrue();
@@ -192,7 +194,7 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('can change channel properties', () => {
-            const channelThatCanBeChanged = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false });
+            const channelThatCanBeChanged = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false } as ChannelDTO);
 
             it('can change channel properties', () => {
                 expect(canChangeChannelProperties(channelThatCanBeChanged)).toBeTrue();
@@ -214,7 +216,7 @@ describe('ConversationPermissionUtils', () => {
                 isArchived: false,
                 hasChannelModerationRights: false,
                 isChannelModerator: false,
-            });
+            } as ChannelDTO);
 
             it('can join channel', () => {
                 expect(canJoinChannel(channelThatCanBeJoined)).toBeTrue();

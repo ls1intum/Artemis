@@ -216,22 +216,8 @@
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
+            "diffReportError": "Der Diff Report konnte nicht erstellt werden.",
             "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
-            "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
-            "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
-            "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
-            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Lösungs-Codeschnipsel wurden gelöscht.",
-            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Lösungs-Codeschnipsel.",
-            "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
-            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Lösungs-Codeschnipsel",
-            "generateCodeHintsTitle": "Generiere Code Hinweise",
-            "generateCodeHintsSuccess": "Code Hinweise wurden erfolgreich generiert",
-            "createStructuralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle strukturellen Tests dieser Aufgabe.",
-            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Lösungs-Codeschnipsel",
-            "createStructuralSolutionEntriesSuccess": "Strukturelle Lösungs-Codeschnipsel wurden erfolgreich erstellt",
-            "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
-            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs-Codeschnipsel",
-            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs-Codeschnipsel wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -358,6 +344,8 @@
                     "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
                     "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
                     "channelSuccess": "Kanal {{channelName}} erfolgreich erstellt.",
+                    "groupFeedback": "Feedback gruppieren",
+                    "groupFeedbackTooltip": "Feedback gruppieren ermöglicht es, ähnliche Feedback-Einträge mit demselben Testfall und derselben Aufgabenbezeichnung zu einem einzigen Eintrag zusammenzufassen. Dies ist nützlich, um die Anzahl der Einträge in der Tabelle zu reduzieren, insbesondere wenn zufällige Werte oder ähnliche Eingaben in den Testfällen verwendet und verglichen werden.",
                     "feedbackModal": {
                         "header": "Fehlerdetails",
                         "feedbackTitle": "Feedback zu Testfällen",
@@ -374,11 +362,11 @@
                         "apply": "Filter anwenden"
                     },
                     "affectedStudentsModal": {
-                        "header": "Betroffene Studierende",
+                        "header": "Stichprobe für Betroffene Studierende",
+                        "description": "Die folgende Liste ist eine Stichprobe der betroffenen Studierenden für den ausgewählten Feedback-Eintrag, da diese ausreichend ist, um das Feedback zu analysieren. Die Liste ist auf 5 Studierende begrenzt. Insgesamt haben {{count}} Studierende dieses Feedback erhalten.",
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "Insgesamt {{count}} Element(e)",
                         "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
                     },
                     "feedbackDetailChannel": {
@@ -394,9 +382,8 @@
                         "announcementChannelNo": "Nein",
                         "createAndNavigateLabel": "Erstellen und Navigieren",
                         "createAndNavigateDescription": "Erstellt den Kanal und navigiert automatisch zum Kanal.",
-                        "createChannelLabel": "Kanal erstellen:",
+                        "createChannelLabel": "Kanal erstellen",
                         "createChannelDescription": "Erstellt den Kanal, ohne die Seite zu verlassen.",
-                        "createChannelButton": "Kanal erstellen",
                         "placeholder": "Dieses Feld bitte nicht leer lassen",
                         "descriptionLabel": "Kanalbeschreibung",
                         "requiredValidationErrorName": "Der Kanalname ist ein Pflichtfeld.",
@@ -404,6 +391,7 @@
                         "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
                         "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "dueDate": "Das Abgabedatum der Übung ist noch nicht erreicht. Bitte beachte, dass das Ergebnis daher noch nicht endgültig ist und sich die betroffenen Studierenden in Zukunft ändern könnten. Zudem ist das Feedback möglicherweise noch nicht für Studierende sichtbar, falls es versteckte Testfälle in der Übung gibt. Bitte überprüfe, ob du dennoch einen Feedback-Kanal erstellen möchtest!",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
                             "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
@@ -578,7 +566,7 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Der eingefügte Code überschreibt alles, was sich an der durch das Checkout-Verzeichnis angegebenen Stelle befindet. Wenn du die Dateien der Studierenden nur teilweise überschreiben willst, muss das Build-Skript angepasst werden.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Die eingefügten Dateien überschreiben alle Dateien im Checkout-Verzeichnis, die den gleichen Namen haben. Dateien, die nicht überschrieben werden, bleiben erhalten.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
@@ -704,20 +692,9 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
-            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
             "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
-            "testwiseCoverageReport": {
-                "button": "Testbasierte Code-Abdeckung anzeigen",
-                "tooltip": "Zeigt die testbasierte Code-Abdeckung für das Lösungs-Repository.",
-                "title": "Testbasierte Code-Abdeckung",
-                "404": "Testbasierte Code-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
-                "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
-                "filePath": "Datei-Pfad",
-                "coveredLines": "Abgedeckte Zeilen"
-            },
             "buildLogStatistics": {
                 "title": "Durchschnittliche Statistiken der Build-Logs",
                 "numberOfBuilds": "# Builds",
@@ -766,6 +743,11 @@
                     "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
                     "addEnvVar": "Umgebungsvariable hinzufügen",
                     "removeEnvVar": "Entfernen"
+                }
+            },
+            "artemisIntelligence": {
+                "consistencyCheckAlert": {
+                    "title": "Resultat der Konsistenzprüfung"
                 }
             }
         },

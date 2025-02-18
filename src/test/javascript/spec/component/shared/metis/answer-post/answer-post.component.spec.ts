@@ -1,22 +1,37 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { metisPostExerciseUser1, metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
-import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/reaction.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
+import dayjs from 'dayjs/esm';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { AccountService } from '../../../../../../../main/webapp/app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -30,18 +45,27 @@ describe('AnswerPostComponent', () => {
         document.body.appendChild(mainContainer);
 
         return TestBed.configureTestingModule({
-            imports: [OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [OverlayModule, MockModule(BrowserAnimationsModule), MockDirective(NgbTooltip)],
             declarations: [
                 AnswerPostComponent,
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(AnswerPostHeaderComponent),
                 MockComponent(PostingContentComponent),
+                MockComponent(PostingHeaderComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
-                MockComponent(AnswerPostReactionsBarComponent),
+                ArtemisDatePipe,
+                ArtemisTranslatePipe,
+                MockDirective(TranslateDirective),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: DOCUMENT, useValue: document },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -56,25 +80,25 @@ describe('AnswerPostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should contain an answer post header when isConsecutive is false', () => {
+    it('should contain the posting header when isConsecutive is false', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isConsecutive = input<boolean>(false);
             component.posting = metisResolvingAnswerPostUser1;
         });
 
         fixture.detectChanges();
-        const header = debugElement.query(By.css('jhi-answer-post-header'));
+        const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).not.toBeNull();
     });
 
-    it('should not contain an answer post header when isConsecutive is true', () => {
+    it('should not contain the posting header when isConsecutive is true', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isConsecutive = input<boolean>(true);
             component.posting = metisResolvingAnswerPostUser1;
         });
 
         fixture.detectChanges();
-        const header = debugElement.query(By.css('jhi-answer-post-header'));
+        const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).toBeNull();
     });
 
@@ -97,7 +121,7 @@ describe('AnswerPostComponent', () => {
         component.posting = metisResolvingAnswerPostUser1;
 
         fixture.detectChanges();
-        const reactionsBar = debugElement.query(By.css('jhi-answer-post-reactions-bar'));
+        const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
         expect(reactionsBar).not.toBeNull();
     });
 
@@ -236,5 +260,32 @@ describe('AnswerPostComponent', () => {
 
         expect(component.posting).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should display post-time span when isConsecutive() returns true', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
+        const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
+
+        expect(postTimeDebugElement).toBeTruthy();
+
+        const expectedTime = dayjs(fixedDate).format('HH:mm');
+        expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
+    });
+
+    it('should not display post-time span when isConsecutive() returns false', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        fixture.detectChanges();
+
+        const postTimeElement = debugElement.query(By.css('span.post-time'));
+        expect(postTimeElement).toBeFalsy();
     });
 });

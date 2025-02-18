@@ -1,29 +1,33 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Posting } from 'app/entities/metis/posting.model';
 import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-link-preview',
     templateUrl: './link-preview.component.html',
     styleUrls: ['./link-preview.component.scss'],
+    imports: [ConfirmIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class LinkPreviewComponent implements OnInit {
+    private metisService = inject(MetisService);
+
     @Input() linkPreview: LinkPreview;
+    @Input() posting?: Posting;
     @Input() showLoadingsProgress: boolean;
     @Input() loaded: boolean;
     @Input() hasError: boolean;
-    @Input() posting?: Posting;
     @Input() isReply?: boolean;
     @Input() multiple?: boolean;
 
     isAuthorOfOriginalPost: boolean;
 
     faTimes = faTimes;
-
-    constructor(private metisService: MetisService) {}
 
     ngOnInit() {
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting!);

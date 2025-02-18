@@ -56,30 +56,30 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
     /**
-     * Find all exams for multiple courses that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+     * Find all exams for a given course that are already visible to the user (either registered, at least tutor or the exam is a test exam)
      *
-     * @param courseIds  set of courseIds that the exams should be retrieved
+     * @param courseId   the course for which the exams should be retrieved
      * @param userId     the id of the user requesting the exams
      * @param groupNames the groups of the user requesting the exams
      * @param now        the current date, typically ZonedDateTime.now()
      * @return a set of all visible exams for the user in the provided courses
      */
     @Query("""
-            SELECT e
+            SELECT DISTINCT e
             FROM Exam e
-                LEFT JOIN e.examUsers registeredUsers
-            WHERE e.course.id IN :courseIds
+                LEFT JOIN e.examUsers eu
+                LEFT JOIN e.course c
+            WHERE c.id = :courseId
                 AND e.visibleDate <= :now
                 AND (
-                    registeredUsers.user.id = :userId
-                    OR e.course.teachingAssistantGroupName IN :groupNames
-                    OR e.course.editorGroupName IN :groupNames
-                    OR e.course.instructorGroupName IN :groupNames
+                    eu.user.id = :userId
+                    OR c.teachingAssistantGroupName IN :groupNames
+                    OR c.editorGroupName IN :groupNames
+                    OR c.instructorGroupName IN :groupNames
                     OR e.testExam = TRUE
                 )
             """)
-    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames,
-            @Param("now") ZonedDateTime now);
+    Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
@@ -384,6 +384,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND studentExam.exam.id = :examId
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
+
+    long countByCourse_Id(Long courseId);
 
     /**
      * Returns the title of the exam with the given id.

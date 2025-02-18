@@ -106,9 +106,6 @@ Generate programming exercise
     - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
       This feature allows students to better concentrate on the immediate challenge at hand.
       Not supported together with static code analysis. Cannot be changed after the exercise creation.
-    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
-      This is necessary when working with Hestia to generate code-based hints.
-      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
     - **Customize Build Plan** Activate this option if you want to customize the build plan of your exercise.
       This feature is available for all programming languages, and works with LocalCI and Jenkins, Artemis provides templates for the build plan configuration.
       The build plan can also be customized after the exercise creation.
@@ -724,3 +721,83 @@ Verify the exercise configuration
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
     :width: 160
+
+.. _feedback_analysis:
+
+Feedback Analysis
+^^^^^^^^^^^^^^^^^
+
+After verifying the exercise configuration, Artemis provides an advanced **Feedback Analysis** feature to help instructors and tutors **identify common mistakes** among students and improve grading efficiency.
+
+**Accessing Feedback Analysis**
+
+- Navigate to the **Exercise Management** page.
+- Open a programming exercise and navigate to the grading section. Click on the **Feedback Analysis** tab.
+
+- A structured table provides an **overview of feedback occurrences**, categorized by **test cases, tasks, and error types**.
+
+    .. figure:: programming/feedback-analysis-overview.png
+          :align: center
+          :scale: 50%
+
+          *Feedback Analysis Overview*
+
+**Key Features**
+
+1. **Filtering and Sorting**
+    - **Filter feedback** by:
+        - **Tasks**
+        - **Test Cases**
+        - **Error Categories** (e.g., Student Errors, System Errors)
+        - **Occurrence Frequency**
+
+    - **Sort feedback** based on occurrence count or relevance.
+
+    .. figure:: programming/feedback-analysis-filters.png
+          :align: center
+          :scale: 50%
+
+          *Filtering Options for Feedback Analysis*
+
+2. **Affected Students Overview**
+    - View a **list of students** affected by specific feedback messages.
+    - Open **individual repositories** for further review and correction of low-quality feedback.
+
+    .. figure:: programming/feedback-analysis-affected-students.png
+          :align: center
+          :scale: 50%
+
+          *Affected Students View*
+
+3. **Aggregated Feedback Overview**
+    - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+    - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+
+4. **Detailed Feedback Inspection**
+    - Click on any feedback entry to view **detailed feedback inspection**.
+    - Open a **modal window** to inspect for example feedback detailtexts which were too long and therefore had to be cut off in the table entry.
+
+    .. figure:: programming/feedback-analysis-detail.png
+          :align: center
+          :scale: 50%
+
+          *Detailed Feedback View*
+
+5. **Communication & Collaboration**
+    - Create **discussion channels** directly from the feedback analysis view.
+    - Enable **collaborative discussions** among tutors to streamline grading.
+
+    .. figure:: programming/feedback-analysis-channel.png
+          :align: center
+          :scale: 50%
+
+          *Creating a Feedback Discussion Channel*
+
+- To get a better understanding of the feature, you can watch the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
+

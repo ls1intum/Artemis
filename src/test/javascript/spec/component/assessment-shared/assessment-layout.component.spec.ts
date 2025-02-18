@@ -9,7 +9,6 @@ import { Complaint } from 'app/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
@@ -23,16 +22,14 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
                 AssessmentNoteComponent,
-                MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
-                TranslatePipeMock,
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],

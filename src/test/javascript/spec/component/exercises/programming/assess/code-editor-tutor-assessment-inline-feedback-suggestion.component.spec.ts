@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { EventEmitter } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MockComponent } from 'ng-mocks';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
     let component: CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
@@ -14,7 +14,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
+            imports: [ArtemisTestModule],
             declarations: [CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent, MockComponent(FeedbackSuggestionBadgeComponent)],
         }).compileComponents();
     });

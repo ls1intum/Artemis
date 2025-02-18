@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +21,9 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.Un
  */
 class StaticCodeAnalysisParserUnitTest {
 
-    private static final Path EXPECTED_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "expected");
+    private static final Path EXPECTED_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "expected");
 
-    private static final Path REPORTS_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports");
+    private static final Path REPORTS_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -60,6 +59,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testDartAnalyzeParser() throws IOException {
+        testParserWithFile("dart_analyze.sarif", "dart_analyze.json");
+    }
+
+    @Test
     void testPMDCPDParser() throws IOException {
         testParserWithFile("cpd.xml", "pmd_cpd.txt");
     }
@@ -75,12 +79,27 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
-    void testParseInvalidXML() throws IOException {
+    void testRuffParser() throws IOException {
+        testParserWithFile("ruff.sarif", "ruff.json");
+    }
+
+    @Test
+    void testRubocopParser() throws IOException {
+        testParserWithFile("rubocop.sarif", "rubocop.json");
+    }
+
+    @Test
+    void testClippyParser() throws IOException {
+        testParserWithFile("clippy.sarif", "clippy.json");
+    }
+
+    @Test
+    void testParseInvalidXML() {
         assertThatCode(() -> testParserWithFileNamed("invalid_xml.xml", "pmd.xml", "invalid_xml.txt")).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    void testInvalidName() throws IOException {
+    void testInvalidName() {
         assertThatCode(() -> testParserWithFile("invalid_name.xml", "invalid_name.txt")).isInstanceOf(UnsupportedToolException.class);
     }
 }

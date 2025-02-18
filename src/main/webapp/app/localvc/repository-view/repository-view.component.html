@@ -45,11 +45,10 @@
                     <jhi-code-button
                         [loading]="!!exercise.loading"
                         [smallButtons]="false"
-                        [routerLinkForRepositoryView]="'.'"
-                        [repositoryUri]="repositoryUri"
                         [participations]="[participation]"
-                        [useParticipationVcsAccessToken]="true"
                         [exercise]="exercise"
+                        [repositoryUri]="repositoryUri"
+                        [routerLinkForRepositoryView]="[]"
                     />
                 }
 

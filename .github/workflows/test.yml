@@ -40,8 +40,10 @@ concurrency:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 20
+  node: 22
   java: 21
+  # Run all tests for non-draft pull-requests or the default branch. Otherwise, only module-affected tests are run.
+  RUN_ALL_TESTS: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || github.event.repository.default_branch == github.ref_name }}
 
 jobs:
 
@@ -59,8 +61,44 @@ jobs:
           17
           ${{ env.java }}
         cache: 'gradle'
-    - name: Java Tests
-      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+    - name: Java Tests (module-affected)
+      # Not a non-draft pull-request and not the default branch
+      if: ${{ !env.RUN_ALL_TESTS }}
+      run: |
+        set -o pipefail
+
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+
+        # Explicitly fetch as the clone action only clones the current branch
+        git fetch origin "$DEFAULT_BRANCH"
+
+        chmod +x ./supporting_scripts/get_changed_modules.sh
+        CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+
+        # Restrict executed tests to changed modules if there is diff between this and the base branch
+        if [ -n "${CHANGED_MODULES}" ]; then
+          IFS=,
+          TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+
+          echo "Executing tests for modules: $CHANGED_MODULES"
+          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+          exit 0
+        fi
+
+        echo "Executing all tests"
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+    - name: Java Tests (All)
+      # Non-draft pull-request or default branch
+      if: ${{ env.RUN_ALL_TESTS }}
+      run: |
+        set -o pipefail
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+    - name: Upload JUnit Test Results
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: JUnit Test Results
+        path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
@@ -68,7 +106,7 @@ jobs:
       uses: codacy/codacy-coverage-reporter-action@master
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
+        coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
       if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
       uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
@@ -92,8 +130,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Coverage Report Server Tests
-        path: build/reports/jacoco/test/html/
-
+        path: build/reports/jacoco/aggregated/html
+    - name: Append Per-Module Coverage to Job Summary
+      if: success() || failure()
+      run: |
+        AGGREGATED_REPORT_FILE=./module_coverage_report.md
+        python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
+        cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
   server-tests-mysql:
       needs: [ server-tests ]

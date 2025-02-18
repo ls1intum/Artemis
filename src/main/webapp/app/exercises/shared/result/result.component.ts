@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import {
     MissingResultInformation,
@@ -8,7 +8,7 @@ import {
     getTextColorClass,
     isAthenaAIResult,
 } from 'app/exercises/shared/result/result.utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -32,11 +32,31 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
+import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass, UpperCasePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
+    imports: [
+        ResultProgressBarComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgClass,
+        NgbTooltip,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 
 /**
@@ -44,6 +64,15 @@ import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
+    private participationService = inject(ParticipationService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private resultService = inject(ResultService);
+    private csvDownloadService = inject(CsvDownloadService);
+    private router = inject(Router);
+
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
@@ -55,6 +84,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
+    @Input() isQueued = false;
     @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
@@ -64,6 +94,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showCompletion = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
+    @Input() estimatedCompletionDate?: dayjs.Dayjs;
+    @Input() buildStartDate?: dayjs.Dayjs;
+    @Input() showProgressBar = false;
+    @Input() showProgressBarBorder = false;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -74,6 +108,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
 
+    estimatedDurationInterval?: ReturnType<typeof setInterval>;
+    estimatedRemaining: number = 0;
+    estimatedDuration: number = 0;
+
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faFile = faFile;
@@ -82,17 +120,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
-
-    constructor(
-        private participationService: ParticipationService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-        private resultService: ResultService,
-        private csvDownloadService: CsvDownloadService,
-        private router: Router,
-    ) {}
 
     /**
      * Executed on initialization. It retrieves the results of a given
@@ -120,7 +147,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 }
                 // Make sure result and participation are connected
                 if (!this.showUngradedResults) {
-                    const firstRatedResult = this.participation.results.find((result) => result.rated);
+                    const firstRatedResult = this.participation.results.find((result) => result?.rated);
                     if (firstRatedResult) {
                         this.result = firstRatedResult;
                         this.result.participation = this.participation;
@@ -163,6 +190,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateSubscription) {
             clearTimeout(this.resultUpdateSubscription);
         }
+        if (this.estimatedDurationInterval) {
+            clearInterval(this.estimatedDurationInterval);
+        }
     }
 
     /**
@@ -175,16 +205,26 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.ngOnInit();
         }
 
-        if (changes.isBuilding?.currentValue) {
+        if (changes.isBuilding?.currentValue && changes.isBuilding?.currentValue === true) {
             // If it's building, we change the templateStatus to building regardless of any other settings.
             this.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        } else if (changes.isQueued?.currentValue && changes.isQueued?.currentValue === true) {
+            // If it's queued, we change the templateStatus to queued regardless of any other settings.
+            this.templateStatus = ResultTemplateStatus.IS_QUEUED;
         } else if (changes.missingResultInfo || changes.isBuilding?.previousValue) {
             // If ...
             // ... the result was building and is not building anymore, or
             // ... the missingResultInfo changed
             // we evaluate the result status.
-
             this.evaluate();
+        }
+
+        clearInterval(this.estimatedDurationInterval);
+        if (this.estimatedCompletionDate && this.buildStartDate) {
+            this.estimatedDurationInterval = setInterval(() => {
+                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
+                this.estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
+            });
         }
     }
 
@@ -192,7 +232,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the corresponding icon, styling and message to display results.
      */
     evaluate() {
-        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo);
+        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
@@ -262,14 +302,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
-        if (this.exercise?.type === ExerciseType.TEXT) {
+        if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
             const courseId = getCourseFromExercise(this.exercise)?.id;
             let submissionId = result.submission?.id;
             // In case of undefined result submission try the latest submission as this can happen before reloading the component
             if (!submissionId) {
                 submissionId = result.participation?.submissions?.last()?.id;
             }
-            this.router.navigate(['/courses', courseId, 'exercises', 'text-exercises', this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
+
+            const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+
+            this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
             return undefined;
         }
 

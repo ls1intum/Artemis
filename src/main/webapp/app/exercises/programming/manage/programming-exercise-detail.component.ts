@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -13,7 +14,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -32,7 +33,6 @@ import {
     faExclamationTriangle,
     faEye,
     faFileSignature,
-    faLightbulb,
     faListAlt,
     faPencilAlt,
     faRobot,
@@ -43,31 +43,74 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        OrionFilterDirective,
+        FeatureToggleLinkDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructorExerciseDownloadComponent,
+        FeatureToggleDirective,
+        ProgrammingExerciseResetButtonDirective,
+        DeleteButtonDirective,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    exerciseService = inject(ExerciseService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private eventManager = inject(EventManager);
+    modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private statisticsService = inject(StatisticsService);
+    private router = inject(Router);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private aeolusService = inject(AeolusService);
+
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
@@ -76,6 +119,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly ButtonSize = ButtonSize;
     protected readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
 
     protected readonly faUndo = faUndo;
@@ -88,7 +132,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
-    protected readonly faLightbulb = faLightbulb;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -134,26 +177,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     exerciseDetailSections: DetailOverviewSection[];
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        public exerciseService: ExerciseService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private eventManager: EventManager,
-        public modalService: NgbModal,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private statisticsService: StatisticsService,
-        private router: Router,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private consistencyCheckService: ConsistencyCheckService,
-        private irisSettingsService: IrisSettingsService,
-        private aeolusService: AeolusService,
-    ) {}
-
     ngOnInit() {
         this.checkBuildPlanEditable();
 
@@ -186,7 +209,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .pipe(
                     tap((updatedProgrammingExercise) => {
                         this.programmingExercise = updatedProgrammingExercise.body!;
-                        this.setLatestCoveredLineRatio();
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
@@ -208,12 +230,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 );
                             }
                             this.supportsAuxiliaryRepositories =
-                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
                                 false;
                             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                            if (this.irisEnabled) {
+                            if (this.irisEnabled && !this.isExamExercise) {
                                 this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
                                 });
@@ -225,9 +247,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
                     mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
-                    tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport, false);
+                    catchError(() => {
+                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
+                        return of(undefined);
                     }),
+                    tap((gitDiffReport) => {
+                        this.processGitDiffReport(gitDiffReport);
+                    }),
+                )
+                // split pipe to keep type checks
+                .pipe(
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
                     ),
@@ -239,11 +268,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: () => {
-                        this.setLatestCoveredLineRatio();
                         this.checkAndAlertInconsistencies();
-                        this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                            programmingExercise.programmingLanguage,
-                        ).plagiarismCheckSupported;
+                        this.plagiarismCheckSupported =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
 
                         /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();
@@ -378,7 +405,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: exercise.templateParticipation,
                         exerciseId: exercise.id,
-                        type: 'TEMPLATE',
+                        type: RepositoryType.TEMPLATE,
                     },
                 },
                 {
@@ -387,7 +414,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: exercise.solutionParticipation,
                         exerciseId: exercise.id,
-                        type: 'SOLUTION',
+                        type: RepositoryType.SOLUTION,
                     },
                 },
                 {
@@ -396,7 +423,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: { repositoryUri: exercise.testRepositoryUri },
                         exerciseId: exercise.id,
-                        type: 'TESTS',
+                        type: RepositoryType.TESTS,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
@@ -458,17 +485,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                {
-                    type: DetailType.ProgrammingDiffReport,
-                    title: 'artemisApp.programmingExercise.diffReport.title',
-                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                    data: {
-                        addedLineCount: this.addedLineCount,
-                        removedLineCount: this.removedLineCount,
-                        isLoadingDiffReport: this.isLoadingDiffReport,
-                        gitDiffReport: exercise.gitDiffReport,
+                this.addedLineCount !== undefined &&
+                    this.removedLineCount !== undefined && {
+                        type: DetailType.ProgrammingDiffReport,
+                        title: 'artemisApp.programmingExercise.diffReport.title',
+                        titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+                        data: {
+                            addedLineCount: this.addedLineCount,
+                            removedLineCount: this.removedLineCount,
+                            isLoadingDiffReport: this.isLoadingDiffReport,
+                            gitDiffReport: exercise.gitDiffReport,
+                        },
                     },
-                },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
@@ -481,17 +509,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
-                    },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
-                    data: { boolean: exercise.buildConfig?.testwiseCoverageEnabled },
-                },
-                exercise.isAtLeastTutor &&
-                    exercise?.buildConfig?.testwiseCoverageEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.coveredLineRatio',
-                        data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
                     },
                 {
                     type: DetailType.Text,
@@ -618,7 +635,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     onParticipationChange(): void {
         this.loadGitDiffReport();
-        this.setLatestCoveredLineRatio();
     }
 
     combineTemplateCommits() {
@@ -789,106 +805,41 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     *
+     * Calculates the added and removed lines of the diff
      * @param gitDiffReport
-     * @param updateDetailSections set to false when called from OnInit, as another method will take care to update the
-     *                             {@link exerciseDetailSections} to prevent unnecessary renderings and duplicated requests,
-     *                             see description of {@link getExerciseDetails}
+     * @returns whether the report has changed compared to the last run
      */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined, updateDetailSections: boolean = true): void {
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
         const isGitDiffReportUpdated =
             gitDiffReport &&
             (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
                 this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (isGitDiffReportUpdated) {
-            this.programmingExercise.gitDiffReport = gitDiffReport;
-            gitDiffReport.programmingExercise = this.programmingExercise;
-
-            const calculateLineCount = (entries: { lineCount?: number; previousLineCount?: number }[] = [], key: 'lineCount' | 'previousLineCount') =>
-                entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-
-            this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-            this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-            if (updateDetailSections) {
-                this.exerciseDetailSections = this.getExerciseDetails();
-            }
+        if (!isGitDiffReportUpdated) {
+            return false;
         }
+
+        this.programmingExercise.gitDiffReport = gitDiffReport;
+        gitDiffReport.programmingExercise = this.programmingExercise;
+        const calculateLineCount = (
+            entries: {
+                lineCount?: number;
+                previousLineCount?: number;
+            }[] = [],
+            key: 'lineCount' | 'previousLineCount',
+        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
+        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
+        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
+
+        return true;
     }
 
     loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            this.processGitDiffReport(gitDiffReport);
-        });
-    }
-
-    createStructuralSolutionEntries() {
-        this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
-                });
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
+            next: (gitDiffReport) => {
+                this.processGitDiffReport(gitDiffReport);
             },
-            error: (err) => {
-                this.onError(err);
-            },
-        });
-    }
-
-    createBehavioralSolutionEntries() {
-        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
-                });
-            },
-            error: (err) => {
-                this.onError(err);
-            },
-        });
-    }
-
-    /**
-     * Returns undefined if the last solution submission was not successful or no report exists yet
-     */
-    private setLatestCoveredLineRatio() {
-        if (!this.programmingExercise?.solutionParticipation) {
-            return;
-        }
-
-        const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
-        if (this.programmingExercise.buildConfig?.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
-            this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
-                this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
-            });
-        }
-    }
-
-    /**
-     * Gets the testwise coverage reports from the server and displays it in a modal.
-     */
-    getAndShowTestwiseCoverage() {
-        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe({
-                    next: (coverageReport) => {
-                        const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
-                            size: 'xl',
-                            backdrop: 'static',
-                        });
-                        modalRef.componentInstance.report = coverageReport;
-                        modalRef.componentInstance.fileContentByPath = response;
-                    },
-                    error: (err: HttpErrorResponse) => {
-                        if (err.status === 404) {
-                            this.alertService.error('artemisApp.programmingExercise.testwiseCoverageReport.404');
-                        } else {
-                            this.onError(err);
-                        }
-                    },
-                });
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.diffReportError');
             },
         });
     }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.RETURNS_MOCKS;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -139,7 +140,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a patch, but with the wrong user ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student2"));
         // the patch should not be broadcast.
-        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
     }
 
     @Test
@@ -152,7 +153,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // the submission should be handled by the service (i.e. saved), ...
         verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any());
         // but it should NOT be broadcast (sync is handled with patches only).
-        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
     }
 
     @Test
@@ -163,9 +164,9 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new modeling submission with the wrong user ...
         participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student2"));
         // the submission is NOT saved ...
-        verify(modelingSubmissionService, timeout(2000).times(0)).handleModelingSubmission(any(), any(), any());
+        verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any());
         // it is also not broadcast.
-        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
     }
 
     @Test

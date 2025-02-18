@@ -16,10 +16,11 @@
                     <th class="d-md-table-cell" jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories"></span></th>
-                    @if (!localVCEnabled) {
-                        <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>
-                    }
+                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                    <!--                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories"></span></th>-->
+                    <!--                    @if (!localVCEnabled) {-->
+                    <!--                        <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>-->
+                    <!--                    }-->
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
@@ -76,7 +77,9 @@
                         <td class="d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                         <td>{{ programmingExercise.bonusPoints }}</td>
                         <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
-                        <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
+                        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                        <!--                        <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">-->
+                        <td>
                             <div class="d-flex justify-content-between">
                                 @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri) {
                                     <span>
@@ -85,7 +88,9 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.templateParticipation!.repositoryUri! }}" target="_blank">Template</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TEMPLATE')"><fa-icon [icon]="faDownload" /> Template</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE)"
+                                                ><fa-icon [icon]="faDownload" /> Template</a
+                                            >
                                         }
                                     </span>
                                 }
@@ -103,7 +108,9 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.solutionParticipation!.repositoryUri! }}" target="_blank">Solution</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'SOLUTION')"><fa-icon [icon]="faDownload" /> Solution</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.SOLUTION)"
+                                                ><fa-icon [icon]="faDownload" /> Solution</a
+                                            >
                                         }
                                     </span>
                                 }
@@ -121,14 +128,16 @@
                                         @if (!localVCEnabled) {
                                             <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
                                         } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TESTS')"><fa-icon [icon]="faDownload" /> Test</a>
+                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TESTS)"><fa-icon [icon]="faDownload" /> Test</a>
                                         }
                                     </span>
                                 }
                             </div>
                         </td>
                         @if (!localVCEnabled) {
-                            <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
+                            <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                            <!--                            <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">-->
+                            <td>
                                 @if (programmingExercise.templateParticipation?.buildPlanId) {
                                     <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a> </span>
                                 }
@@ -159,7 +168,9 @@
                         <td class="d-md-table-cell">
                             <jhi-exercise-categories [exercise]="programmingExercise" />
                         </td>
-                        <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
+                        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                        <!--                        <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">-->
+                        <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical me-1 mb-auto">
                                     @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
@@ -208,15 +219,6 @@
                                             </div>
                                         </a>
                                     }
-                                    @if (programmingExercise.isAtLeastEditor) {
-                                        <a
-                                            [routerLink]="['/course-management', programmingExercise.course!.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                                            class="btn btn-warning btn-sm me-1 mb-1"
-                                        >
-                                            <fa-icon [icon]="faLightbulb" />
-                                            <span jhiTranslate="entity.action.hints"></span>
-                                        </a>
-                                    }
                                 </div>
                                 <div class="btn-group-vertical me-1">
                                     @if (programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation) {
@@ -229,6 +231,7 @@
                                                 'programming-exercises',
                                                 programmingExercise.id,
                                                 'code-editor',
+                                                RepositoryType.TEMPLATE,
                                                 programmingExercise.templateParticipation.id,
                                             ]"
                                             class="btn btn-warning btn-sm me-1 mb-1"

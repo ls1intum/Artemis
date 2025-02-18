@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { Subscription, fromEvent } from 'rxjs';
 import { take, tap } from 'rxjs/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
@@ -21,14 +21,24 @@ import {
     faPlayCircle,
     faVideo,
 } from '@fortawesome/free-solid-svg-icons';
+import { NgStyle } from '@angular/common';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @Component({
     selector: 'jhi-guided-tour',
     templateUrl: './guided-tour.component.html',
     styleUrls: ['./guided-tour.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgStyle, TranslateDirective, FaIconComponent, ArtemisTranslatePipe, SafeResourceUrlPipe],
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
+    guidedTourService = inject(GuidedTourService);
+    private accountService = inject(AccountService);
+    private renderer = inject(Renderer2);
+
     @ViewChild('tourStep', { static: false }) private tourStep: ElementRef;
     @ViewChild('dotNavigation', { static: false }) private dotNavigation: ElementRef;
     @ViewChildren('dotElements') private dotElements: QueryList<ElementRef>;
@@ -81,12 +91,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     faICursor = faICursor;
     faHandPointUp = faHandPointUp;
     faPlayCircle = faPlayCircle;
-
-    constructor(
-        public guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-        private renderer: Renderer2,
-    ) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key

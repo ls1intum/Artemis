@@ -116,7 +116,7 @@ describe('ExamAssessmentButtons', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExamAssessmentButtonsComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            declarations: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers,
         })
             .compileComponents()

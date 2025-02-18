@@ -3,17 +3,36 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ModePickerComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        ProgrammingExerciseTheiaComponent,
+        ProgrammingExerciseCustomBuildPlanComponent,
+        ProgrammingExerciseCustomAeolusBuildPlanComponent,
+        KeyValuePipe,
+        RemoveKeysPipe,
+    ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -43,6 +62,8 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         dockerhubLink: 'https://hub.docker.com/',
     };
     readonly DOCUMENTATION_LINK = 'https://docs.artemis.cit.tum.de/user/exercises/programming.html';
+
+    protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
 
     ngAfterViewInit() {
         this.fieldSubscriptions.push(this.selectLanguageField.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));

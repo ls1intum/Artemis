@@ -3,22 +3,24 @@ import { Component, inject } from '@angular/core';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 
 @Component({
     selector: 'jhi-import-competencies',
     templateUrl: './import-course-competencies.component.html',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ButtonComponent, CommonModule, FormsModule, TranslateDirective, ImportCompetenciesTableComponent, CompetencySearchComponent],
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.COMPETENCY;
     allowRelationImport = true;
 
-    protected readonly competencyService: CompetencyService = inject(CompetencyService);
+    private readonly competencyService = inject(CompetencyService);
 
     onSubmit() {
         this.competencyService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, this.importRelations).subscribe({

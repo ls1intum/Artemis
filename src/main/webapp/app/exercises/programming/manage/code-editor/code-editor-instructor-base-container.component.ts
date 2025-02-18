@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -9,27 +10,14 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
+import { DomainChange, DomainType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-
-/**
- * Enumeration specifying the repository type
- */
-export enum REPOSITORY {
-    ASSIGNMENT = 'ASSIGNMENT',
-    TEMPLATE = 'TEMPLATE',
-    SOLUTION = 'SOLUTION',
-    TEST = 'TEST',
-    AUXILIARY = 'AUXILIARY',
-}
 
 /**
  * Enumeration specifying the loading state
@@ -42,12 +30,22 @@ export enum LOADING_STATE {
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
+    private router = inject(Router);
+    private exerciseService = inject(ProgrammingExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private domainService = inject(DomainService);
+    private location = inject(Location);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+
     ButtonSize = ButtonSize;
-    REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -64,7 +62,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
-    selectedRepository: REPOSITORY;
+    selectedRepository: RepositoryType;
     selectedRepositoryId: number;
     selectedAuxiliaryRepositoryName?: string;
 
@@ -74,18 +72,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
-
-    protected constructor(
-        protected router: Router,
-        private exerciseService: ProgrammingExerciseService,
-        private courseExerciseService: CourseExerciseService,
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private location: Location,
-        private participationService: ParticipationService,
-        protected route: ActivatedRoute,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initialize the route params subscription.
@@ -97,7 +83,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         this.paramSub = this.route!.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
-            const participationId = Number(params['participationId']);
+            const repositoryType = params['repositoryType'];
             const repositoryId = Number(params['repositoryId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
             this.loadExercise(exerciseId)
@@ -109,21 +95,21 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     }),
                     // Set selected participation
                     tap(() => {
-                        if (this.router.url.endsWith('/test')) {
+                        if (repositoryType === RepositoryType.TESTS) {
                             this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
-                        } else if (this.router.url.indexOf('auxiliary') >= 0) {
+                        } else if (repositoryType === RepositoryType.AUXILIARY) {
                             const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
                             if (auxiliaryRepo) {
                                 this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
                                 this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
                             }
                         } else {
-                            const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
+                            const nextAvailableParticipation = this.getNextAvailableParticipation(repositoryId);
                             if (nextAvailableParticipation) {
                                 this.selectParticipationDomainById(nextAvailableParticipation.id!);
 
                                 // Show a consistent route in the browser
-                                if (nextAvailableParticipation.id !== participationId) {
+                                if (nextAvailableParticipation.id !== repositoryId) {
                                     const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
                                     this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
                                 }
@@ -201,13 +187,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.codeEditorContainer.initializeProperties();
         }
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
-            this.selectedRepository = REPOSITORY.AUXILIARY;
+            this.selectedRepository = RepositoryType.AUXILIARY;
             this.selectedRepositoryId = domainValue.id;
         } else if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
-            this.selectedRepository = REPOSITORY.TEST;
+            this.selectedRepository = RepositoryType.TESTS;
         }
     }
 
@@ -219,15 +205,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         // The result component needs a circular structure of participation -> exercise.
         const exercise = this.exercise;
         if (participationId === this.exercise.templateParticipation!.id) {
-            this.selectedRepository = REPOSITORY.TEMPLATE;
+            this.selectedRepository = RepositoryType.TEMPLATE;
             this.selectedParticipation = this.exercise.templateParticipation;
             (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
         } else if (participationId === this.exercise.solutionParticipation!.id) {
-            this.selectedRepository = REPOSITORY.SOLUTION;
+            this.selectedRepository = RepositoryType.SOLUTION;
             this.selectedParticipation = this.exercise.solutionParticipation;
             (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
-            this.selectedRepository = REPOSITORY.ASSIGNMENT;
+            this.selectedRepository = RepositoryType.ASSIGNMENT;
             this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
             this.selectedParticipation.exercise = exercise;
         } else {
@@ -285,42 +271,36 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Select the template participation repository and navigate to it
      */
     selectTemplateParticipation() {
-        this.router.navigate([this.up(), this.exercise.templateParticipation!.id], { relativeTo: this.route });
+        this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the solution participation repository and navigate to it
      */
     selectSolutionParticipation() {
-        this.router.navigate([this.up(), this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+        this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
     selectAssignmentParticipation() {
-        this.router.navigate([this.up(), this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+        this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
     }
 
     /**
      * Select the test repository and navigate to it
      */
     selectTestRepository() {
-        this.router.navigate([this.up(), 'test'], { relativeTo: this.route });
+        // as test repositories do not have any participation nor repository Id associated, we use a 'test' placeholder
+        this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
     }
 
     /**
      * Select the auxiliary repository and navigate to it
      */
     selectAuxiliaryRepository(repositoryId: number) {
-        this.router.navigate([this.up(), 'auxiliary', repositoryId], { relativeTo: this.route });
-    }
-
-    /**
-     * Go two folders up if the current view is an auxiliary repository, and one otherwise
-     */
-    up() {
-        return this.selectedRepository === REPOSITORY.AUXILIARY ? '../..' : '..';
+        this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
     }
 
     /**
@@ -348,7 +328,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     deleteAssignmentParticipation() {
         this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
-        if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
+        if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
         const assignmentParticipationId = this.exercise.studentParticipations![0].id!;

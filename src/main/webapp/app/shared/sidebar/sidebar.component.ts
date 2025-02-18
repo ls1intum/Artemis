@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
-import { faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, inject, input, output } from '@angular/core';
+import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
+import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
 import {
@@ -15,31 +15,57 @@ import {
     getExerciseTypeFilterOptions,
 } from 'app/shared/sidebar/sidebar.helper';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { NgClass } from '@angular/common';
+import { SearchFilterComponent } from '../search-filter/search-filter.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
+import { SidebarCardDirective } from './sidebar-card.directive';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
+    imports: [
+        NgClass,
+        SearchFilterComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        SidebarAccordionComponent,
+        SidebarCardDirective,
+        SearchFilterPipe,
+    ],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private sidebarEventService = inject(SidebarEventService);
+    private modalService = inject(NgbModal);
+
     @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
     onBrowsePressed = output<void>();
     onCreateChannelPressed = output<void>();
-    @Input() searchFieldEnabled: boolean = true;
+    onMarkAllChannelsAsRead = output<void>();
+    @Input() searchFieldEnabled = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
-    @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
-    @Input() showFilter: boolean = false;
+    @Input() showFilter = false;
     inCommunication = input<boolean>(false);
     searchValue = '';
-    isCollapsed: boolean = false;
+    isCollapsed = false;
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
 
     exerciseId: string;
@@ -61,18 +87,14 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
+    readonly faCheckDouble = faCheckDouble;
 
     sidebarDataBeforeFiltering: SidebarData;
 
     exerciseFilters?: ExerciseFilterOptions;
-    isFilterActive: boolean = false;
+    isFilterActive = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private sidebarEventService: SidebarEventService,
-        private modalService: NgbModal,
-    ) {
+    constructor() {
         effect(() => {
             this.subscribeToSidebarEvents();
         });
@@ -194,5 +216,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
+    }
+
+    markAllMessagesAsChecked() {
+        this.onMarkAllChannelsAsRead.emit();
     }
 }

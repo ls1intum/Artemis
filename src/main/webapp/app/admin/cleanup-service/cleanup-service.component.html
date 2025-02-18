@@ -18,6 +18,7 @@
                     <tr>
                         <td>
                             <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
+                            <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
                         </td>
                         <td>
                             @if (operation.name !== 'deleteOrphans') {
@@ -60,17 +61,9 @@
                             }
                         </td>
                         <td>
-                            <button
-                                id="execute-operation"
-                                jhiDeleteButton
-                                [disabled]="!operation.datesValid()"
-                                [entityTitle]="'cleanupService.operation.' + operation.name | artemisTranslate"
-                                deleteQuestion="cleanupService.execute.question"
-                                deleteConfirmationText="cleanupService.execute.typeOperationNameToConfirm"
-                                (delete)="executeCleanupOperation(operation)"
-                                [dialogError]="dialogError"
-                                class="btn mt-1"
-                            ></button>
+                            <button id="execute-operation" class="btn btn-md btn-danger" [disabled]="!operation.datesValid()" (click)="openCleanupOperationModal(operation)">
+                                {{ 'entity.action.delete' | artemisTranslate }}
+                            </button>
                         </td>
                     </tr>
                 }

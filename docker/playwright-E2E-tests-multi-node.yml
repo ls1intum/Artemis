@@ -109,6 +109,8 @@ services:
         condition: service_healthy
     environment:
       PLAYWRIGHT_DB_TYPE: 'MySQL'
+    networks:
+      - artemis
 
 networks:
   artemis:

@@ -11,21 +11,12 @@ import { Course } from 'app/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
-import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
-import { NgModel } from '@angular/forms';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { SimpleChange } from '@angular/core';
-import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
@@ -85,18 +76,6 @@ describe('QuizExercise Re-evaluate Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                NgModel,
-                QuizReEvaluateComponent,
-                MockComponent(ReEvaluateMultipleChoiceQuestionComponent),
-                MockComponent(ReEvaluateDragAndDropQuestionComponent),
-                MockComponent(ReEvaluateShortAnswerQuestionComponent),
-                MockTranslateValuesDirective,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(IncludedInOverallScorePickerComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
             providers: [
                 MockProvider(NgbModal),
                 { provide: ActivatedRoute, useValue: route },

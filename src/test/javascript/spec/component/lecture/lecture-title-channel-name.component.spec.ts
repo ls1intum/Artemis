@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgForm } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 describe('LectureTitleChannelNameComponent', () => {
@@ -10,11 +8,7 @@ describe('LectureTitleChannelNameComponent', () => {
     let fixture: ComponentFixture<LectureTitleChannelNameComponent>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            declarations: [LectureTitleChannelNameComponent],
-            imports: [TitleChannelNameModule],
-            providers: [NgForm],
-        }).compileComponents();
+        await TestBed.configureTestingModule({}).compileComponents();
     });
 
     beforeEach(() => {

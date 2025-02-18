@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Subject } from 'rxjs';
 import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 
 @Component({
     selector: 'jhi-competency-graph',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CompetencyNodeComponent, NgxGraphModule],
+    imports: [CompetencyNodeComponent, NgxGraphModule, TranslateDirective],
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })
@@ -19,7 +19,7 @@ export class CompetencyGraphComponent {
         nodes: [],
         edges: [],
     });
-    readonly nodes = computed(() => this.internalCompetencyGraph().nodes);
+    readonly nodes = computed(() => this.internalCompetencyGraph().nodes || []);
     readonly edges = computed(() => {
         return (
             this.internalCompetencyGraph().edges?.map((edge) => ({
@@ -29,13 +29,12 @@ export class CompetencyGraphComponent {
         );
     });
 
-    readonly layout = signal('dagreCluster');
     readonly update$ = new Subject<boolean>();
     readonly center$ = new Subject<boolean>();
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
 
     constructor() {
-        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()), { allowSignalWrites: true });
+        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()));
     }
 
     setNodeDimension(sizeUpdate: SizeUpdate): void {

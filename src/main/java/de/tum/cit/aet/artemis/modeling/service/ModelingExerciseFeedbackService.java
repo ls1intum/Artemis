@@ -59,15 +59,6 @@ public class ModelingExerciseFeedbackService {
         this.participationService = participationService;
     }
 
-    private void checkRateLimitOrThrow(StudentParticipation participation) {
-
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-
-        if (athenaResults.size() >= 10) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
-        }
-    }
-
     /**
      * Handles the request for generating feedback for a modeling exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
@@ -78,8 +69,24 @@ public class ModelingExerciseFeedbackService {
      */
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
-            this.checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, modelingExercise));
+            this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
+
+            Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
+                    .findLatestSubmission();
+
+            if (submissionOptional.isEmpty()) {
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
+            }
+
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
+
+            this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+
+            if (modelingSubmission.isEmpty()) {
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
+            }
+
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
         }
         return participation;
     }
@@ -88,29 +95,21 @@ public class ModelingExerciseFeedbackService {
      * Generates automatic non-graded feedback for a modeling exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation    the student participation associated with the exercise.
-     * @param modelingExercise the modeling exercise object.
+     * @param modelingSubmission the modeling submission associated with the student participation.
+     * @param participation      the student participation associated with the exercise.
+     * @param modelingExercise   the modeling exercise object.
      */
-    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, ModelingExercise modelingExercise) {
+    public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
-                .findLatestSubmission();
-
-        if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
-        }
-
-        Submission submission = submissionOptional.get();
-
-        Result automaticResult = createInitialResult(participation, submission);
+        Result automaticResult = createInitialResult(participation, modelingSubmission);
 
         try {
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
 
-            log.debug("Submission id: {}", submission.getId());
+            log.debug("Submission id: {}", modelingSubmission.getId());
 
-            List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, (ModelingSubmission) submission);
+            List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, modelingSubmission);
 
             double totalFeedbackScore = calculateTotalFeedbackScore(feedbacks, modelingExercise);
 
@@ -120,11 +119,15 @@ public class ModelingExerciseFeedbackService {
 
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            submissionService.saveNewResult(submission, automaticResult);
+            submissionService.saveNewResult(modelingSubmission, automaticResult);
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
         catch (Exception e) {
             log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
+            automaticResult.setSuccessful(false);
+            automaticResult.setCompletionDate(null);
+            participation.addResult(automaticResult);
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
             throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
     }
@@ -173,6 +176,7 @@ public class ModelingExerciseFeedbackService {
         feedback.setHasLongFeedbackText(false);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setCredits(feedbackItem.credits());
+        feedback.setReference(feedbackItem.reference());
         return feedback;
     }
 

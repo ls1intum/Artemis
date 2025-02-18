@@ -5,9 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,15 +30,20 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 
 /**
@@ -56,6 +63,8 @@ public class SharedQueueManagementService {
 
     private IQueue<BuildJobQueueItem> queue;
 
+    private IQueue<ResultQueueItem> resultQueue;
+
     /**
      * Map of build jobs currently being processed across all nodes
      */
@@ -70,6 +79,10 @@ public class SharedQueueManagementService {
     private ITopic<String> pauseBuildAgentTopic;
 
     private ITopic<String> resumeBuildAgentTopic;
+
+    private int buildAgentsCapacity;
+
+    private int runningBuildJobCount;
 
     public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
@@ -89,6 +102,9 @@ public class SharedQueueManagementService {
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
         this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
+        this.updateBuildAgentCapacity();
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
     }
 
     /**
@@ -126,6 +142,14 @@ public class SharedQueueManagementService {
     public List<BuildJobQueueItem> getProcessingJobs() {
         // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(processingJobs.values());
+    }
+
+    /**
+     * @return a list of processing job ids
+     */
+    public List<String> getProcessingJobIds() {
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return new ArrayList<>(processingJobs.keySet());
     }
 
     public int getProcessingJobsSize() {
@@ -194,6 +218,7 @@ public class SharedQueueManagementService {
                 }
             }
             queue.removeAll(toRemove);
+            updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
             // Cancel build job if it is currently being processed
@@ -201,6 +226,12 @@ public class SharedQueueManagementService {
             if (buildJob != null) {
                 triggerBuildJobCancellation(buildJobId);
             }
+        }
+    }
+
+    private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
+        for (BuildJobQueueItem queuedJob : queuedJobs) {
+            buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
         }
     }
 
@@ -220,7 +251,9 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
+        List<BuildJobQueueItem> queuedJobs = getQueuedJobs();
         queue.clear();
+        updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
     /**
@@ -256,6 +289,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
     /**
@@ -286,6 +320,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = getProcessingJobs();
         for (BuildJobQueueItem runningJob : runningJobs) {
@@ -293,6 +328,18 @@ public class SharedQueueManagementService {
                 cancelBuildJob(runningJob.id());
             }
         }
+    }
+
+    /**
+     * Clear all build related data from the distributed data structures.
+     * This method should only be called by an admin user.
+     */
+    public void clearDistributedData() {
+        queue.clear();
+        processingJobs.clear();
+        dockerImageCleanupInfo.clear();
+        resultQueue.clear();
+        buildAgentInformation.clear();
     }
 
     /**
@@ -322,5 +369,125 @@ public class SharedQueueManagementService {
         List<BuildJob> orderedBuildJobs = buildJobIds.stream().map(buildJobMap::get).toList();
 
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
+    }
+
+    /**
+     * Estimates how long the job will be queued for on the participation ID.
+     *
+     * @param participationId the ID of the participation for which the queue release date is estimated
+     * @return the estimated queue release date as a {@link ZonedDateTime}
+     */
+    public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
+        if (queue.isEmpty() || this.buildAgentsCapacity > this.runningBuildJobCount + queue.size()) {
+            return ZonedDateTime.now();
+        }
+
+        String buildJobId = getIdOfQueuedJobFromParticipation(participationId);
+
+        if (buildJobId == null) {
+            return ZonedDateTime.now();
+        }
+
+        // Get the jobs queued before the job for the participation
+        List<BuildJobQueueItem> jobsQueuedBefore = getQueuedJobs().stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        // Get the remaining duration of the build jobs currently being processed
+        List<Long> agentsAvailabilities = new ArrayList<>(getProcessingJobs().stream().map(job -> getBuildJobRemainingDuration(job, now)).sorted().toList());
+
+        if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
+            int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
+            agentsAvailabilities.addAll(Collections.nCopies(agentsToAdd, 0L));
+        }
+        else {
+            agentsAvailabilities = agentsAvailabilities.subList(0, this.buildAgentsCapacity);
+            log.warn("There are more processing jobs than the build agents' capacity. This should not happen. Processing jobs: {}, Build agents: {}", processingJobs,
+                    buildAgentInformation);
+        }
+
+        if (jobsQueuedBefore.size() < agentsAvailabilities.size()) {
+            return now.plusSeconds(agentsAvailabilities.get(jobsQueuedBefore.size()));
+        }
+        else {
+            return now.plusSeconds(calculateNextJobQueueDuration(agentsAvailabilities, jobsQueuedBefore));
+        }
+    }
+
+    private String getIdOfQueuedJobFromParticipation(long participationId) {
+        var participationBuildJobIds = getQueuedJobs().stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
+        if (participationBuildJobIds.isEmpty()) {
+            return null;
+        }
+        return participationBuildJobIds.getLast();
+    }
+
+    private Long calculateNextJobQueueDuration(List<Long> agentsAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {
+        PriorityQueue<Long> agentAvailabilitiesQueue = new PriorityQueue<>(agentsAvailabilities);
+        for (BuildJobQueueItem job : jobsQueuedBefore) {
+            Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+            long agentRemainingTime = agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+            agentRemainingTime = Math.max(0, agentRemainingTime);
+            agentAvailabilitiesQueue.add(agentRemainingTime + job.jobTimingInfo().estimatedDuration());
+        }
+        Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+        return agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+    }
+
+    private long getBuildJobRemainingDuration(BuildJobQueueItem buildJob, ZonedDateTime now) {
+        ZonedDateTime estimatedCompletionDate = buildJob.jobTimingInfo().estimatedCompletionDate();
+        if (estimatedCompletionDate == null) {
+            return 0;
+        }
+        if (estimatedCompletionDate.isBefore(now)) {
+            return 0;
+        }
+        return Duration.between(now, estimatedCompletionDate).toSeconds();
+    }
+
+    private class BuildAgentListener
+            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
+
+        @Override
+        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.getValue());
+            updateBuildAgentCapacity();
+        }
+
+        @Override
+        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent removed: {}", event.getOldValue());
+            updateBuildAgentCapacity();
+        }
+
+        @Override
+        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.getValue());
+            updateBuildAgentCapacity();
+        }
+    }
+
+    private void updateBuildAgentCapacity() {
+        buildAgentsCapacity = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
+        runningBuildJobCount = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
+    }
+
+    /**
+     * Check if a submission is currently being processed.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit hash
+     * @return the build start date and estimated completion date of the submission if it is currently being processed, null otherwise
+     */
+    public BuildTimingInfo isSubmissionProcessing(long participationId, String commitHash) {
+        var buildJob = getProcessingJobs().stream().filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().assignmentCommitHash()))
+                .findFirst();
+        if (buildJob.isPresent()) {
+            return new BuildTimingInfo(buildJob.get().jobTimingInfo().buildStartDate(), buildJob.get().jobTimingInfo().estimatedCompletionDate());
+        }
+        return null;
+    }
+
+    public record BuildTimingInfo(ZonedDateTime buildStartDate, ZonedDateTime estimatedCompletionDate) {
     }
 }

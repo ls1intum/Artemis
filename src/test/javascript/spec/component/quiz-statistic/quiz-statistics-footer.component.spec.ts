@@ -16,6 +16,8 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 
 const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -36,16 +38,19 @@ describe('QuizExercise Statistic Footer Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizStatisticsFooterComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-                { provide: AccountService, useClass: MockAccountService },
-            ],
+            providers: [{ provide: Router, useClass: MockRouter }, QuizStatisticUtil, ShortAnswerQuestionUtil],
         })
+            .overrideComponent(QuizStatisticsFooterComponent, {
+                set: {
+                    providers: [
+                        { provide: ActivatedRoute, useValue: route },
+                        { provide: LocalStorageService, useClass: MockSyncStorage },
+                        { provide: SessionStorageService, useClass: MockSyncStorage },
+                        { provide: TranslateService, useClass: MockTranslateService },
+                        { provide: AccountService, useClass: MockAccountService },
+                    ],
+                },
+            })
             .overrideTemplate(QuizStatisticsFooterComponent, '')
             .compileComponents()
             .then(() => {
@@ -53,7 +58,7 @@ describe('QuizExercise Statistic Footer Component', () => {
                 comp = fixture.componentInstance;
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
+                router = TestBed.inject(Router);
                 routerSpy = jest.spyOn(router, 'navigateByUrl');
                 accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));

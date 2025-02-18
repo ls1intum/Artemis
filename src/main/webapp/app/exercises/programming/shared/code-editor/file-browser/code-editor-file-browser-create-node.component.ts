@@ -2,12 +2,14 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, View
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
     styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
     providers: [NgbModal],
+    imports: [FaIconComponent],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;

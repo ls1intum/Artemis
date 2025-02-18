@@ -165,8 +165,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
 
     @Test
     void testOnlySpringTransactionalAnnotation() {
-        ArchRule onlySpringTransactionalAnnotation = noMethodsOfThisModule().should().beAnnotatedWith(javax.transaction.Transactional.class).orShould()
-                .beAnnotatedWith(jakarta.transaction.Transactional.class)
+        ArchRule onlySpringTransactionalAnnotation = noMethodsOfThisModule().should().beAnnotatedWith(jakarta.transaction.Transactional.class)
                 .because("Only Spring's Transactional annotation should be used as the usage of the other two is not reliable.");
         onlySpringTransactionalAnnotation.check(allClasses);
     }

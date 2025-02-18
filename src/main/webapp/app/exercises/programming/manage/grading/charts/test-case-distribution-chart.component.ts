@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
@@ -8,6 +8,9 @@ import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/man
 import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',
@@ -24,8 +27,12 @@ type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
+    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
@@ -47,10 +54,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     // array containing the ngx-dedicated objects in order to display the points chart
     ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] as any[] }];
 
-    constructor(
-        private translateService: TranslateService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         super();
 
         this.translateService.onLangChange.subscribe(() => {
@@ -62,7 +66,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         this.updateTranslation();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.testCases == undefined) {
             this.testCases = [];
         }

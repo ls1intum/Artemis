@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
@@ -25,7 +25,7 @@ export interface FeedbackItemService {
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackItemServiceImpl implements FeedbackItemService {
-    constructor(private translateService: TranslateService) {}
+    private translateService = inject(TranslateService);
 
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));

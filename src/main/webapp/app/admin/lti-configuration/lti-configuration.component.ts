@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
@@ -11,12 +11,47 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        NgbNav,
+        NgbNavItem,
+        NgbNavLink,
+        NgbNavLinkBase,
+        NgbNavContent,
+        HelpIconComponent,
+        CopyIconButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        SortDirective,
+        SortByDirective,
+        DeleteButtonDirective,
+        ItemCountComponent,
+        NgbPagination,
+        NgbNavOutlet,
+    ],
 })
 export class LtiConfigurationComponent implements OnInit {
+    private router = inject(Router);
+    private ltiConfigurationService = inject(LtiConfigurationService);
+    private sortService = inject(SortService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+
     course: Course;
     platforms: LtiPlatformConfiguration[];
     ascending!: boolean;
@@ -39,14 +74,6 @@ export class LtiConfigurationComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private router: Router,
-        private ltiConfigurationService: LtiConfigurationService,
-        private sortService: SortService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises

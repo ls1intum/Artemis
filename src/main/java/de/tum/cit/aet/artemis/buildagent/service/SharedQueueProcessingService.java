@@ -12,10 +12,8 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,6 +44,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -67,7 +66,7 @@ public class SharedQueueProcessingService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private final ThreadPoolExecutor localCIBuildExecutorService;
+    private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
 
@@ -78,6 +77,8 @@ public class SharedQueueProcessingService {
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     private final TaskScheduler taskScheduler;
+
+    private final BuildAgentDockerService buildAgentDockerService;
 
     private IQueue<BuildJobQueueItem> queue;
 
@@ -127,14 +128,16 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
+    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler,
+            BuildAgentDockerService buildAgentDockerService) {
         this.hazelcastInstance = hazelcastInstance;
-        this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
+        this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.taskScheduler = taskScheduler;
+        this.buildAgentDockerService = buildAgentDockerService;
     }
 
     /**
@@ -266,9 +269,10 @@ public class SharedQueueProcessingService {
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {
+            var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
             // TODO: we should log this centrally and not on the local node
             log.error("Couldn't add build job to thread pool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
-                    localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize(), e);
+                    localProcessingJobs.get(), buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize(), e);
 
             // Add the build job back to the queue
             if (buildJob != null) {
@@ -305,7 +309,10 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
+            long estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
+            ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(estimatedDuration);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName),
+                    estimatedCompletionDate);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -333,6 +340,9 @@ public class SharedQueueProcessingService {
                 log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
             }
         }
+        catch (Exception e) {
+            log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
+        }
         finally {
             buildAgentInformation.unlock(memberAddress);
         }
@@ -342,7 +352,8 @@ public class SharedQueueProcessingService {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
+        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
+                : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status = isPaused.get() ? BuildAgentInformation.BuildAgentStatus.PAUSED
                 : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
@@ -403,7 +414,8 @@ public class SharedQueueProcessingService {
         futureResult.thenAccept(buildResult -> {
 
             log.debug("Build job completed: {}", buildJob);
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
+            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
+                    buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
 
             BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
@@ -437,12 +449,22 @@ public class SharedQueueProcessingService {
             BuildJobQueueItem job;
             BuildStatus status;
 
-            if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                status = BuildStatus.FAILED;
-                log.error("Error while processing build job: {}", buildJob, ex);
+            String cancelledMsg = "Build job with id " + buildJob.id() + " was cancelled.";
+            String timeoutMsg = "Build job with id " + buildJob.id() + " was timed out";
+            Throwable cause = ex.getCause();
+            String errorMessage = ex.getMessage();
+
+            if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
+                status = BuildStatus.TIMEOUT;
+                log.info("Build job with id {} was timed out", buildJob.id());
+            }
+            else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
+                status = BuildStatus.CANCELLED;
+                log.info("Build job with id {} was cancelled", buildJob.id());
             }
             else {
-                status = BuildStatus.CANCELLED;
+                status = BuildStatus.FAILED;
+                log.error("Error while processing build job: {}", buildJob, ex);
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
@@ -451,8 +473,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
-                    false);
-            failedResult.setBuildLogEntries(buildLogs);
+                    buildLogs, false);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             if (processResults.get()) {
@@ -486,7 +507,6 @@ public class SharedQueueProcessingService {
             updateLocalBuildAgentInformation();
 
             log.info("Gracefully cancelling running build jobs");
-
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
             if (runningBuildJobIds.isEmpty()) {
                 log.info("No running build jobs to cancel");
@@ -510,6 +530,8 @@ public class SharedQueueProcessingService {
                     }
                 }
             }
+            // Close the build executor and docker client
+            buildAgentConfiguration.closeBuildAgentServices();
         }
         finally {
             pauseResumeLock.unlock();
@@ -543,26 +565,34 @@ public class SharedQueueProcessingService {
             log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             isPaused.set(false);
             processResults.set(true);
+            buildAgentConfiguration.openBuildAgentServices();
+
+            // Cleanup docker containers
+            buildAgentDockerService.cleanUpContainers();
+
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
-            checkAvailabilityAndProcessNextBuild();
+
             updateLocalBuildAgentInformation();
         }
         finally {
             pauseResumeLock.unlock();
         }
+
+        checkAvailabilityAndProcessNextBuild();
     }
 
     /**
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
+        var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
-                localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
-        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize()
-                && localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
+                buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
+        return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()
+                && buildExecutorService.getQueue().isEmpty();
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {

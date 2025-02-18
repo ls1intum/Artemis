@@ -1,10 +1,16 @@
-import { Component, DoCheck, Input, OnDestroy } from '@angular/core';
+import { Component, DoCheck, Input, OnDestroy, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { Subscription } from 'rxjs';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',
@@ -34,8 +40,11 @@ import { GradeStepsDTO } from 'app/entities/grade-step.model';
             }
         </ng-container>
     `,
+    imports: [HasAnyAuthorityDirective, FormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class PresentationScoreComponent implements DoCheck, OnDestroy {
+    private gradingSystemService = inject(GradingSystemService);
+
     @Input() exercise: Exercise;
 
     Authority = Authority;
@@ -44,8 +53,6 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     private gradeStepsDTO?: GradeStepsDTO;
     private gradeStepsDTOSub?: Subscription;
-
-    constructor(private gradingSystemService: GradingSystemService) {}
 
     ngDoCheck(): void {
         if (!this.gradeStepsDTOSub && this.exercise.course?.id) {

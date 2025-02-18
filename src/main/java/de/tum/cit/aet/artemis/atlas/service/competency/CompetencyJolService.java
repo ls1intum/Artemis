@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
@@ -23,12 +23,13 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
  * Service Implementation for managing CompetencyJol.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class CompetencyJolService {
 
@@ -44,15 +45,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<IrisCourseChatSessionService> irisCourseChatSessionService;
+    private final Optional<PyrisEventService> pyrisEventService;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<IrisCourseChatSessionService> irisCourseChatSessionService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventService> pyrisEventService) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
-        this.irisCourseChatSessionService = irisCourseChatSessionService;
+        this.pyrisEventService = pyrisEventService;
     }
 
     /**
@@ -83,10 +84,10 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        irisCourseChatSessionService.ifPresent(service -> {
+        pyrisEventService.ifPresent(service -> {
             // Inform Iris so it can send a message to the user
             try {
-                service.onJudgementOfLearningSet(jol);
+                service.trigger(new CompetencyJolSetEvent(jol));
             }
             catch (Exception e) {
                 log.warn("Something went wrong while sending the judgement of learning to Iris", e);

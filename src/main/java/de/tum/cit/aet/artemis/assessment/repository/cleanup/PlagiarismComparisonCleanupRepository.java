@@ -41,6 +41,13 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
             """)
     int deletePlagiarismSubmissionElementsByComparisonIdsIn(@Param("ids") List<Long> ids);
 
+    @Query("""
+            SELECT COUNT(e)
+            FROM PlagiarismSubmissionElement e
+            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :ids
+            """)
+    int countPlagiarismSubmissionElementsByComparisonIdsIn(@Param("ids") List<Long> ids);
+
     @Modifying
     @Transactional // ok because of delete
     @Query("""
@@ -50,8 +57,15 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
             """)
     int deletePlagiarismSubmissionsByComparisonIdsIn(@Param("ids") List<Long> ids);
 
+    @Query("""
+            SELECT COUNT(s)
+            FROM PlagiarismSubmission s
+            WHERE s.plagiarismComparison.id IN :ids
+            """)
+    int countPlagiarismSubmissionsByComparisonIdsIn(@Param("ids") List<Long> ids);
+
     @Modifying
-    @Transactional // ok because of modifying
+    @Transactional // ok because of modifying query
     @Query("""
             UPDATE PlagiarismComparison pc
             SET pc.submissionA = NULL, pc.submissionB = NULL
@@ -67,6 +81,13 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
             WHERE m.plagiarism_comparison_id IN :ids
             """)
     int deletePlagiarismComparisonMatchesByComparisonIdsIn(@Param("ids") List<Long> ids);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*)
+            FROM plagiarism_comparison_matches m
+            WHERE m.plagiarism_comparison_id IN :ids
+            """)
+    int countPlagiarismComparisonMatchesByComparisonIdsIn(@Param("ids") List<Long> ids);
 
     /**
      * Retrieves a list of unnecessary plagiarism comparison IDs based on the associated course's date range.

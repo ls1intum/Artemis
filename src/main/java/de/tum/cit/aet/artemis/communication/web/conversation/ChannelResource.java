@@ -53,8 +53,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
 @Profile(PROFILE_CORE)
@@ -84,13 +84,10 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            StudentParticipationRepository studentParticipationRepository) {
+            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -102,7 +99,6 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -232,12 +228,13 @@ public class ChannelResource extends ConversationManagementResource {
         channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.getDescription());
+        channelToCreate.setIsCourseWide(channelDTO.getIsCourseWide());
 
-        if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
+        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 
-        var createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        var createdChannel = channelService.createChannel(course, channelDTO.toChannel(), Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
@@ -486,14 +483,64 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to create feedback channel for course {} and exercise {} with properties: {}", courseId, exerciseId, feedbackChannelRequest);
 
         ChannelDTO channelDTO = feedbackChannelRequest.channel();
-        String feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
+        List<String> feedbackDetailTexts = feedbackChannelRequest.feedbackDetailTexts();
+        String testCaseName = feedbackChannelRequest.testCaseName();
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
-        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
-
+        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
+    }
+
+    /**
+     * POST /api/courses/:courseId/channels/mark-as-read: Marks all channels of a course as read for the current user.
+     *
+     * @param courseId the id of the course.
+     * @return ResponseEntity with status 200 (Ok).
+     */
+    @PostMapping("{courseId}/channels/mark-as-read")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
+        log.debug("REST request to mark all channels of course {} as read", courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(course);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        conversationService.markAllConversationOfAUserAsRead(course.getId(), requestingUser);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/toggle-privacy
+     *
+     * Toggles the privacy status of a channel: If the channel is public, it becomes private;
+     * if it is private, it becomes public.
+     *
+     * @param courseId  The ID of the course to which the channel belongs
+     * @param channelId The ID of the channel whose privacy status will be changed
+     * @return The updated channel's DTO
+     */
+    @PostMapping("{courseId}/channels/{channelId}/toggle-privacy")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<ChannelDTO> toggleChannelPrivacy(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to toggle privacy for channel : {}", channelId);
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
+        if (!channelFromDatabase.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+
+        channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
+
+        boolean isCurrentlyPublic = Boolean.TRUE.equals(channelFromDatabase.getIsPublic());
+        channelFromDatabase.setIsPublic(!isCurrentlyPublic);
+
+        var updatedChannel = channelRepository.save(channelFromDatabase);
+
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {

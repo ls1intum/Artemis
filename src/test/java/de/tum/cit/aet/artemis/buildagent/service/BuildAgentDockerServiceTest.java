@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -23,6 +25,7 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
@@ -83,7 +86,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         buildAgentDockerService.deleteOldDockerImages();
 
         // Verify that removeImageCmd() was not called.
-        verify(dockerClient, times(0)).removeImageCmd(anyString());
+        verify(dockerClient, never()).removeImageCmd(anyString());
     }
 
     @Test
@@ -92,8 +95,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null,
-                null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
         var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
@@ -150,7 +152,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
 
         buildAgentDockerService.cleanUpContainers();
 
-        // Verify that removeContainerCmd() was called
+        // Verify that stopContainerCmd() was called
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be younger than 5 minutes
@@ -158,7 +160,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
 
         buildAgentDockerService.cleanUpContainers();
 
-        // Verify that removeContainerCmd() was not called a second time
+        // Verify that stopContainerCmd() was not called a second time
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be older than 5 minutes
@@ -167,11 +169,19 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         // Mock exception when stopping container
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doReturn(stopContainerCmd).when(stopContainerCmd).withTimeout(anyInt());
         doThrow(new RuntimeException("Container stopping failed")).when(stopContainerCmd).exec();
 
         buildAgentDockerService.cleanUpContainers();
 
         // Verify that killContainerCmd() was called
         verify(dockerClient, times(1)).killContainerCmd(anyString());
+
+        // Mock NotModified exception when stopping container
+        doThrow(new NotModifiedException("Container not running")).when(stopContainerCmd).exec();
+        buildAgentDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was called
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
     }
 }

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,10 +21,8 @@ describe('FeedbackDetailChannelModalComponent', () => {
         activeModal = TestBed.inject(NgbActiveModal);
         modalService = TestBed.inject(NgbModal);
 
-        fixture.componentRef.setInput('affectedStudentsCount', 42);
         fixture.componentRef.setInput('feedbackDetail', {
-            detailText: 'Sample feedback',
-            concatenatedFeedbackIds: [1],
+            detailTexts: ['Sample feedback'],
             count: 10,
             relativeCount: 50,
             testCaseName: 'testCase1',
@@ -36,8 +34,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should initialize form and inputs', () => {
-        expect(component.affectedStudentsCount()).toBe(42);
-        expect(component.feedbackDetail().detailText).toBe('Sample feedback');
+        expect(component.feedbackDetail().detailTexts).toStrictEqual(['Sample feedback']);
         expect(component.form).toBeDefined();
         expect(component.form.valid).toBeFalse();
     });
@@ -60,7 +57,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 
@@ -73,26 +70,26 @@ describe('FeedbackDetailChannelModalComponent', () => {
                 creationDate: undefined,
                 creator: undefined,
                 description: 'channelDescription',
-                hasChannelModerationRights: undefined,
+                hasChannelModerationRights: false,
                 hasUnreadMessage: undefined,
                 id: undefined,
                 isAnnouncementChannel: false,
-                isArchived: undefined,
-                isChannelModerator: undefined,
-                isCourseWide: undefined,
+                isArchived: false,
+                isChannelModerator: false,
+                isCourseWide: false,
                 isCreator: undefined,
                 isFavorite: undefined,
                 isHidden: undefined,
                 isMember: undefined,
                 isMuted: undefined,
-                isPublic: true,
+                isPublic: false,
                 lastMessageDate: undefined,
                 lastReadDate: undefined,
                 name: 'channel',
                 numberOfMembers: undefined,
                 subType: undefined,
                 subTypeReferenceId: undefined,
-                topic: undefined,
+                topic: 'FeedbackDiscussion',
                 tutorialGroupId: undefined,
                 tutorialGroupTitle: undefined,
                 type: 'channel',
@@ -109,7 +106,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: false,
             isAnnouncementChannel: false,
         });
 
@@ -135,7 +132,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 

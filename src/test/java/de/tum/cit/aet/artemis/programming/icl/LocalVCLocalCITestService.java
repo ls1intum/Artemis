@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
@@ -181,7 +180,7 @@ public class LocalVCLocalCITestService {
      * @param dockerClient         the DockerClient to mock.
      * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
      * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
-     *                                 tarArchiveEntry.getName() and the value being the content of the TarArchiveEntry. There can be up to two dataToReturn entries, in which case
+     *                                 tarArchiveEntry.name() and the value being the content of the TarArchiveEntry. There can be up to two dataToReturn entries, in which case
      *                                 the first call to "copyArchiveFromContainerCmd().exec()" will return the first entry, and the second call will return the second entry.
      * @throws IOException if the InputStream cannot be created.
      */
@@ -213,7 +212,7 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Create a BufferedInputStream from a map. Each entry of the map will be one TarArchiveEntry with the key denoting the tarArchiveEntry.getName() and the value being the
+     * Create a BufferedInputStream from a map. Each entry of the map will be one TarArchiveEntry with the key denoting the tarArchiveEntry.name() and the value being the
      * content.
      * The returned InputStream can be used to mock the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec().
      *
@@ -313,7 +312,7 @@ public class LocalVCLocalCITestService {
     private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
         String tempDir = System.getProperty("java.io.tmpdir");
 
-        Path projectFolder = Paths.get(tempDir, projectKey);
+        Path projectFolder = Path.of(tempDir, projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {

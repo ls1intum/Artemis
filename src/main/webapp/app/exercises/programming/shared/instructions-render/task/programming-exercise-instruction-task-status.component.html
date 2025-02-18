@@ -6,7 +6,7 @@
         <fa-icon [icon]="farTimesCircle" size="lg" class="test-icon text-danger" />
     }
     @if (testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED) {
-        <fa-icon [icon]="faQuestionCircle" size="lg" class="test-icon text-secondary" />
+        <fa-icon [icon]="faCircleDot" size="lg" class="test-icon text-secondary" />
     }
     @if (taskName) {
         <span class="task-name" [innerHTML]="taskName | safeHtml"></span>

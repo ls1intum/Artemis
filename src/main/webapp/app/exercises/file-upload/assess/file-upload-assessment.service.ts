@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -14,9 +14,9 @@ type FileUploadAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string 
     providedIn: 'root',
 })
 export class FileUploadAssessmentService {
-    private resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api';
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, assessmentNote: string | undefined, submit = false): Observable<Result> {
         let params = new HttpParams();

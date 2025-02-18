@@ -1,19 +1,22 @@
-import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-emoji-picker',
     templateUrl: './emoji-picker.component.html',
+    imports: [PickerModule, ArtemisTranslatePipe],
 })
 export class EmojiPickerComponent {
     private themeService = inject(ThemeService);
 
-    @Input() emojisToShowFilter: (emoji: string | EmojiData) => boolean;
-    @Input() categoriesIcons: { [key: string]: string };
-    @Input() recent: string[];
-    @Output() emojiSelect: EventEmitter<any> = new EventEmitter();
+    recent = input<string[]>();
+    emojiSelect = output<any>();
+    emojisToShowFilter = input<(emoji: string | EmojiData) => boolean>();
+    categoriesIcons = input<{ [key: string]: string }>({});
 
     utils = EmojiUtils;
     dark = computed(() => this.themeService.currentTheme() === Theme.DARK);

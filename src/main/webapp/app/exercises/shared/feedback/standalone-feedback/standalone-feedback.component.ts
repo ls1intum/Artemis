@@ -1,4 +1,4 @@
-import { Component, OnInit, Optional } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
@@ -7,13 +7,19 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { FeedbackComponent } from '../feedback.component';
 
 @Component({
     selector: 'jhi-standalone-feedback',
     templateUrl: './standalone-feedback.component.html',
     styleUrls: ['./../feedback.scss', 'standalone-feedback.scss'],
+    imports: [FeedbackComponent],
 })
 export class StandaloneFeedbackComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+
     exercise?: Exercise;
     result?: Result;
 
@@ -22,12 +28,6 @@ export class StandaloneFeedbackComponent implements OnInit {
     exerciseType?: ExerciseType;
 
     latestDueDate?: dayjs.Dayjs;
-
-    constructor(
-        public route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-    ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {

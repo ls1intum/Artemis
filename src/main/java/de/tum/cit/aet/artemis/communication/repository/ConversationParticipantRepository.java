@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -60,7 +61,26 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
+    @Async
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant p
+            SET p.lastRead = :now, p.unreadMessagesCount = 0
+            WHERE p.user.id = :userId
+                AND p.conversation.id IN :conversationIds
+            """)
+    void updateMultipleLastReadAsync(@Param("userId") Long userId, @Param("conversationIds") List<Long> conversationIds, @Param("now") ZonedDateTime now);
+
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
+
+    @Query("""
+            SELECT DISTINCT conversationParticipant.conversation.id
+            FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.user.id = :userId
+                AND conversationParticipant.conversation.course.id = :courseId
+            """)
+    List<Long> findConversationIdsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 

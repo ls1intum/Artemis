@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, input, output, viewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -10,6 +10,14 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -18,20 +26,28 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     styleUrls: ['./modeling-exam-submission.component.scss'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FullscreenComponent,
+        ModelingEditorComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;
 
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
+    modelingEditor = viewChild.required(ModelingEditorComponent);
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: ModelingSubmission;
+    studentSubmission = input.required<ModelingSubmission>();
     problemStatementHtml: string;
 
-    @Input()
-    exercise: ModelingExercise;
+    exercise = input.required<ModelingExercise>();
     umlModel: UMLModel; // input model for Apollon+
 
     // explicitly needed to track if submission.isSynced is changed, otherwise component
@@ -46,13 +62,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // Icons
     protected readonly faListAlt = faListAlt;
 
-    constructor(changeDetectorReference: ChangeDetectorRef) {
-        super(changeDetectorReference);
-    }
-
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -66,25 +78,25 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     getSubmission(): Submission {
-        return this.studentSubmission;
+        return this.studentSubmission();
     }
 
     getExerciseId(): number | undefined {
-        return this.exercise.id;
+        return this.exercise().id;
     }
 
     getExercise(): Exercise {
-        return this.exercise;
+        return this.exercise();
     }
 
     updateViewFromSubmission(): void {
-        if (this.studentSubmission) {
-            if (this.studentSubmission.model) {
+        if (this.studentSubmission()) {
+            if (this.studentSubmission()!.model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = JSON.parse(this.studentSubmission.model);
+                this.umlModel = JSON.parse(this.studentSubmission()!.model!);
             }
             // Updates explanation text with the latest submission
-            this.explanationText = this.studentSubmission.explanationText ?? '';
+            this.explanationText = this.studentSubmission()!.explanationText ?? '';
         }
     }
 
@@ -93,17 +105,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Updates the explanation text of the submission with the current explanation
      */
     public updateSubmissionFromView(): void {
-        if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
+        if (!this.modelingEditor() || !this.modelingEditor().getCurrentModel()) {
             return;
         }
-        const currentApollonModel = this.modelingEditor.getCurrentModel();
+        const currentApollonModel = this.modelingEditor().getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
 
-        if (this.studentSubmission) {
+        if (this.studentSubmission()) {
             if (diagramJson) {
-                this.studentSubmission.model = diagramJson;
+                this.studentSubmission()!.model = diagramJson;
             }
-            this.studentSubmission.explanationText = this.explanationText;
+            this.studentSubmission()!.explanationText = this.explanationText;
         }
     }
 
@@ -111,24 +123,23 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the submission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission.isSynced!;
+        return !this.studentSubmission()!.isSynced!;
     }
 
     /**
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
+        return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    modelChanged(model: UMLModel) {
-        this.studentSubmission.isSynced = false;
+    modelChanged(_model: UMLModel) {
+        this.studentSubmission()!.isSynced = false;
     }
 
     // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
-        this.studentSubmission.isSynced = false;
+        this.studentSubmission()!.isSynced = false;
         this.explanationText = explanation;
     }
 
@@ -147,7 +158,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
             // if we do not wait here for apollon, the redux store might be undefined
-            await this.modelingEditor!.apollonEditor!.nextRender;
+            await this.modelingEditor()!.apollonEditor!.nextRender;
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel = JSON.parse(model);

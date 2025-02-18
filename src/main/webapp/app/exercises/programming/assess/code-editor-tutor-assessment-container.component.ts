@@ -1,21 +1,24 @@
-import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Location } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -41,12 +44,48 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from './repo-export/programming-assessment-repo-export-button.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        AssessmentLayoutComponent,
+        NgTemplateOutlet,
+        CodeEditorContainerComponent,
+        IncludedInScoreBadgeComponent,
+        RouterLink,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ResultComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+    ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
+    private manualResultService = inject(ProgrammingAssessmentManualResultService);
+    private router = inject(Router);
+    private location = inject(Location);
+    private accountService = inject(AccountService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private domainService = inject(DomainService);
+    private complaintService = inject(ComplaintService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private athenaService = inject(AthenaService);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -104,8 +143,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateFileSession: { [fileName: string]: string } = {};
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
+    // @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
@@ -122,24 +162,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    constructor(
-        private manualResultService: ProgrammingAssessmentManualResultService,
-        private router: Router,
-        private location: Location,
-        private accountService: AccountService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private domainService: DomainService,
-        private complaintService: ComplaintService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private structuredGradingCriterionService: StructuredGradingCriterionService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private athenaService: AthenaService,
-        translateService: TranslateService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
@@ -198,7 +223,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
-                        this.localRepositoryLink = getLocalRepositoryLink(this.courseId, this.exerciseId, this.participation.id!, this.exerciseGroupId, this.examId);
+                        this.localRepositoryLink = getLocalRepositoryLink(
+                            this.courseId,
+                            this.exerciseId,
+                            RepositoryType.USER,
+                            this.participation.id!,
+                            this.exerciseGroupId,
+                            this.examId,
+                        );
                         return observable;
                     }),
                     tap((templateFilesObj) => {
@@ -433,8 +465,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     return;
                 }
 
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
                     this.courseId,

@@ -11,6 +11,71 @@
     }
 }
 
+.message-bubble {
+    --r: 13px; /* the radius */
+
+    position: absolute;
+    z-index: 50;
+    bottom: 100px;
+    right: 80px;
+    width: 350px;
+    height: 150px;
+    background-color: var(--iris-client-chat-background);
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+    overflow-y: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    padding: 10px;
+    display: flex;
+    border-radius: var(--r);
+    border-bottom-right-radius: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+        transform: scale(1.05);
+
+        .read-more > span {
+            text-decoration: underline;
+        }
+    }
+}
+
+.content-overflow {
+    &::before {
+        content: '';
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        background: linear-gradient(0deg, var(--iris-chat-bubble-fade) 2%, transparent);
+    }
+}
+
+.read-more {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    width: 150px;
+    font-size: 14px;
+    z-index: 100;
+    color: var(--link-color);
+    transition: all 0.2s ease;
+
+    &:focus-visible {
+        outline: 2px solid var(--link-color);
+        outline-offset: 2px;
+    }
+}
+
+.hidden {
+    display: none;
+}
+
 .btn-circle {
     width: 40px;
     height: 40px;

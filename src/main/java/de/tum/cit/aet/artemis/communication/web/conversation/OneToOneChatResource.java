@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -66,7 +68,8 @@ public class OneToOneChatResource extends ConversationManagementResource {
      *
      * @param courseId                   the id of the course
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
-     * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
+     *
+     * @return ResponseEntity according to createOneToOneChat function
      */
     @PostMapping("{courseId}/one-to-one-chats")
     @EnforceAtLeastStudent
@@ -74,8 +77,8 @@ public class OneToOneChatResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
-        checkMessagingEnabledElseThrow(course);
-        oneToOneChatAuthorizationService.isAllowedToCreateOneToOneChat(course, requestingUser);
+
+        validateInputElseThrow(requestingUser, course);
 
         var loginsToSearchFor = new HashSet<>(otherChatParticipantLogins);
         loginsToSearchFor.add(requestingUser.getLogin());
@@ -88,8 +91,53 @@ public class OneToOneChatResource extends ConversationManagementResource {
         var userA = chatMembers.getFirst();
         var userB = chatMembers.get(1);
 
-        var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
         var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
+        return createOneToOneChat(requestingUser, userToBeNotified, course);
+    }
+
+    /**
+     * POST /api/courses/:courseId/one-to-one-chats/:userId: Starts a new one to one chat in a course
+     *
+     * @param courseId the id of the course
+     * @param userId   the id of the participating user
+     *
+     * @return ResponseEntity according to createOneToOneChat function
+     */
+    @PostMapping("{courseId}/one-to-one-chats/{userId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @PathVariable Long userId) throws URISyntaxException {
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var otherUser = userRepository.findByIdElseThrow(userId);
+        log.debug("REST request to create one to one chat by id in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherUser.getLogin());
+        var course = courseRepository.findByIdElseThrow(courseId);
+
+        validateInputElseThrow(requestingUser, course);
+
+        return createOneToOneChat(requestingUser, otherUser, course);
+    }
+
+    /**
+     * Function to validate incoming request data
+     *
+     * @param requestingUser user that wants to create the one to one chat
+     * @param course         course to create the one to one chat
+     */
+    private void validateInputElseThrow(User requestingUser, Course course) {
+        checkMessagingEnabledElseThrow(course);
+        oneToOneChatAuthorizationService.isAllowedToCreateOneToOneChat(course, requestingUser);
+    }
+
+    /**
+     * Function to create a one to one chat and return the corresponding response to the client
+     *
+     * @param requestingUser   user that wants to create the one to one chat
+     * @param userToBeNotified user that is invited into the one to one chat
+     * @param course           course to create the one to one chat
+     *
+     * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
+     */
+    private ResponseEntity<OneToOneChatDTO> createOneToOneChat(User requestingUser, User userToBeNotified, Course course) throws URISyntaxException {
+        var oneToOneChat = oneToOneChatService.startOneToOneChat(course, requestingUser, userToBeNotified);
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, userToBeNotified, requestingUser,
                 NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         // also send notification to the author in order for the author to subscribe to the new chat (this notification won't be saved and shown to author)

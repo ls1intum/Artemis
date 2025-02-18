@@ -340,7 +340,8 @@
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             },
             "saveExercise": "Aufgabe speichern",
-            "exerciseSaved": "Aufgabe gespeichert"
+            "exerciseSaved": "Aufgabe gespeichert",
+            "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -776,7 +777,8 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur ({{ examTitle }})",
+            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
@@ -800,7 +802,7 @@
             "endOfIndividualWorkingTime": "Ende der individuellen Bearbeitungszeit:",
             "disabledChangeSubmissionStateButtonExplanation": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
-            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
+            "toggleFailed": "Der Abgabestatus konnte nicht geändert werden!",
             "hasComplaint": "Beschwerde existiert",
             "noSessions": "Keine Sitzungen"
         },

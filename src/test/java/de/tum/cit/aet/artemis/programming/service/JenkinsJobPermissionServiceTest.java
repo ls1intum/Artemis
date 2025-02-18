@@ -27,8 +27,8 @@ class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenk
     private static MockedStatic<JenkinsJobPermissionsUtils> mockedJenkinsJobPermissionsUtils;
 
     @BeforeEach
-    void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+    void initTestCase() {
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockedJenkinsJobPermissionsUtils = mockStatic(JenkinsJobPermissionsUtils.class);
     }

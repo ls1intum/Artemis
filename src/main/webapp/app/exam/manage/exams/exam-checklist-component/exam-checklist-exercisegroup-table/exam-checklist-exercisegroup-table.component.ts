@@ -3,11 +3,17 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NoDataComponent } from 'app/shared/no-data-component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
     styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
+    imports: [TranslateDirective, NgbTooltip, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() quizExamMaxPoints: number;

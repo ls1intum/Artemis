@@ -18,7 +18,7 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
     private final String errorKey;
 
     /**
-     * @param type
+     * @param type           of the error (e.g. URI.create("/problem-with-message"))
      * @param defaultMessage that will be displayed if the translation is not found in the client side i18n error.json files
      * @param status         of the http response (e.g. 400 BAD REQUEST)
      * @param entityName     of the component where the error occurred

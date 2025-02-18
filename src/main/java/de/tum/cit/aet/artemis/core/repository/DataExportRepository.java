@@ -37,7 +37,7 @@ public interface DataExportRepository extends ArtemisJpaRepository<DataExport, L
     Set<DataExport> findAllToBeCreated();
 
     /**
-     * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
+     * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days and that have not been deleted or failed before
      *
      * @param thresholdDate the date to filter data exports, typically 7 days before today.
      * @return a set of data exports that need to be deleted
@@ -47,6 +47,7 @@ public interface DataExportRepository extends ArtemisJpaRepository<DataExport, L
             FROM DataExport dataExport
             WHERE dataExport.creationFinishedDate IS NOT NULL
                 AND dataExport.creationFinishedDate < :thresholdDate
+                AND dataExport.dataExportState < 4
             """)
     Set<DataExport> findAllToBeDeleted(@Param("thresholdDate") ZonedDateTime thresholdDate);
 

@@ -31,7 +31,6 @@ describe('VirtualScrollComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [VirtualScrollComponent],
             providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()

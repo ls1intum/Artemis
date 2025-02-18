@@ -1,4 +1,4 @@
-@if (activeConversation && course) {
+@if (activeConversation() && course()) {
     <div class="d-flex justify-content-between align-items-center conversation-member-row" (mouseleave)="$event.stopPropagation(); userDropdown.close()">
         <span class="d-inline-block">
             <jhi-profile-picture
@@ -9,13 +9,12 @@
                 [authorId]="userId"
                 [authorName]="userName"
                 [imageUrl]="userImageUrl"
-            >
-            </jhi-profile-picture>
-            @if (isChannel(activeConversation) && conversationMember?.isChannelModerator) {
+            />
+            @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }
-            {{ userLabel }}
-            @if (!conversationMember.isStudent) {
+            <a (click)="userNameClicked()" class="bs-body-color" [ngClass]="{ disabled: isCurrentUser }"> {{ userLabel }} </a>
+            @if (!conversationMember()?.isStudent) {
                 <fa-icon class="ms-1 text-secondary" [icon]="userIcon" [ngbTooltip]="userTooltip" />
             }
         </span>

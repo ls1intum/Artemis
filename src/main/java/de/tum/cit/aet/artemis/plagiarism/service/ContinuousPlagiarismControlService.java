@@ -74,9 +74,8 @@ public class ContinuousPlagiarismControlService {
      */
     @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 5 * * *}")
     public void executeChecks() {
-        log.info("Starting continuous plagiarism control...");
-
         var exercises = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        log.info("Starting scheduled continuous plagiarism control for {} exercises: {}", exercises.size(), exercises.stream().map(Exercise::getId).toList());
         exercises.stream().filter(isBeforeDueDateOrAfterWithPostDueDateChecksEnabled).forEach(exercise -> {
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();

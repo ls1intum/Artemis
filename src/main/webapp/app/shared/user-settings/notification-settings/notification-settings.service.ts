@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
     ATTACHMENT_CHANGE_TITLE,
     CONVERSATION_ADD_USER_CHANNEL_TITLE,
@@ -48,6 +48,8 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
+    private userSettingsService = inject(UserSettingsService);
+
     /**
      * This is the place where the mapping between SettingIds and notification titles happens on the client side
      * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
@@ -99,7 +101,7 @@ export class NotificationSettingsService {
 
     private notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
 
-    constructor(private userSettingsService: UserSettingsService) {
+    constructor() {
         this.listenForNotificationSettingsChanges();
     }
 

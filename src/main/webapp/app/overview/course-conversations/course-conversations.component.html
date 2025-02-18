@@ -30,10 +30,10 @@
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
                     (onCreateChannelPressed)="openCreateChannelDialog()"
+                    (onMarkAllChannelsAsRead)="markAllChannelAsRead()"
                     (onBrowsePressed)="openChannelOverviewDialog()"
                     (onDirectChatPressed)="openCreateOneToOneChatDialog()"
                     (onGroupChatPressed)="openCreateGroupChatDialog()"
-                    [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
                     [channelTypeIcon]="CHANNEL_TYPE_ICON"
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
@@ -51,20 +51,27 @@
                 [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
             >
                 @if (activeConversation) {
-                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
+                    <jhi-conversation-header
+                        (collapseSearch)="toggleChannelSearch()"
+                        (onUpdateSidebar)="prepareSidebarData()"
+                        (togglePinnedMessage)="togglePinnedView()"
+                        [pinnedMessageCount]="pinnedCount"
+                    />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
-                        (openThread)="postInThread = $event"
+                        (openThread)="openThread($event)"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
                         [focusPostId]="focusPostId"
                         [openThreadOnFocus]="openThreadOnFocus"
+                        [showOnlyPinned]="showOnlyPinned"
+                        (pinnedCount)="onPinnedCountChanged($event)"
                     />
                 } @else {
                     @if (selectedSavedPostStatus === null) {
                         <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                     } @else {
-                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)"></jhi-saved-posts>
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)" />
                     }
                 }
             </div>

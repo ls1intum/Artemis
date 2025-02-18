@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -6,22 +6,32 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    providers: [],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, ArtemisDatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private complaintResponseService = inject(ComplaintResponseService);
+    private router = inject(Router);
+    private location = inject(Location);
+
     @Input() complaint: Complaint;
     @Input() isTestRun = false;
     @Input() isAssessor = false;
@@ -42,14 +52,6 @@ export class ComplaintsForTutorComponent implements OnInit {
     isLockedForLoggedInUser = false;
     course?: Course;
     maxComplaintResponseTextLimit: number;
-
-    constructor(
-        private alertService: AlertService,
-        private complaintResponseService: ComplaintResponseService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private location: Location,
-    ) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise!);

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
@@ -19,6 +19,7 @@ export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
     EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
+    LECTURE = 'lecture-chat',
 }
 
 /**
@@ -26,8 +27,15 @@ export enum ChatServiceMode {
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
+    http = inject(IrisChatHttpService);
+    ws = inject(IrisWebsocketService);
+    status = inject(IrisStatusService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
+    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
@@ -40,21 +48,7 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedIris = false;
 
-    /**
-     * Creates an instance of IrisChatService.
-     * @param http The IrisChatHttpService for HTTP operations related to sessions.
-     * @param ws The IrisChatWebsocketService for websocket operations
-     * @param status The IrisStatusService for handling the status of the service.
-     * @param userService The UserService for handling user operations.
-     * @param accountService The AccountService for handling account operations.
-     */
-    protected constructor(
-        public http: IrisChatHttpService,
-        public ws: IrisWebsocketService,
-        public status: IrisStatusService,
-        private userService: UserService,
-        private accountService: AccountService,
-    ) {
+    protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
     }
 
@@ -98,6 +92,9 @@ export class IrisChatService implements OnDestroy {
     private replaceOrAddMessage(message: IrisMessage) {
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
+            if (message.sender === IrisSender.LLM) {
+                this.newIrisMessage.next(message);
+            }
             this.messages.next([...this.messages.getValue(), message]);
         }
     }
@@ -152,6 +149,7 @@ export class IrisChatService implements OnDestroy {
 
     public messagesRead(): void {
         this.numNewMessages.next(0);
+        this.newIrisMessage.next(undefined);
     }
 
     public setUserAccepted(): void {
@@ -239,6 +237,7 @@ export class IrisChatService implements OnDestroy {
             this.stages.next([]);
             this.suggestions.next([]);
             this.numNewMessages.next(0);
+            this.newIrisMessage.next(undefined);
         }
         this.error.next(undefined);
     }
@@ -250,6 +249,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
+
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
