@@ -10,6 +10,8 @@ import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
@@ -30,6 +32,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
