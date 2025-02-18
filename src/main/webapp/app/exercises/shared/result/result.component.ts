@@ -147,7 +147,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 }
                 // Make sure result and participation are connected
                 if (!this.showUngradedResults) {
-                    const firstRatedResult = this.participation.results.find((result) => result.rated);
+                    const firstRatedResult = this.participation.results.find((result) => result?.rated);
                     if (firstRatedResult) {
                         this.result = firstRatedResult;
                         this.result.participation = this.participation;
