@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +12,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-lifecycle-buttons.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
-import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Lifecycle Buttons Component', () => {
     let comp: QuizExerciseLifecycleButtonsComponent;
@@ -37,7 +38,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
-                MockProvider(QuizExerciseService),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(QuizExerciseLifecycleButtonsComponent, '')
