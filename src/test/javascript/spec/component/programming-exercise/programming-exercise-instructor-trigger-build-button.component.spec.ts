@@ -12,6 +12,11 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { SubmissionType } from 'app/entities/submission.model';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     const course = { id: 123 } as Course;
@@ -28,11 +33,13 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
