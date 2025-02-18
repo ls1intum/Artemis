@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotificationFactory.createTutorialGroupNotification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,19 +17,20 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupNotificationApi;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 
 @Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupNotificationService {
 
-    private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
+    private final Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi;
 
-    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+    private final Optional<TutorialGroupRegistrationApi> tutorialGroupRegistrationApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -36,11 +38,11 @@ public class TutorialGroupNotificationService {
 
     private final GeneralInstantNotificationService notificationService;
 
-    public TutorialGroupNotificationService(TutorialGroupNotificationRepository tutorialGroupNotificationRepository,
-            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, WebsocketMessagingService websocketMessagingService,
+    public TutorialGroupNotificationService(Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi,
+            Optional<TutorialGroupRegistrationApi> tutorialGroupRegistrationApi, WebsocketMessagingService websocketMessagingService,
             NotificationSettingsService notificationSettingsService, GeneralInstantNotificationService notificationService) {
-        this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
-        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
+        this.tutorialGroupRegistrationApi = tutorialGroupRegistrationApi;
         this.websocketMessagingService = websocketMessagingService;
         this.notificationSettingsService = notificationSettingsService;
         this.notificationService = notificationService;
@@ -67,7 +69,8 @@ public class TutorialGroupNotificationService {
     }
 
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {
-        tutorialGroupNotificationRepository.save(notification);
+        TutorialGroupNotificationApi api = tutorialGroupNotificationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupNotificationApi.class, PROFILE_CORE));
+        api.save(notification);
         sendNotificationViaWebSocket(notification);
         sendInstantNotification(notification, notifyTutor);
     }
@@ -89,10 +92,12 @@ public class TutorialGroupNotificationService {
     }
 
     private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
+        TutorialGroupRegistrationApi api = tutorialGroupRegistrationApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupRegistrationApi.class, PROFILE_CORE));
+
         var tutorialGroup = notification.getTutorialGroup();
         // ToDo: Adapt to the type of registration in the future
-        var potentiallyInterestedUsers = tutorialGroupRegistrationRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
-                .stream().map(TutorialGroupRegistration::getStudent);
+        var potentiallyInterestedUsers = api.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION).stream()
+                .map(TutorialGroupRegistration::getStudent);
         if (tutorialGroup.getTeachingAssistant() != null && notifyTutor) {
             potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
         }

@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -78,7 +78,7 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
-    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
@@ -87,7 +87,7 @@ public class ChannelResource extends ConversationManagementResource {
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            ConversationService conversationService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -96,7 +96,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
-        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
     }
@@ -286,7 +286,7 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
 
-        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresent(tutorialGroup -> {
+        tutorialGroupChannelManagementApi.flatMap(groupChannelManagementApi -> groupChannelManagementApi.getTutorialGroupBelongingToChannel(channel)).ifPresent(tutorialGroup -> {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         });
 
