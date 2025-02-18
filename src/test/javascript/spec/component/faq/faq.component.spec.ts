@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -84,8 +84,6 @@ describe('FaqComponent', () => {
                     },
                 },
                 { provide: ProfileService, useValue: new MockProfileService() },
-                MockProvider(IrisSettingsService),
-                MockProvider(SortService),
 
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
@@ -114,6 +112,7 @@ describe('FaqComponent', () => {
                         return true;
                     },
                 }),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
