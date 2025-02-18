@@ -23,9 +23,9 @@
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",
                 "searchBarPlaceholder": "Search within current channel",
-                "searchResultsMultiple": "{{ count }} Results",
-                "searchResultsSingle": "1 Result",
-                "searchResultsNone": "No Results"
+                "searchResultsMultiple": "{{ count }} results",
+                "searchResultsSingle": "1 result",
+                "searchResultsNone": "No results"
             },
             "threadSideBar": {
                 "label": "Thread",
