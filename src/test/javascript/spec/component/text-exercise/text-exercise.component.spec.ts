@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -13,10 +13,7 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockProvider } from 'ng-mocks';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -42,10 +39,7 @@ describe('TextExercise Management Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(CourseManagementService),
-                MockProvider(ExerciseService),
-                MockProvider(TextExerciseService),
-                MockProvider(CourseExerciseService),
+                provideHttpClient(),
                 MockProvider(EventManager),
             ],
         }).compileComponents();
