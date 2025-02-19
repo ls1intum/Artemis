@@ -15,6 +15,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -218,9 +219,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
         fixture.detectChanges();
         component['markdownEditor'].inVisualMode = true;
+        // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
+        component['markdownEditor']['monacoEditor'] = {
+            setText: jest.fn(),
+        } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
+
         const parseQuestionStub = jest.spyOn(component['visualChild'], 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
-        expect(component['markdownEditor'].markdown).toBe('parsed-question');
+        expect(component['markdownEditor']['_markdown']).toBe('parsed-question');
     });
 });
