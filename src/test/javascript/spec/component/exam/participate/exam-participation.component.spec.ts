@@ -60,6 +60,8 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -140,6 +142,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()

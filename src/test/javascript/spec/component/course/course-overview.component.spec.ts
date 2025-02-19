@@ -57,6 +57,8 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -205,6 +207,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

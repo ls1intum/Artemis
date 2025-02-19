@@ -22,6 +22,8 @@ import { RepositoryType } from '../../../../../main/webapp/app/exercises/program
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockProvider } from 'ng-mocks';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -45,7 +47,6 @@ describe('ProgrammingExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -54,6 +55,7 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
                 provideHttpClientTesting(),
