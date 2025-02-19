@@ -10,6 +10,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sar
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RubocopMessageProcessor;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RuffCategorizer;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.SarifParser;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.SingleCategoryCategorizer;
 
 /**
  * Policy class for the parser strategies.
@@ -32,6 +33,7 @@ public class ParserPolicy {
             case CHECKSTYLE -> new CheckstyleParser();
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
+            case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer("Lint"));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());

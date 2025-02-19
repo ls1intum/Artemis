@@ -86,6 +86,8 @@ public class StaticCodeAnalysisConfigurer {
     private static final List<String> CATEGORY_NAMES_DART_ANALYZE = List.of("TODO", "HINT", "COMPILE_TIME_ERROR", "CHECKED_MODE_COMPILE_TIME_ERROR", "STATIC_WARNING",
             "SYNTACTIC_ERROR", "LINT");
 
+    private static final List<String> CATEGORY_NAMES_ESLINT = List.of("Lint");
+
     // @formatter:off
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
             entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
