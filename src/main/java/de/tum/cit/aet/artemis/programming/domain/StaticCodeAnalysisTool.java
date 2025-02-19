@@ -15,6 +15,8 @@ public enum StaticCodeAnalysisTool {
 
     // @formatter:off
     CHECKSTYLE("checkstyle-result.xml"),
+    CLIPPY("clippy.sarif"),
+    DART_ANALYZE("dart_analyze.sarif"),
     GCC("gcc.xml"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
@@ -29,9 +31,11 @@ public enum StaticCodeAnalysisTool {
     // @formatter:off
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.ofEntries(
         entry(ProgrammingLanguage.C, List.of(GCC)),
+        entry(ProgrammingLanguage.DART, List.of(DART_ANALYZE)),
         entry(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD)),
         entry(ProgrammingLanguage.PYTHON, List.of(RUFF)),
         entry(ProgrammingLanguage.RUBY, List.of(RUBOCOP)),
+        entry(ProgrammingLanguage.RUST, List.of(CLIPPY)),
         entry(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT))
     ));
     // @formatter:on
