@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,7 +99,7 @@ public class TextPlagiarismDetectionService {
 
             // TODO: why do we have such a strange folder name?
             final var submissionsFolderName = "./tmp/submissions";
-            final var submissionFolderFile = new File(submissionsFolderName);
+            final var submissionFolderFile = Path.of(submissionsFolderName).toFile();
             submissionFolderFile.mkdirs();
 
             final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);

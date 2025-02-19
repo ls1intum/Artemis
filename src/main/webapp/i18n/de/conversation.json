@@ -29,7 +29,9 @@
             "threadSideBar": {
                 "label": "Thread",
                 "close": "Thread schließen",
-                "reply": "Antworten im Thread"
+                "reply": "Antworten im Thread",
+                "expand": "Thread erweitern",
+                "collapse": "Thread einklappen"
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
@@ -108,12 +110,27 @@
                 "warning": "Der/Die Nutzer:in wird nicht mehr in der Lage sein, auf diesen Gruppenchat zugreifen zu können, es sei denn, er/sie wird erneut eingeladen.",
                 "remove": "Nutzer:in entfernen"
             },
+            "publicChannel": {
+                "title": "Zu einem öffentlichen Kanal wechseln?",
+                "question": "Möchtest du diesen Kanal wirklich öffentlich machen?",
+                "description": "Beachte, dass das Öffnen eines Kanals bedeutet, dass jeder im Kurs beitreten kann und neue Mitglieder die bisherigen Nachrichten sehen können.",
+                "confirmButton": "Öffentlich machen"
+            },
+            "privateChannel": {
+                "title": "Zu einem privaten Kanal wechseln?",
+                "question": "Möchtest du diesen Kanal wirklich privat machen?",
+                "description": "Beachte, dass beim Wechsel zu einem privaten Kanal die Historie und Mitglieder unverändert bleiben und bisher gesendete Nachrichten weiterhin für bestehende Mitglieder sichtbar sind.",
+                "confirmButton": "Privat machen"
+            },
             "conversationSettings": {
                 "settingsUnavailable": "Keine Einstellungen möglich",
                 "actions": {
                     "leave": "Konversation verlassen",
-                    "archiveChannel": "Kanal archivieren",
-                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen"
+                    "archiveChannel": "Kanal für alle archivieren",
+                    "unarchiveChannel": "Kanal für alle dearchivieren",
+                    "publicChannel": "In einen öffentlichen Kanal umwandeln",
+                    "privateChannel": "In einen privaten Kanal umwandeln",
+                    "deleteChannel": "Kanal löschen"
                 }
             },
             "conversationDetail": {

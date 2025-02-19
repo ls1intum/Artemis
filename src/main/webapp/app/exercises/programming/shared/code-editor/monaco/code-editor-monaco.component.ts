@@ -39,7 +39,6 @@ import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -49,13 +48,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        ArtemisSharedModule,
-        MonacoEditorComponent,
-        CodeEditorHeaderComponent,
-        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
-        CodeEditorTutorAssessmentInlineFeedbackComponent,
-    ],
+    imports: [MonacoEditorComponent, CodeEditorHeaderComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent, CodeEditorTutorAssessmentInlineFeedbackComponent],
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
