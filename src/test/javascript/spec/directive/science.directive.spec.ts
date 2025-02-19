@@ -4,9 +4,12 @@ import { By } from '@angular/platform-browser';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 import { ScienceService } from 'app/shared/science/science.service';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockScienceService } from '../helpers/mocks/service/mock-science-service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({
     template: '<div [jhiScience]="ScienceEventType.LECTURE__OPEN"></div>',
@@ -25,7 +28,9 @@ describe('ScienceDirective', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ScienceService, useClass: MockScienceService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

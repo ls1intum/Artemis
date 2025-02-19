@@ -1,7 +1,6 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -15,6 +14,9 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('OrionBuildAndTestService', () => {
     let serviceUnderTest: OrionBuildAndTestService;
@@ -50,12 +52,13 @@ describe('OrionBuildAndTestService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 MockProvider(OrionConnectorService),
                 { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         });
 

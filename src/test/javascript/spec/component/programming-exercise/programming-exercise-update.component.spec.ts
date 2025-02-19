@@ -43,8 +43,9 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -79,6 +80,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -4,8 +4,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../../../../../main/webapp/app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { ProgrammingExercise } from '../../../../../../main/webapp/app/entities/programming/programming-exercise.model';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AddAuxiliaryRepositoryButtonComponent', () => {
     let comp: AddAuxiliaryRepositoryButtonComponent;
@@ -14,7 +13,7 @@ describe('AddAuxiliaryRepositoryButtonComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
-            providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
+            providers: [provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

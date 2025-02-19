@@ -9,7 +9,6 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Re-Evaluate Button Component', () => {
@@ -27,7 +26,6 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),

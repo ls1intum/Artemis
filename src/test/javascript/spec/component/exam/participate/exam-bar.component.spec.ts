@@ -11,10 +11,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ExamBarComponent', () => {
@@ -27,7 +25,6 @@ describe('ExamBarComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
                 MockProvider(AlertService),
                 provideHttpClient(),
             ],

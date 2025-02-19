@@ -22,8 +22,7 @@ import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { MockArtemisServerDateService } from '../../../../../helpers/mocks/service/mock-server-date.service';
+import { provideHttpClient } from '@angular/common/http';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -74,10 +73,7 @@ describe('QuizExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {
