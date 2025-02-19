@@ -160,7 +160,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateFileUploadExerciseView() {
         const fileUploadComponent = this.activePageComponent as FileUploadExamSubmissionComponent;
         if (fileUploadComponent) {
-            fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
+            fileUploadComponent.studentSubmission.update(() => this.currentSubmission as FileUploadSubmission);
             fileUploadComponent.updateViewFromSubmission();
         }
     }

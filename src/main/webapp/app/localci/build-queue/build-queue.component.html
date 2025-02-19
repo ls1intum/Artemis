@@ -488,8 +488,9 @@
                         <th class="finish-jobs-column">
                             <span jhiTranslate="artemisApp.buildQueue.buildJob.duration"></span>
                         </th>
-                        <th class="finish-jobs-column">
+                        <th jhiSortBy="buildSubmissionDate" class="finish-jobs-column">
                             <span jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"></span>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="buildStartDate" class="finish-jobs-column">
                             <span jhiTranslate="artemisApp.buildQueue.buildJob.start"></span>
