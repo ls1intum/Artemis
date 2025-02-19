@@ -9,7 +9,6 @@ describe('AdminFeatureToggleComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
             .compileComponents()
