@@ -72,6 +72,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should show learning paths button if course has learningPathsEnabled', () => {
         component.course = { learningPathsEnabled: true };
+        component.atlasEnabled = true;
         fixture.detectChanges();
 
         const learningPathButton = debugElement.query(By.css('button.btn-primary'));
@@ -81,6 +82,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should navigate to learning paths when button is clicked', () => {
         component.course = { learningPathsEnabled: true };
+        component.atlasEnabled = true;
         fixture.detectChanges();
 
         const navigateSpy = jest.spyOn(component, 'navigateToLearningPaths');
