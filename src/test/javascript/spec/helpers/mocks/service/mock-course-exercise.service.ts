@@ -12,7 +12,4 @@ export class MockCourseExerciseService {
     findAllProgrammingExercisesForCourse = () => of([{ id: 456 } as ProgrammingExercise]);
 
     requestFeedback = () => of({});
-    findAllFileUploadExercisesForCourse(courseId: number) {
-        return of();
-    }
 }
