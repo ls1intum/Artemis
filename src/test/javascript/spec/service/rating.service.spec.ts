@@ -12,7 +12,6 @@ describe('Rating Service', () => {
     let elemDefault: Rating;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(RatingService);

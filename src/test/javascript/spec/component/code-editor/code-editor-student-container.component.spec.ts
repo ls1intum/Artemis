@@ -28,7 +28,6 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

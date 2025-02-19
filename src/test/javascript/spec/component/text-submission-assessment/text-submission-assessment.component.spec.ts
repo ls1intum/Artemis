@@ -147,7 +147,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as unknown as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,

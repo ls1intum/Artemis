@@ -11,9 +11,7 @@ describe('TableEditableFieldComponent', () => {
     const tableInputValue = '.table-editable-field__input';
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [],
-        })
+        return TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TableEditableFieldComponent);

@@ -9,7 +9,6 @@ describe('OrionCourseManagementExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [OrionCourseManagementExercisesComponent, MockComponent(CourseManagementExercisesComponent)],
         })
             .compileComponents()

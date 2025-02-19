@@ -34,7 +34,6 @@ describe('AuthExpiredInterceptor', () => {
         } as any as AccountService;
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 AuthExpiredInterceptor,
                 { provide: LoginService, useValue: loginServiceMock },

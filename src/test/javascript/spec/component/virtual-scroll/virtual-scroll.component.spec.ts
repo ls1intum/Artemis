@@ -29,7 +29,6 @@ describe('VirtualScrollComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()

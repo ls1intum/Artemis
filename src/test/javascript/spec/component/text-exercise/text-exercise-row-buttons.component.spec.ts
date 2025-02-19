@@ -16,7 +16,6 @@ describe('TextExercise Row Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: TextExerciseService, useValue: { delete: jest.fn() } },
                 { provide: EventManager, useValue: { broadcast: jest.fn() } },

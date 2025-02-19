@@ -36,7 +36,6 @@ describe('ExamChecklistService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [MockProvider(ExamManagementService)],
         })
             .compileComponents()

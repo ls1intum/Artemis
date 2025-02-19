@@ -14,9 +14,7 @@ describe('DoughnutChartComponent', () => {
     const max = 100;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(DoughnutChartComponent);

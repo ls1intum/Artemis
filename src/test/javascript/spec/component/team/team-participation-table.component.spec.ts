@@ -147,7 +147,6 @@ describe('TeamParticipationTableComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 MockProvider(TranslateService),
                 { provide: TeamService, useClass: MockTeamService },

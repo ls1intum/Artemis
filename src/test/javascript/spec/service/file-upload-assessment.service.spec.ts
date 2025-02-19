@@ -17,7 +17,6 @@ describe('Modeling Assessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(FileUploadAssessmentService);

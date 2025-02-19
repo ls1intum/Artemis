@@ -9,7 +9,6 @@ describe('CodeEditorHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [],
         })

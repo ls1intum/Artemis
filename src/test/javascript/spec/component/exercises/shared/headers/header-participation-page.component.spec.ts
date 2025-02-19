@@ -23,7 +23,6 @@ describe('HeaderParticipationPage', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 HeaderParticipationPageComponent,
                 MockComponent(DifficultyBadgeComponent),

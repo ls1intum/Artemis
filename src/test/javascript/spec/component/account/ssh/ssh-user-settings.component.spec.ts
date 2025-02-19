@@ -44,7 +44,6 @@ describe('SshUserSettingsComponent', () => {
             error: jest.fn(),
         };
         await TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },

@@ -15,7 +15,6 @@ describe('TestExamWorkingTimeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [],
         })
             .compileComponents()

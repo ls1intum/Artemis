@@ -33,7 +33,6 @@ describe('RepositoryViewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DomainService, useValue: mockDomainService },

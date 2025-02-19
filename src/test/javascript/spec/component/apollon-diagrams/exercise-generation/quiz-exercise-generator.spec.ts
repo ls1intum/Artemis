@@ -40,7 +40,6 @@ describe('QuizExercise Generator', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [
                 provideHttpClient(),

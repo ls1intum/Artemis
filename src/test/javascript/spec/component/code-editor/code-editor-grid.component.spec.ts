@@ -14,9 +14,7 @@ describe('CodeEditorGridComponent', () => {
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorGridComponent);

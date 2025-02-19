@@ -97,7 +97,6 @@ describe('ExamParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,

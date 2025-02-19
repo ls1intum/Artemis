@@ -12,7 +12,6 @@ describe('SubmissionVersion Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 

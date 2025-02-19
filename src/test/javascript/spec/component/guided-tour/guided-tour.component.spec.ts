@@ -58,7 +58,6 @@ describe('GuidedTourComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(JhiConnectionWarningComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

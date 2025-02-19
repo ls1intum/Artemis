@@ -156,7 +156,6 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(ExamResultOverviewComponent),

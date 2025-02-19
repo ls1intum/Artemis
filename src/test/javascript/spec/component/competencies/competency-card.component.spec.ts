@@ -17,7 +17,6 @@ describe('CompetencyCardComponent', () => {
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),

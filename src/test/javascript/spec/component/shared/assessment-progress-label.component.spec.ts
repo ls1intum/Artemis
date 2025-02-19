@@ -10,9 +10,7 @@ describe('Assessment progress label test', () => {
     let fixture: ComponentFixture<AssessmentProgressLabelComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AssessmentProgressLabelComponent);

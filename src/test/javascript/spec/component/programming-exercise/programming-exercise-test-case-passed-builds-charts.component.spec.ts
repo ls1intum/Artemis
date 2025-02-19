@@ -8,9 +8,7 @@ describe('TestCasePassedBuildsChartComponent', () => {
     let fixture: ComponentFixture<TestCasePassedBuildsChartComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        }).compileComponents();
+        TestBed.configureTestingModule({}).compileComponents();
         fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
         comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;
     });

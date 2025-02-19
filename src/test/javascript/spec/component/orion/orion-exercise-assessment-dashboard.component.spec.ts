@@ -35,7 +35,6 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 OrionExerciseAssessmentDashboardComponent,
                 MockComponent(ExerciseAssessmentDashboardComponent),

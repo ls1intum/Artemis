@@ -37,7 +37,6 @@ describe('ModelingEditorComponent', () => {
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
             providers: [
                 provideHttpClient(),

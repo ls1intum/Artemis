@@ -18,7 +18,6 @@ describe('StatisticsComponent', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 StatisticsComponent,
                 MockComponent(StatisticsGraphComponent),

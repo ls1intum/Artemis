@@ -20,7 +20,6 @@ describe('AssessmentInstructionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 AssessmentInstructionsComponent,
                 MockComponent(ExpandableSectionComponent),

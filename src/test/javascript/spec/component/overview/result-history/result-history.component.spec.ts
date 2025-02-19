@@ -11,7 +11,6 @@ describe('ResultHistoryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()

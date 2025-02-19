@@ -23,7 +23,6 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [IrisGlobalSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService),

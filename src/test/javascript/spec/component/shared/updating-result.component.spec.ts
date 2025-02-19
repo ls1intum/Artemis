@@ -54,7 +54,6 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

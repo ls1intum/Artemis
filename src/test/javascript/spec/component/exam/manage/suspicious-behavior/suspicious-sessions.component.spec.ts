@@ -36,7 +36,6 @@ describe('SuspiciousSessionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe)],
         });
         fixture = TestBed.createComponent(SuspiciousSessionsComponent);

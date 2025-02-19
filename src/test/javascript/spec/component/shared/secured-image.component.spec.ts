@@ -32,7 +32,6 @@ describe('SecuredImageComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [SecuredImageComponent, UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
                 { provide: CacheableImageService, useClass: MockCacheableImageService },

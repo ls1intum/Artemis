@@ -29,7 +29,6 @@ describe('HeaderExercisePageWithDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 HeaderExercisePageWithDetailsComponent,
                 MockComponent(DifficultyBadgeComponent),

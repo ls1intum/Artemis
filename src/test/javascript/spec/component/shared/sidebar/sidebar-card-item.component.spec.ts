@@ -15,7 +15,6 @@ describe('SidebarCardItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [SidebarCardItemComponent, MockComponent(ProfilePictureComponent)],
         }).compileComponents();
 

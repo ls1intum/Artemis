@@ -51,7 +51,6 @@ describe('AthenaService', () => {
     } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
         })
             .compileComponents()

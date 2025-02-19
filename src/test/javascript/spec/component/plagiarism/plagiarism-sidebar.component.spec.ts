@@ -13,7 +13,6 @@ describe('Plagiarism Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

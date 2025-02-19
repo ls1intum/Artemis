@@ -7,7 +7,6 @@ describe('FormStatusBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [],
         })

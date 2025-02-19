@@ -741,7 +741,6 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
                 declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(NavbarComponent)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -17,7 +17,6 @@ describe('CoursePrerequisitesButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()

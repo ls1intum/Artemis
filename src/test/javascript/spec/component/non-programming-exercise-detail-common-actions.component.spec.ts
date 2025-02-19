@@ -34,7 +34,6 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 NonProgrammingExerciseDetailCommonActionsComponent,
                 MockComponent(SubmissionExportButtonComponent),

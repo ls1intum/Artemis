@@ -16,7 +16,6 @@ describe('FeedbackTextComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [MockProvider(LongFeedbackTextService)],
         })
             .compileComponents()

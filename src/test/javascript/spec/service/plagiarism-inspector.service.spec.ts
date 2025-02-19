@@ -11,9 +11,7 @@ describe('PlagiarismInspectorService', () => {
     let range: Range;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 service = TestBed.inject(PlagiarismInspectorService);

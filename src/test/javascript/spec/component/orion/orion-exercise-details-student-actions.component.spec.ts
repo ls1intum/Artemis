@@ -27,7 +27,6 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 OrionExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),

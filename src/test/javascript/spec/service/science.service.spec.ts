@@ -19,7 +19,6 @@ describe('ScienceService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },

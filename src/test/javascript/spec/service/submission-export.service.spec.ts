@@ -12,7 +12,6 @@ describe('Submission Export Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(SubmissionExportService);

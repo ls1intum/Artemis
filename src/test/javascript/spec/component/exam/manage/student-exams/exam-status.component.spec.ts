@@ -55,7 +55,6 @@ describe('ExamStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ExamStatusComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

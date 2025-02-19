@@ -103,7 +103,6 @@ describe('Lecture', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),

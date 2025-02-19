@@ -14,7 +14,6 @@ describe('LinkPreviewContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: LinkPreviewService, useClass: MockLinkPreviewService },
                 { provide: LinkifyService, useClass: LinkifyService },

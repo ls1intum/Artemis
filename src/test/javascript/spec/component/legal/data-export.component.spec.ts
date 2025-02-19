@@ -27,7 +27,6 @@ describe('DataExportComponent', () => {
     let route: ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 DataExportComponent,
                 MockComponent(ButtonComponent),

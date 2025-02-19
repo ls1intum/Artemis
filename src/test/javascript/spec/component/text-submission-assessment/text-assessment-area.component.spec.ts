@@ -14,7 +14,6 @@ describe('TextAssessmentAreaComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TextAssessmentAreaComponent,
                 MockComponent(TextBlockAssessmentCardComponent),

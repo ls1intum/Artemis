@@ -12,7 +12,6 @@ describe('Navigation Util Service', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: Router, useValue: router },
                 { provide: Location, useClass: Location },

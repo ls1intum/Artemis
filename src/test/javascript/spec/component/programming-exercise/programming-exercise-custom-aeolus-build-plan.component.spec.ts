@@ -63,7 +63,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ProgrammingExerciseCustomAeolusBuildPlanComponent,
                 MockComponent(FaIconComponent),

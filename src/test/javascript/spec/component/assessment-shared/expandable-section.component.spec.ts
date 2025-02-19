@@ -12,7 +12,6 @@ describe('ExpandableSectionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })

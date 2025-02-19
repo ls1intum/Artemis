@@ -10,9 +10,7 @@ describe('AssessmentWarningComponent', () => {
     let fixture: ComponentFixture<AssessmentWarningComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AssessmentWarningComponent);

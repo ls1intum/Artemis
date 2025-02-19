@@ -70,7 +70,6 @@ describe('ComplaintsStudentViewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ComplaintsStudentViewComponent,
                 MockPipe(ArtemisTranslatePipe),

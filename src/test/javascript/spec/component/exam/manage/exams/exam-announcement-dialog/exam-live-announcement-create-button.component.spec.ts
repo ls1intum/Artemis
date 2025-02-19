@@ -18,7 +18,6 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: NgbModal, useValue: { open: jest.fn() } },
                 { provide: AlertService, useValue: { closeAll: jest.fn() } },

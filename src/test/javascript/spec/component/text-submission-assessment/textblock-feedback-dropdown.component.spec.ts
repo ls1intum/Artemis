@@ -23,7 +23,6 @@ describe('TextblockFeedbackDropdownComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [TextblockFeedbackDropdownComponent, MockComponent(HelpIconComponent)],
         })
             .compileComponents()

@@ -38,7 +38,6 @@ describe('ExerciseDetailStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ExerciseDetailStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DoughnutChartComponent)],
             providers: [
                 { provide: Router, useClass: MockRouter },

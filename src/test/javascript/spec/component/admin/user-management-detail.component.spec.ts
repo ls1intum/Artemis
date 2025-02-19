@@ -16,7 +16,6 @@ describe('User Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

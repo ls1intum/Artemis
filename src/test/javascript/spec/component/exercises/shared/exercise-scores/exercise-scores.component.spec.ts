@@ -106,7 +106,6 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },

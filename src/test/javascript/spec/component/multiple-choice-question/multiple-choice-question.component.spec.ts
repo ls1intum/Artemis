@@ -16,7 +16,6 @@ describe('MultipleChoiceQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
             providers: [ArtemisMarkdownService],
         }).compileComponents();

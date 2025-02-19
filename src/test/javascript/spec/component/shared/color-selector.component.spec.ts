@@ -7,9 +7,7 @@ describe('ColorSelectorComponent', () => {
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ColorSelectorComponent);

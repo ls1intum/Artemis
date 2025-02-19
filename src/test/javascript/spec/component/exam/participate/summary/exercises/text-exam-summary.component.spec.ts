@@ -21,7 +21,6 @@ describe('TextExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 {
                     provide: ActivatedRoute,

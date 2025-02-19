@@ -123,7 +123,6 @@ describe('BuildAgentDetailsComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },

@@ -204,7 +204,6 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [],
             providers,
         })
             .compileComponents()

@@ -16,7 +16,6 @@ describe('ConversationThreadSidebarComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ConversationThreadSidebarComponent,
                 MockComponent(FaIconComponent),

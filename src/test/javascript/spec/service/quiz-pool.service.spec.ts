@@ -11,7 +11,6 @@ describe('QuizPoolService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), QuizPoolService],
         });
         quizPoolService = TestBed.inject(QuizPoolService);

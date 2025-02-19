@@ -7,9 +7,7 @@ describe('Fireworks', () => {
     let component: FireworksComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FireworksComponent);

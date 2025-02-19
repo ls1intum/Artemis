@@ -89,7 +89,6 @@ describe('ResultComponent', () => {
         global.URL.revokeObjectURL = jest.fn();
 
         await TestBed.configureTestingModule({
-            imports: [],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },

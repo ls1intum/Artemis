@@ -7,7 +7,6 @@ describe('Exam Exercise Update Service Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExamExerciseUpdateService],
-            imports: [],
         });
 
         service = TestBed.inject(ExamExerciseUpdateService);

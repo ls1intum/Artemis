@@ -54,7 +54,6 @@ describe('SuspiciousSessionsOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [SuspiciousSessionsOverviewComponent, MockComponent(SuspiciousSessionsComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
         });
         history.pushState({ suspiciousSessions: [suspiciousSessions, suspiciousSessions2, suspiciousSessions3] }, '');

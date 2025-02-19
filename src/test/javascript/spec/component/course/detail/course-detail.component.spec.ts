@@ -69,7 +69,6 @@ describe('Course Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),

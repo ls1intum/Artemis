@@ -100,7 +100,6 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: NgbModal, useClass: MockNgbModalService },

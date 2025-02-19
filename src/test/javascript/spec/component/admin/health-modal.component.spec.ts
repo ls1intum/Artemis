@@ -12,7 +12,6 @@ describe('HealthModalComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [MockProvider(NgbActiveModal)],
         })
             .compileComponents()

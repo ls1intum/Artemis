@@ -9,7 +9,6 @@ describe('GitDiffLineStatComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [GitDiffLineStatComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();

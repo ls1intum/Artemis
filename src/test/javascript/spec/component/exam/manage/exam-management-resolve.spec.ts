@@ -17,7 +17,6 @@ describe('Exam Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExamResolve, MockProvider(ExamManagementService)],
-            imports: [],
         });
 
         resolve = TestBed.inject(ExamResolve);
@@ -101,7 +100,6 @@ describe('Exam Group Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExerciseGroupResolve, MockProvider(ExerciseGroupService)],
-            imports: [],
         });
 
         resolve = TestBed.inject(ExerciseGroupResolve);
@@ -151,7 +149,6 @@ describe('Student Exam Resolve', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [StudentExamResolve, MockProvider(StudentExamService)],
-            imports: [],
         });
 
         resolve = TestBed.inject(StudentExamResolve);

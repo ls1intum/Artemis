@@ -57,7 +57,6 @@ describe('ManualTextblockSelectionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ManualTextblockSelectionComponent, MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
             providers: [MockProvider(TextSelectDirective)], // Not mocking this will cause a leak through the mocked ManualTextSelectionComponent
         })

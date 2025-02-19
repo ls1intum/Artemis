@@ -21,7 +21,6 @@ describe('OrionValidatorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [OrionVersionValidator, MockProvider(Router), MockProvider(ProfileService)],
         });
         orionVersionValidator = TestBed.inject(OrionVersionValidator);

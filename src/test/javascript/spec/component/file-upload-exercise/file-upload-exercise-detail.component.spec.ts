@@ -59,7 +59,6 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 FileUploadExerciseDetailComponent,
                 MockPipe(HtmlForMarkdownPipe),
