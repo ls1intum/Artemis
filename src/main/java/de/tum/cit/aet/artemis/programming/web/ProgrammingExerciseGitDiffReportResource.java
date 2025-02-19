@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.CommitHistoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -57,22 +56,19 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final CommitHistoryService commitHistoryService;
-
     private final RepositoryService repositoryService;
 
     private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService, CommitHistoryService commitHistoryService, RepositoryService repositoryService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.gitDiffReportService = gitDiffReportService;
         this.submissionRepository = submissionRepository;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.commitHistoryService = commitHistoryService;
         this.repositoryService = repositoryService;
     }
 
@@ -193,7 +189,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         else {
             throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
         }
-        var report = commitHistoryService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
+        var report = gitDiffReportService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
         return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
 }
