@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication.notifications.service.mail;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,5 +36,36 @@ class DataExportFailedMailTest extends AbstractMailContentTest {
         assertThat(capturedContent).contains("test_login");
         assertThat(capturedContent).contains("test_subject");
         assertThat(capturedContent).contains("test_reason");
+    }
+
+    @Test
+    void testThatExceptionIsThrownWhenPassedExceptionIsNull() {
+        // Arrange:
+        User recipient = createMinimalMailRecipientUser();
+        DataExport dataExport = new DataExport();
+
+        // Act and Assert:
+        assertThatThrownBy(() -> mailService.sendDataExportFailedEmailToAdmin(recipient, dataExport, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Parameters cannot be null");
+    }
+
+    @Test
+    void testThatExceptionIsThrownWhenPassedDataExportIsNull() {
+        // Arrange:
+        User recipient = createMinimalMailRecipientUser();
+
+        // Act and Assert:
+        assertThatThrownBy(() -> mailService.sendDataExportFailedEmailToAdmin(recipient, null, new Exception())).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Parameters cannot be null");
+    }
+
+    @Test
+    void testThatExceptionIsThrownWhenUserOfTheDataExportIsNull() {
+        // Arrange:
+        User recipient = createMinimalMailRecipientUser();
+
+        // Act and Assert:
+        assertThatThrownBy(() -> mailService.sendDataExportFailedEmailToAdmin(recipient, new DataExport(), new Exception())).isInstanceOf(IllegalStateException.class)
+                .hasMessage("DataExport user cannot be null");
     }
 }

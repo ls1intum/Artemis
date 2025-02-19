@@ -14,18 +14,14 @@ public record SAML2SetPasswordMailRecipientDTO(String langKey, String email, Str
     /**
      * Factory method to create a {@link SAML2SetPasswordMailRecipientDTO} instance from a {@link User}.
      *
-     * @param user The user object used to populate the DTO. Must not be {@code null}.
+     * @param user The user object used to populate the DTO.
      *                 The {@code resetKey} field in the {@code User} must also not be {@code null}.
      * @return A new {@link SAML2SetPasswordMailRecipientDTO} containing the user's language key, email, login, and reset key.
-     * @throws IllegalArgumentException if {@code user} is {@code null}.
-     * @throws IllegalStateException    if the {@code resetKey} field of {@code user} is {@code null}.
+     * @throws IllegalStateException if the {@code resetKey} field of {@code user} is {@code null}.
      */
     public static SAML2SetPasswordMailRecipientDTO of(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
         if (user.getResetKey() == null) {
-            throw new IllegalStateException("Reset key is not set");
+            throw new IllegalStateException("Reset key is required");
         }
         return new SAML2SetPasswordMailRecipientDTO(user.getLangKey(), user.getEmail(), user.getLogin(), user.getResetKey());
     }

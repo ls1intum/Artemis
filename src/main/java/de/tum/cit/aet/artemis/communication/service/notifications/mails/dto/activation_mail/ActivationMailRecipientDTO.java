@@ -14,16 +14,12 @@ public record ActivationMailRecipientDTO(String langKey, String email, String lo
     /**
      * Factory method to create an instance of {@link ActivationMailRecipientDTO} from a {@link User}.
      *
-     * @param user The user entity from which the DTO will be created. Must not be {@code null}.
+     * @param user The user entity from which the DTO will be created.
      * @return A new {@link ActivationMailRecipientDTO} containing the user's language key, email,
      *         login, and activation key.
-     * @throws IllegalArgumentException if the {@code user} parameter is {@code null}.
-     * @throws IllegalStateException    if the {@code user} lacks an activation key.
+     * @throws IllegalStateException if the {@code user} lacks an activation key.
      */
     public static ActivationMailRecipientDTO of(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
         if (user.getActivationKey() == null) {
             throw new IllegalStateException("Activation key is required for account activation");
         }

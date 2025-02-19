@@ -22,8 +22,6 @@ class WeeklySummaryMailTest extends AbstractMailContentTest {
     void testThatVariablesAreInjectedIntoTheTemplate() {
         // Arrange:
         User recipient = createMinimalMailRecipientUser();
-        recipient.setLogin("test_login");
-        recipient.setResetKey("test_reset_key");
 
         ZonedDateTime dueDateTime = ZonedDateTime.now().plusDays(1);
         ZonedDateTime releaseDateTime = ZonedDateTime.now().minusDays(1);

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication.notifications.service.mail;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,5 +27,14 @@ class PasswordResetMailTest extends AbstractMailContentTest {
         String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_login");
         assertThat(capturedContent).contains("test_reset_key");
+    }
+
+    @Test
+    void testThatExceptionIsThrownWhenResetKeyIsMissing() {
+        // Arrange:
+        User recipient = createMinimalMailRecipientUser();
+
+        // Act and Assert:
+        assertThatThrownBy(() -> mailService.sendPasswordResetMail(recipient)).isInstanceOf(IllegalStateException.class).hasMessage("Reset key is required");
     }
 }

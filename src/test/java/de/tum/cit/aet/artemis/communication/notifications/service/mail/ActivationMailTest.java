@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication.notifications.service.mail;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,5 +27,16 @@ class ActivationMailTest extends AbstractMailContentTest {
         String capturedContent = getGeneratedEmailTemplateText(subject);
         assertThat(capturedContent).contains("test_student");
         assertThat(capturedContent).contains("test_key");
+    }
+
+    @Test
+    void testThatExceptionIsThrownWhenActivationKeyIsMissing() {
+        // Arrange:
+        User recipient = createMinimalMailRecipientUser();
+        recipient.setLogin("test_student");
+
+        // Act and Assert:
+        assertThatThrownBy(() -> mailService.sendActivationEmail(recipient)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Activation key is required for account activation");
     }
 }

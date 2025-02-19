@@ -12,9 +12,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public record NotificationMailRecipientDTO(String langKey, String email, String name, String login) implements IMailRecipientUserDTO {
 
     public static NotificationMailRecipientDTO of(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
         return new NotificationMailRecipientDTO(user.getLangKey(), user.getEmail(), user.getName(), user.getLogin());
     }
 }
