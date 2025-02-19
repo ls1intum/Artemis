@@ -79,9 +79,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
-    @Input() isButtonLoading = false;
-    @Input() isFormGroupValid = false;
-    @Input() editType: PostingEditType;
+
+    isButtonLoading = input<boolean>(false);
+    isFormGroupValid = input<boolean>(false);
+    editType = input<PostingEditType>();
 
     readonly EditType = PostingEditType.CREATE;
     /**

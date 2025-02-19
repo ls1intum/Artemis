@@ -242,9 +242,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    @Input() isButtonLoading = false;
-    @Input() isFormGroupValid = false;
-    @Input() editType: PostingEditType;
+    isButtonLoading = input<boolean>(false);
+    isFormGroupValid = input<boolean>(false);
+    editType = input<PostingEditType>();
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
