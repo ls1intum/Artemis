@@ -18,6 +18,11 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sar
 public class ParserPolicy {
 
     /**
+     * This is used as the category of all code issues if the analysis tool does not assign a category.
+     */
+    public static final String GENERIC_LINT_CATEGORY = "Lint";
+
+    /**
      * Selects the appropriate parsing strategy based on the filename of the static code analysis XML report.
      *
      * @param fileName Name of the file that contains the static code analysis report
@@ -33,7 +38,7 @@ public class ParserPolicy {
             case CHECKSTYLE -> new CheckstyleParser();
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
-            case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer("Lint"));
+            case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());
