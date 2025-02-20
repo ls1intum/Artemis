@@ -178,7 +178,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
                 if (graphemes.length === 0) return;
 
-                graphemes.pop();
+                const lastGrapheme = graphemes.pop();
+                const deletedLength = lastGrapheme?.length ?? 1;
                 const newTextBeforeCursor = graphemes.join('');
                 const textAfterCursor = lineContent.substring(column - 1);
 
@@ -193,6 +194,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     ],
                     () => null,
                 );
+                const newCursorPosition = column - deletedLength;
+                this._editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
             }) || undefined;
     }
 

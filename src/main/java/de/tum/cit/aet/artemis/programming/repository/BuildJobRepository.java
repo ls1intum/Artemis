@@ -123,7 +123,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @Transactional
     @Modifying
-    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
+    @Query("""
+            UPDATE BuildJob b
+            SET b.buildStatus = :newStatus
+            WHERE b.buildJobId = :buildJobId
+            """)
     void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 
     /**

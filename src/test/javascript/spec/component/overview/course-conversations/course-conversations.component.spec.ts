@@ -12,7 +12,7 @@ import { ConversationMessagesComponent } from 'app/overview/course-conversations
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -29,7 +29,6 @@ import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -84,6 +83,9 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
+        const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
+        MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
