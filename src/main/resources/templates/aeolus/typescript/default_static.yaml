@@ -6,7 +6,7 @@ actions:
   - name: install_dependencies
     script: 'npm ci --prefer-offline --no-audit'
   - name: static_code_analysis
-    script: 'npm run lint:ci'
+    script: 'npm run lint:ci || [ $? -eq 1 ]'
     results:
       - name: ESLint issues
         path: 'eslint.sarif'
