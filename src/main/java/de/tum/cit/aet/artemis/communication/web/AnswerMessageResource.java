@@ -106,6 +106,16 @@ public class AnswerMessageResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /communication/courses/{courseId}/answer-messages-source-posts : Retrieve source answer posts by their IDs
+     *
+     * @param courseId      id of the course the answer posts belong to
+     * @param answerPostIds list of answer post IDs to retrieve
+     * @return ResponseEntity with status 200 (OK) containing the list of found answer posts,
+     *         400 (Bad Request) if the provided list is null or empty,
+     *         or 404 (Not Found) if no matching answer posts are found
+     * @throws BadRequestAlertException if the provided answer post IDs are null, empty, or belong to a different course
+     */
     @GetMapping("communication/courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
