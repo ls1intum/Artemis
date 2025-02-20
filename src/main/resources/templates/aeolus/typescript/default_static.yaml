@@ -11,6 +11,8 @@ actions:
       - name: ESLint issues
         path: 'eslint.sarif'
         type: sca
+  - name: build
+    script: 'npm run build'
   - name: test
     script: 'npm run test:ci'
     runAlways: false

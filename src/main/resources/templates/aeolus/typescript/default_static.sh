@@ -11,6 +11,11 @@ static_code_analysis () {
   npm run lint:ci || [ $? -eq 1 ]
 }
 
+build () {
+  echo '⚙️ executing build'
+  npm run build
+}
+
 test () {
   echo '⚙️ executing test'
   npm run test:ci
@@ -26,6 +31,8 @@ main () {
   bash -c "source ${_script_name} aeolus_sourcing; install_dependencies"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; static_code_analysis"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; build"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; test"
 }
