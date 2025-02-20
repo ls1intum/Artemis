@@ -1,16 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
 import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/lecture-transcription.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-lecture-transcription-ingestion',
     templateUrl: './lecture-transcription-ingestion.component.html',
     styleUrl: './lecture-transcription-ingestion.component.scss',
     standalone: true,
-    imports: [ArtemisSharedComponentModule, FormsModule],
+    imports: [FormsModule, ButtonComponent],
 })
 export class LectureTranscriptionIngestionComponent {
     private lectureTranscriptionService = inject(LectureTranscriptionService);
