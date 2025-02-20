@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 
 /**
  * REST controller for managing AnswerPost.
@@ -36,11 +35,8 @@ public class PlagiarismAnswerPostResource {
 
     private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 
-    private final PlagiarismCaseService plagiarismCaseService;
-
-    public PlagiarismAnswerPostResource(PlagiarismAnswerPostService plagiarismAnswerPostService, PlagiarismCaseService plagiarismCaseService) {
+    public PlagiarismAnswerPostResource(PlagiarismAnswerPostService plagiarismAnswerPostService) {
         this.plagiarismAnswerPostService = plagiarismAnswerPostService;
-        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -58,7 +54,7 @@ public class PlagiarismAnswerPostResource {
         long start = System.nanoTime();
         AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPost);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismCaseService.informInstructorAboutPostReply(createdAnswerPost.getPost());
+        plagiarismAnswerPostService.informInstructorAboutPostReply(createdAnswerPost.getPost());
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
 

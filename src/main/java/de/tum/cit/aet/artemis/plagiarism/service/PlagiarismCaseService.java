@@ -91,10 +91,6 @@ public class PlagiarismCaseService {
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
     }
 
-    public void informInstructorAboutPostReply(Post post) {
-        singleUserNotificationService.notifyInstructionAboutPlagiarismCaseReply(post.getPlagiarismCase(), post.getAuthor());
-    }
-
     /**
      * Save a post for a plagiarism case and notify the student about the plagiarism case.
      *
