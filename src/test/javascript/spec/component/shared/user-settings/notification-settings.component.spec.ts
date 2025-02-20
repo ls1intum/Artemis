@@ -30,24 +30,19 @@ describe('NotificationSettingsComponent', () => {
         changed: false,
     };
 
-    const imports: any[] = [];
-    const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
-    const providers = [
-        MockProvider(AlertService),
-        MockProvider(NotificationSettingsService),
-        MockProvider(UrlSerializer),
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
-        { provide: TranslateService, useClass: MockTranslateService },
-        provideHttpClient(),
-        provideHttpClientTesting(),
-    ];
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports,
-            declarations,
-            providers,
+            declarations: [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(NotificationSettingsService),
+                MockProvider(UrlSerializer),
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
