@@ -164,6 +164,33 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         }
     }
 
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    void shouldGetTheLatestSubmission(ExerciseType exerciseType) {
+        var exercise = exerciseByType.get(exerciseType);
+        exercise.setDueDate(ZonedDateTime.now());
+        var participation = new StudentParticipation().exercise(exercise);
+        Set<Submission> submissions = new java.util.HashSet<>();
+        Submission expectedLatestSubmission = null;
+
+        for (int i = 0; i < 3; i++) {
+            var submission = getSubmissionBasedOnExerciseType(exerciseType);
+            // i + 1 one to make sure that the submission date is before the due date
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(i + 1));
+            // ids in the order of submission date
+            submission.setId(2L - i);
+            submission.setParticipation(participation);
+            submission.setResults(List.of(new Result().rated(true).completionDate(ZonedDateTime.now().minusDays(i + 1))));
+            submissions.add(submission);
+            if (i == 0) {
+                expectedLatestSubmission = submission;
+            }
+        }
+
+        var latestSubmission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
+        assertThat(latestSubmission).isPresent().get().isEqualTo(expectedLatestSubmission);
+    }
+
     /// PROGRAMMING SUBMISSIONS ///
 
     @ParameterizedTest

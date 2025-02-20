@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -905,16 +904,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void disconnectRelatedEntities() {
         Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
-    }
-
-    /**
-     * Checks if the current result has been assessed and the assessment due date is over.
-     *
-     * @param result the current result
-     * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
-     */
-    protected boolean isResultAssessedAndAssessmentDueDateOver(Result result) {
-        return result.isAssessmentComplete() && ExerciseDateService.isAfterAssessmentDueDate(this);
     }
 
     public ZonedDateTime getDueDateForParticipation(StudentParticipation participation) {
