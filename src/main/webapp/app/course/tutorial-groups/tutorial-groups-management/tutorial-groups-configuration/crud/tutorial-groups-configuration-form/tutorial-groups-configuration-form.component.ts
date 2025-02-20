@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -19,6 +20,7 @@ export interface TutorialGroupsConfigurationFormData {
     styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe],
+    providers: [ArtemisDatePipe],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
