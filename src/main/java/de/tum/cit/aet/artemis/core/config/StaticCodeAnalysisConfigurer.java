@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
 
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map
@@ -82,12 +83,17 @@ public class StaticCodeAnalysisConfigurer {
 
     private static final List<String> CATEGORY_NAMES_RUBOCOP = List.of("Bundler", "Gemspec", "Layout", "Lint", "Metrics", "Migration", "Naming", "Security", "Style");
 
+    private static final List<String> CATEGORY_NAMES_DART_ANALYZE = List.of("TODO", "HINT", "COMPILE_TIME_ERROR", "CHECKED_MODE_COMPILE_TIME_ERROR", "STATIC_WARNING",
+            "SYNTACTIC_ERROR", "LINT");
+
     // @formatter:off
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
             entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
+            entry(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE)),
             entry(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava()),
             entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
             entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
+            entry(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY)),
             entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
     );
     // @formatter:on

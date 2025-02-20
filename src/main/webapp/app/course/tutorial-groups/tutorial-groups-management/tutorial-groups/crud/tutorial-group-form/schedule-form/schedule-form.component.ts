@@ -29,7 +29,7 @@ export interface ScheduleFormData {
     selector: 'jhi-schedule-form',
     templateUrl: './schedule-form.component.html',
     styleUrls: ['./schedule-form.component.scss'],
-    providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
+    providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTimepicker, OwlDateTimeModule, FaIconComponent, ArtemisDatePipe, ArtemisDateRangePipe, ArtemisTranslatePipe],
 })
