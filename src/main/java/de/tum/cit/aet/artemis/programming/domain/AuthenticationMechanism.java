@@ -25,4 +25,12 @@ public enum AuthenticationMechanism {
      * The user attempted to authenticate to the LocalVC using either a user token or a participation token
      */
     VCS_ACCESS_TOKEN,
+    /**
+     * The user used HTTPS
+     */
+    HTTPS,
+    /**
+     * It is unclear what the user used
+     */
+    OTHER
 }

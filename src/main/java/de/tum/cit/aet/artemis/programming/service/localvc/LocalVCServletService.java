@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
@@ -255,8 +257,15 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException();
         }
 
-        var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
-        savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+        try {
+            var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
+            savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+        }
+        catch (LocalVCForbiddenException e) {
+            log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
+            saveFailedAccessVcsAccessLog(Optional.of(request), Optional.empty(), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
+            throw new AccessDeniedException("User does not have access to this repository", e);
+        }
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -278,18 +287,66 @@ public class LocalVCServletService {
             var ipAddress = request.getRemoteAddr();
             var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
 
-            String commitHash = null;
-            try {
-                commitHash = getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
-            }
-            catch (GitAPIException e) {
-                log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
-            }
-
-            String finalCommitHash = commitHash;
+            String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
         }
+    }
+
+    /**
+     * Logs a failed attempt to access a repository.
+     *
+     * @param request                  An optional {@link HttpServletRequest} containing request details if access was attempted via HTTPS.
+     * @param session                  An optional {@link ServerSession} containing session details if access was attempted via SSH.
+     * @param repositoryTypeOrUserName A string representing either the repository type or the username associated with the repository.
+     * @param exercise                 The {@link Exercise} associated with the repository.
+     * @param localVCRepositoryUri     The {@link LocalVCRepositoryUri} representing the repository location.
+     * @param user                     The {@link User} attempting the access.
+     * @param repositoryAction         The {@link RepositoryActionType} action that was attempted.
+     */
+    public void saveFailedAccessVcsAccessLog(Optional<HttpServletRequest> request, Optional<ServerSession> session, String repositoryTypeOrUserName, Exercise exercise,
+            LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction) {
+        String ipAddress = "";
+        AuthenticationMechanism authenticationMechanism = AuthenticationMechanism.OTHER;
+        var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
+
+        // HTTPS
+        if (request.isPresent()) {
+            ipAddress = request.get().getRemoteAddr();
+            try {
+                authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.get().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+            }
+            catch (LocalVCAuthException ignored) {
+                authenticationMechanism = AuthenticationMechanism.HTTPS;
+            }
+        }
+        // SSH
+        if (session.isPresent()) {
+            ipAddress = session.get().getClientAddress().toString();
+            authenticationMechanism = AuthenticationMechanism.SSH;
+        }
+
+        String finalCommitHash = getCommitHash(localVCRepositoryUri);
+        var finalAuthenticationMechanism = authenticationMechanism;
+        var finalIpAddress = ipAddress;
+        RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, finalAuthenticationMechanism, finalCommitHash, finalIpAddress));
+    }
+
+    /**
+     * Retrieves the latest commit hash from the given repository.
+     *
+     * @param localVCRepositoryUri The {@link LocalVCRepositoryUri} representing the repository location.
+     * @return The latest commit hash as a string, or an empty string if retrieval fails.
+     */
+    private String getCommitHash(LocalVCRepositoryUri localVCRepositoryUri) {
+        try {
+            return getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
+        }
+        catch (GitAPIException e) {
+            log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
+        }
+        return "";
     }
 
     /**
@@ -482,7 +539,7 @@ public class LocalVCServletService {
      * @param repositoryActionType     The type of the action the user wants to perform.
      * @param localVCRepositoryUri     The URI of the local repository.
      * @param usingSSH                 The flag specifying whether the method is called from the SSH or HTTPs context
-     * @return the ProgrammingParticipation Optional, containing the participation fetched during authorization
+     * @return the ProgrammingParticipation Optional, containing the fetched participation
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
@@ -499,6 +556,16 @@ public class LocalVCServletService {
         return Optional.of(participation);
     }
 
+    /**
+     * Attempts to load a programming exercise participation based on the provided parameters.
+     *
+     * @param usingSSH                 {@code true} if the user's session is over SSH, {@code false} if over HTTP
+     * @param repositoryTypeOrUserName A string representing either the repository type or the username associated with the repository.
+     * @param localVCRepositoryUri     The local version control repository URI.
+     * @param exercise                 The programming exercise for which participation is being fetched.
+     * @return The fetched {@link ProgrammingExerciseParticipation} instance.
+     * @throws LocalVCInternalException If no participation is found and it is not an auxiliary repository.
+     */
     private ProgrammingExerciseParticipation tryToLoadParticipation(boolean usingSSH, String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri,
             ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
