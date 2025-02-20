@@ -176,7 +176,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 const splitter = new Graphemer();
                 const graphemes = splitter.splitGraphemes(textBeforeCursor);
 
-                if (graphemes.length === 0) return;
+                if (textBeforeCursor.length === 0) {
+                    this._editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
 
                 const lastGrapheme = graphemes.pop();
                 const deletedLength = lastGrapheme?.length ?? 1;
@@ -184,6 +187,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 const textAfterCursor = lineContent.substring(column - 1);
 
                 const newLineContent = newTextBeforeCursor + textAfterCursor;
+
                 model.pushEditOperations(
                     [],
                     [
