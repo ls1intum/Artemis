@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserPolicy;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
 
 /**
@@ -94,7 +95,8 @@ public class StaticCodeAnalysisConfigurer {
             entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
             entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
             entry(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY)),
-            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
+            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift()),
+            entry(ProgrammingLanguage.TYPESCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT))
     );
     // @formatter:on
 
