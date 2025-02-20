@@ -28,8 +28,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService);
-    protected fileUploadExerciseService = inject(FileUploadExerciseService);
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected fileUploadExerciseService = inject(FileUploadExerciseService); // needed in html code
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -79,10 +79,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a file upload exercise in the collection
+     * @param _index of a file upload exercise in the collection
      * @param item current file upload exercise
      */
-    trackId(index: number, item: FileUploadExercise) {
+    trackId(_index: number, item: FileUploadExercise) {
         return item.id;
     }
 

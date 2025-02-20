@@ -89,6 +89,7 @@ describe('QuizExercise Management Component', () => {
         );
 
         comp.ngOnInit();
+        // @ts-ignore
         comp.deleteMultipleExercises([{ id: 1 }, { id: 2 }, { id: 3 }] as QuizExercise[], comp.quizExerciseService);
         expect(quizExerciseService.delete).toHaveBeenCalledTimes(3);
     });

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -70,12 +72,10 @@ public class LectureResource {
 
     private static final String ENTITY_NAME = "lecture";
 
-    private final CompetencyApi competencyApi;
-
-    private final LectureTranscriptionRepository lectureTranscriptionRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final Optional<CompetencyApi> competencyApi;
 
     private final LectureRepository lectureRepository;
 
@@ -97,9 +97,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final LectureTranscriptionRepository lectureTranscriptionRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, LectureService lectureService,
             LectureImportService lectureImportService, CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ExerciseService exerciseService, ChannelService channelService, ChannelRepository channelRepository, CompetencyApi competencyApi,
+            ExerciseService exerciseService, ChannelService channelService, ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi,
             LectureTranscriptionRepository lectureTranscriptionRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -380,7 +382,9 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
-        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
+        if (competencyApi.isPresent()) {
+            competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
+        }
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -410,7 +414,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
-        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

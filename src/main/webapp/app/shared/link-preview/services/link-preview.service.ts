@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { shareReplay } from 'rxjs/operators';
 import { Link } from 'app/shared/link-preview/services/linkify.service';
 
 export interface LinkPreview {
@@ -12,7 +12,7 @@ export interface LinkPreview {
     shouldPreviewBeShown?: boolean;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class LinkPreviewService {
     private http = inject(HttpClient);
 
@@ -28,10 +28,11 @@ export class LinkPreviewService {
             return this.cache[url];
         }
 
-        const preview$ = this.http.post(this.resourceUrl, url).pipe(
-            map((value) => value as LinkPreview),
-            shareReplay(1),
-        );
+        // Encode the URL to ensure special characters are properly handled
+        const encodedUrl = encodeURIComponent(url);
+        const params = new HttpParams().set('url', encodedUrl);
+
+        const preview$ = this.http.get<LinkPreview>(this.resourceUrl, { params }).pipe(shareReplay(1));
 
         this.cache[url] = preview$;
         return preview$;

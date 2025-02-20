@@ -21,9 +21,9 @@ import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/c
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import dayjs from 'dayjs';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import dayjs from 'dayjs/esm';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -81,7 +81,7 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private accountService = inject(AccountService);
 
     pinEmojiId: string = PIN_EMOJI_ID;
@@ -220,7 +220,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
 
             if (lastReadDate && creationDate) {
                 const lastReadDateDayJs = dayjs(lastReadDate);
-                // @ts-ignore
                 if (!isAuthor && creationDate.isAfter(lastReadDateDayJs)) {
                     showIcon = true;
                 }
@@ -416,6 +415,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    /**
+     * Checks whether the post is pinned.
+     * Used in posting.directive.ts to determine the pin status for the dropdown menu.
+     *
+     * @returns {DisplayPriority} The display priority of the post.
+     */
     checkIfPinned(): DisplayPriority {
         return this.displayPriority;
     }
