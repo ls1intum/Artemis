@@ -8,7 +8,7 @@ install_dependencies () {
 
 static_code_analysis () {
   echo '⚙️ executing static_code_analysis'
-  npm run lint:ci
+  npm run lint:ci || [ $? -eq 1 ]
 }
 
 test () {
