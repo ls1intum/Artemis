@@ -125,7 +125,7 @@ The SAML2 configuration for Artemis at your IT department could look like this:
 
 .. code:: xml
 
-    <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<REGISTRATION_ID_HERE>" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+    <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
       <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <md:KeyDescriptor use="signing">
           <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -141,6 +141,6 @@ The SAML2 configuration for Artemis at your IT department could look like this:
             </ds:X509Data>
           </ds:KeyInfo>
         </md:KeyDescriptor>
-        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://ARTEMIS_URL_HERE/login/saml2/sso/REGISTRATION_ID_HERE" index="1"/>
+        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://<<ARTEMIS_URL_HERE>>/login/saml2/sso/<<REGISTRATION_ID_HERE>>" index="1"/>
       </md:SPSSODescriptor>
     </md:EntityDescriptor>
