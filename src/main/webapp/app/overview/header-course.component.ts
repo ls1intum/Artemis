@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -17,7 +17,7 @@ import { getContrastingTextColor } from 'app/utils/color.utils';
     styleUrls: ['./header-course.component.scss'],
     imports: [NgStyle, FaIconComponent, TranslateDirective, RouterLink, SecuredImageComponent, ArtemisTranslatePipe],
 })
-export class HeaderCourseComponent implements OnChanges, OnInit {
+export class HeaderCourseComponent implements OnChanges {
     protected router = inject(Router);
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -33,15 +33,9 @@ export class HeaderCourseComponent implements OnChanges, OnInit {
 
     faArrowDown = faArrowDown;
 
-    // Removed ngOnInit to consolidate initialization logic
-
     ngOnChanges() {
         this.courseColor = this.course.color || ARTEMIS_DEFAULT_COLOR;
         this.contentColor = getContrastingTextColor(this.courseColor);
-        this.adjustCourseDescription();
-    }
-
-    ngOnChanges() {
         this.adjustCourseDescription();
     }
 
