@@ -17,8 +17,8 @@ public class ArtemisConfigHelper {
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
-            log.error("Property {} not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false", key);
-            System.exit(1);
+            throw new RuntimeException(
+                    String.format("Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false", key));
         }
         return value;
     }
