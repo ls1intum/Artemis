@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis (Server, LocalVC &amp; Jenkins)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="dev,jenkins,localvc,artemis,scheduling,core,atlas,local" />
+    <option name="ACTIVE_PROFILES" value="dev,jenkins,localvc,artemis,scheduling,corelocal" />
     <module name="Artemis.main" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.cit.aet.artemis.ArtemisApp" />
