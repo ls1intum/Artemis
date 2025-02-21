@@ -85,6 +85,7 @@ describe('NavbarComponent', () => {
             },
         },
         activeProfiles: ['test'],
+        activeModuleFeatures: [],
     } as ProfileInfo;
 
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
