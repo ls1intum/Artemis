@@ -42,7 +42,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { PROFILE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
@@ -167,7 +167,7 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, PROFILE_ATLAS] } as ProfileInfo;
+            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, MODULE_FEATURE_ATLAS] } as ProfileInfo;
             const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
             const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
             const organization = new Organization();
@@ -951,7 +951,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, PROFILE_ATLAS] } as ProfileInfo;
+        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, MODULE_FEATURE_ATLAS] } as ProfileInfo;
         const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
 

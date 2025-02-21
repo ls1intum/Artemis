@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.export;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
 
 /**
  * A Service to create the science event export data for users.
@@ -42,7 +42,7 @@ public class DataExportScienceEventService {
      * @throws IOException if the file cannot be created
      */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
-        var api = scienceEventApi.orElseThrow(() -> new ApiNotPresentException(ScienceEventApi.class, PROFILE_ATLAS));
+        var api = scienceEventApi.orElseThrow(() -> new ApiConditionNotPresentException(ScienceEventApi.class, ATLAS_ENABLED_PROPERTY_NAME));
         var scienceEvents = api.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }
