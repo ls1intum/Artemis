@@ -16,7 +16,10 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,13 +193,14 @@ public class ProgrammingExerciseGitDiffReportService {
 
         // TODO find a way to make this work gitService.getBareRepository(vcsRepositoryUri);
 
-        // if (profileService.isLocalVcsActive()) {
-        // templateRepo = gitService.getBareRepository(templateParticipation.getVcsRepositoryUri());
-        // submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
-        // } else {
-        templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
-        submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
-
+        if (profileService.isLocalVcsActive()) {
+            templateRepo = gitService.getBareRepository(templateParticipation.getVcsRepositoryUri());
+            submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
+        }
+        else {
+            templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
+            submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
+        }
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(submissionRepository);
         var report = createReport(templateRepo, oldTreeParser, newTreeParser);
@@ -246,9 +250,17 @@ public class ProgrammingExerciseGitDiffReportService {
         Repository solutionRepo;
         // TODO: in case of LocalVC, we should calculate the diff in the bare origin repository
         // TODO localVC - find a way to compare commits of different repositories
-        templateRepo = prepareRepository(templateVcsRepositoryUri);
-        solutionRepo = prepareRepository(solutionVcsRepositoryUri);
+        if (profileService.isLocalVcsActive()) {
 
+            templateRepo = gitService.getBareRepository(templateVcsRepositoryUri);
+            solutionRepo = gitService.getBareRepository(solutionVcsRepositoryUri);
+            return createReport(templateRepo, solutionRepo);
+
+        }
+        else {
+            templateRepo = prepareRepository(templateVcsRepositoryUri);
+            solutionRepo = prepareRepository(solutionVcsRepositoryUri);
+        }
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
 
@@ -307,6 +319,42 @@ public class ProgrammingExerciseGitDiffReportService {
             for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
                 gitDiffEntry.setGitDiffReport(report);
             }
+            report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
+            return report;
+        }
+    }
+
+    private ProgrammingExerciseGitDiffReport createReport(Repository firstRepo, Repository secondRepo) throws IOException, GitAPIException {
+
+        try (ObjectReader firstReader = firstRepo.newObjectReader();
+                ObjectReader secondReader = secondRepo.newObjectReader();
+                ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream();
+                DiffFormatter diffFormatter = new DiffFormatter(diffOutputStream)) {
+
+            // Resolve the tree IDs
+            ObjectId firstTreeId = firstRepo.resolve("HEAD^{tree}");
+            ObjectId secondTreeId = secondRepo.resolve("HEAD^{tree}");
+
+            // Initialize tree parsers
+            CanonicalTreeParser firstTreeParser = new CanonicalTreeParser();
+            CanonicalTreeParser secondTreeParser = new CanonicalTreeParser();
+            firstTreeParser.reset(firstReader, firstTreeId);
+            secondTreeParser.reset(secondReader, secondTreeId);
+
+            // Configure DiffFormatter (it supports cross-repository diff)
+            diffFormatter.setRepository(firstRepo); // Only used for configuration, diff is still cross-repo
+            diffFormatter.setDetectRenames(true);
+            diffFormatter.format(firstTreeParser, secondTreeParser); // Generate diff
+
+            // Process diff output
+            var diff = diffOutputStream.toString();
+            var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diff, false, true);
+            var report = new ProgrammingExerciseGitDiffReport();
+
+            for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
+                gitDiffEntry.setGitDiffReport(report);
+            }
+
             report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
             return report;
         }
