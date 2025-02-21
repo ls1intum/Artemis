@@ -2,10 +2,9 @@ package de.tum.cit.aet.artemis.plagiarism.architecture;
 
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource;
-import de.tum.cit.aet.artemis.programming.web.ProgrammingExercisePlagiarismResource;
+import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
+import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleAccessArchitectureTest;
-import de.tum.cit.aet.artemis.text.web.TextExerciseResource;
 
 class PlagiarismApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
@@ -16,6 +15,6 @@ class PlagiarismApiArchitectureTest extends AbstractModuleAccessArchitectureTest
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of(ModelingExerciseResource.class, TextExerciseResource.class, ProgrammingExercisePlagiarismResource.class);
+        return Set.of(ProgrammingLanguageNotSupportedForPlagiarismDetectionException.class, PlagiarismResultResponseBuilder.class);
     }
 }
