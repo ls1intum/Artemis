@@ -185,17 +185,11 @@ public class ProgrammingExerciseGitDiffReportService {
             throws GitAPIException, IOException {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         var vcsRepositoryUri = ((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri();
-        Repository templateRepo;
-        Repository submissionRepository;
 
-        // TODO find a way to make this work gitService.getBareRepository(vcsRepositoryUri);
-
-        // if (profileService.isLocalVcsActive()) {
-        // templateRepo = gitService.getBareRepository(templateParticipation.getVcsRepositoryUri());
-        // submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
-        // } else {
-        templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
-        submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
+        // TODO: for LocalVC, we should do that without checking out the repository
+        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
+        Repository templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
+        Repository submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(submissionRepository);
@@ -244,8 +238,8 @@ public class ProgrammingExerciseGitDiffReportService {
             throws GitAPIException, IOException {
         Repository templateRepo;
         Repository solutionRepo;
-        // TODO: in case of LocalVC, we should calculate the diff in the bare origin repository
-        // TODO localVC - find a way to compare commits of different repositories
+        // TODO: for LocalVC, we should do that without checking out the repository
+        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
         templateRepo = prepareRepository(templateVcsRepositoryUri);
         solutionRepo = prepareRepository(solutionVcsRepositoryUri);
 
