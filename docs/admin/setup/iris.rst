@@ -20,7 +20,7 @@ Enable the ``iris`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local,iris
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,corelocal,iris
 
 Configure Pyris API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

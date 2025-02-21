@@ -86,7 +86,7 @@ In addition, you have to start Artemis with the profiles ``localvc`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,localvc,artemis,atlas,scheduling
+   --spring.profiles.active=dev,jenkins,localvc,artemisscheduling
 
 Please read :ref:`Server Setup` for more details.
 
