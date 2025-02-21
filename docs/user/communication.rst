@@ -171,7 +171,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Reply in Thread                                      |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| See who reacted to a post                            |                                      | |UNAVAILABLE|      | |AVAILABLE|         | |AVAILABLE|         |
+| See who reacted to a post                            |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Copy Text                                            |                                      | |NOT PLANNED|      | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -335,6 +335,7 @@ Available features on each platform
     - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
     - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
     - Downloading sent images in the chat is only available through the browser option on the web app.
+    - Seeing who reacted to a post is available when hovering over a reaction on the web app.
 
 Features for Users
 ------------------
