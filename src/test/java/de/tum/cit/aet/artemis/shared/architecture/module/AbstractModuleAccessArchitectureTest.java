@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     @Test
-    void shouldOnlyAccessApiDomainDtoAndAllowedException() {
+    void shouldOnlyAccessApiDomainDto() {
         ArchCondition<JavaClass> onlyAllowedDependencies = new ArchCondition<>("have only allowed dependencies") {
 
             @Override
