@@ -906,6 +906,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 .forEach(Collection::clear);
     }
 
+    /**
+     * Gets either the due date of this exercise, or the individual due date for the given participation, if it is set.
+     *
+     * @param participation The participation for which the individual due date is returned if it is set.
+     * @return The exercise due date, or the participation-specific due date, if it is set.
+     */
     public ZonedDateTime getDueDateForParticipation(StudentParticipation participation) {
         if (participation.getIndividualDueDate() != null) {
             return participation.getIndividualDueDate();
