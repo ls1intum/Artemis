@@ -77,7 +77,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,aeolus,artemis,scheduling,local
+   --spring.profiles.active=dev,localci,localvc,aeolus,artemis,scheduling,atlas,local
 
 
 More information on how Aeolus works can be found on `GitHub <https://github.com/ls1intum/Aeolus>`_ or in the `Aeolus documentation <https://ls1intum.github.io/Aeolus/>`_.
