@@ -13,6 +13,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+/**
+ * This class is responsible for providing information about the enabled module features.
+ * This is required to report the enabled features to the client for features that are evaluated based on
+ * Spring properties.
+ * This is complementary with Spring profiles. It's a similar approach, but the support for active profiles
+ * is supported by Spring out-of-the-box.
+ */
 @Profile(PROFILE_CORE)
 @Component
 public class ModuleFeatureInfoContributor implements InfoContributor {
