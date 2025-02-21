@@ -33,9 +33,12 @@ export class HeaderCourseComponent implements OnChanges, OnInit {
 
     faArrowDown = faArrowDown;
 
-    ngOnInit() {
+    // Removed ngOnInit to consolidate initialization logic
+
+    ngOnChanges() {
         this.courseColor = this.course.color || ARTEMIS_DEFAULT_COLOR;
         this.contentColor = getContrastingTextColor(this.courseColor);
+        this.adjustCourseDescription();
     }
 
     ngOnChanges() {
