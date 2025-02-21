@@ -71,6 +71,7 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
+    const activeModuleFeatures: string[] = []; // needs to be explicitly typed
     const profileInfo = {
         git: {
             branch: 'code-button',
@@ -85,7 +86,7 @@ describe('NavbarComponent', () => {
             },
         },
         activeProfiles: ['test'],
-        activeModuleFeatures: [],
+        activeModuleFeatures,
     } as ProfileInfo;
 
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
