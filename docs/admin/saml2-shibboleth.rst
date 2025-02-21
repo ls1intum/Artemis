@@ -40,6 +40,19 @@ You can see the structure of the saml2 configuration in the following:
 
 .. code:: yaml
 
+    spring:
+      security:
+        saml2:
+          relyingparty:
+            registration:
+              REGISTRATION_ID_HERE:
+                signing.credentials: &my-metadata
+                  - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem
+                    certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt
+                decryption.credentials: *my-metadata
+                assertingparty:
+                  metadata-uri: URL_TO_METADATA_HERE
+
     saml2:
         # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
         # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
@@ -62,25 +75,18 @@ You can see the structure of the saml2 configuration in the following:
             #  value_pattern: 'somePrefix(?<value>.+)someSuffix'
             #- key: 'uid'
             #  value_pattern: 'pre(?<value>\d+)post'
-        # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
-        # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
-        identity-providers:
-            #- metadata: https://idp_host/.../metadata
-            #  registration-id: IdPName
-            #  entity-id: artemis
-            #  cert-file: # path-to-cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
-            #  key-file: # path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank (must be a PKCS#8 file!)
-            # Multiple IdPs can be configured
-            # - metadata: <URL>
-            #   registrationid: <id>
-            #   entityid: <id>
 
     # String used for the SAML2 login button. E.g. 'Shibboleth Login'
-    info.saml2.button-label: 'SAML2 Login'
-    # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-    # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
-    # Enabled the password reset function in Artemis.
-    info.saml2.enable-password: true
+    info:
+        saml2:
+            button-label: 'SAML2 Login' # Name of the button to login with SAML2
+            identity-provider-name: 'Shibboleth Account' # Name of the identity provider (e.g., University X Account). Only used for the text at login page
+            password-login-disabled: false # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
+            # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
+            # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
+            # Enabled the password reset function in Artemis.
+            enable-password: true
+
 
 Example configuration
 ^^^^^^^^^^^^^^^^^^^^^
@@ -96,22 +102,30 @@ The SAML2 configuration of Artemis could look like this:
         email-pattern: '{mail}'
         registration-number-pattern: '{matriculationNumber}'
         lang-key-pattern: 'de'
-        identity-providers:
-            - metadata: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
-              registration-id: REGISTRATION_ID_HERE
-              entity-id: ENTITY_ID_HERE
-              cert-file: /opt/artemis/config/shibboleth-sp-cert.crt
-              key-file: /opt/artemis/config/shibboleth-sp-key.pem
-    info.saml2.button-label: 'Shibboleth Login'
-    info.saml2.enable-password: false
-    info.saml2.password-login-disabled: true
-    info.saml2.identity-provider-name: 'Shibboleth Account'
+    info:
+        saml2:
+            button-label: 'Shibboleth Login'
+            enable-password: false
+            password-login-disabled: true
+            identity-provider-name: 'Shibboleth Account'
+    spring:
+      security:
+        saml2:
+          relyingparty:
+            registration:
+              scc:
+                signing.credentials: &scc-metadata
+                  - private-key-location: file:/config/shibboleth-sp-key.pem
+                    certificate-location: file:/config/shibboleth-sp-cert.crt
+                decryption.credentials: *scc-metadata
+                assertingparty:
+                  metadata-uri: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
 
 The SAML2 configuration for Artemis at your IT department could look like this:
 
 .. code:: xml
 
-    <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="ENTITY_ID_HERE" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+    <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<REGISTRATION_ID_HERE>" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
       <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <md:KeyDescriptor use="signing">
           <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
