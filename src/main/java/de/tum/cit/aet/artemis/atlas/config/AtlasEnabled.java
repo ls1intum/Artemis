@@ -6,6 +6,10 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
+/**
+ * Condition to check if the Atlas module is enabled.
+ * Based on this condition, Spring components concerning atlas functionality can be enabled or disabled.
+ */
 public class AtlasEnabled implements Condition {
 
     private final ArtemisConfigHelper artemisConfigHelper;

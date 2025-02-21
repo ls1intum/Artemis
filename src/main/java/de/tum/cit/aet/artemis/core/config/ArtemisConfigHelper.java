@@ -2,14 +2,21 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+/**
+ * Helper class for property configuration, in particular for determining conditions
+ * whether services should be enabled or not.
+ * This bridges the gap between the condition classes and the actual property values.
+ */
 public class ArtemisConfigHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(ArtemisConfigHelper.class);
-
+    /**
+     * Check if the Atlas module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Atlas module is enabled, false otherwise
+     */
     public boolean isAtlasEnabled(Environment environment) {
         return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
     }
