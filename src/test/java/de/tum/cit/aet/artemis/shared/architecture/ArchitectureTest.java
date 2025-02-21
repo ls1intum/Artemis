@@ -50,6 +50,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -238,10 +239,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void ensureSpringComponentsAreProfileAnnotated() {
+    void ensureSpringComponentsAreProfileOrConditionalAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileOrConditionalAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
@@ -272,14 +273,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    private static ArchCondition<JavaClass> beProfileAnnotated() {
+    private static ArchCondition<JavaClass> beProfileOrConditionalAnnotated() {
         return new ArchCondition<>("be annotated with @Profile") {
 
             @Override
             public void check(JavaClass item, ConditionEvents events) {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
-                if (!hasProfileAnnotation) {
-                    String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
+                boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation)) {
+                    String message = String.format("Class %s is neither annotated with @Profile or @Conditional", item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
