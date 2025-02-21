@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -99,20 +100,26 @@ public class AuthorizationTestService {
     }
 
     /**
-     * Evaluates whether a given endpoint depends on a specific profile
+     * Evaluates whether a given endpoint depends on a specific profile or condition
      *
      * @param handlerMethod The handler method of the endpoint
-     * @return true if the endpoint depends on a profile, false otherwise
+     * @return true if the endpoint depends on a profile or condition, false otherwise
      */
     private boolean isConditionalEndpoint(HandlerMethod handlerMethod) {
         var methodProfileAnnotation = handlerMethod.getMethod().getAnnotation(Profile.class);
+        var classConditionalAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Conditional.class);
         var classProfileAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class);
         // No null-check required for classes because we have tests ensuring Profile annotations on classes
-        return (methodProfileAnnotation != null && isNonCoreProfile(methodProfileAnnotation)) || isNonCoreProfile(classProfileAnnotation);
+        return (methodProfileAnnotation != null && isNonCoreProfile(methodProfileAnnotation)) || (classConditionalAnnotation != null && isConditional(classConditionalAnnotation))
+                || isNonCoreProfile(classProfileAnnotation);
     }
 
     private boolean isNonCoreProfile(Profile profileAnnotation) {
         return !(profileAnnotation.value().length == 1 && profileAnnotation.value()[0].equals(PROFILE_CORE));
+    }
+
+    private boolean isConditional(Conditional conditionalAnnotation) {
+        return conditionalAnnotation.value().length != 0;
     }
 
     /**
