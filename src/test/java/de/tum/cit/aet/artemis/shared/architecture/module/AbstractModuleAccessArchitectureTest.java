@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.shared.architecture.module;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -26,17 +29,23 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
             @Override
             public void check(JavaClass origin, ConditionEvents events) {
-                for (Dependency dependency : origin.getDirectDependenciesFromSelf()) {
+                List<Dependency> targetsInModule = origin.getDirectDependenciesFromSelf().stream()
+                        .filter(dependency -> resideInAPackage(getModuleWithSubpackage()).test(dependency.getTargetClass())).toList();
+
+                for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
 
-                    if (target.getPackageName().startsWith(getModuleWithSubpackage())) {
-                        boolean isInAllowedPackage = target.getPackageName().startsWith(getModuleApiSubpackage()) || target.getPackageName().startsWith(getModuleDomainSubpackage())
-                                || target.getPackageName().startsWith(getModuleDtoSubpackage());
+                    if (resideOutsideOfPackage(getModuleWithSubpackage()).test(origin)) { // ToDo: Remove?
+                        // target inside default-allowed packages (API, Domain, DTO)
+                        boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
+                        if (inDefaultAllowedPackage) {
+                            continue;
+                        }
 
-                        boolean isAllowedException = getIgnoredClasses().contains(target.getClass());
-
-                        if (!(isInAllowedPackage || isAllowedException)) {
-                            String message = String.format("%s depends on %s which is not in an allowed package or ignored", origin.getName(), target.getName());
+                        // target explicitly ignored
+                        boolean isIgnored = getIgnoredClasses().contains(target.reflect());
+                        if (!isIgnored) {
+                            String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
                             events.add(SimpleConditionEvent.violated(origin, message));
                         }
                     }
@@ -44,7 +53,7 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
             }
         };
 
-        noClasses().that().resideOutsideOfPackage(getModuleWithSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
+        classes().that().resideOutsideOfPackage(getModuleWithSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
     }
 
     @Test
