@@ -42,8 +42,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 LEFT JOIN Course c ON b.courseId = c.id
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (CAST(:startDate AS string) IS NULL OR b.buildStartDate >= :startDate)
-                AND (CAST(:endDate AS string) IS NULL OR b.buildCompletionDate <= :endDate)
+                AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
+                AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
                 AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
                 AND (:courseId IS NULL OR b.courseId = :courseId)
                 AND (:durationLower IS NULL OR (b.buildCompletionDate - b.buildStartDate) >= :durationLower)
@@ -74,14 +74,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
 
-    // NOTE: we explicitly use buildStartDate here because it has an index in the database
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
                 b.buildStatus,
                 COUNT(b.buildStatus)
             )
             FROM BuildJob b
-            WHERE b.buildStartDate >= :fromDateTime
+            WHERE b.buildSubmissionDate >= :fromDateTime
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             GROUP BY b.buildStatus
             """)
@@ -124,7 +123,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @Transactional
     @Modifying
-    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
+    @Query("""
+            UPDATE BuildJob b
+            SET b.buildStatus = :newStatus
+            WHERE b.buildJobId = :buildJobId
+            """)
     void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 
     /**
