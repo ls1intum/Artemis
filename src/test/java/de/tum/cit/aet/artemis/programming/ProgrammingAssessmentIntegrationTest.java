@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
@@ -1015,8 +1014,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result.setScore(100D);
         resultRepository.save(result);
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
-
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         var response = request.putWithResponseBodyAndParams("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK, params);
@@ -1024,8 +1021,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
         assertThat(responseParticipation.isLocked()).isFalse();
-
-        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test

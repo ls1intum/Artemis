@@ -129,7 +129,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
-        return getDefaultBranchOfRepository(localVCRepositoryUri);
+        return getDefaultBranch(localVCRepositoryUri);
     }
 
     /**
@@ -139,9 +139,9 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public static String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
+    public static String getDefaultBranch(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
-        return getDefaultBranchOfRepository(localRepositoryPath);
+        return getDefaultBranch(localRepositoryPath);
     }
 
     /**
@@ -151,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public static String getDefaultBranchOfRepository(String localRepositoryPath) {
+    public static String getDefaultBranch(String localRepositoryPath) {
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();

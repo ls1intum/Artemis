@@ -87,7 +87,7 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
     localVCEnabled = true;
-    localCIEnabled = false;
+    localCIEnabled = true;
 
     // Icons
     faPlus = faPlus;

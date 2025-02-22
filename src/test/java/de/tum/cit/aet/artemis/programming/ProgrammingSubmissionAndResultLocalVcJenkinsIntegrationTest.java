@@ -18,7 +18,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -36,9 +35,9 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDe
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
-    private static final String TEST_PREFIX = "progsubresgitlabjen";
+    private static final String TEST_PREFIX = "progsubreslocalvcjen";
 
     private ProgrammingExercise exercise;
 
@@ -237,50 +236,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(results).isEmpty();
     }
 
-    /**
-     * This test results from a bug where the first push event wasn't received by Artemis but all build events.
-     * This test ensures that in such a situation, the submission dates are set according to the commit dates and are therefore in the correct order.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
-        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
-        String userLogin = TEST_PREFIX + "student1";
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = objectMapper.readTree(GITLAB_PUSH_EVENT_REQUEST);
-        String firstCommitHash = rootNode.get("before").asText();
-        String secondCommitHash = rootNode.get("after").asText();
-        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
-        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
-
-        String projectKey = testService.programmingExercise.getProjectKey();
-
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, (projectKey + "-" + userLogin).toUpperCase(), false);
-
-        // First commit is pushed but not recorded
-
-        // Second commit is pushed and recorded
-        postSubmission(testService.participation.getId(), HttpStatus.OK);
-
-        // Build result for first commit is received
-        var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new CommitDTO(firstCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
-        var notificationDTOFirstCommit = createJenkinsNewResultNotification(projectKey, userLogin, JAVA, List.of(), new ArrayList<>(), firstBuildCompleteDate,
-                List.of(firstVcsDTO));
-
-        postResult(notificationDTOFirstCommit, HttpStatus.OK);
-
-        // Build result for second commit is received
-        var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new CommitDTO(secondCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
-        var notificationDTOSecondCommit = createJenkinsNewResultNotification(projectKey, userLogin, JAVA, List.of(), new ArrayList<>(), secondBuildCompleteDate,
-                List.of(secondVcsDTO));
-
-        postResult(notificationDTOSecondCommit, HttpStatus.OK);
-
-        testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
-    }
-
     private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments() {
@@ -382,13 +337,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         return result;
-    }
-
-    /**
-     * This is the simulated request from the VCS to Artemis on a new commit.
-     */
-    private void postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
     }
 
     private void assertNoNewSubmissions(long participationId, ProgrammingSubmission existingSubmission) {

@@ -47,8 +47,6 @@ following dependencies/tools on your machine:
 
    * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
    * :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
-   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>` (deprecated)
-   * :ref:`GitLab and GitLab CI <GitLab CI and GitLab Setup>` (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -76,8 +74,6 @@ following dependencies/tools on your machine:
    setup/client
    setup/integrated-code-lifecycle
    setup/jenkins-localvc
-   setup/jenkins-gitlab
-   setup/gitlabci-gitlab
    setup/aeolus
    setup/common-problems
    setup/docker-compose

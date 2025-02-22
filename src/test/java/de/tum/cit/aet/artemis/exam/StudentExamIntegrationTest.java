@@ -11,10 +11,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -1021,7 +1019,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingExerciseParticipationService, timeout(1000)).lockStudentRepository(programmingExercise, participation);
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
@@ -1319,9 +1316,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
 
         // assert that all repositories of programming exercises have been locked
         assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
-        for (int i = 0; i < exercisesToBeLocked.size(); i++) {
-            verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
-        }
         deleteExamWithInstructor(exam1);
     }
 
@@ -1495,8 +1489,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
             assertThat(studentExamFinished.isSubmitted()).isTrue();
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
-        // The method lockStudentRepository will only be called if the student hands in early (see separate test)
-        verify(programmingExerciseParticipationService, never()).lockStudentRepositoryAndParticipation(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExamWithInstructor(exam1);

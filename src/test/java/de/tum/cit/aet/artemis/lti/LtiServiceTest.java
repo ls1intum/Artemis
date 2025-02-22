@@ -74,8 +74,7 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, optionalVcsUserManagementService,
-                optionalCIUserManagementService);
+        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, optionalCIUserManagementService);
         Course course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);

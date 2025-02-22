@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -50,7 +48,6 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -206,7 +203,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             // No initial submissions should be created for programming exercises
             assertThat(participation.getSubmissions()).isEmpty();
             assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
-            verify(versionControlService, never()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
         }
     }
 
@@ -245,8 +241,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // The participation should not get locked if it gets created after the exam already started
             assertThat(studentParticipation.isLocked()).isFalse();
-            verify(versionControlService).addMemberToRepository(studentParticipation.getVcsRepositoryUri(), studentParticipation.getStudent().orElseThrow(),
-                    VersionControlRepositoryPermission.REPO_WRITE);
         }
     }
 

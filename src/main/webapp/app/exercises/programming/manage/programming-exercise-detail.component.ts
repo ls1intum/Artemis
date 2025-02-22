@@ -150,8 +150,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
-    localVCEnabled = false;
-    localCIEnabled = false;
+    localVCEnabled = true;
+    localCIEnabled = true;
     irisEnabled = false;
     irisChatEnabled = false;
 

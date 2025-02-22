@@ -1419,7 +1419,6 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
         mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-        doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
         var response = request.postWithResponseBody("/api/programming-exercises/import/" + sourceId, exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);

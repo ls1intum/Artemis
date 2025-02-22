@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
 class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
-    private static final String TEST_PREFIX = "progexjenkgitlab";
+    private static final String TEST_PREFIX = "progexjenklocalvc";
 
     @BeforeEach
     void initTestCase() throws Exception {

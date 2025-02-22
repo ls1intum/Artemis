@@ -96,7 +96,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     localVCEnabled = true;
-    localCIEnabled = false;
+    localCIEnabled = true;
     onlineIdeEnabled = false;
 
     // extension points, see shared/extension-point

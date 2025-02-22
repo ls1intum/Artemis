@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -42,7 +41,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -75,7 +73,6 @@ import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
@@ -197,7 +194,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoc
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(participation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(participation);
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
@@ -786,7 +783,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoc
         var instructorAssignmentRepoUri = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUri(), true, defaultBranch);
 
@@ -1180,57 +1177,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoc
         var response = studentParticipationRepository.findById(participation.getId());
         assertThat(response).isPresent();
         assertThat(response.get().getId()).isEqualTo(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUnlockStudentRepository() {
-        doAnswer((Answer<Void>) invocation -> {
-            ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
-            return null;
-        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUri(), participation.getStudent().orElseThrow(),
-                VersionControlRepositoryPermission.REPO_WRITE);
-
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-
-        assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(participation.isLocked()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUnlockStudentRepository_beforeStateRepoConfigured() {
-        participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot unlock student repository for participation ");
-        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLockStudentRepository() {
-        doAnswer((Answer<Void>) invocation -> {
-            participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
-            return null;
-        }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation.getStudents());
-
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
-        assertThat(participation.isLocked()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLockStudentRepository_beforeStateRepoConfigured() {
-        participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot lock student repository for participation ");
-        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

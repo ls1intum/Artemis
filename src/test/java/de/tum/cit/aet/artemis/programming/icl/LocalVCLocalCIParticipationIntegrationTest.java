@@ -43,7 +43,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
-        // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().
+        // Set the branch to null to force the usage of LocalVCService#getDefaultBranch().
         programmingExercise.getBuildConfig().setBranch(null);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);

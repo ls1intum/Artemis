@@ -22,7 +22,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -1305,8 +1304,6 @@ public class ProgrammingExerciseTestService {
         }
 
         final User participant = userRepo.getUserByLoginElseThrow(userPrefix + STUDENT_LOGIN);
-
-        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
