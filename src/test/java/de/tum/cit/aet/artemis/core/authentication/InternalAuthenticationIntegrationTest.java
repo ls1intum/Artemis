@@ -35,7 +35,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -51,11 +50,11 @@ import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
-// TODO: rewrite this test to use LocalVC instead of GitLab
-class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+// TODO: rewrite this test to use LocalVC instead
+class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "internalauth";
 
@@ -73,9 +72,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private AuthorityRepository authorityRepository;
-
-    @Autowired
-    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -137,7 +133,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
-        gitlabRequestMockProvider.enableMockingOfRequests();
         final var student = userUtilService.createAndSaveUser("ab12cde");
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -154,8 +149,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @NotNull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
         userTestRepository.findOneByLogin("user1").ifPresent(userTestRepository::delete);
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        gitlabRequestMockProvider.mockGetUserID();
         tutorialGroupUtilService.addTutorialCourse();
 
         student.setId(null);
@@ -291,9 +284,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        gitlabRequestMockProvider.mockUpdateUser();
-
         final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);

@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "submissionpolicyintegration";
 
@@ -226,7 +226,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
-        gitlabRequestMockProvider.enableMockingOfRequests();
         mockRepositoryWritePermissionsForStudent(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
     }
@@ -243,7 +242,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
         User student2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
-        gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student2));
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
     }
@@ -488,7 +486,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
 
     private void mockGitlabRequests(ProgrammingExerciseParticipation participation) throws Exception {
         User student = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
     }
 

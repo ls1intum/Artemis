@@ -9,7 +9,6 @@ import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
@@ -18,8 +17,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -72,8 +69,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
@@ -113,7 +108,6 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -128,8 +122,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
- * 2) LocalVC + LocalCI
+ * 1) LocalVC + LocalCI
  */
 @Service
 public class ProgrammingExerciseIntegrationTestService {
@@ -1642,85 +1635,6 @@ public class ProgrammingExerciseIntegrationTestService {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
-    }
-
-    void lockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
-        request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
-    }
-
-    void lockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
-        request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
-    }
-
-    void lockAllRepositories() throws Exception {
-        course.setInstructorGroupName(userPrefix + "lockAll");
-        courseRepository.save(course);
-
-        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        instructor.setGroups(Set.of(userPrefix + "lockAll"));
-        userRepository.save(instructor);
-
-        mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation1.getStudents());
-        mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
-
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
-        request.postWithoutLocation("/api" + endpoint, null, HttpStatus.OK, null);
-
-        verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
-                participation1.getStudents());
-        verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
-                participation2.getStudents());
-
-        await().untilAsserted(() -> {
-            userUtilService.changeUser(userPrefix + "instructor1");
-            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-            assertThat(notifications).as("Instructor get notified that lock operations were successful")
-                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
-                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
-        });
-    }
-
-    void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
-        request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
-    }
-
-    void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
-        request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
-    }
-
-    void unlockAllRepositories() throws Exception {
-        String suffix = "unlockAll";
-        courseUtilService.updateCourseGroups(userPrefix, course, suffix);
-
-        var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        instructor.setGroups(Set.of(userPrefix + "instructor" + suffix));
-        userRepository.save(instructor);
-
-        mockConfigureRepository(programmingExercise);
-        mockDelegate.mockDefaultBranch(programmingExercise);
-
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
-        request.postWithoutLocation("/api" + endpoint, null, HttpStatus.OK, null);
-
-        verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
-                VersionControlRepositoryPermission.REPO_WRITE);
-        verify(versionControlService, timeout(300)).addMemberToRepository(participation2.getVcsRepositoryUri(), participation2.getStudent().orElseThrow(),
-                VersionControlRepositoryPermission.REPO_WRITE);
-
-        userUtilService.changeUser(userPrefix + "instructor1");
-
-        await().untilAsserted(() -> {
-            // login again since this is executed on another thread
-            userUtilService.changeUser(userPrefix + "instructor1");
-            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-            assertThat(notifications).as("Instructor get notified that unlock operations were successful")
-                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
-                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
-        });
     }
 
     void testCheckPlagiarism() throws Exception {

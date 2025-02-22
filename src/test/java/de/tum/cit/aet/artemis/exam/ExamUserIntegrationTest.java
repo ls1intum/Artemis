@@ -46,9 +46,9 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "examuser";
 
@@ -108,7 +108,6 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         exam1 = examRepository.save(exam1);
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -346,9 +345,6 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
-        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
-            gitlabRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i, true);
-        }
 
         ZonedDateTime visibleDate;
         ZonedDateTime startDate;
@@ -382,8 +378,6 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
             exam.setEndDate(ZonedDateTime.now().plusMinutes(2));
             examRepository.save(exam);
         }
-
-        gitlabRequestMockProvider.reset();
 
         if (setFields) {
             exam2 = exam;

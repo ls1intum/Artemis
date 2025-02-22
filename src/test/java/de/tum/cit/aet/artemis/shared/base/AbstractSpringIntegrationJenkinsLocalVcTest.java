@@ -18,12 +18,12 @@ import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
@@ -33,10 +33,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
-import de.tum.cit.aet.artemis.core.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -50,29 +51,27 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
-// TODO: rewrite this test to use LocalVC instead of GitLab
-@ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
+// TODO: rewrite this test to use LocalVC
+@ResourceLock("AbstractSpringIntegrationJenkinsLocalVcTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, "gitlab", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, "localvc", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_gitlabjenkins" })
-public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvcjenkins" })
+public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
-    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
-    // GitlabApi.
     @MockitoSpyBean
-    protected GitLabService versionControlService;
+    protected LocalVCService versionControlService;
 
     @MockitoSpyBean
     protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -87,9 +86,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;
 
     @Autowired
-    protected GitlabRequestMockProvider gitlabRequestMockProvider;
-
-    @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @MockitoSpyBean
@@ -101,7 +97,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, versionControlService);
+        Mockito.reset(continuousIntegrationService);
         super.resetSpyBeans();
     }
 
@@ -109,16 +105,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
             throws Exception {
         final var projectKey = exercise.getProjectKey();
-        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
-        gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, false);
-        gitlabRequestMockProvider.mockCreateProjectForExercise(exercise);
-        gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
-        gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
-        gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
         if (useCustomBuildPlanDefinition) {
             aeolusRequestMockProvider.enableMockingOfRequests();
@@ -147,7 +133,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
-        mockImportRepositories(exerciseToBeImported);
         if (!recreateBuildPlans) {
             mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
             mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
@@ -170,26 +155,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
-        mockImportRepositories(exerciseToBeImported);
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
-    }
-
-    private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws Exception {
-        final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
-        final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
-
-        gitlabRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-
-        gitlabRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
-        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
-        gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTestsRepoName);
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
     }
 
     private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
@@ -233,28 +200,16 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
-        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-    }
-
-    @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
-        // Step 1a)
-        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1c)
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
-        // Step 1c)
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
     }
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -262,19 +217,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Note: Step 2c) is not needed in the Jenkins setup
     }
 
-    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException, GitLabApiException {
-        // Step 1a)
-        gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1c)
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, users, true);
+    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
         // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
         mockUpdatePlanRepositoryForParticipation(exercise, username);
-
-        // Mock Default Branch
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
     }
 
     @Override
@@ -287,36 +235,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException {
         jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
-    }
-
-    @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
-        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
-        gitlabRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, firstStudent.getLogin());
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
-        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
-        final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
-        gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, newStudent.getLogin(), !status.is2xxSuccessful());
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
-        final var repositorySlug = (exercise.getProjectKey() + "-" + student.getParticipantIdentifier()).toLowerCase();
-        final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
-        gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, student.getLogin(), !status.is2xxSuccessful());
-    }
-
-    @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not necessary for the core functionality
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
-        // Not needed in Gitlab
     }
 
     @Override
@@ -376,52 +294,27 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), oldGroups, true);
-        gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, oldGroups, user.getGroups(), true);
     }
 
     @Override
     public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
-        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         jenkinsRequestMockProvider.mockCreateUser(user, userExistsInCi, false, false);
     }
 
     @Override
     public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
-        gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
         jenkinsRequestMockProvider.mockCreateUser(user, false, failInCi, failToGetCiUser);
     }
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception {
-        gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, false);
     }
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
             boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
-        gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, failToAddUsers, failToRemoveUsers);
-    }
-
-    @Override
-    public void mockCreateGroupInUserManagement(String groupName) {
-        // Not needed here
-    }
-
-    @Override
-    public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not needed here
-    }
-
-    @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
-        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repositoryName, shouldFail);
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
-        gitlabRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
@@ -436,13 +329,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
-        gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
         jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), failInCi);
     }
 
     @Override
     public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
-        gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
         jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
         jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), false);
     }
@@ -471,18 +362,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
-        gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
         jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
-    }
-
-    @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri repositoryUri, String projectKey, boolean isUrlValid) throws Exception {
-        gitlabRequestMockProvider.mockRepositoryUriIsValid(repositoryUri, isUrlValid);
     }
 
     @Override
@@ -505,35 +386,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception {
-        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, users);
-    }
-
-    @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, students, userExists);
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws GitLabApiException {
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-    }
-
-    @Override
     public void resetMockProvider() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
 
     @Override
     public void verifyMocks() {
-        gitlabRequestMockProvider.verifyMocks();
         jenkinsRequestMockProvider.verifyMocks();
-    }
-
-    @Override
-    public void mockUserExists(String username) throws Exception {
-        gitlabRequestMockProvider.mockUserExists(username, true);
     }
 
     /**
@@ -554,20 +413,90 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         for (final String planName : planNames) {
             jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
-        List<String> repoNames = new ArrayList<>(studentLogins);
-
-        for (final var repoType : RepositoryType.values()) {
-            gitlabRequestMockProvider.mockDeleteRepository(programmingExercise.generateRepositoryName(repoType), false);
-        }
-
-        for (final var repoName : repoNames) {
-            gitlabRequestMockProvider.mockDeleteRepository((projectKey + "-" + repoName).toLowerCase(), false);
-        }
-        gitlabRequestMockProvider.mockDeleteProject(projectKey, false);
     }
 
     @Override
     public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob(exercise.getProjectKey(), null);
+    }
+
+    @Override
+    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        // Not needed for this test
     }
 }

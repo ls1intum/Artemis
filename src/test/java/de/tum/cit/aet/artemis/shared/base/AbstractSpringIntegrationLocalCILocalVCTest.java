@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -607,7 +606,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException {
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
         // Not implemented for local VC and local CI
     }
 

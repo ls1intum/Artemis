@@ -31,9 +31,9 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
-import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -51,7 +51,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
-    let modalService: NgbModal;
 
     const mockProgrammingExercise = {
         id: 1,
@@ -134,7 +133,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
         router = fixture.debugElement.injector.get(Router);
-        modalService = fixture.debugElement.injector.get(NgbModal);
 
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
@@ -267,11 +265,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(sections).toBeDefined();
     });
 
-    it.each([
-        ['jenkins', true],
-        ['gitlabci', true],
-        ['gitlab', false],
-    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+    it.each([['jenkins', true]])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
         profileInfo.activeProfiles = [profile];
         const profileInfoStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
 
@@ -314,40 +308,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.isExamExercise = true;
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should handle unlock all repsitories', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        comp.programmingExercise = mockProgrammingExercise;
-
-        comp.handleUnlockAllRepositories();
-        expect(modalSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should unlock all repositories', () => {
-        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(of(new HttpResponse({ body: 2 })));
-        const successSpy = jest.spyOn(alertService, 'addAlert');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.unlockAllRepositories();
-        expect(unlockSpy).toHaveBeenCalledOnce();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should error on unlock all repositories', () => {
-        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(() => new HttpResponse({ body: 2 })));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.unlockAllRepositories();
-        expect(unlockSpy).toHaveBeenCalledOnce();
-        expect(errorSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should handle lock all Repsitories', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        comp.programmingExercise = mockProgrammingExercise;
-
-        comp.handleLockAllRepositories();
-        expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should generate structure oracle', async () => {

@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,14 +20,13 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 
-class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
-    private static final String TEST_PREFIX = "courseegitlabjenkins";
+    private static final String TEST_PREFIX = "courselocalvcjenkins";
 
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -181,7 +179,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         changeUserGroup(TEST_PREFIX + "tutor1", Set.of(course.getTeachingAssistantGroupName(), "new-editor-group"));
         changeUserGroup(TEST_PREFIX + "tutor2", Set.of(course.getEditorGroupName()));
 
-        gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName());
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
 
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
@@ -195,8 +192,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     void testSetPermissionsForNewGroupMembersInCourse() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         String oldInstructorGroup = course.getInstructorGroupName();
-        String oldEditorGroup = course.getEditorGroupName();
-        String oldTaGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
         course.setEditorGroupName("new-editor-group");
@@ -215,7 +210,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         user.setGroups(Set.of("new-instructor-group"));
         userTestRepository.save(user);
 
-        gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -234,9 +228,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userTestRepository.save(user);
+        userTestRepository.save(user);
 
-        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
@@ -249,9 +242,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userTestRepository.save(user);
+        userTestRepository.save(user);
 
-        gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
@@ -270,7 +262,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         var user = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
-        gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());
     }
 
@@ -299,7 +290,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         Optional<User> user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
         assertThat(user).isPresent();
 
-        gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
@@ -315,7 +305,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
         assertThat(exercise).isPresent();
 
-        gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
@@ -546,7 +535,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
+    void testRemoveTutorFromCourse_removeUserGroupFails() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepository.save(course);
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -554,11 +543,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
         Optional<User> optionalTutor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
         assertThat(optionalTutor).isPresent();
 
-        String tutorGroup = course.getTeachingAssistantGroupName();
         User tutor = optionalTutor.get();
 
-        gitlabRequestMockProvider.mockUpdateBasicUserInformation(tutor.getLogin(), false);
-        gitlabRequestMockProvider.mockRemoveUserFromGroup(1L, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

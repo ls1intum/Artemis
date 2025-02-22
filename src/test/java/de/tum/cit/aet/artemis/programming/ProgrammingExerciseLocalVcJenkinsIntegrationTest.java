@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTL
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
-import static de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -35,8 +34,6 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -44,23 +41,22 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
-class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+// TODO: rewrite this test to use LocalVc
+class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
-    private static final String TEST_PREFIX = "progexgitlabjenkins";
+    private static final String TEST_PREFIX = "progexlocalvcjenkins";
 
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         aeolusRequestMockProvider.reset();
     }
@@ -318,14 +314,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractProgrammin
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
-    void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
-        programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(exerciseMode, null);
     }
@@ -409,7 +397,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

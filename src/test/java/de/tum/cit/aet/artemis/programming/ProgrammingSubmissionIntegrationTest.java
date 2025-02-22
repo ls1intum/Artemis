@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
 
@@ -88,7 +88,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
 
@@ -394,7 +393,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);

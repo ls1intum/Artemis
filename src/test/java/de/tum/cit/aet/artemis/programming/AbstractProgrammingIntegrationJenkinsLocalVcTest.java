@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import java.net.URI;
-import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,11 +30,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckTestService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
@@ -48,17 +45,14 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestServ
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionAndResultIntegrationTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     // Config
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     protected String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
-
-    @Value("${artemis.version-control.url}")
-    protected URL gitlabServerUrl;
 
     @Value("${artemis.git.name}")
     protected String artemisGitName;
@@ -130,9 +124,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected ConsistencyCheckTestService consistencyCheckTestService;
 
     @Autowired
-    protected GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
-
-    @Autowired
     protected JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
 
     @Autowired
@@ -146,9 +137,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
 
     @Autowired
     protected ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
-    protected ProgrammingExerciseImportService programmingExerciseImportService;
 
     @Autowired
     protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;

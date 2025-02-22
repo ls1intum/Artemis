@@ -142,7 +142,6 @@ import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -155,9 +154,8 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
- * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
- * {@link de.tum.cit.aet.artemis.programming.icl.ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
+ * 1) Jenkins + LocalVc
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
 @Service
 public class ProgrammingExerciseTestService {
@@ -2179,7 +2177,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
-        assertThatExceptionOfType(GitLabException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST

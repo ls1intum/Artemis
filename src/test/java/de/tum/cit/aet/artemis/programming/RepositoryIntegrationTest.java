@@ -80,7 +80,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
-class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
@@ -197,7 +197,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
-        gitlabRequestMockProvider.enableMockingOfRequests();
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(participation);
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
 

@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
-import static de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -38,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDe
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "progsubresgitlabjen";
 
@@ -47,7 +45,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     @BeforeEach
     void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -64,7 +61,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.reset();
-        gitlabRequestMockProvider.reset();
     }
 
     @Test
@@ -259,8 +255,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         String projectKey = testService.programmingExercise.getProjectKey();
 
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        gitlabRequestMockProvider.mockGetPushDate(testService.participation, Map.of(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate));
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, (projectKey + "-" + userLogin).toUpperCase(), false);
 
         // First commit is pushed but not recorded

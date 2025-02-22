@@ -18,7 +18,6 @@ import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
-class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationGitlabCIGitlabSamlTest {
+class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVcSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
 
@@ -61,7 +60,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void init() throws Exception {
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
-        gitlabRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
@@ -78,7 +76,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @AfterEach
     void tearDown() throws Exception {
         scheduleService.clearAllTasks();
-        gitlabRequestMockProvider.reset();
         studentRepository.resetLocalRepo();
     }
 
@@ -101,10 +98,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         }
     }
 
-    private void mockStudentRepoLocks() throws GitAPIException, GitLabApiException {
+    private void mockStudentRepoLocks() throws GitAPIException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
             final VcsRepositoryUri repositoryUri = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUri();
-            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, participation.getStudents());
             doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                     .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
         }

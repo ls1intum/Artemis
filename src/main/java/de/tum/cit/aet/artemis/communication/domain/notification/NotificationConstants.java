@@ -41,7 +41,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
@@ -310,7 +309,7 @@ public class NotificationConstants {
             .put(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE).put(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
             .put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE).put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE)
             .put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE).put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE)
-            .put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE).put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE).build();
+            .put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

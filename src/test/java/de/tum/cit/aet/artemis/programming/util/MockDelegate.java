@@ -5,7 +5,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,7 +41,7 @@ public interface MockDelegate {
 
     void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception;
 
-    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException, GitLabApiException;
+    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException;
 
     void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception;
 
@@ -129,7 +128,7 @@ public interface MockDelegate {
 
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
 
-    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
+    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException;
 
     void mockUserExists(String username) throws Exception;
 

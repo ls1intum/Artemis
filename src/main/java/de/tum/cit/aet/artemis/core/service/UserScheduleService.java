@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Service
@@ -33,8 +32,6 @@ public class UserScheduleService {
 
     private final UserRepository userRepository;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final CacheManager cacheManager;
 
     private final ScheduledExecutorService scheduler;
@@ -45,10 +42,8 @@ public class UserScheduleService {
     // The key of the map is the user id.
     private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
 
-    public UserScheduleService(UserRepository userRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+    public UserScheduleService(UserRepository userRepository, CacheManager cacheManager, Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.cacheManager = cacheManager;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
         this.learnerProfileApi = learnerProfileApi;
@@ -97,15 +92,6 @@ public class UserScheduleService {
         if (existingUser.getActivated()) {
             return;
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
-            try {
-                vcsUserManagementService.deleteVcsUser(existingUser.getLogin());
-            }
-            catch (VersionControlException e) {
-                // Ignore exception since the user should still be deleted but log it.
-                log.warn("Cannot remove non-activated user {} from the VCS:", existingUser.getLogin(), e);
-            }
-        });
         deleteUser(existingUser);
     }
 

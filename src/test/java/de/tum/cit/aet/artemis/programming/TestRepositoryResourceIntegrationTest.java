@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
-class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "testrepositoryresourceint";
 

@@ -61,18 +61,14 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            Optional<CIUserManagementService> optionalCIUserManagementService) {
+            JWTCookieService jwtCookieService, Optional<CIUserManagementService> optionalCIUserManagementService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
@@ -144,7 +140,6 @@ public class LtiService {
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser, password));
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser, password));
 
             log.info("Created new user {}", newUser);

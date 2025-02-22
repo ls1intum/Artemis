@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import java.net.URL;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -16,17 +13,12 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCIResultService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
 
-public abstract class AbstractProgrammingIntegrationGitlabCIGitlabSamlTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
-
-    // Config
-    @Value("${artemis.version-control.url}")
-    protected URL gitlabServerUrl;
+public abstract class AbstractProgrammingIntegrationLocalVcSamlTest extends AbstractSpringIntegrationLocalVcSamlTest {
 
     // Repositories
     @Autowired
@@ -53,10 +45,6 @@ public abstract class AbstractProgrammingIntegrationGitlabCIGitlabSamlTest exten
 
     @Autowired
     protected StudentExamTestRepository studentExamRepository;
-
-    // Services
-    @Autowired
-    protected GitLabCIResultService gitLabCIResultService;
 
     // External Services
     @Autowired

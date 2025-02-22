@@ -56,9 +56,6 @@ class LtiServiceTest {
     private JWTCookieService jwtCookieService;
 
     @Mock
-    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
-    @Mock
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private Exercise exercise;

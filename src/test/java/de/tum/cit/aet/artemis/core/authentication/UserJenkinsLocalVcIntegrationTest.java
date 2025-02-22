@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -25,13 +23,12 @@ import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTokenManagementService;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+// TODO: rewrite this test to use LocalVC
+class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "userjenk"; // shorter prefix as user's name is limited to 50 chars
 
@@ -40,9 +37,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Value("${jenkins.use-pseudonyms:#{false}}")
     private boolean usePseudonymsJenkins;
-
-    @Value("${gitlab.use-pseudonyms:#{false}}")
-    private boolean usePseudonymsGitlab;
 
     @Autowired
     private UserTestService userTestService;
@@ -54,25 +48,17 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private JenkinsUserManagementService jenkinsUserManagementService;
 
     @Autowired
-    private GitLabUserManagementService gitLabUserManagementService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
 
     @BeforeEach
     void setUp() throws Exception {
         userTestService.setup(TEST_PREFIX, this);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach
     void teardown() throws Exception {
         jenkinsRequestMockProvider.reset();
-        gitlabRequestMockProvider.reset();
         userTestService.tearDown();
     }
 
@@ -116,10 +102,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithPseudonymsIsSuccessful() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
-        ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", true);
         userTestService.createExternalUser_asAdmin_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", usePseudonymsJenkins);
-        ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", usePseudonymsGitlab);
     }
 
     @Test
@@ -164,19 +148,13 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
-        gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", true);
         userTestService.createInternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUserWithoutRoles_isSuccessful() throws Exception {
-        gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", true);
         userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", false);
     }
 
     @Test
@@ -361,7 +339,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
+    void createUserWithGroupsAlreadyExists() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -371,14 +349,13 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor"));
 
-        gitlabRequestMockProvider.mockAddUserToGroupsUserExists(newUser, programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCreateUser(newUser, false, false, false);
         request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
+    void createUserWithGroupsAlreadyFails() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -388,7 +365,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
-        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExercise.getProjectKey());
         request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -414,19 +390,18 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldFailIfCannotUpdateActivatedUserInGitlab() throws Exception {
+    void shouldFailIfCannotUpdateActivatedUser() throws Exception {
         String oldLogin = userTestService.student.getLogin();
         User user = userTestService.student;
         user.setLogin("new-login");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
         request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldFailIfCannotUpdateDeactivatedUserInGitlab() throws Exception {
+    void shouldFailIfCannotUpdateDeactivatedUser() throws Exception {
         // create unactivated user in repo
         User user = UserFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -435,8 +410,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // Register the user
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword("password");
-        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
-        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         Optional<User> registeredUser = userTestService.getUserTestRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
@@ -448,13 +421,12 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         user.setLogin("some-new-login");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
         request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldBlockUserInGitlabIfAccountNotActivated() throws Exception {
+    void shouldBlockUserIfAccountNotActivated() throws Exception {
         String password = "this is a password";
         userTestService.student.setPassword(passwordService.hashPassword(password));
         userTestRepository.save(userTestService.student);
@@ -464,7 +436,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         user.setActivated(false);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
 
         request.put("/api/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
@@ -472,8 +443,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         final var userInDB = userRepository.findById(user.getId());
         assertThat(userInDB).isPresent();
         assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());
-
-        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyLong());
     }
 
     @Test

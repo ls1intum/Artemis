@@ -15,7 +15,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
@@ -148,12 +147,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     teamBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
-    lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
-    // Used to hide links to repositories and build plans when the "localvc" profile is active.
-    // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
     localCIEnabled = false;
     irisEnabled = false;
@@ -688,72 +684,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Unlock all repositories immediately. Asks for confirmation.
-     */
-    handleUnlockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.unlockAllRepositories';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.unlockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.unlockAllRepositories();
-        });
-    }
-
-    /**
-     * Unlocks all repositories that belong to the exercise
-     */
-    unlockAllRepositories() {
-        this.lockingOrUnlockingRepositories = true;
-        this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
-                    translationParams: { number: res?.body },
-                });
-                this.lockingOrUnlockingRepositories = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.lockingOrUnlockingRepositories = false;
-                this.onError(err);
-            },
-        });
-    }
-
-    /**
-     * Lock all repositories immediately. Asks for confirmation.
-     */
-    handleLockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.lockAllRepositories';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.lockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.lockAllRepositories();
-        });
-    }
-
-    /**
-     * Locks all repositories that belong to the exercise
-     */
-    private lockAllRepositories() {
-        this.lockingOrUnlockingRepositories = true;
-        this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
-                    translationParams: { number: res?.body },
-                });
-                this.lockingOrUnlockingRepositories = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.lockingOrUnlockingRepositories = false;
-                this.onError(err);
-            },
-        });
-    }
-
-    /**
      * Opens modal and executes a consistency check for the given programming exercise
      * @param exercise the programming exercise to check
      */
@@ -785,10 +715,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
             exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
         }
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.message);
     }
 
     /**

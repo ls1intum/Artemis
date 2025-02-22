@@ -5,18 +5,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
-class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ConsistencyCheckLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     @BeforeEach
     void setup() throws Exception {
         consistencyCheckTestService.setup(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
 

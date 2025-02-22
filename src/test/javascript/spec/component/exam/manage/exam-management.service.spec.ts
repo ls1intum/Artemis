@@ -553,41 +553,6 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
-    it('should unlock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-        // WHEN
-        service.unlockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/unlock-all-repositories`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should lock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-
-        // WHEN
-        service.lockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/lock-all-repositories`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should update order', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };

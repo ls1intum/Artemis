@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -24,12 +23,12 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.web.open.PublicUserJwtResource;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
 
 /**
  * Tests for {@link PublicUserJwtResource} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 
@@ -39,16 +38,6 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @Autowired
     private PasswordService passwordService;
-
-    @BeforeEach
-    void setup() {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
-    }
 
     @AfterEach
     void clearExistingUser() {
@@ -207,8 +196,6 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     }
 
     private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
-        gitlabRequestMockProvider.mockGetUserID(STUDENT_NAME, new org.gitlab4j.api.models.User().withId(1L));
-
         Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);
     }

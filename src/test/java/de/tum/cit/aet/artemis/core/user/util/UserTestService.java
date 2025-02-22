@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
+ * 1) Jenkins + LocalVc
  */
 @Service
 public class UserTestService {
@@ -84,9 +84,6 @@ public class UserTestService {
 
     @Autowired
     protected RequestUtilService request;
-
-    @Autowired
-    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
@@ -802,12 +799,11 @@ public class UserTestService {
         final User user = userTestRepository.save(repoUser);
 
         if (mock) {
-            // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
+            // Mock user creation and update calls to prevent issues in Jenkins tests
             mockDelegate.mockCreateUserInUserManagement(user, false);
             mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, null, new HashSet<>());
         }
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);

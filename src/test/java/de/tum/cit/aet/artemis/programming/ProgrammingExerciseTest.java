@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "peinttest";
 
@@ -51,14 +51,11 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
 
         jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
-        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
@@ -172,11 +169,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
 
         if (assessmentType == AssessmentType.AUTOMATIC) {
             jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-            gitlabRequestMockProvider.enableMockingOfRequests();
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
-            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
         }
 
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");

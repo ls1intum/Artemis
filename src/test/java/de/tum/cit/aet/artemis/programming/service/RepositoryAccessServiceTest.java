@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,15 +19,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.util.TestConstants;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
-class RepositoryAccessServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class RepositoryAccessServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "rastest";
 
@@ -60,10 +58,6 @@ class RepositoryAccessServiceTest extends AbstractProgrammingIntegrationJenkinsG
         programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Process a new result for the submission. This should lock the participation, because the submission limit is reached.
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        final var commitMap = new HashMap<String, ZonedDateTime>();
-        commitMap.put(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
-        gitlabRequestMockProvider.mockGetPushDate(participation, commitMap);
         mockRepositoryWritePermissionsForStudent(student, participation.getProgrammingExercise(), HttpStatus.OK);
         final var repoName = (programmingExercise.getProjectKey() + "-" + student).toUpperCase();
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(programmingExercise.getProjectKey() + " » " + repoName + " #3", repoName, null,

@@ -184,7 +184,7 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
+        participationService.deleteAllByExercise(exercise, false);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
@@ -247,6 +247,6 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, true, true, true);
+        participationService.deleteAllByExercise(exercise, true);
     }
 }

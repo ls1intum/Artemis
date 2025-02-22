@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Jenkins + Gitlab
+ * 1) Jenkins + LocalVc
  */
 @Service
 public class ProgrammingExerciseResultTestService {

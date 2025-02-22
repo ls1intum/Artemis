@@ -22,13 +22,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
-class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "progexjenkgitlab";
 
     @BeforeEach
     void initTestCase() throws Exception {
-        gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
@@ -400,7 +399,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
-        gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
         assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
@@ -851,42 +849,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.resetTestCaseWeights_instructorInWrongCourse_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void lockAllRepositories_asStudent_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.lockAllRepositories_asStudent_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void lockAllRepositories_asTutor_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.lockAllRepositories_asTutor_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void lockAllRepositories() throws Exception {
-        programmingExerciseIntegrationTestService.lockAllRepositories();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.unlockAllRepositories_asStudent_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.unlockAllRepositories_asTutor_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void unlockAllRepositories() throws Exception {
-        programmingExerciseIntegrationTestService.unlockAllRepositories();
     }
 
     @Test

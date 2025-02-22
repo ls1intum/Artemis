@@ -250,7 +250,6 @@ public class StudentExamResource {
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
-                instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
             }
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
@@ -337,7 +336,7 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+        studentExamService.submitStudentExam(studentExamFromClient, currentUser);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
@@ -704,13 +703,6 @@ public class StudentExamResource {
 
         studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
             log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-            if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
-                // This is a special case if "prepare exercise start" was pressed shortly before the exam start
-                // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
-                // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
-                // Since this gets never executed here, we need to manually schedule the locking.
-                instanceMessageSendService.sendRescheduleAllStudentExams(examId);
-            }
         });
         return ResponseEntity.ok().build();
     }

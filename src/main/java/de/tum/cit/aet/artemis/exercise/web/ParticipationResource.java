@@ -586,12 +586,6 @@ public class ParticipationResource {
                 participationService.initializeTeamParticipations(participationsBeforeDueDate);
                 participationService.initializeTeamParticipations(participationsAfterDueDate);
             }
-            // when changing the individual due date after the regular due date, the repository might already have been locked
-            participationsBeforeDueDate.forEach(
-                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
-            // the new due date may be in the past, students should no longer be able to make any changes
-            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
-                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
@@ -871,22 +865,19 @@ public class ParticipationResource {
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted
      * here!
      *
-     * @param participationId  the participationId of the participation to delete
-     * @param deleteBuildPlan  True, if the build plan should also get deleted
-     * @param deleteRepository True, if the repository should also get deleted
+     * @param participationId the participationId of the participation to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("participations/{participationId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
+    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
+        return deleteParticipation(participation, user);
     }
 
     /**
@@ -894,15 +885,12 @@ public class ParticipationResource {
      * tutorial)
      * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
-     * @param participationId  the participationId of the participation to delete
-     * @param deleteBuildPlan  True, if the build plan should also get deleted
-     * @param deleteRepository True, if the repository should also get deleted
+     * @param participationId the participationId of the participation to delete
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping("guided-tour/participations/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
+    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
@@ -919,27 +907,24 @@ public class ParticipationResource {
             throw new AccessForbiddenException("Users are not allowed to delete their own participation.");
         }
 
-        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
+        return deleteParticipation(participation, user);
     }
 
     /**
      * delete the participation, potentially including build plan and repository and log the event in the database audit
      *
-     * @param participation    the participation to be deleted
-     * @param deleteBuildPlan  whether the build plan should be deleted as well, only relevant for programming exercises
-     * @param deleteRepository whether the repository should be deleted as well, only relevant for programming exercises
-     * @param user             the currently logged-in user who initiated the delete operation
+     * @param participation the participation to be deleted
+     * @param user          the currently logged-in user who initiated the delete operation
      * @return the response to the client
      */
     @NotNull
-    private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, boolean deleteBuildPlan, boolean deleteRepository, User user) {
+    private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, User user) {
         String name = participation.getParticipantName();
-        var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
-                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + user.getLogin();
+        var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + " by " + user.getLogin();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository, true);
+        participationService.delete(participation.getId(), true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
