@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -73,16 +73,16 @@ public class IrisSettingsService {
 
     private final ObjectMapper objectMapper;
 
-    private final Optional<TextApi> textApi;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextApi> textApi) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.objectMapper = objectMapper;
-        this.textApi = textApi;
+        this.textRepositoryApi = textRepositoryApi;
     }
 
     /**
@@ -382,7 +382,7 @@ public class IrisSettingsService {
         var newEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
                 : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
         if (!Objects.equals(oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)) {
-            textApi.ifPresent(api -> api.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+            textRepositoryApi.ifPresent(api -> api.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
                     .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)));
         }
 
