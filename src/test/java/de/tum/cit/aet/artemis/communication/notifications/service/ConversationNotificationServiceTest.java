@@ -16,6 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
@@ -66,6 +68,8 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
 
     private OneToOneChat oneToOneChat;
 
+    private GroupChat groupChat;
+
     private User user1;
 
     private User user2;
@@ -91,6 +95,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         oneToOneChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
         oneToOneChat = conversationRepository.save(oneToOneChat);
 
+        groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        groupChat.setCreator(user1);
+        groupChat.setCreationDate(ZonedDateTime.now());
+        groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
+        groupChat = conversationRepository.save(groupChat);
+
         conversationNotificationRepository.deleteAll();
     }
 
@@ -103,13 +114,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createNotificationForNewMessageInConversation() {
-        Post post = new Post();
-        post.setAuthor(user1);
-        post.setCreationDate(ZonedDateTime.now());
-        post.setConversation(oneToOneChat);
-        post.setVisibleForStudents(true);
-        post.setContent("hi test");
-        post = conversationMessageRepository.save(post);
+        Post post = createAndSavePostForUser(user1, oneToOneChat);
 
         ConversationNotification notification = conversationNotificationService.createNotification(post, oneToOneChat, course, Set.of());
         conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2));
@@ -124,5 +129,27 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         conversationMessageRepository.deleteAllById(List.of(post.getId()));
         conversationParticipantRepository.deleteAllById(participants.stream().map(ConversationParticipant::getId).toList());
         conversationRepository.deleteAllById(List.of(oneToOneChat.getId()));
+    }
+
+    // This caused a bug in notifications on the mobile apps, see https://github.com/ls1intum/artemis-android/issues/391
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createNotificationForNewMessageInGroupChatContainsNonNullGroupName() {
+        Post post = createAndSavePostForUser(user1, groupChat);
+
+        ConversationNotification notification = conversationNotificationService.createNotification(post, groupChat, course, Set.of());
+        String[] notificationPlaceholders = notification.getTransientPlaceholderValuesAsArray();
+        String conversationName = notificationPlaceholders[3];
+        assertThat(conversationName).isNotNull();
+    }
+
+    private Post createAndSavePostForUser(User user, Conversation conversation) {
+        Post post = new Post();
+        post.setAuthor(user);
+        post.setCreationDate(ZonedDateTime.now());
+        post.setConversation(conversation);
+        post.setVisibleForStudents(true);
+        post.setContent("hi test");
+        return conversationMessageRepository.save(post);
     }
 }
