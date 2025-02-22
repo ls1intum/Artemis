@@ -3,8 +3,8 @@ import { PresentationScoreComponent } from 'app/exercises/shared/presentation-sc
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { HttpTestingController } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PresentationScoreComponent', () => {
     let component: PresentationScoreComponent;
@@ -38,7 +38,7 @@ describe('PresentationScoreComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(PresentationScoreComponent, '')
             .compileComponents()

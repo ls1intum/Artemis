@@ -72,7 +72,7 @@
         "papaparse": "5.5.2",
         "pdf-lib": "1.17.1",
         "pdfjs-dist": "4.10.38",
-        "rxjs": "7.8.1",
+        "rxjs": "7.8.2",
         "simple-statistics": "7.8.7",
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.6.1",
@@ -102,7 +102,7 @@
             "@angular/cdk": "^19.1.0"
         },
         "@typescript-eslint/utils": {
-            "eslint": "^9.20.0"
+            "eslint": "^9.21.0"
         },
         "braces": "3.0.3",
         "cookie": "1.0.2",
@@ -110,7 +110,7 @@
         "debug": "4.4.0",
         "esbuild": "0.25.0",
         "eslint-plugin-deprecation": {
-            "eslint": "^9.20.0"
+            "eslint": "^9.21.0"
         },
         "express": "5.0.1",
         "jsdom": "26.0.0",
@@ -153,7 +153,7 @@
         "@types/jest": "29.5.14",
         "@types/lodash-es": "4.17.12",
         "@types/markdown-it": "14.1.2",
-        "@types/node": "22.13.4",
+        "@types/node": "22.13.5",
         "@types/pako": "2.0.3",
         "@types/papaparse": "5.3.15",
         "@types/smoothscroll-polyfill": "0.3.4",
@@ -164,7 +164,7 @@
         "@typescript-eslint/parser": "8.24.1",
         "angular-eslint": "19.1.0",
         "cross-env": "7.0.3",
-        "eslint": "9.20.1",
+        "eslint": "9.21.0",
         "eslint-config-prettier": "10.0.1",
         "eslint-plugin-deprecation": "3.0.0",
         "eslint-plugin-jest": "28.11.0",
@@ -178,11 +178,11 @@
         "jest-extended": "4.0.2",
         "jest-fail-on-console": "3.3.1",
         "jest-junit": "16.0.0",
-        "jest-preset-angular": "14.5.1",
+        "jest-preset-angular": "14.5.2",
         "lint-staged": "15.4.3",
         "ng-mocks": "14.13.1",
         "patch-package": "8.0.0",
-        "prettier": "3.5.1",
+        "prettier": "3.5.2",
         "rimraf": "6.0.1",
         "sass": "1.85.0",
         "ts-jest": "29.2.5",

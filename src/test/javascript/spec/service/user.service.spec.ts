@@ -12,7 +12,6 @@ describe('User Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
 
@@ -56,10 +55,10 @@ describe('User Service', () => {
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
-        it('should call correct URL to accept Iris', () => {
-            service.acceptIris().subscribe();
+        it('should call correct URL to accept external LLM', () => {
+            service.acceptExternalLLMUsage().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/users/accept-iris';
+            const resourceUrl = 'api/users/accept-external-llm-usage';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
     });

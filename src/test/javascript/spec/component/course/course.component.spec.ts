@@ -1,5 +1,5 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
@@ -23,7 +23,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -94,7 +93,7 @@ describe('CoursesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
+            imports: [RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -117,6 +116,8 @@ describe('CoursesComponent', () => {
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
                 MockProvider(CourseAccessStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

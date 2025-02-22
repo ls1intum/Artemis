@@ -93,18 +93,10 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             return;
         }
 
-        const sortedAnswerPosts = this.sortedAnswerPosts()
-            .slice()
-            .reverse()
-            .map((post) => {
-                (post as any).creationDateDayjs = post.creationDate ? dayjs(post.creationDate) : undefined;
-                return post;
-            });
+        const sortedAnswerPosts = this.sortedAnswerPosts().slice().reverse();
 
         const sortedPosts = sortedAnswerPosts.sort((a, b) => {
-            const aDate = (a as any).creationDateDayjs;
-            const bDate = (b as any).creationDateDayjs;
-            return aDate?.valueOf() - bDate?.valueOf();
+            return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
         const groups: PostGroup[] = [];
@@ -117,12 +109,9 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             const currentPost = sortedPosts[i];
             const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
 
-            const currentDate = (currentPost as any).creationDateDayjs;
-            const lastDate = (lastPostInGroup as any).creationDateDayjs;
-
             let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentDate && lastDate) {
-                timeDiff = currentDate.diff(lastDate, 'minute');
+            if (currentPost.creationDate && lastPostInGroup.creationDate) {
+                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {

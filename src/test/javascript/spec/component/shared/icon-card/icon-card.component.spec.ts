@@ -10,7 +10,6 @@ describe('IconCardComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
             declarations: [IconCardComponent, MockDirective(TranslateDirective)],
         }).compileComponents();
 

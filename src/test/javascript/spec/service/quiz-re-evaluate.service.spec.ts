@@ -1,7 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizReEvaluateService } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.service';
-import { ArtemisTestModule } from '../test.module';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -10,7 +9,6 @@ describe('QuizReEvaluateService', () => {
     let httpMock: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService],
         });
         service = TestBed.inject(QuizReEvaluateService);

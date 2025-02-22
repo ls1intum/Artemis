@@ -1,8 +1,9 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 function getDiffEntryWithPaths(previousFilePath?: string, filePath?: string) {
     return {
@@ -17,9 +18,8 @@ describe('GitDiffFileComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
-            declarations: [],
-            providers: [],
+            imports: [MonacoDiffEditorComponent],
+            providers: [{ provide: ThemeService, useClass: MockThemeService }],
         }).compileComponents();
         // Required because Monaco uses the ResizeObserver for the diff editor.
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {

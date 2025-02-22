@@ -10,9 +10,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { DummyPagingService } from '../manage/dummy-paging-service';
 
 @Component({ template: '' })
@@ -38,8 +37,9 @@ describe('ImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
+            imports: [FormsModule, MockComponent(NgbPagination)],
             declarations: [DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            providers: [MockProvider(DummyPagingService), MockProvider(SortService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
