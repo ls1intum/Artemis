@@ -37,6 +37,8 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
 
     /***
      * Get a single saved post by user id, connected post/answer post id and posting type. Not cached.
+     * Be careful: There may be multiple entries for a post id/type id/user id. Make sure to use this
+     * when know there is only a single one (e.g. certain test cases). Will throw otherwise.
      *
      * @param userId   of the bookmark
      * @param postId   of the bookmark
@@ -45,6 +47,17 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * @return The saved post if exists, null otherwise.
      */
     SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
+
+    /***
+     * Get all saved post by user id, connected post/answer post id and posting type. Not cached.
+     *
+     * @param userId   of the bookmark
+     * @param postId   of the bookmark
+     * @param postType of the bookmark
+     *
+     * @return The saved posts if they exist.
+     */
+    List<SavedPost> findSavedPostsByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
 
     /***
      * Get all saved posts by connected post/answer post id and posting type. Not cached.
@@ -80,8 +93,10 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return List of saved posts of the given user, filtered by the given status.
      */
+    @Query("SELECT new SavedPost(" + "sp.user, sp.postId, sp.postType, MAX(sp.status), MAX(sp.completedAt)) " + "FROM SavedPost sp "
+            + "WHERE sp.user.id = :userId AND sp.status = :status " + "GROUP BY sp.user, sp.postId, sp.postType " + "ORDER BY MAX(sp.completedAt) DESC, MAX(sp.id) DESC")
     @Cacheable(key = "'saved_post_status_' + #status.getDatabaseKey() + '_' + #userId")
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(Long userId, SavedPostStatus status);
+    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") Long userId, @Param("status") SavedPostStatus status);
 
     /***
      * Query all SavedPosts for a certain user. Not cached.
