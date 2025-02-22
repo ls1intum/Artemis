@@ -287,12 +287,14 @@
                         </li>
                     }
                     @if (ltiEnabled) {
-                        <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.lti"></span>
-                        </a>
+                        <jhi-feature-overlay [enabled]="atlasEnabled">
+                            <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.lti"></span>
+                            </a>
+                        </jhi-feature-overlay>
                     }
-                    @if (atlasEnabled && standardizedCompetenciesEnabled) {
+                    @if (standardizedCompetenciesEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faFlag" [fixedWidth]="true" />
