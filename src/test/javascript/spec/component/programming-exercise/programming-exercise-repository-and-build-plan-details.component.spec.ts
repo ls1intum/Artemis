@@ -60,7 +60,6 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
-            imports: [],
             providers: [
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: TranslateService, useClass: MockTranslateService },

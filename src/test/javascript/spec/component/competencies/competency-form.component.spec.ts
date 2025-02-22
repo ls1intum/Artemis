@@ -6,7 +6,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
@@ -17,6 +16,7 @@ import { CourseCompetencyService } from '../../../../../main/webapp/app/course/c
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -26,9 +26,9 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
+            imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
-            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
+            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {

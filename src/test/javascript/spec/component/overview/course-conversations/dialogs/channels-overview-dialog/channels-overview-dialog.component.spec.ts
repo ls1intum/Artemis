@@ -47,7 +47,6 @@ examples.forEach((exampleChannel) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [],
                 declarations: [ChannelsOverviewDialogComponent, LoadingIndicatorContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 providers: [
                     MockProvider(ChannelService),
