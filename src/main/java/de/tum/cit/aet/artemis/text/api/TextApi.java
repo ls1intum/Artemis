@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -25,8 +24,7 @@ public class TextApi extends AbstractTextApi {
 
     private final TextExerciseService textExerciseService;
 
-    // TextExerciseService needs to be initialized lazy because of the dependency to InstanceMessageSendService
-    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, @Lazy TextExerciseService textExerciseService) {
+    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
