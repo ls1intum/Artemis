@@ -11,7 +11,8 @@ import { flatMap } from 'lodash-es';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
@@ -47,8 +48,7 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [MockProvider(TeamService)],
+            providers: [MockProvider(TeamService), MockProvider(NgbActiveModal), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
     }));
 

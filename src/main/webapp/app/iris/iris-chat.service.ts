@@ -43,10 +43,11 @@ export class IrisChatService implements OnDestroy {
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
+    private acceptSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedIris = false;
+    hasJustAcceptedExternalLLMUsage = false;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -54,10 +55,11 @@ export class IrisChatService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
+        this.acceptSubscription?.unsubscribe();
     }
 
     protected start() {
-        if (this.accountService.userIdentity?.irisAccepted || this.hasJustAcceptedIris) {
+        if (this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
         }
     }
@@ -153,8 +155,10 @@ export class IrisChatService implements OnDestroy {
     }
 
     public setUserAccepted(): void {
-        this.userService.acceptIris().subscribe(() => {
-            this.hasJustAcceptedIris = true;
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
+            this.hasJustAcceptedExternalLLMUsage = true;
+            this.accountService.setUserAcceptedExternalLLMUsage();
             this.closeAndStart();
         });
     }

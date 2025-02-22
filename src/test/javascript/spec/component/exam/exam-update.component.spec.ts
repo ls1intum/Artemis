@@ -1,10 +1,10 @@
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
-import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter, Router, UrlSegment } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockDirective, MockProvider } from 'ng-mocks';
 
@@ -28,9 +28,10 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     template: '',
@@ -61,7 +62,7 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -106,6 +107,7 @@ describe('ExamUpdateComponent', () => {
                             );
                         },
                     }),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 
@@ -581,7 +583,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -610,6 +612,7 @@ describe('ExamUpdateComponent', () => {
                         },
                     }),
                     MockDirective(NgForm),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 
@@ -729,7 +732,9 @@ describe('ExamUpdateComponent', () => {
             examWithError.exerciseGroups = [exerciseGroup2];
 
             component.exam = examWithError;
-            component.examExerciseImportComponent.exam = examWithError;
+            TestBed.runInInjectionContext(() => {
+                component.examExerciseImportComponent.exam = input(examWithError);
+            });
             component.examExerciseImportComponent.ngOnInit();
 
             fixture.detectChanges();

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -9,7 +9,7 @@ import {
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -25,8 +25,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../../../helpers/mocks/service/mock-theme.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -63,7 +66,7 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
             declarations: [
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
@@ -88,6 +91,9 @@ describe('TutorialGroupFormComponent', () => {
                     },
                 }),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                { provide: ThemeService, useClass: MockThemeService },
             ],
         }).compileComponents();
 

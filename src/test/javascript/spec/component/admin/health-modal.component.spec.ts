@@ -4,7 +4,6 @@ import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { MockProvider } from 'ng-mocks';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('HealthModalComponentTest', () => {
     let fixture: ComponentFixture<HealthModalComponent>;
@@ -13,7 +12,6 @@ describe('HealthModalComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [MockProvider(NgbActiveModal)],
         })
             .compileComponents()

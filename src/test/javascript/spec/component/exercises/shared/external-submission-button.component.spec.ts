@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
@@ -14,8 +16,7 @@ describe('External Submission Dialog', () => {
     beforeEach(() => {
         modalService = { open: jest.fn() } as any as NgbModal;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [{ provide: NgbModal, useValue: modalService }],
+            providers: [{ provide: NgbModal, useValue: modalService }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

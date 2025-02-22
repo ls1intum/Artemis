@@ -84,7 +84,6 @@ describe('ProgrammingSubmissionService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

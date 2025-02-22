@@ -10,7 +10,6 @@ describe('TextEditorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         textEditorService = TestBed.inject(TextEditorService);

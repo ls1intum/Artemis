@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static java.util.Map.entry;
-
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -87,15 +87,20 @@ public class StaticCodeAnalysisConfigurer {
             "SYNTACTIC_ERROR", "LINT");
 
     // @formatter:off
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
-            entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
-            entry(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE)),
-            entry(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava()),
-            entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
-            entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
-            entry(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY)),
-            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
-    );
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories;
+
+    static {
+        Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> map = new EnumMap<>(ProgrammingLanguage.class);
+        map.put(ProgrammingLanguage.C, createDefaultCategoriesForC());
+        map.put(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE));
+        map.put(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
+        map.put(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF));
+        map.put(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP));
+        map.put(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY));
+        map.put(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
+
+        languageToDefaultCategories = Collections.unmodifiableMap(map);
+    }
     // @formatter:on
 
     /**

@@ -9,7 +9,6 @@ describe('LinkPreviewService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), LinkPreviewService],
         });
         service = TestBed.inject(LinkPreviewService);

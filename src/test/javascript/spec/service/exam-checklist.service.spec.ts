@@ -5,7 +5,6 @@ import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { of, take } from 'rxjs';
-import { ArtemisTestModule } from '../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
@@ -37,7 +36,6 @@ describe('ExamChecklistService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [MockProvider(ExamManagementService)],
         })
             .compileComponents()

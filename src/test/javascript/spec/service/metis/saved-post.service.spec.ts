@@ -16,7 +16,6 @@ describe('SavedPostService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [SavedPostService, provideHttpClient(), provideHttpClientTesting()],
         });
 
