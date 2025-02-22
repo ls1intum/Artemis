@@ -33,7 +33,7 @@
                 "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden"
             },
             "userRepository": {
-                "title": "Benutzer-Repository"
+                "title": "Assignment-Repository"
             },
             "templateRepository": {
                 "title": "Template-Repository"
