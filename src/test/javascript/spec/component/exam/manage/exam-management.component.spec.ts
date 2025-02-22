@@ -27,6 +27,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -203,9 +204,9 @@ describe('Exam Management Component', () => {
     it('should open the import modal for exercise groups', fakeAsync(() => {
         const mockReturnValue = {
             componentInstance: {
-                subsequentExerciseGroupSelection: undefined,
-                targetCourseId: undefined,
-                targetExamId: undefined,
+                subsequentExerciseGroupSelection: signal<boolean>(false),
+                targetCourseId: signal<number | undefined>(undefined),
+                targetExamId: signal<number | undefined>(undefined),
             },
             result: Promise.resolve(exam),
         } as NgbModalRef;

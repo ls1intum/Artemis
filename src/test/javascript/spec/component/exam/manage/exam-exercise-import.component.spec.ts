@@ -82,8 +82,8 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should initialize ngOnInit without titleAndShortNameOfProgrammingExercises', () => {
-        component.exam = exam1;
-        component.importInSameCourse = false;
+        fixture.componentRef.setInput('exam', exam1);
+        fixture.componentRef.setInput('importInSameCourse', false);
         component.ngOnInit();
 
         expect(component.selectedExercises.size).toBe(5);
@@ -105,8 +105,8 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should initialize ngOnInit with titleAndShortNameOfProgrammingExercises', () => {
-        component.exam = exam1;
-        component.importInSameCourse = true;
+        fixture.componentRef.setInput('exam', exam1);
+        fixture.componentRef.setInput('importInSameCourse', true);
         component.ngOnInit();
 
         expect(component.selectedExercises.size).toBe(5);
@@ -131,8 +131,8 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should initialize maps when updateMapsAfterRejectedImport is called', () => {
-        component.exam = exam1;
-        component.importInSameCourse = false;
+        fixture.componentRef.setInput('exam', exam1);
+        fixture.componentRef.setInput('importInSameCourse', false);
         // Step 1: Initialize the component
         component.ngOnInit();
         // As importInSameCourse = false, this should be preliminary empty
@@ -148,10 +148,12 @@ describe('Exam Exercise Import Component', () => {
         const programmingExerciseRejected = new ProgrammingExercise(undefined, exerciseGroup3Rejected);
         programmingExerciseRejected.id = 3;
         exerciseGroup3Rejected.exercises = [programmingExerciseRejected];
-        component.exam = {
+        const exam = {
             id: 10,
             exerciseGroups: [exerciseGroup1, exerciseGroup2, exerciseGroup3Rejected, exerciseGroup4, exerciseGroup5],
         } as Exam;
+        fixture.componentRef.setInput('exam', exam);
+
         // Method called by Parent-Component
         component.updateMapsAfterRejectedImportDueToInvalidProjectKey();
 
@@ -177,7 +179,7 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly process the selection of a modellingExercise', () => {
-        component.exam = exam1;
+        fixture.componentRef.setInput('exam', exam1);
         component.ngOnInit();
 
         // Step 1 ( after initialization): Modelling Exercise is selected
@@ -199,7 +201,7 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly process the selection of a programmingExercise', () => {
-        component.exam = exam1;
+        fixture.componentRef.setInput('exam', exam1);
         component.ngOnInit();
 
         // Step 1 ( after initialization): Programming Exercise is selected
@@ -226,7 +228,7 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly map selected Exercises To Exercise Groups', () => {
-        component.exam = exam1;
+        fixture.componentRef.setInput('exam', exam1);
         component.ngOnInit();
 
         // Initial Case: All Exercise Groups are selected
@@ -257,7 +259,7 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly validate the user input', () => {
-        component.exam = exam1;
+        fixture.componentRef.setInput('exam', exam1);
         component.ngOnInit();
 
         // Programming Exercises with this title and short name should not be accepted
@@ -325,8 +327,8 @@ describe('Exam Exercise Import Component', () => {
         } as Exam;
 
         beforeEach(() => {
-            component.exam = exam2;
-            component.importInSameCourse = false;
+            fixture.componentRef.setInput('exam', exam2);
+            fixture.componentRef.setInput('importInSameCourse', false);
             component.ngOnInit();
         });
 

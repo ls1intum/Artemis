@@ -118,6 +118,24 @@ describe('Post Service', () => {
             req.flush(mockResponse);
             tick();
         }));
+
+        it('should get source posts by IDs', fakeAsync(() => {
+            const postIds = [1, 2, 3];
+            const returnedFromService = metisCoursePosts.slice(0, 3);
+            const expected = returnedFromService;
+
+            service
+                .getSourcePostsByIds(metisCourse.id!, postIds)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toEqual(expected));
+
+            const req = httpMock.expectOne({
+                method: 'GET',
+                url: `api/communication/courses/${metisCourse.id}/messages-source-posts?postIds=${postIds.join(',')}`,
+            });
+            req.flush(returnedFromService);
+            tick();
+        }));
     });
 
     afterEach(() => {
