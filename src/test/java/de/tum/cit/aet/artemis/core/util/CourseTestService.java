@@ -3371,7 +3371,7 @@ public class CourseTestService {
     public void testGetCoursesForImport() throws Exception {
         List<Course> coursesExpected = new ArrayList<>();
         for (int i = 1; i < 3; i++) {
-            coursesExpected.add(courseUtilService.createCourse((long) i));
+            coursesExpected.add(courseUtilService.createCourse());
         }
         var searchTerm = pageableSearchUtilService.configureSearch("");
 
@@ -3390,7 +3390,7 @@ public class CourseTestService {
     public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {
-            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+            expectedOldCourses.add(courseUtilService.createCourse());
         }
 
         expectedOldCourses.get(0).setSemester("SS20");
@@ -3415,17 +3415,17 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
-        Course course1 = courseUtilService.createCourse((long) 1);
+        Course course1 = courseUtilService.createCourse();
         course1.setSemester("SS20");
         course1.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course1);
 
-        Course course2 = courseUtilService.createCourse((long) 2);
+        Course course2 = courseUtilService.createCourse();
         course2.setSemester("SS21");
         course2.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course2);
 
-        Course course3 = courseUtilService.createCourse((long) 3);
+        Course course3 = courseUtilService.createCourse();
         course3.setSemester("WS21/22");
         course3.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course3);

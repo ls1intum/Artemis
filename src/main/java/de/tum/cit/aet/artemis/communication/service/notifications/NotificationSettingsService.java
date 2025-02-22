@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -138,46 +139,50 @@ public class NotificationSettingsService {
 
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
-    public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
-            // weekly summary
-            new NotificationSetting(false, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
-            // course wide discussion notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
-            new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
-            new NotificationSetting(true, true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
-            // exercise notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
-            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
-            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
-            new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
-            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
-            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
-            new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER),
-            // lecture notification settings group
-            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
-            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
-            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
-            // exam notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST),
-            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST),
-            // tutorial group notification settings group
-            new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
-            new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
-            // tutor notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
-            // editor notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
-            // instructor notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
-            new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
-            // user new message notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
-            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
-            // user mention notification setting group
-            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
-            // data export notification setting (cannot be overridden by user)
-            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
-            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
+    // NOTE: we cannot define a constant here, otherwise ids might be saved and Hibernate won't be able to work with the default settings anymore
+    public static Set<NotificationSetting> getDefaultNotificationSettings() {
+        // always create a new set of objects with null ids to avoid issues with Hibernate
+        return Set.of(
+                // weekly summary
+                new NotificationSetting(false, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
+                // course wide discussion notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
+                new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
+                new NotificationSetting(true, true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
+                // exercise notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
+                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
+                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
+                new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
+                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
+                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+                new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER),
+                // lecture notification settings group
+                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
+                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
+                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+                // exam notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST),
+                new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST),
+                // tutorial group notification settings group
+                new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
+                new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
+                // tutor notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
+                // editor notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
+                // instructor notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
+                new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
+                // user new message notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
+                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
+                // user mention notification setting group
+                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
+                // data export notification setting (cannot be overridden by user)
+                new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
+                new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+    }
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -279,7 +284,7 @@ public class NotificationSettingsService {
             // for those notification types that are not explicitly set by the user, we use the default settings
             Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
                     .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
-            for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
+            for (NotificationSetting defaultSetting : getDefaultNotificationSettings()) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
                     notificationSettings
                             .add(new NotificationSetting(user, defaultSetting.isWebapp(), defaultSetting.isEmail(), defaultSetting.isPush(), defaultSetting.getSettingId()));
@@ -364,65 +369,53 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Extracts the settingsIds of a notification settings set
-     * E.g. used to compare two sets of notification settings based on setting id
+     * Compares two notification settings sets based on their notification setting IDs.
      *
-     * @param notificationSettings set which setting ids should be extracted
-     * @return a set of settings ids
+     * @param notificationSettingsA the first set
+     * @param notificationSettingsB the second set
+     * @return true if both sets have the same notification setting IDs, otherwise false
      */
-    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
-        Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
-        return settingsIds;
+    private boolean haveSameNotificationSettingIds(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        return Objects.equals(notificationSettingsA.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()),
+                notificationSettingsB.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()));
     }
 
     /**
-     * Compares two notification settings sets based on their notification setting ids
+     * Checks and updates the personal notification settings retrieved from the DB.
+     * If the loaded set is empty, use default settings.
+     * If the loaded set has different setting IDs than the default settings, merge both sets.
      *
-     * @param notificationSettingsA is the first set
-     * @param notificationSettingsB is the second set
-     * @return true if the notification setting ids of both are the same else return false
-     */
-    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
-        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
-        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
-        return settingIdsA.equals(settingIdsB);
-    }
-
-    /**
-     * Checks the personal notificationSettings retrieved from the DB.
-     * If the loaded set is empty substitute it with the default settings
-     * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     *
-     * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
-     * @param user                     the user for which the settings should be loaded
-     * @return the updated and correct notification settings
+     * @param userNotificationSettings The notification settings retrieved from the DB for the user (it's important that the entities are not detached).
+     * @param user                     The user for whom the settings should be checked.
+     * @return The updated and correct notification settings.
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
+        var defaultSettings = getDefaultNotificationSettings();
         if (userNotificationSettings.isEmpty()) {
-            return DEFAULT_NOTIFICATION_SETTINGS;
+            return defaultSettings;
         }
-        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
-        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(userNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedDefaultNotificationSettings = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
-
-            userNotificationSettings.forEach(userNotificationSetting -> DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
-                if (defaultSetting.getSettingId().equals(userNotificationSetting.getSettingId())) {
-                    updatedDefaultNotificationSettings.remove(defaultSetting);
-                    updatedDefaultNotificationSettings.add(userNotificationSetting);
-                }
-            }));
-
-            updatedDefaultNotificationSettings.forEach(userNotificationSetting -> userNotificationSetting.setUser(user));
-            // update DB to fix inconsistencies and avoid redundant future merges
-            // first remove all settings of the current user in the DB
-            notificationSettingRepository.deleteAll(userNotificationSettings);
-            // save correct merge to DB
-            notificationSettingRepository.saveAll(updatedDefaultNotificationSettings);
-            return updatedDefaultNotificationSettings;
+        // If all default settings are available in the database, return them
+        if (haveSameNotificationSettingIds(userNotificationSettings, defaultSettings)) {
+            return userNotificationSettings;
         }
-        return userNotificationSettings;
+
+        // Merge user settings with default settings
+        Map<String, NotificationSetting> settingsMap = userNotificationSettings.stream().collect(Collectors.toMap(NotificationSetting::getSettingId, setting -> setting));
+
+        // Merge user-specific settings with default settings:
+        // - If the user already has a setting with the same ID, use the user’s version.
+        // - If the user doesn’t have a specific setting, fall back to the default version.
+        Set<NotificationSetting> mergedSettings = defaultSettings.stream().map(defaultSetting -> settingsMap.getOrDefault(defaultSetting.getSettingId(), defaultSetting))
+                .collect(Collectors.toSet());
+
+        // Assign user reference to the updated settings
+        mergedSettings.forEach(setting -> setting.setUser(user));
+
+        // Save only **new or updated** settings, avoiding unnecessary deletes
+        notificationSettingRepository.saveAll(mergedSettings);
+
+        return mergedSettings;
     }
 
     /**

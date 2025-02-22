@@ -482,7 +482,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Create a new course with different id.
         Long oldCourseId = course.getId();
         Long newCourseId = oldCourseId + 1L;
-        Course newCourse = courseUtilService.createCourse(newCourseId);
+        Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the text exercise.
         existingTextExercise.setCourse(newCourse);

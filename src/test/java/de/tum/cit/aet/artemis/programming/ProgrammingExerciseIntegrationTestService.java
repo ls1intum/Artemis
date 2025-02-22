@@ -936,7 +936,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Create a new course with different id.
         Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         Long newCourseId = oldCourseId + 1;
-        Course newCourse = courseUtilService.createCourse(newCourseId);
+        Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the programming exercise.
         ProgrammingExercise newProgrammingExercise = programmingExercise;
