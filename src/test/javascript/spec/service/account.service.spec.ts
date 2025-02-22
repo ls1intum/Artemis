@@ -619,4 +619,37 @@ describe('AccountService', () => {
             req.flush({ body: token });
         });
     });
+
+    describe('test external LLM usage acceptance', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            // Set a fixed date for consistent testing
+            jest.setSystemTime(new Date('2024-02-06'));
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should set externalLLMUsageAccepted when user identity exists', () => {
+            // Setup user identity
+            accountService.userIdentity = { id: 1, groups: ['USER'] } as User;
+
+            // Call the function
+            accountService.setUserAcceptedExternalLLMUsage();
+
+            // Check if the date was set correctly
+            const acceptedDate = accountService.userIdentity.externalLLMUsageAccepted;
+            expect(acceptedDate).toBeDefined();
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            // Ensure userIdentity is undefined
+            accountService.userIdentity = undefined;
+
+            // Verify that calling the function doesn't throw an error
+            expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();
+        });
+    });
 });
