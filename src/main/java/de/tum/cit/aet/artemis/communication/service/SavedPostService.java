@@ -79,7 +79,7 @@ public class SavedPostService {
     public void updateStatusOfSavedPostForCurrentUser(Posting post, SavedPostStatus status) {
         var existingSavedPosts = this.getSavedPostForCurrentUser(post);
 
-        if (existingSavedPosts == null) {
+        if (existingSavedPosts.isEmpty()) {
             return;
         }
 
