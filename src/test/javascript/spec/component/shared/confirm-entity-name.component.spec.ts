@@ -5,7 +5,6 @@ import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 
 const expectedEntityName = 'TestEntityName';
@@ -28,7 +27,8 @@ describe('ConfirmEntityNameComponent', () => {
 
         beforeEach(async () => {
             await TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ReactiveFormsModule, ConfirmEntityNameComponent],
+                imports: [ReactiveFormsModule, ConfirmEntityNameComponent],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             }).compileComponents();
             fixture = TestBed.createComponent(ConfirmEntityNameHostComponent);
 

@@ -3,7 +3,7 @@
         @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             <button
                 class="btn btn-primary"
-                (click)="requestFeedback()"
+                (click)="requestAIFeedback(popup)"
                 [class.btn-sm]="smallButtons()"
                 [disabled]="!isSubmitted() || isGeneratingFeedback()"
                 [id]="'request-feedback-' + exercise().id"
@@ -20,9 +20,9 @@
                 </span>
             </button>
         } @else {
-            <a
+            <button
                 class="btn btn-primary"
-                (click)="requestFeedback()"
+                (click)="requestAIFeedback(popup)"
                 [class.btn-sm]="smallButtons()"
                 [id]="'request-feedback-' + exercise().id"
                 [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
@@ -36,7 +36,7 @@
                 >
                     {{ this.currentFeedbackRequestCount }} / {{ this.feedbackRequestLimit }}
                 </span>
-            </a>
+            </button>
         }
     } @else {
         <a
@@ -51,3 +51,15 @@
         </a>
     }
 }
+
+<ng-template #popup let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title" id="modal-title" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpLabel"></h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('decline')" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.decline"></button>
+        <button type="button" class="btn btn-primary" (click)="acceptExternalLLMUsage(modal)" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.accept"></button>
+    </div>
+</ng-template>

@@ -27,7 +27,6 @@ import { MockParticipationService } from '../../../../helpers/mocks/service/mock
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from '../../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -107,7 +106,6 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
