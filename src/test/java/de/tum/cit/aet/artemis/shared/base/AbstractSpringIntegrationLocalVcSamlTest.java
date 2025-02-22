@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
@@ -105,11 +104,6 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
         // Not needed for this test
     }
@@ -150,11 +144,6 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
         // Not needed for this test
     }
@@ -171,11 +160,6 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
 
     @Override
     public void resetMockProvider() throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
-    public void verifyMocks() {
         // Not needed for this test
     }
 
@@ -262,11 +246,6 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
         // Not needed for this test
     }
@@ -293,16 +272,6 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
         // Not needed for this test
     }
 

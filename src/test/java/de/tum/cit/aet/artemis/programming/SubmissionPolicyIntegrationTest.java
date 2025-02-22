@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
@@ -242,7 +240,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
         User student2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
-        mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student2));
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
     }
 
@@ -382,9 +379,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false, List.of("test1"),
                 List.of("test2", "test3"), null, null, null);
-        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            mockGitlabRequests(participation);
-        }
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
@@ -414,9 +408,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
-        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            mockGitlabRequests(participation);
-        }
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
@@ -482,11 +473,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         participationUtilService.addResultToParticipation(participation, submission2);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
-    }
-
-    private void mockGitlabRequests(ProgrammingExerciseParticipation participation) throws Exception {
-        User student = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {

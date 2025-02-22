@@ -858,11 +858,6 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri(), programmingExercise.getProjectKey(), true);
     }
 
-    private void mockConfigureRepository(ProgrammingExercise programmingExercise) throws Exception {
-        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
-        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
-    }
-
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
@@ -953,7 +948,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-        mockConfigureRepository(programmingExercise);
 
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 

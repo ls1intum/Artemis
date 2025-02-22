@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -262,11 +261,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
-        // Not needed here
-    }
-
-    @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
@@ -357,11 +351,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        // Not needed here
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
         jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
     }
@@ -390,11 +379,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
         jenkinsRequestMockProvider.reset();
     }
 
-    @Override
-    public void verifyMocks() {
-        jenkinsRequestMockProvider.verifyMocks();
-    }
-
     /**
      * Configures the mock requests needed to delete a programming exercise in an exam.
      *
@@ -418,11 +402,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     @Override
     public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob(exercise.getProjectKey(), null);
-    }
-
-    @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
-        // Not needed for this test
     }
 
     @Override
@@ -477,16 +456,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
 
     @Override
     public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
         // Not needed for this test
     }
 

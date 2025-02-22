@@ -98,7 +98,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         mockDefaultBranch(programmingExercise1);
         mockDefaultBranch(programmingExercise2);
         mockTriggerFailedBuild(participation);
-        mockGrantReadAccess(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);

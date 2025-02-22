@@ -2143,9 +2143,6 @@ public class ProgrammingExerciseTestService {
         User firstStudent = students.iterator().next();
         team.removeStudents(firstStudent);
 
-        // Mock repository access removal call
-        mockDelegate.mockRemoveRepositoryAccess(exercise, team, firstStudent);
-
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
 
