@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
@@ -22,6 +21,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorBuildOutputComponent', () => {
     let comp: CodeEditorBuildOutputComponent;
@@ -81,13 +82,13 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 MockProvider(CodeEditorSubmissionService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

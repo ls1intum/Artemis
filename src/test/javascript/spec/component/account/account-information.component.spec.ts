@@ -5,9 +5,10 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { ArtemisTestModule } from '../../test.module';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
@@ -34,12 +35,12 @@ describe('AccountInformationComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: UserSettingsService, useValue: userSettingsServiceMock },
                 { provide: NgbModal, useValue: modalServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);

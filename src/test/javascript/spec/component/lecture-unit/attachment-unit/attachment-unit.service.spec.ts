@@ -20,7 +20,6 @@ describe('AttachmentUnitService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

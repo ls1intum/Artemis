@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
@@ -16,6 +15,8 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -47,12 +48,13 @@ describe('CodeEditorMonacoComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
+            imports: [MonacoEditorComponent],
             declarations: [MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

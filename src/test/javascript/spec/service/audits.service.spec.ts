@@ -11,7 +11,6 @@ describe('Audits Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
 

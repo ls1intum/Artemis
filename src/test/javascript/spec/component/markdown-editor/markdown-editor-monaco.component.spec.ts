@@ -1,9 +1,8 @@
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -21,6 +20,10 @@ import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -29,8 +32,14 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(FileUploaderService), MockProvider(AlertService)],
-            imports: [FormsModule, NgbNavModule, ArtemisTestModule, MockDirective(NgbTooltip), DragDropModule],
+            providers: [
+                MockProvider(FileUploaderService),
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+            imports: [FormsModule, NgbNavModule, MockDirective(NgbTooltip), DragDropModule],
             declarations: [
                 MarkdownEditorMonacoComponent,
                 MockComponent(MonacoEditorComponent),
@@ -86,7 +95,11 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
-        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW, preventDefault: jest.fn() });
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            preventDefault: jest.fn(),
+        });
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
     });
@@ -94,7 +107,11 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should emit when leaving the visual tab', () => {
         const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
         fixture.detectChanges();
-        comp.onNavChanged({ nextId: MarkdownEditorMonacoComponent.TAB_EDIT, activeId: MarkdownEditorMonacoComponent.TAB_VISUAL, preventDefault: jest.fn() });
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            activeId: MarkdownEditorMonacoComponent.TAB_VISUAL,
+            preventDefault: jest.fn(),
+        });
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
@@ -190,8 +207,14 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1]);
         // Each file should be embedded. PDFs should be embedded as URLs.
-        expect(attachmentStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[0].url, text: fileInformation[0].file.name });
-        expect(urlStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[1].url, text: fileInformation[1].file.name });
+        expect(attachmentStub).toHaveBeenCalledExactlyOnceWith({
+            url: fileInformation[0].url,
+            text: fileInformation[0].file.name,
+        });
+        expect(urlStub).toHaveBeenCalledExactlyOnceWith({
+            url: fileInformation[1].url,
+            text: fileInformation[1].file.name,
+        });
     }));
 
     it('should not embed files if file upload is disabled', () => {

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,6 +13,7 @@ import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -60,8 +60,9 @@ describe('FeedbackAnalysisComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FeedbackAnalysisComponent],
+            imports: [TranslateModule.forRoot(), FeedbackAnalysisComponent],
             providers: [
+                provideHttpClient(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,

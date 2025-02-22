@@ -19,8 +19,9 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -41,7 +42,7 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
@@ -58,6 +59,7 @@ describe('Exam Import Component', () => {
                 MockProvider(NgbActiveModal),
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
