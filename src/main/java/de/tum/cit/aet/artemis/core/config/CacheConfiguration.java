@@ -3,12 +3,15 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +37,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.hazelcast.config.Config;
@@ -41,6 +45,7 @@ import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
+import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.config.SplitBrainProtectionConfig;
@@ -124,6 +129,9 @@ public class CacheConfiguration {
      */
     @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void connectToAllMembers() {
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return;
+        }
         if (registration == null) {
             return;
         }
@@ -167,6 +175,35 @@ public class CacheConfiguration {
      */
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
+        // ========================= TESTING ONLY =========================
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            // try to avoid that parallel test executions interfere with each other
+            Config testConfig = new Config();
+            testConfig.setInstanceName(instanceName);
+            testConfig.setClusterName("test-cluster-" + UUID.randomUUID());
+
+            testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+            NetworkConfig networkConfig = testConfig.getNetworkConfig();
+            // Set network configuration to prevent joining other nodes
+            networkConfig.getJoin().getMulticastConfig().setEnabled(false);
+            networkConfig.getJoin().getTcpIpConfig().setEnabled(false);
+            networkConfig.getJoin().getAwsConfig().setEnabled(false);
+            networkConfig.getJoin().getKubernetesConfig().setEnabled(false);
+            networkConfig.getJoin().getEurekaConfig().setEnabled(false);
+
+            // Ensure the instance is a local-only, lite member to prevent connections
+            networkConfig.setPort(5701 + new Random().nextInt(1000)); // Randomize port to prevent conflicts
+            networkConfig.setPortAutoIncrement(false);
+            testConfig.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+
+            // testConfig.setLiteMember(true); // Run as a lite member to avoid forming a full cluster
+            return Hazelcast.newHazelcastInstance(testConfig);
+        }
+        // ========================= TESTING ONLY =========================
+
         log.debug("Configuring Hazelcast");
         HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelCastInstance != null) {

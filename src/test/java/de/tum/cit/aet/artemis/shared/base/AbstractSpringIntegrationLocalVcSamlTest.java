@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.shared.base;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
@@ -41,8 +43,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 // TODO: rewrite this test to use LocalVC
 @ResourceLock("AbstractSpringIntegrationLocalVcSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, "localvc", "localci", PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml",
+        "artemis.version-control.ssh-port=1236" })
 public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractArtemisIntegrationTest {
 
     @Autowired
