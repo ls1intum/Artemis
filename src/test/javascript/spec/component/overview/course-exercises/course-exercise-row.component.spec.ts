@@ -3,7 +3,6 @@ import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
@@ -33,6 +32,8 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { RouterModule } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
     template: '',
@@ -49,7 +50,6 @@ describe('CourseExerciseRowComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 TranslateModule.forRoot(),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
@@ -78,6 +78,8 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

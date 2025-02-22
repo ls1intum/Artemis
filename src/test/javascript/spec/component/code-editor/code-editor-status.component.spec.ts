@@ -1,12 +1,12 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
@@ -14,8 +14,9 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [CodeEditorStatusComponent, TranslatePipeMock],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

@@ -5,7 +5,6 @@ import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,7 +17,6 @@ describe('CompetencyCardComponent', () => {
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),

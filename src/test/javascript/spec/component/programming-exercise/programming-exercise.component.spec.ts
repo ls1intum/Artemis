@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -20,6 +19,11 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -43,7 +47,6 @@ describe('ProgrammingExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -52,6 +55,10 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(EventManager),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(ProgrammingExerciseComponent, '')

@@ -13,7 +13,6 @@ describe('Quiz Participation Service', () => {
     let exerciseId: number;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(QuizParticipationService);

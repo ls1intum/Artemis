@@ -91,7 +91,6 @@ describe('Bonus Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(BonusService);

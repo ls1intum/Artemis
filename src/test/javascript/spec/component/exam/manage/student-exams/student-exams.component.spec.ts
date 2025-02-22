@@ -26,7 +26,6 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamsComponent', () => {
@@ -205,7 +204,6 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers,
         })
             .compileComponents()
