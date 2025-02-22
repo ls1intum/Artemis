@@ -1,12 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TemplateRef } from '@angular/core';
-import { MockProvider } from 'ng-mocks';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement, TemplateRef } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
