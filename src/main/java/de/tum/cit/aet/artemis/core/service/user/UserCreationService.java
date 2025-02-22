@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)

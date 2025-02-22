@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
-@Profile("gitlabci | jenkins")
+@Profile("jenkins")
 @RestController
 @RequestMapping("api/")
 public class BuildPlanResource {

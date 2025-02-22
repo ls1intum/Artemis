@@ -111,7 +111,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         Repository targetRepo = null;
         try {
             // create the new target repo
-            createRepository(targetProjectKey, targetRepoSlug, null);
+            createRepository(targetProjectKey, targetRepoSlug);
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUri, targetRepoUri, true);
             // copy by pushing the source's content to the target's repo

@@ -75,8 +75,6 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
-        // For GitLab, users are added to the respective repository to allow them to fetch from there and push to it
-        // if the exercise allows for usage of an offline IDE.
         // For local VCS, users are allowed to access the repository by default if they have access to the repository URI.
         // Instead, the LocalVCFetchFilter and LocalVCPushFilter block requests if offline IDE usage is not allowed.
     }
@@ -237,7 +235,7 @@ public class LocalVCService extends AbstractVersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         try {
-            // Instead of defining a project like would be done for GitLab, just create a directory that will contain all repositories.
+            // Create a directory that will contain all repositories.
             Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
@@ -260,12 +258,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @throws LocalVCInternalException if the repository could not be created
      */
     @Override
-    public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
-        createRepository(projectKey, repositorySlug);
-    }
-
-    private void createRepository(String projectKey, String repositorySlug) {
-
+    public void createRepository(String projectKey, String repositorySlug) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);

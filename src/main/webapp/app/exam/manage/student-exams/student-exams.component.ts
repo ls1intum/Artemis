@@ -85,7 +85,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
-    localVCEnabled = false;
+    localVCEnabled = true;
 
     exercisePreparationStatus?: ExamExerciseStartPreparationStatus;
     exercisePreparationRunning = false;

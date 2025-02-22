@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
-@Profile("gitlabci | jenkins")
+@Profile("jenkins")
 @RestController
 // TODO: should we adapt the mapping based on the profile?
 @RequestMapping("api/public/")

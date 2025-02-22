@@ -121,7 +121,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -895,7 +894,7 @@ public class CourseResource {
         courseService.archiveCourse(course);
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
-        // instructors to download student repos in order to delete those on Gitlab
+        // instructors to download student repos in order to delete those in the VCS
 
         // Note: Lectures are not part of the archive at the moment and will be included in a future version
         // 1) Get all lectures (attachments) of the course and store them in a folder

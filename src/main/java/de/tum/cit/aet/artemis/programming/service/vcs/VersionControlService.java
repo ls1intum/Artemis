@@ -101,12 +101,11 @@ public interface VersionControlService {
     /**
      * Creates a repository on the VCS.
      *
-     * @param projectKey       The key of the project that contains the repository (must exist)
-     * @param repoName         The name of the repository
-     * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
+     * @param projectKey The key of the project that contains the repository (must exist)
+     * @param repoName   The name of the repository
      * @throws VersionControlException if the repository could not be created
      */
-    void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
+    void createRepository(String projectKey, String repoName) throws VersionControlException;
 
     /**
      * Checks if the project with the given projectKey already exists

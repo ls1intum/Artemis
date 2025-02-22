@@ -62,8 +62,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
 
-    localVCEnabled = false;
-    localCIEnabled = false;
+    localVCEnabled = true;
+    localCIEnabled = true;
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

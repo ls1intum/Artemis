@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationGitlabCIGitlabSamlTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;

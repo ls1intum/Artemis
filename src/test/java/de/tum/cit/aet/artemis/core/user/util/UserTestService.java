@@ -57,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 

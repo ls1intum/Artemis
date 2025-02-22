@@ -236,9 +236,9 @@ public class ProgrammingExerciseRepositoryService {
     void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.orElseThrow().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE)); // Create template repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS)); // Create tests repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION)); // Create solution repository
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
@@ -254,7 +254,7 @@ public class ProgrammingExerciseRepositoryService {
     private void createAndInitializeAuxiliaryRepositories(final String projectKey, final ProgrammingExercise programmingExercise) throws GitAPIException {
         for (final AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.orElseThrow().createRepository(projectKey, repositoryName, null);
+            versionControlService.orElseThrow().createRepository(projectKey, repositoryName);
             repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
             final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
@@ -293,7 +293,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void createAndInitializeAuxiliaryRepository(final ProgrammingExercise programmingExercise, final AuxiliaryRepository repo) throws GitAPIException {
         final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-        versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName, null);
+        versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName);
         repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
         final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);

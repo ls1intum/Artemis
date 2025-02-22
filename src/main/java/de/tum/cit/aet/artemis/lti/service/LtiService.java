@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Service

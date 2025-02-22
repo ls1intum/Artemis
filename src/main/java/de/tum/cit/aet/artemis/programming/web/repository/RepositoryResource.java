@@ -285,7 +285,7 @@ public abstract class RepositoryResource {
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
             // Trigger a build, and process the result. Only implemented for local CI.
-            // For GitLab + Jenkins, webhooks were added when creating the repository,
+            // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVcsCiActive()) {
                 localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);

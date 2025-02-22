@@ -158,8 +158,6 @@ dependencies {
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.3"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
-
     implementation "de.jplag:jplag:${jplag_version}"
 
     implementation "de.jplag:c:${jplag_version}"
