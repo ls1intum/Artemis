@@ -4,7 +4,8 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from '../../../../../main/webapp/app/entities/lecture.model';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureWizardPeriodComponent', () => {
     let wizardPeriodComponentFixture: ComponentFixture<LectureUpdatePeriodComponent>;
@@ -12,9 +13,8 @@ describe('LectureWizardPeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [LectureUpdatePeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             schemas: [],
         })
             .compileComponents()

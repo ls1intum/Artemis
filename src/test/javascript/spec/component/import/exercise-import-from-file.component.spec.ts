@@ -2,9 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -16,6 +15,8 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
@@ -26,8 +27,9 @@ describe('ExerciseImportFromFileComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(HelpIconComponent), MockComponent(ButtonComponent)],
+            imports: [MockComponent(HelpIconComponent), MockComponent(ButtonComponent)],
             declarations: [ExerciseImportFromFileComponent, MockDirective(TranslateDirective)],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportFromFileComponent);

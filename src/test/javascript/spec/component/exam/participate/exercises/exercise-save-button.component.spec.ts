@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { input } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { ExerciseSaveButtonComponent } from '../../../../../../../main/webapp/app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
@@ -18,7 +17,6 @@ describe('ExerciseSaveButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

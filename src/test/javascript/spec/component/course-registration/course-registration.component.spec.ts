@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -10,6 +9,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CoursePrerequisitesButtonComponent } from 'app/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CourseRegistrationComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationComponent>;
@@ -34,14 +37,18 @@ describe('CourseRegistrationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 CourseRegistrationComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CoursePrerequisitesButtonComponent),
                 MockComponent(CourseRegistrationButtonComponent),
             ],
-            providers: [MockProvider(AccountService), MockProvider(CourseManagementService)],
+            providers: [
+                MockProvider(AccountService),
+                MockProvider(CourseManagementService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
