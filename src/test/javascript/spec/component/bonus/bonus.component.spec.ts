@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -19,6 +18,9 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -250,7 +252,7 @@ describe('BonusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
+            imports: [FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
@@ -266,6 +268,8 @@ describe('BonusComponent', () => {
                 },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
     });

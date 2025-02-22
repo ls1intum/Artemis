@@ -16,8 +16,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -63,7 +66,6 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -79,7 +81,12 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(SortService)],
+            providers: [
+                MockProvider(SortService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -123,8 +130,7 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [MockProvider(SortService), MockProvider(ActivatedRoute)],
+            providers: [MockProvider(SortService), MockProvider(ActivatedRoute), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

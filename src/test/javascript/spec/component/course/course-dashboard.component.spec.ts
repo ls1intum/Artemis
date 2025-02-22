@@ -35,7 +35,6 @@ describe('CourseDashboardComponent', () => {
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

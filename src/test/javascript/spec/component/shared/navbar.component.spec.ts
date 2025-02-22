@@ -94,7 +94,6 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -17,6 +16,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -51,7 +54,6 @@ describe('CourseManagementCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementCardComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -62,7 +64,13 @@ describe('CourseManagementCardComponent', () => {
                 MockComponent(SecuredImageComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .compileComponents()
             .then(() => {

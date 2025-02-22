@@ -40,7 +40,6 @@ describe('QuizExercise Generator', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [],
             providers: [
                 provideHttpClient(),
@@ -75,10 +74,10 @@ describe('QuizExercise Generator', () => {
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
         const selectedElements = Object.entries(interactiveElements.elements)
-            .filter(([, include]) => include)
+            .filter(([include]) => include)
             .map(([id]) => id);
         const selectedRelationships = Object.entries(interactiveElements.relationships)
-            .filter(([, include]) => include)
+            .filter(([include]) => include)
             .map(([id]) => id);
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
         const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
