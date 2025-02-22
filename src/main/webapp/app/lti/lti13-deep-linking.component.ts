@@ -18,6 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -32,6 +33,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         SortDirective,
         ArtemisDatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
     ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
