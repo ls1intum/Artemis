@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -233,6 +234,10 @@ public class AnswerMessageService extends PostingService {
      */
     public AnswerPost findById(Long answerMessageId) {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
+    }
+
+    public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
+        return answerPostRepository.findByIdIn(answerMessageIds);
     }
 
     /**

@@ -96,19 +96,19 @@ describe('Exam Import Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
 
-        component.subsequentExerciseGroupSelection = false;
+        component.subsequentExerciseGroupSelection.set(false);
         component.performImportOfExerciseGroups();
 
-        component.subsequentExerciseGroupSelection = true;
+        component.subsequentExerciseGroupSelection.set(true);
         component.exam = undefined;
         component.performImportOfExerciseGroups();
 
         component.exam = exam1WithExercises;
-        component.targetExamId = undefined;
+        component.targetExamId.set(undefined);
         component.performImportOfExerciseGroups();
 
-        component.targetExamId = 1;
-        component.targetCourseId = undefined;
+        component.targetExamId.set(1);
+        component.targetCourseId.set(undefined);
         component.performImportOfExerciseGroups();
 
         expect(importSpy).not.toHaveBeenCalled();
@@ -146,14 +146,14 @@ describe('Exam Import Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
 
-        component.subsequentExerciseGroupSelection = true;
+        component.subsequentExerciseGroupSelection.set(true);
         const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
         const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
         component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
-        component.targetCourseId = 1;
-        component.targetExamId = 3;
+        component.targetCourseId.set(1);
+        component.targetExamId.set(3);
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
         expect(importSpy).not.toHaveBeenCalled();
@@ -196,10 +196,10 @@ describe('Exam Import Component', () => {
     });
 
     function performImport(importSpy: jest.SpyInstance): void {
-        component.subsequentExerciseGroupSelection = true;
         component.exam = exam1WithExercises;
-        component.targetCourseId = 1;
-        component.targetExamId = 2;
+        component.subsequentExerciseGroupSelection.set(true);
+        component.targetCourseId.set(1);
+        component.targetExamId.set(2);
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
         expect(importSpy).toHaveBeenCalledOnce();

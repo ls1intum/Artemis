@@ -24,7 +24,7 @@
                             (onBlurEditor)="onBlurEditor.emit()"
                         />
                         @if (enableFileUpload) {
-                            <div class="d-flex" #fileUploadFooter>
+                            <div class="d-flex align-items-center border-top" #fileUploadFooter>
                                 <input
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
@@ -40,11 +40,14 @@
                                 >
                                     <div class="row mx-0 align-items-baseline">
                                         <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
-                                        <a class="col-auto" href="https://markdown-it.github.io/">
-                                            <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                        </a>
                                     </div>
                                 </label>
+                                <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                </a>
+                                @if (editType() !== EditType.UPDATE) {
+                                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
+                                }
                             </div>
                         }
                     </div>
@@ -71,6 +74,10 @@
                                 <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }
                         </ng-content>
+                        @if (editType() !== EditType.UPDATE) {
+                            <!-- <ng-container *ngTemplateOutlet="sendButton; context: {text: 'hallo'}" /> -->
+                            <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
+                        }
                     </div>
                 </ng-template>
             </ng-container>
@@ -82,7 +89,7 @@
                             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                         }
                         <!-- Headers -->
-                        @if (displayedActions.header.length > 0) {
+                        @if (displayedActions.header.length) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                                 <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
                                     <span [jhiTranslate]="headerActions!.translationKey"></span>
@@ -264,4 +271,18 @@
 
 <ng-template #noItemsAvailable>
     <button class="ps-1 me-1" mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
+</ng-template>
+
+<ng-template #sendButton let-extraClass="extraClass" let-testId="testId">
+    <button
+        jhi-posting-button
+        [buttonIcon]="faPaperPlane"
+        [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
+        [buttonLoading]="isButtonLoading()"
+        [disabled]="isButtonLoading() || !isFormGroupValid()"
+        class="btn btn-sm btn-outline-secondary"
+        [ngClass]="extraClass ?? ''"
+        [id]="testId ?? ''"
+        type="submit"
+    ></button>
 </ng-template>

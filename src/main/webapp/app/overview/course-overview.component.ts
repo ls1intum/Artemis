@@ -623,11 +623,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
-
-            // Listen for changes to the control configuration; works for initial config as well
             this.controlsSubscription =
-                this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
+                this.controlConfiguration.subject?.subscribe(async (controls: TemplateRef<any>) => {
                     this.controls = controls;
+                    this.tryRenderControls();
+                    await firstValueFrom(provider.controlsRendered);
                     this.tryRenderControls();
                 }) || undefined;
         }
