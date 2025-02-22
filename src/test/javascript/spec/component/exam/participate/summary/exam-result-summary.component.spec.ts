@@ -27,15 +27,19 @@ import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/entities/course.model';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -152,7 +156,6 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(ExamResultOverviewComponent),
@@ -181,6 +184,16 @@ function sharedSetup(url: string[]) {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                {
+                    provide: SessionStorageService,
+                    useClass: MockSyncStorage,
+                },
             ],
         })
             .compileComponents()

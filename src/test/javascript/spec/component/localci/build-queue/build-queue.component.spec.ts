@@ -6,7 +6,6 @@ import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
@@ -15,9 +14,11 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
-import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -268,7 +269,7 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BuildQueueComponent],
+            imports: [BuildQueueComponent],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -276,6 +277,7 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
             ],
         }).compileComponents();

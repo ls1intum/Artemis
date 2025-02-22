@@ -29,7 +29,6 @@ describe('TutorialGroupService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

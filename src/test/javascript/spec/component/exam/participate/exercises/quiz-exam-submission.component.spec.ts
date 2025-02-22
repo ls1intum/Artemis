@@ -52,7 +52,6 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.text = 'Short answer question text';
 
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 QuizExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),

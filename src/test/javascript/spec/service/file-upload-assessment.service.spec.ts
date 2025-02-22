@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { ArtemisTestModule } from '../test.module';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
@@ -18,7 +17,6 @@ describe('Modeling Assessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(FileUploadAssessmentService);

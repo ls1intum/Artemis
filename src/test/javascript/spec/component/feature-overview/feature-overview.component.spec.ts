@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
 import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;
@@ -17,10 +18,10 @@ describe('Feature Overview Component', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ProfileService, useValue: MockProfileService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 

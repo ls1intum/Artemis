@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -10,13 +9,15 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamUpdateDialogComponent', () => {
     let comp: TeamUpdateDialogComponent;
@@ -26,7 +27,7 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -41,6 +42,8 @@ describe('TeamUpdateDialogComponent', () => {
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

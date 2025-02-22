@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuildAgentClearDistributedDataComponent } from '../../../../../../main/webapp/app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentClearDistributedDataComponent', () => {
     let component: BuildAgentClearDistributedDataComponent;
@@ -15,8 +16,11 @@ describe('BuildAgentClearDistributedDataComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BuildAgentClearDistributedDataComponent],
-            providers: [{ provide: NgbActiveModal, useValue: activeModal }],
+            imports: [BuildAgentClearDistributedDataComponent],
+            providers: [
+                { provide: NgbActiveModal, useValue: activeModal },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentClearDistributedDataComponent);

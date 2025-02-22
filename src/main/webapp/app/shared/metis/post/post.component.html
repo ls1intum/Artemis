@@ -42,7 +42,7 @@
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode())) {
+                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
                     <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
@@ -89,6 +89,9 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
+                        @if (originalPostDetails) {
+                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
+                        }
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">
                             @if (!previewMode()) {
                                 <!-- Post reactions (that appear when post is hovered) -->
@@ -96,6 +99,7 @@
                                     [lastReadDate]="lastReadDate()"
                                     [isReadOnlyMode]="readOnlyMode()"
                                     [previewMode]="previewMode()"
+                                    [course]="course"
                                     [posting]="posting"
                                     [(showAnswers)]="showAnswers"
                                     [sortedAnswerPosts]="sortedAnswerPosts"
@@ -107,6 +111,7 @@
                                     (mayEditOutput)="onMayEdit($event)"
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
+                                    [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
                                 />
@@ -196,6 +201,10 @@
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
             <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+        </button>
+        <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
+            <fa-icon [icon]="faShare" class="item-icon" />
+            <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
     </div>
 }
