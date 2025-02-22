@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
@@ -7,6 +6,8 @@ import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/pr
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
 import { Course } from '../../../../../main/webapp/app/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from '../../../../../main/webapp/app/entities/programming/programming-exercise-build.config';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
@@ -21,8 +22,11 @@ describe('ProgrammingExercise Docker Image', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            providers: [{ provide: ProfileService, useValue: profileServiceMock }],
+            imports: [FormsModule],
+            providers: [
+                { provide: ProfileService, useValue: profileServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then();

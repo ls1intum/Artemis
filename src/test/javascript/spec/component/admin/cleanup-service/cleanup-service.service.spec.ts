@@ -61,7 +61,6 @@ describe('DataCleanupService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [DataCleanupService, provideHttpClient(), provideHttpClientTesting()],
         });
 

@@ -14,7 +14,6 @@ describe('StandardizedCompetencyService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
 
