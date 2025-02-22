@@ -2,19 +2,19 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
-import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { Exercise } from 'app/entities/exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -23,11 +23,12 @@ describe('Plagiarism Header Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 

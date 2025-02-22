@@ -3,7 +3,6 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
-import { ArtemisTestModule } from '../../../test.module';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,7 +10,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -21,6 +20,11 @@ import { EventEmitter, input, runInInjectionContext } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -30,7 +34,6 @@ describe('SidebarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 MockModule(FormsModule),
                 MockModule(ReactiveFormsModule),
                 MockModule(RouterModule),
@@ -47,7 +50,13 @@ describe('SidebarComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
             ],
-            providers: [MockProvider(NgbModal)],
+            providers: [
+                MockProvider(NgbModal),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(SidebarComponent);

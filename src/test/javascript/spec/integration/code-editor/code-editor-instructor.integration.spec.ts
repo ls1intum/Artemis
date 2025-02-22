@@ -6,7 +6,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { DomainType, FileType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -68,6 +67,8 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -98,7 +99,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
@@ -144,6 +145,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockProvider(ProfileService, {
                     getProfileInfo: () => of(mockProfileInfo),
                 }),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

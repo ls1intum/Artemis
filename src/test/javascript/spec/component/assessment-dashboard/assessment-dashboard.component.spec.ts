@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -22,10 +21,16 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Course } from 'app/entities/course.model';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -125,11 +130,15 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

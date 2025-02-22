@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -14,6 +13,12 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('TextExercise Management Component', () => {
     let comp: TextExerciseComponent;
@@ -27,12 +32,15 @@ describe('TextExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                MockProvider(EventManager),
             ],
         }).compileComponents();
 
