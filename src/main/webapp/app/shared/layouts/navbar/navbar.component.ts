@@ -65,6 +65,7 @@ import { SystemNotificationComponent } from '../../notification/system-notificat
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -405,6 +406,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         prerequisites: 'artemisApp.prerequisite.title',
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
         cleanup_service: 'cleanupService.title',
+        user_repository: 'artemisApp.repository.userRepository.title',
+        template_repository: 'artemisApp.repository.templateRepository.title',
+        solution_repository: 'artemisApp.repository.solutionRepository.title',
+        tests_repository: 'artemisApp.repository.testsRepository.title',
+        auxiliary_repository: 'artemisApp.repository.auxiliaryRepository.title',
+        vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
     };
 
     studentPathBreadcrumbTranslations: { [key: string]: string } = {
@@ -509,7 +516,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
             case 'teams':
-            case 'repository':
             case 'code-editor':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
@@ -521,6 +527,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // Special case: A raw /course-management/XXX/exercises/XXX doesn't work, we need to add the exercise type
                 // For example /course-management/XXX/programming-exercises/XXX
                 this.addExerciseCrumb(Number(segment), currentPath);
+                break;
+            case 'USER':
+                this.addTranslationAsCrumb(currentPath, 'user_repository');
+                break;
+            case 'AUXILIARY':
+                this.addTranslationAsCrumb(currentPath, 'auxiliary_repository');
                 break;
             case 'text-exercises':
             case 'modeling-exercises':
@@ -620,6 +632,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'reset':
             case 'groups':
             case 'code-editor':
+            case 'repository':
             case 'admin':
             case 'ide':
             case 'text-units':
@@ -671,6 +684,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'exams' && segment === 'import') {
                     // This route is only used internally when opening the exam import modal and therefore shouldn't be displayed.
                     // When opening the exam-update.component, the id of the to be imported exam is appended (-> case `import`).
+                    break;
+                } else if (this.lastRouteUrlSegment === 'repository') {
+                    this.addRepositoryViewBreadcrumb(currentPath, segment);
                     break;
                 }
 
@@ -948,6 +964,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case EntityType.LECTURE:
                 this.lectureTitle = title;
+                break;
+        }
+    }
+
+    /**
+     * Sets the breadcrumb for the template, tests and solution repository view. User and Auxiliary repositories are not treated here
+     * as they have an ID after the repository type.
+     *
+     * @param currentPath    The path that should get used for the breadcrumb
+     * @param repositoryType The type of the repository
+     */
+    private addRepositoryViewBreadcrumb(currentPath: string, repositoryType: string) {
+        switch (repositoryType) {
+            case RepositoryType.TEMPLATE:
+                this.addTranslationAsCrumb(currentPath, 'template_repository');
+                break;
+            case RepositoryType.TESTS:
+                this.addTranslationAsCrumb(currentPath, 'tests_repository');
+                break;
+            case RepositoryType.SOLUTION:
+                this.addTranslationAsCrumb(currentPath, 'solution_repository');
+                break;
+            default:
                 break;
         }
     }

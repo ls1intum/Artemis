@@ -32,6 +32,21 @@
                 "timeStamp": "Timestamp",
                 "error": "VCS Access log could not be retrieved"
             }
+        },
+        "userRepository": {
+            "title": "User-Repository"
+        },
+        "templateRepository": {
+            "title": "Template-Repository"
+        },
+        "solutionRepository": {
+            "title": "Solution-Repository"
+        },
+        "testsRepository": {
+            "title": "Test-Repository"
+        },
+        "auxiliaryRepository": {
+            "title": "Auxiliary Repository"
         }
     }
 }
