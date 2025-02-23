@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/entities/metis/post.model';
@@ -15,6 +15,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ButtonType } from 'app/shared/components/button.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -23,7 +24,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnDestroy {
     protected localStorageService = inject(LocalStorageService);
     protected metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
@@ -35,14 +36,20 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     irisEnabled = false;
     channelSubTypeReferenceRouterLink = '';
 
+    private conversationServiceSubscription: Subscription;
+
     ngOnInit(): void {
         super.ngOnInit();
+        this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
+            this.checkIrisSettings(getAsChannelDTO(conversation), this.course()?.id);
+        });
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
-    ngOnChanges() {
-        super.ngOnChanges();
-        this.checkForIrisEnabled();
+    ngOnDestroy(): void {
+        if (this.conversationServiceSubscription) {
+            this.conversationServiceSubscription.unsubscribe();
+        }
     }
 
     /**
@@ -95,16 +102,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * Checks if Iris is enabled for the related channel content
-     * @private
-     */
-    private checkForIrisEnabled(): void {
-        this.metisConversationService.activeConversation$.subscribe((conversation) => {
-            this.checkIrisSettings(getAsChannelDTO(conversation), this.course()?.id);
-        });
-    }
-
-    /**
      * Helper method to check if iris is activated in the settings
      * @param channelDTO channel to be checked for
      * @param courseId
@@ -121,15 +118,15 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                 break;
             case ChannelSubType.LECTURE:
                 if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
-                        this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                    this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
+                        this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
                     });
                 }
                 break;
             case ChannelSubType.EXERCISE:
                 if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
-                        this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                    this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
+                        this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
                     });
                 }
                 break;

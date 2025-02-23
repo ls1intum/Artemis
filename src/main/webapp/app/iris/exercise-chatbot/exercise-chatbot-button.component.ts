@@ -67,6 +67,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     private numNewMessagesSubscription: Subscription;
     private paramsSubscription: Subscription;
     private latestIrisMessageSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
 
     // Icons
     faCircle = faCircle;
@@ -86,7 +87,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             this.chatService.switchTo(this.mode, id);
         });
 
-        this.route.queryParams?.subscribe((params: any) => {
+        this.queryParamsSubscription = this.route.queryParams?.subscribe((params: any) => {
             if (params.irisQuestion) {
                 this.irisQuestion = params.irisQuestion;
                 this.openChat();
@@ -125,6 +126,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.numNewMessagesSubscription?.unsubscribe();
         this.paramsSubscription.unsubscribe();
         this.latestIrisMessageSubscription.unsubscribe();
+        this.queryParamsSubscription.unsubscribe();
         this.newIrisMessage = undefined;
         this.isOverflowing = false;
     }

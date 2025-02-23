@@ -144,7 +144,7 @@ describe('MessageInlineInputComponent', () => {
 
     describe('iris redirect button', () => {
         it('should be enabled for exercise chats if Iris is activated for the exercise', fakeAsync(() => {
-            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(irisSettings));
 
             component.posting = directMessageUser1;
 
@@ -156,7 +156,7 @@ describe('MessageInlineInputComponent', () => {
 
             jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
-            component.ngOnChanges();
+            component.ngOnInit();
             tick();
 
             expect(component.irisEnabled).toBeTrue();
@@ -164,7 +164,7 @@ describe('MessageInlineInputComponent', () => {
         }));
 
         it('should be enabled for lecture chats if Iris is activated for the lecture', fakeAsync(() => {
-            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(irisSettings));
+            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
 
             component.posting = directMessageUser1;
 
@@ -176,7 +176,7 @@ describe('MessageInlineInputComponent', () => {
 
             jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
-            component.ngOnChanges();
+            component.ngOnInit();
             tick();
 
             expect(component.irisEnabled).toBeTrue();
@@ -185,8 +185,8 @@ describe('MessageInlineInputComponent', () => {
 
         it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
             const disabledIrisSettings = mockSettings();
-            disabledIrisSettings.irisLectureChatSettings!.enabled = false;
-            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(disabledIrisSettings));
+            disabledIrisSettings.irisChatSettings!.enabled = false;
+            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(disabledIrisSettings));
 
             component.posting = directMessageUser1;
 
@@ -198,7 +198,7 @@ describe('MessageInlineInputComponent', () => {
 
             jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
 
-            component.ngOnChanges();
+            component.ngOnInit();
             tick();
 
             expect(component.irisEnabled).toBeFalse();
