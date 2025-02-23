@@ -273,7 +273,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            // if (this.participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))) {
             if (this.participation.results) {
                 if (!this.submission?.results) {
                     this.result = this.sortedHistoryResults.last()!;
