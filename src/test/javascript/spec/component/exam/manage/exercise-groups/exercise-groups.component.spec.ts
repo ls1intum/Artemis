@@ -1,6 +1,6 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,12 +14,28 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../../../test.module';
-import { signal } from '@angular/core';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { signal } from '@angular/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -49,12 +65,29 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ExerciseGroupsComponent],
+            imports: [ExerciseGroupsComponent],
+            declarations: [
+                MockComponent(ExamExerciseRowButtonsComponent),
+                MockComponent(ProgrammingExerciseInstructorStatusComponent),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(HasAnyAuthorityDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FileUploadExerciseGroupCellComponent),
+                MockComponent(ModelingExerciseGroupCellComponent),
+                MockComponent(ProgrammingExerciseGroupCellComponent),
+                MockComponent(QuizExerciseGroupCellComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })

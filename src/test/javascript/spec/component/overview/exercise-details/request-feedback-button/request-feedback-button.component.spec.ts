@@ -1,20 +1,21 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TemplateRef } from '@angular/core';
-import { MockProvider } from 'ng-mocks';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement, TemplateRef } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('RequestFeedbackButtonComponent', () => {
@@ -28,8 +29,13 @@ describe('RequestFeedbackButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RequestFeedbackButtonComponent, NgbTooltipModule],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }, MockProvider(HttpClient), NgbModal],
+            imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
+            providers: [
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {

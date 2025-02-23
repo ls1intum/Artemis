@@ -3,7 +3,6 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -41,6 +40,10 @@ import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-st
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -64,7 +67,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([textEditorRoute[0]])],
+            imports: [RouterModule.forRoot([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -90,6 +93,9 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

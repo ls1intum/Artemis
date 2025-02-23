@@ -12,12 +12,16 @@ import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/shared/components/exercise-action-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -85,8 +89,18 @@ describe('CodeButtonComponent', () => {
         router.setUrl('a');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ExerciseActionButtonComponent],
-            providers: [MockProvider(AlertService), { provide: ActivatedRoute, useValue: route }, { provide: Router, useValue: router }, LocalStorageService],
+            imports: [ExerciseActionButtonComponent],
+            providers: [
+                MockProvider(AlertService),
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: router },
+                LocalStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {
