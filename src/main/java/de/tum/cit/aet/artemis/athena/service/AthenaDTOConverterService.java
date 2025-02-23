@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -44,15 +45,15 @@ public class AthenaDTOConverterService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final Optional<TextApi> textApi;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    public AthenaDTOConverterService(Optional<TextApi> textApi, ProgrammingExerciseRepository programmingExerciseRepository,
+    public AthenaDTOConverterService(Optional<TextRepositoryApi> textRepositoryApi, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository) {
-        this.textApi = textApi;
+        this.textRepositoryApi = textRepositoryApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
     }
@@ -67,7 +68,8 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
-                var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findWithGradingCriteriaByIdElseThrow(exercise.getId());
+                var textExercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE))
+                        .findWithGradingCriteriaByIdElseThrow(exercise.getId());
                 return TextExerciseDTO.of(textExercise);
             }
             case PROGRAMMING -> {
@@ -117,8 +119,8 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
-                if (feedback.getReference() != null && textApi.isPresent()) {
-                    feedbackTextBlock = textApi.get().findById(feedback.getReference()).orElse(null);
+                if (feedback.getReference() != null && textRepositoryApi.isPresent()) {
+                    feedbackTextBlock = textRepositoryApi.get().findById(feedback.getReference()).orElse(null);
                 }
                 return TextFeedbackDTO.of(exercise.getId(), submissionId, feedback, feedbackTextBlock);
             }

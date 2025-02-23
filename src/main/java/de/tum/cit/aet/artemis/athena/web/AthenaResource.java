@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 
 /**
@@ -66,7 +67,7 @@ public class AthenaResource {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<TextApi> textApi;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
@@ -89,13 +90,13 @@ public class AthenaResource {
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, Optional<TextApi> textApi, Optional<TextSubmissionApi> textSubmissionApi,
+    public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
             AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
-        this.textApi = textApi;
+        this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -165,7 +166,7 @@ public class AthenaResource {
     @GetMapping("athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        var api = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
+        var api = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
         var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
 
         return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,

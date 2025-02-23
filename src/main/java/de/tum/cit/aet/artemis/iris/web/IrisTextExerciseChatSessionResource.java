@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -43,20 +44,20 @@ public class IrisTextExerciseChatSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final Optional<TextApi> textApi;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
 
     private final IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
 
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
-            Optional<TextApi> textApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
+            Optional<TextRepositoryApi> textRepositoryApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.textApi = textApi;
+        this.textRepositoryApi = textRepositoryApi;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
     }
 
@@ -69,7 +70,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
@@ -97,7 +98,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var textExercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
         validateExercise(textExercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
@@ -119,7 +120,7 @@ public class IrisTextExerciseChatSessionResource {
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);

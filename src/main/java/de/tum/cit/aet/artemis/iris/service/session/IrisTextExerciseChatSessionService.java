@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Service
@@ -48,7 +49,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     private final IrisMessageService irisMessageService;
 
-    private final Optional<TextApi> textApi;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -61,14 +62,14 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
     private final AuthorizationCheckService authCheckService;
 
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisMessageService irisMessageService, Optional<TextApi> textApi, StudentParticipationRepository studentParticipationRepository,
+            IrisMessageService irisMessageService, Optional<TextRepositoryApi> textRepositoryApi, StudentParticipationRepository studentParticipationRepository,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
         this.irisMessageService = irisMessageService;
-        this.textApi = textApi;
+        this.textRepositoryApi = textRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.pyrisPipelineService = pyrisPipelineService;
         this.pyrisJobService = pyrisJobService;
@@ -87,7 +88,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(session.getExercise().getId());
+        var exercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(session.getExercise().getId());
         if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
