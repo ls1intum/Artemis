@@ -759,14 +759,44 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindCourseWideMessages_IncludesDirectChatsAndNonCourseWideChannels() throws Exception {
+    void testFindCourseWideMessages_IncludesDirectMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+                SortingOrder.DESCENDING);
+
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
+        List<Post> resultPosts = searchResults.getContent();
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindCourseWideMessages_IncludesDirectMessages_UsingGetRequest() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        directPost.setContent("SearchTestDirect");
+        request.postWithResponseBody("/api/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchText", "SearchTest");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> resultPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindCourseWideMessages_IncludesNonCourseWideGroupChannels() throws Exception {
         Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "group-chat-test");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student1");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+
         Post groupPost = new Post();
         groupPost.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         groupPost.setConversation(nonCourseWideChannel);
@@ -779,7 +809,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
         List<Post> resultPosts = searchResults.getContent();
-        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect", "SearchTestGroup");
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestGroup");
     }
 
     private long getUnreadMessagesCount(Conversation conversation, User user) {
