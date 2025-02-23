@@ -76,13 +76,13 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
-    @Value("${artemis.continuous-integration.container-flags-limit.max-cpu-count:}")
+    @Value("${artemis.continuous-integration.container-flags-limit.max-cpu-count:0}")
     private int maxCpuCount;
 
-    @Value("${artemis.continuous-integration.container-flags-limit.max-memory:}")
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory:0}")
     private int maxMemory;
 
-    @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:}")
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
     public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
