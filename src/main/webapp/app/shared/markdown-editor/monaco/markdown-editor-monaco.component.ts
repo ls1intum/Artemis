@@ -74,6 +74,8 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { facArtemisIntelligence } from 'app/icons/icons';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
+import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
+import { Router } from '@angular/router';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -139,6 +141,7 @@ const BORDER_HEIGHT_OFFSET = 2;
         CdkDrag,
         MatButton,
         ArtemisTranslatePipe,
+        RedirectToIrisButtonComponent,
     ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
@@ -148,6 +151,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
+    router = inject(Router);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -245,6 +249,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     editType = input<PostingEditType>();
+
+    channelSubTypeReferenceRouterLink = input<string>('');
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
@@ -651,5 +657,15 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     applyOptionPreset(preset: MonacoEditorOptionPreset): void {
         this.monacoEditor.applyOptionPreset(preset);
+    }
+
+    /**
+     * invokes the metis service to redirect the question to Iris in the course, exercises or lectures view
+     */
+    redirectToIris(): void {
+        if (this.channelSubTypeReferenceRouterLink().length > 0) {
+            const content = this._markdown;
+            this.router.navigate([this.channelSubTypeReferenceRouterLink()], { queryParams: { irisQuestion: content } });
+        }
     }
 }

@@ -125,7 +125,7 @@
                             <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                         </div>
                     } @else {
-                        <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" />
+                        <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" [course]="course" />
                     }
                 </div>
             }

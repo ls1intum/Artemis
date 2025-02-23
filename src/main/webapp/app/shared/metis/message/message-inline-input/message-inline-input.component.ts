@@ -9,12 +9,10 @@ import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
-import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { Router } from '@angular/router';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ButtonType } from 'app/shared/components/button.component';
 
@@ -23,7 +21,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges {
     protected localStorageService = inject(LocalStorageService);
@@ -31,13 +29,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     metisConversationService = inject(MetisConversationService);
     irisSettingsService = inject(IrisSettingsService);
 
-    router = inject(Router);
-
     course = input<Course>();
 
     warningDismissed = false;
-    channelSubTypeReferenceRouterLink: string | undefined = undefined;
     irisEnabled = false;
+    channelSubTypeReferenceRouterLink = '';
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -99,16 +95,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     /**
-     * invokes the metis service to redirect the question to Iris in the course, exercises or lectures view
-     */
-    redirectToIris(): void {
-        if (this.channelSubTypeReferenceRouterLink) {
-            const content = this.formGroup.get('content')?.value;
-            this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
-        }
-    }
-
-    /**
      * Checks if Iris is enabled for the related channel content
      * @private
      */
@@ -162,7 +148,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     private setIrisStatus(enabled: boolean, link?: string): void {
         this.irisEnabled = enabled;
         if (enabled) {
-            this.channelSubTypeReferenceRouterLink = link;
+            this.channelSubTypeReferenceRouterLink = link ?? '';
         } else {
             this.channelSubTypeReferenceRouterLink = '';
         }

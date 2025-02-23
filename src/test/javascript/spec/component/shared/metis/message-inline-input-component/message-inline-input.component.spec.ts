@@ -204,31 +204,5 @@ describe('MessageInlineInputComponent', () => {
             expect(component.irisEnabled).toBeFalse();
             expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
         }));
-
-        it('should add the message as payload when pressed', fakeAsync(() => {
-            jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
-
-            component.posting = directMessageUser1;
-
-            component.resetFormGroup();
-            component.formGroup.setValue({ content: 'Test' });
-
-            const mockChannelDTO = {
-                type: ConversationType.CHANNEL,
-                subType: ChannelSubType.EXERCISE,
-                subTypeReferenceId: 42,
-            } as ConversationDTO;
-
-            jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
-
-            const routerNavigateSpy = jest.spyOn(component.router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-            component.ngOnChanges();
-            tick();
-            component.redirectToIris();
-            let correctLink = metisService.getLinkForExercise('42');
-
-            expect(routerNavigateSpy).toHaveBeenCalledWith([correctLink], { queryParams: { irisQuestion: directMessageUser1.content } });
-        }));
     });
 });
