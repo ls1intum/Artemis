@@ -310,7 +310,7 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves two courses with exercises and lectures.
+     * Creates and saves two courses with exercises and lectures. Requires at least two students.
      *
      * @param userPrefix                  The prefix of the course user groups.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
