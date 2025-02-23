@@ -76,6 +76,15 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
+    @Value("${artemis.continuous-integration.container-flags-limit.max-cpu-count:}")
+    private int maxCpuCount;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory:}")
+    private int maxMemory;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:}")
+    private int maxMemorySwap;
+
     public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.hostConfig = hostConfig;
@@ -108,9 +117,16 @@ public class BuildJobContainerService {
         }
         HostConfig customHostConfig;
         if (cpuCount > 0 || memory > 0 || memorySwap > 0) {
-            long adjustedCpuCount = (cpuCount > 0) ? cpuCount : hostConfig.getCpuCount();
-            long adjustedMemory = (memory > 0) ? convertMemorFromMBToBytes(memory) : hostConfig.getMemory();
-            long adjustedMemorySwap = (memorySwap > 0) ? convertMemorFromMBToBytes(memorySwap) : hostConfig.getMemorySwap();
+            // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
+            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : hostConfig.getCpuCount();
+
+            long adjustedMemory = (memory > 0)
+                    ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))
+                    : hostConfig.getMemory();
+
+            long adjustedMemorySwap = (memorySwap > 0)
+                    ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
+                    : hostConfig.getMemorySwap();
 
             customHostConfig = copyAndAdjustHostConfig(adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
@@ -138,7 +154,7 @@ public class BuildJobContainerService {
                 .withPidsLimit(hostConfig.getPidsLimit()).withAutoRemove(true);
     }
 
-    private long convertMemorFromMBToBytes(long memory) {
+    private long convertMemoryFromMBToBytes(long memory) {
         return memory * 1024L * 1024L;
     }
 
