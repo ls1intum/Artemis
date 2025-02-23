@@ -9,7 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Message, Subscription as StompSubscription } from 'webstomp-client';
 
 jest.mock('webstomp-client', () => ({
-    over: jest.fn().mockReturnValue({
+    client: jest.fn().mockReturnValue({
         connect: jest.fn(),
         subscribe: jest.fn(),
         send: jest.fn(),
@@ -328,10 +328,6 @@ describe('WebsocketService', () => {
         expect(websocketService['observables'].size).toBe(1);
         websocketService.receive('/test/topictwo');
         expect(websocketService['observables'].size).toBe(2);
-    });
-
-    it('should have default value for get session id if unsubscribed', () => {
-        expect(websocketService['getSessionId']()).toBe('unsubscribed');
     });
 
     it('should enable and disable reconnect when functions are called', () => {

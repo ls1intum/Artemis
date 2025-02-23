@@ -177,7 +177,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         // @formatter:off
         registry
-            // NOTE: clients can connect using sockjs via 'ws://${artemis-url}/websocket' or without sockjs using 'ws://${artemis-url}/websocket/websocket'
+            // NOTE: clients can connect using sockjs via 'ws://{artemis-url}/websocket' or without sockjs using 'ws://{artemis-url}/websocket/websocket'
             .addEndpoint("/websocket")
             .setAllowedOriginPatterns("*")
             // TODO: in the future, we should deactivate the option to connect with sockjs, because this is not needed any more
