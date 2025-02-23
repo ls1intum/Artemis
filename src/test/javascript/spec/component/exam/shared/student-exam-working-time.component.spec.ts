@@ -3,7 +3,6 @@ import dayjs from 'dayjs/esm';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('StudentExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
@@ -15,7 +14,6 @@ describe('StudentExamWorkingTimeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [],
         })
             .compileComponents()

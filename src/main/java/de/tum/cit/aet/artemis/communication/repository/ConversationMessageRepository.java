@@ -87,8 +87,11 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * @return returns a Page of Messages
      */
     default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        var specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
                 .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
+        if (postContextFilter.searchText() != null && !postContextFilter.searchText().isEmpty()) {
+            specification = Specification.where(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
+        }
         specification = configureSearchSpecification(specification, postContextFilter, userId);
         return findPostsWithSpecification(pageable, specification);
     }
