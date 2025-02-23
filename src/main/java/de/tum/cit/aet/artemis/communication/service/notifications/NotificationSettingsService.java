@@ -142,46 +142,62 @@ public class NotificationSettingsService {
     // NOTE: we cannot define a constant here, otherwise ids might be saved and Hibernate won't be able to work with the default settings anymore
     public static Set<NotificationSetting> getDefaultNotificationSettings() {
         // always create a new set of objects with null ids to avoid issues with Hibernate
-        return Set.of(
-                // weekly summary
-                new NotificationSetting(false, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
-                // course wide discussion notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
-                new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
-                new NotificationSetting(true, true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
-                // exercise notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
-                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
-                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
-                new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
-                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
-                new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
-                new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER),
-                // lecture notification settings group
-                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
-                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
-                new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
-                // exam notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST),
-                new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST),
-                // tutorial group notification settings group
-                new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
-                new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
-                // tutor notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
-                // editor notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
-                // instructor notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
-                new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
-                // user new message notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
-                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
-                // user mention notification setting group
-                new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
-                // data export notification setting (cannot be overridden by user)
-                new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
-                new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+        Set<NotificationSetting> notificationSettings = new HashSet<>();
+
+        // Always create a new set of objects with null IDs to avoid Hibernate issues
+        notificationSettings.add(new NotificationSetting(false, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
+
+        // Course-wide discussion notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST));
+        notificationSettings.add(new NotificationSetting(true, true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST));
+
+        // Exercise notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE));
+        notificationSettings.add(new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
+        notificationSettings.add(new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER));
+
+        // Lecture notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST));
+
+        // Exam notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST));
+
+        // Tutorial group notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE));
+
+        // Tutor notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+
+        // Editor notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED));
+
+        // Instructor notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED));
+
+        // Tutor notification settings (extra)
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+
+        // User new message notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE));
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE));
+
+        // User mention notification settings
+        notificationSettings.add(new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION));
+
+        // Data export notification settings (cannot be overridden by user)
+        notificationSettings.add(new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
+        notificationSettings.add(new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+
+        return notificationSettings;
     }
 
     /**
