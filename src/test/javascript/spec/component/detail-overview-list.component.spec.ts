@@ -11,7 +11,8 @@ import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../test.module';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -35,12 +36,12 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

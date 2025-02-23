@@ -1,5 +1,4 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import dayjs from 'dayjs/esm';
@@ -13,7 +12,6 @@ describe('SubmissionVersion Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 

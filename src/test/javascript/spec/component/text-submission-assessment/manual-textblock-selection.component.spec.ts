@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -58,7 +57,6 @@ describe('ManualTextblockSelectionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ManualTextblockSelectionComponent, MockComponent(TextBlockAssessmentCardComponent), MockComponent(ManualTextSelectionComponent)],
             providers: [MockProvider(TextSelectDirective)], // Not mocking this will cause a leak through the mocked ManualTextSelectionComponent
         })
