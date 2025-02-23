@@ -462,6 +462,7 @@ For more details, please visit the :doc:`./criteria-builder` page.
 To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
 #. Implicit pre- and post-authorization annotations:
+    #.  ``AllowedTools(ToolTokenType.__)``, which ensures that tool-based requests can only access specific endpoints following the Principle of Least Privilege.
     #. ``EnforceRoleInResource`` (e.g. ``EnforceAtLeastInstructorInCourse``) annotations are responsible for blocking users with *wrong or missing authorization roles* without querying the database.
     #. If necessary, these annotations check for access rights to individual resources within the database via light-weight queries.
     #. Currently we offer the following annotations: ``EnforceRoleInCourse`` and ``EnforceRoleInExercise``
@@ -493,6 +494,47 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+-----------------+----------------+
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
+
+Tool-Based Authorization Annotations
+------------------------------------------------
+To enforce minimal access for external tools, Artemis provides an additional annotation ``@AllowedTools``.
+This annotation is used to restrict Tool Tokens to certain endpoints.
+A Tool Token is a normal jwt token with the claim ``"tools": "TOOLTYPE"`` specified.
+
+**How it works?**
+
+* **Requests without a tool claim** (e.g., requests from users in a browser) can access all endpoints as long as they meet role-based authorization rules. So they are not restricted by the ``@AllowedTools`` annotation.
+* **Requests with a tool claim** (e.g., ``{"tool": "SCORPIO"}`` in the JWT) can only access endpoints annotated with ``@AllowedTools(ToolTokenType.__)`` (e.g. ``@AllowedTools(ToolTokenType.SCORPIO)``).
+* If a tool tries to access an unannotated endpoint, it receives a 403 Forbidden response.
+
+**When to Use It?**
+
+Use ``@AllowedTools`` to restrict what tools can do, without limiting normal requests.
+For example, an endpoint that provides a Scorpio-specific (VSCode Extension) integration:
+
+.. code-block:: java
+
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
+        [...]
+        return ResponseEntity.ok(courseForDashboardDTO);
+    }
+
+**Best Practices**
+
+* Requests without a tool claim are unrestricted, meaning users and standard API clients will not be affected.
+* Tool-based requests must explicitly be allowed by annotating endpoints with ``@AllowedTools(ToolTokenType.VSCODE)``.
+* Nevertheless, try to follow the **Principle of Least Privilege** and use tool tokens whenever possible.
+* If multiple tools should be allowed for one endpoint, list them:
+
+.. code-block:: java
+
+    @AllowedTools({ToolTokenType.SCORPIO, ToolTokenType.ANDROID})
+
+**How to Get Tool Tokens**
+    #. Verify that the tool type is already defined in ``ToolTokenType.java``
+    #. Send a POST request to the endpoint ``{{base_url}}/api/public/authenticate?tool=TOOLTYPE``
+
 
 Implicit pre- and post-authorization annotations
 ------------------------------------------------

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -23,7 +22,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -47,6 +46,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -88,7 +88,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterModule.forRoot([])],
+            imports: [NgxDatatableModule, RouterModule.forRoot([])],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
@@ -109,6 +109,8 @@ describe('ParticipationSubmissionComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: ActivatedRoute, useValue: route() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

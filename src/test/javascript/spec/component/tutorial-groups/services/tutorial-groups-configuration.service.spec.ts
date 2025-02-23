@@ -14,7 +14,6 @@ describe('TutorialGroupsConfigurationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(TutorialGroupsConfigurationService);

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardSize } from 'app/types/sidebar';
-import { ArtemisTestModule } from '../../../test.module';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { input, runInInjectionContext } from '@angular/core';
@@ -16,7 +15,6 @@ describe('SidebarCardItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [SidebarCardItemComponent, MockComponent(ProfilePictureComponent)],
         }).compileComponents();
 

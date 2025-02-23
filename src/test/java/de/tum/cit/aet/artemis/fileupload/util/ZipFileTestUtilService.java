@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -27,13 +28,13 @@ public class ZipFileTestUtilService {
      * @throws IOException if something goes wrong
      */
     public Path extractZipFileRecursively(String zipFile) throws IOException {
-        File file = new File(zipFile);
+        File file = Path.of(zipFile).toFile();
 
         try (ZipFile zip = new ZipFile(file)) {
             String newPath = zipFile.substring(0, zipFile.length() - 4);
 
-            File parentFolder = new File(newPath);
-            parentFolder.mkdir();
+            Path parentFolder = Path.of(newPath);
+            Files.createDirectories(parentFolder);
 
             Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
             // Process each entry
@@ -41,26 +42,26 @@ public class ZipFileTestUtilService {
                 // grab a zip file entry
                 ZipEntry entry = zipFileEntries.nextElement();
                 String currentEntry = entry.getName();
-                File destFile = new File(parentFolder, currentEntry);
+                Path destFile = parentFolder.resolve(currentEntry);
 
-                if (!destFile.getCanonicalPath().startsWith(parentFolder.getCanonicalPath())) {
+                if (!destFile.toAbsolutePath().toString().startsWith(parentFolder.toAbsolutePath().toString())) {
                     fail("Bad zip entry");
                 }
 
-                File destinationParent = destFile.getParentFile();
+                Path destinationParent = destFile.getParent();
                 // create the parent directory structure if needed
-                destinationParent.mkdirs();
+                Files.createDirectories(destinationParent);
 
                 if (!entry.isDirectory()) {
-                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), destFile);
+                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), destFile.toFile());
                 }
 
                 if (currentEntry.endsWith(".zip")) {
                     // found a zip file, try to open
-                    extractZipFileRecursively(destFile.getAbsolutePath());
+                    extractZipFileRecursively(destFile.toAbsolutePath().toString());
                 }
             }
-            return parentFolder.toPath();
+            return parentFolder;
         }
     }
 }

@@ -3,7 +3,7 @@ import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-ca
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -16,14 +16,14 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { ExerciseType } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -109,8 +109,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
-                TranslateTestingModule,
                 ArtemisDatePipe,
                 RouterModule.forRoot([
                     {
@@ -129,6 +127,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 

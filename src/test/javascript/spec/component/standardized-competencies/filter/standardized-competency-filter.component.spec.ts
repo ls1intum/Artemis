@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('StandardizedCompetencyFilterComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyFilterComponent>;
@@ -9,7 +8,7 @@ describe('StandardizedCompetencyFilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyFilterComponent, ArtemisTestModule, FormsModule],
+            imports: [StandardizedCompetencyFilterComponent, FormsModule],
             declarations: [],
             providers: [],
         })

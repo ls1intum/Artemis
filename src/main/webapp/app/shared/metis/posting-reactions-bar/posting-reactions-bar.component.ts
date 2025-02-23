@@ -4,26 +4,32 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { faArrowRight, faBookmark, faCheck, faPencilAlt, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { DisplayPriority } from '../metis.util';
 import { Post } from 'app/entities/metis/post.model';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import dayjs from 'dayjs/esm';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { MetisConversationService } from '../metis-conversation.service';
+import { Course } from 'app/entities/course.model';
+import { map } from 'rxjs';
+import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -81,29 +87,40 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
+    readonly onBookmarkClicked = output<void>();
+    readonly DisplayPriority = DisplayPriority;
+    readonly faBookmark = faBookmark;
+    readonly faSmile = faSmile;
+    readonly faCheck = faCheck;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faArrowRight = faArrowRight;
+    readonly faTrash = faTrashAlt;
+    readonly faShare = faShare;
 
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
-
-    posting = input<T>();
-    isThreadSidebar = input<boolean>();
-    isEmojiCount = input<boolean>(false);
-    isReadOnlyMode = input<boolean>(false);
-
-    openPostingCreateEditModal = output<void>();
-    closePostingCreateEditModal = output<void>();
-    reactionsUpdated = output<Reaction[]>();
-    isModalOpen = output<void>();
-
     showReactionSelector = false;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
     isAtLeastInstructorInCourse: boolean;
+    mayEdit: boolean;
+    mayDelete: boolean;
+    pinTooltip: string;
+    displayPriority: DisplayPriority;
+    canPin = false;
+    channels: ChannelDTO[] = [];
+    users: UserPublicInfoDTO[] = [];
+    posting = input<T>();
+    isThreadSidebar = input<boolean>();
+    isEmojiCount = input<boolean>(false);
+    isReadOnlyMode = input<boolean>(false);
+    openPostingCreateEditModal = output<void>();
+    closePostingCreateEditModal = output<void>();
+    reactionsUpdated = output<Reaction[]>();
+    isModalOpen = output<void>();
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
@@ -113,30 +130,20 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     lastReadDate = input<dayjs.Dayjs>();
     previewMode = input<boolean>();
     hoverBar = input<boolean>(true);
-
     showAnswersChange = output<boolean>();
     isLastAnswer = input<boolean>(false);
     postingUpdated = output<void>();
-    mayEdit: boolean;
-    mayDelete: boolean;
-    pinTooltip: string;
-    displayPriority: DisplayPriority;
-    canPin = false;
-    readonly DisplayPriority = DisplayPriority;
-
-    isDeleteEvent = output<boolean>();
-    readonly onBookmarkClicked = output<void>();
     openThread = output<void>();
-
-    // Icons
-    readonly faBookmark = faBookmark;
-    readonly faSmile = faSmile;
-    readonly faCheck = faCheck;
-    readonly faPencilAlt = faPencilAlt;
-    readonly faArrowRight = faArrowRight;
-    readonly faTrash = faTrashAlt;
-
+    originalPostDetails = input<Posting>();
+    course = input<Course>();
+    isDeleteEvent = output<boolean>();
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');
+
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
+    private conversationService = inject(ConversationService);
+    private modalService = inject(NgbModal);
+    private metisConversationService = inject(MetisConversationService);
 
     /**
      * on initialization: updates the current posting and its reactions,
@@ -415,6 +422,16 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    /**
+     * Checks whether the post is pinned.
+     * Used in posting.directive.ts to determine the pin status for the dropdown menu.
+     *
+     * @returns {DisplayPriority} The display priority of the post.
+     */
+    checkIfPinned(): DisplayPriority {
+        return this.displayPriority;
+    }
+
     openAnswerView() {
         this.showAnswersChange.emit(true);
         this.openPostingCreateEditModal.emit();
@@ -440,6 +457,93 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         } else {
             this.openPostingCreateEditModal.emit();
         }
+    }
+
+    /**
+     * Forwards the current post to another conversation.
+     * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
+     */
+    forwardMessage(): void {
+        const isAnswer = this.getPostingType() === 'answerPost';
+        if (!this.posting()!.content || this.posting()!.content === '') {
+            this.openForwardMessageView(this.originalPostDetails()!, isAnswer);
+        } else {
+            this.openForwardMessageView(this.posting()!, isAnswer);
+        }
+    }
+
+    openForwardMessageView(post: Posting, isAnswer: boolean): void {
+        if (!this.course()?.id) {
+            return;
+        }
+        this.channels = [];
+        this.users = [];
+
+        this.conversationService
+            .getConversationsOfUser(this.course()!.id!)
+            .pipe(map((response) => response.body || []))
+            .subscribe({
+                next: (conversations) => {
+                    conversations.forEach((conversation) => {
+                        if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
+                            this.channels.push(conversation as ChannelDTO);
+                        }
+                    });
+
+                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
+                        size: 'lg',
+                        backdrop: 'static',
+                    });
+
+                    modalRef.componentInstance.users.set([]);
+                    modalRef.componentInstance.channels.set(this.channels);
+                    modalRef.componentInstance.postToForward.set(post);
+                    modalRef.componentInstance.courseId.set(this.course()?.id);
+
+                    modalRef.result.then(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                        if (selection) {
+                            const allSelections: Conversation[] = [...selection.channels];
+                            const userLogins = selection.users.map((user) => user.login!);
+
+                            if (userLogins.length > 0) {
+                                let newConversation: Conversation | null = null;
+
+                                if (userLogins.length === 1) {
+                                    try {
+                                        const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
+                                        newConversation = (response?.body ?? null) as Conversation;
+                                        if (newConversation) {
+                                            allSelections.push(newConversation);
+                                        }
+                                    } catch (error) {
+                                        return;
+                                    }
+                                } else {
+                                    try {
+                                        const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
+                                        if (response && response.body) {
+                                            newConversation = response.body as Conversation;
+                                            allSelections.push(newConversation);
+                                        }
+                                    } catch (error) {
+                                        return;
+                                    }
+                                }
+                            }
+
+                            allSelections.forEach((conversation) => {
+                                if (conversation && conversation.id) {
+                                    this.forwardPost(post, conversation, selection.messageContent, isAnswer);
+                                }
+                            });
+                        }
+                    });
+                },
+            });
+    }
+
+    forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({});
     }
 
     setMayDelete(): void {
