@@ -56,7 +56,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitialized = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
-            this.submitted = !!this.studentParticipation && !!this.studentParticipation.submissions?.length;
+            this.submitted = this.studentParticipation?.submissions?.some((submission) => submission.submitted) ?? false;
         } else {
             this.uninitialized = !afterDueDate && !this.studentParticipation;
             this.notSubmitted = afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
