@@ -306,31 +306,48 @@ public class LocalVCServletService {
      */
     public void saveFailedAccessVcsAccessLog(Optional<HttpServletRequest> request, Optional<ServerSession> session, String repositoryTypeOrUserName, Exercise exercise,
             LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction) {
-        String ipAddress = "";
-        AuthenticationMechanism authenticationMechanism = AuthenticationMechanism.OTHER;
         var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
+        var commitHash = getCommitHash(localVCRepositoryUri);
+        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(request, session, user);
+        var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+        var ipAddress = request.isPresent() ? request.get().getRemoteAddr() : (session.isPresent() ? session.get().getClientAddress().toString() : "");
+        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+    }
 
-        // HTTPS
-        if (request.isPresent()) {
-            ipAddress = request.get().getRemoteAddr();
+    /**
+     * Determines the authentication mechanism based on the provided session or request.
+     *
+     * <p>
+     * If a {@link ServerSession} is present, the authentication mechanism is assumed to be SSH.
+     * </p>
+     * <p>
+     * If an {@link HttpServletRequest} is present, the method attempts to resolve the authentication
+     * mechanism using the authorization header. If an exception occurs, HTTPS authentication is assumed by default.
+     * </p>
+     * <p>
+     * If neither a session nor a request is available, the authentication mechanism defaults to OTHER.
+     * </p>
+     *
+     * @param request an {@link Optional} containing the HTTP request, if available
+     * @param session an {@link Optional} containing the server session, if available
+     * @param user    the user for whom authentication is being determined
+     * @return the resolved {@link AuthenticationMechanism}
+     */
+    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(Optional<HttpServletRequest> request, Optional<ServerSession> session, User user) {
+        if (session.isPresent()) {
+            return AuthenticationMechanism.SSH;
+        }
+        else if (request.isPresent()) {
             try {
-                authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.get().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+                return resolveHTTPSAuthenticationMechanism(request.get().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
             }
             catch (LocalVCAuthException ignored) {
-                authenticationMechanism = AuthenticationMechanism.HTTPS;
+                return AuthenticationMechanism.HTTPS;
             }
         }
-        // SSH
-        if (session.isPresent()) {
-            ipAddress = session.get().getClientAddress().toString();
-            authenticationMechanism = AuthenticationMechanism.SSH;
+        else {
+            return AuthenticationMechanism.OTHER;
         }
-
-        String finalCommitHash = getCommitHash(localVCRepositoryUri);
-        var finalAuthenticationMechanism = authenticationMechanism;
-        var finalIpAddress = ipAddress;
-        RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
-        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, finalAuthenticationMechanism, finalCommitHash, finalIpAddress));
     }
 
     /**
