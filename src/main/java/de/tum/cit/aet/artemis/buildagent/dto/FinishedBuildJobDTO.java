@@ -36,7 +36,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
          * @return the converted DTO
          */
         public static ResultDTO of(Result result) {
-            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission());
+            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission(), false, null, null);
 
             return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
                     ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),

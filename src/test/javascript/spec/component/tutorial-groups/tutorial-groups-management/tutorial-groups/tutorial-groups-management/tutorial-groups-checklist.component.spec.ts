@@ -15,6 +15,8 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupsChecklistComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsChecklistComponent>;
@@ -42,6 +44,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
                 mockedActivatedRoute({ courseId: course.id! }, {}, {}, {}),
             ],
         })

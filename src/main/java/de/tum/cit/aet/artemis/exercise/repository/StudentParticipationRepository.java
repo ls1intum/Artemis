@@ -218,20 +218,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND p.testRun = :testRun
-            """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("studentId") long studentId, @Param("testRun") boolean testRun);
-
     /**
      * Get all participations for an exercise with each manual and latest results (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -1275,15 +1261,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
                         WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                         ELSE 'Student Error'
-                    END
+                    END,
+                    f.hasLongFeedbackText
                 )
-                FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                LEFT JOIN r.feedbacks f
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
@@ -1300,12 +1287,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                                 ELSE 'Student Error'
                             END IN (:filterErrorCategories))
-                GROUP BY f.detailText, f.testCase.testName
+                GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
                 HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
             @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
-            @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, Pageable pageable);
+            @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, @Param("pageable") Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
@@ -1317,8 +1304,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT COUNT(DISTINCT r.id)
-            FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+            FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                          SELECT MAX(pr.id)
                          FROM p.results pr
                          WHERE pr.participation.id = p.id
@@ -1344,13 +1331,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT MAX(feedbackCounts.feedbackCount)
             FROM (
                 SELECT COUNT(f.id) AS feedbackCount
-                FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                LEFT JOIN r.feedbacks f
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
@@ -1365,12 +1352,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param exerciseId  for which the affected student participation data is requested.
      * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
-     * @param pageable    A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
-                                p.exercise.course.id,
+                SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
                                 p.id,
                                 p.student.firstName,
                                 p.student.lastName,
@@ -1378,63 +1363,41 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 p.repositoryUri
                             )
                 FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN s.results r
-                LEFT JOIN r.feedbacks f
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                       AND f.id IN :feedbackIds
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
+    List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
      *
-     * @param exerciseId The ID of the exercise for which affected students are requested.
-     * @param detailText The feedback detail text to filter by.
+     * @param exerciseId   The ID of the exercise for which affected students are requested.
+     * @param detailTexts  The feedback detail text to filter by.
+     * @param testCaseName The name of the test case for which the feedback is given.
      * @return A list of student logins affected by the given feedback detail text in the specified exercise.
      */
     @Query("""
                 SELECT DISTINCT p.student.login
                 FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s
-                INNER JOIN s.results r ON r.id = (
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
-                    FROM s.results pr
+                    FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                  AND f.detailText = :detailText
+                  AND f.detailText IN :detailTexts
+                  AND f.testCase.testName = :testCaseName
                   AND p.testRun = FALSE
             """)
-    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
-
-    /**
-     * Counts the number of distinct students affected by a specific feedback detail text for a given programming exercise.
-     * <p>
-     * This query identifies students whose submissions were impacted by feedback entries matching the provided detail text
-     * within the specified exercise. Only students with non-test run submissions and negative feedback entries are considered.
-     * </p>
-     *
-     * @param exerciseId the ID of the programming exercise for which the count is calculated.
-     * @param detailText the feedback detail text used to filter the affected students.
-     * @return the total number of distinct students affected by the feedback detail text.
-     */
-    @Query("""
-                SELECT COUNT(DISTINCT p.student.id)
-                FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s
-                INNER JOIN s.results r ON r.id = (
-                    SELECT MAX(pr.id)
-                    FROM s.results pr
-                    WHERE pr.participation.id = p.id
-                )
-                INNER JOIN r.feedbacks f
-                WHERE p.exercise.id = :exerciseId
-                  AND f.detailText = :detailText
-                  AND p.testRun = FALSE
-            """)
-    long countAffectedStudentsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
+    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
+            @Param("testCaseName") String testCaseName);
 }

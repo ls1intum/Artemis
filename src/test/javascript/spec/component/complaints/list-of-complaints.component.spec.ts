@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
@@ -15,7 +14,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -24,8 +22,8 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -35,6 +33,7 @@ describe('ListOfComplaintsComponent', () => {
     let activatedRoute: MockActivatedRoute;
     let translateService: TranslateService;
     let router: Router;
+    let datePipe: ArtemisDatePipe;
 
     let findAllByTutorIdForExerciseIdStub: jest.SpyInstance;
     let findAllByTutorIdForCourseIdStub: jest.SpyInstance;
@@ -65,16 +64,14 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
+            declarations: [TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SortService),
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ArtemisDatePipe, useClass: TranslatePipeMock },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
         })
@@ -87,6 +84,7 @@ describe('ListOfComplaintsComponent', () => {
                 translateService = fixture.debugElement.injector.get(TranslateService);
                 activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
                 router = fixture.debugElement.injector.get(Router);
+                datePipe = fixture.debugElement.injector.get(ArtemisDatePipe);
 
                 findAllByTutorIdForExerciseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
                 findAllByTutorIdForCourseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForCourseId');
@@ -211,6 +209,7 @@ describe('ListOfComplaintsComponent', () => {
 
         it('complaint locked by the current user', () => {
             const endDate = dayjs().add(2, 'days');
+            const expectedDate = datePipe.transform(endDate);
             const complaint = createComplaint(ComplaintType.MORE_FEEDBACK, endDate);
             complaint.id = 42;
             complaint.result = new Result();
@@ -221,12 +220,13 @@ describe('ListOfComplaintsComponent', () => {
             comp.calculateComplaintLockStatus(complaint);
 
             expect(translateService.instant).toHaveBeenCalledOnce();
-            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformationYou', { endDate: `${endDate.valueOf()}` });
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformationYou', { endDate: `${expectedDate}` });
         });
 
         it('complaint locked by another user', () => {
             const reviewLogin = 'review';
             const endDate = dayjs().add(2, 'days');
+            const expectedDate = datePipe.transform(endDate);
             const complaint = new Complaint();
             complaint.id = 42;
             complaint.result = new Result();
@@ -243,7 +243,7 @@ describe('ListOfComplaintsComponent', () => {
             comp.calculateComplaintLockStatus(complaint);
 
             expect(translateService.instant).toHaveBeenCalledOnce();
-            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformation', { endDate: `${endDate.valueOf()}`, user: reviewLogin });
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformation', { endDate: `${expectedDate}`, user: reviewLogin });
         });
     });
 

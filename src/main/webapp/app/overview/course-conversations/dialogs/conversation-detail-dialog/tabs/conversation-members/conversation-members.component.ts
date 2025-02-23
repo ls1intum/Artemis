@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -8,12 +8,18 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface SearchQuery {
     searchTerm: string;
@@ -22,17 +28,18 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();
-    @Input()
-    course: Course;
-    @Input()
-    public activeConversation: ConversationDTO;
-    @Output()
-    changesPerformed = new EventEmitter<void>();
+
+    course = input.required<Course>();
+    activeConversationInput = input.required<ConversationDTO>();
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
+    changesPerformed = output<void>();
+
     canAddUsersToConversation = canAddUsersToConversation;
     getAsChannel = getAsChannelDTO;
     isChannel = isChannelDTO;
@@ -59,12 +66,10 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
 
-    constructor(
-        public conversationService: ConversationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
+    public conversationService = inject(ConversationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private cdr = inject(ChangeDetectorRef);
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;
@@ -73,8 +78,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.activeConversation = this.activeConversation();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -114,16 +119,20 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                     this.isSearching = true;
                     this.searchTerm = searchTerm;
                 }),
-                switchMap(() =>
-                    this.conversationService.searchMembersOfConversation(
-                        this.course.id!,
-                        this.activeConversation.id!,
-                        this.searchTerm,
-                        this.page - 1,
-                        this.itemsPerPage,
-                        Number(this.selectedFilter),
-                    ),
-                ),
+                switchMap(() => {
+                    if (this.course()?.id && this.activeConversation()?.id) {
+                        return this.conversationService.searchMembersOfConversation(
+                            this.course().id!,
+                            this.activeConversation()!.id!,
+                            this.searchTerm,
+                            this.page - 1,
+                            this.itemsPerPage,
+                            Number(this.selectedFilter),
+                        );
+                    } else {
+                        return EMPTY;
+                    }
+                }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
@@ -140,6 +149,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             searchTerm: '',
             force: true,
         });
+
+        const inputValue = this.activeConversationInput();
+        if (inputValue) {
+            this.activeConversation.set(inputValue);
+        }
     }
 
     ngOnDestroy() {
@@ -176,7 +190,15 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
         this.totalItems = Number(headers.get('X-Total-Count'));
         if (this.activeConversation) {
             // might have changed because of user deletion or addition
-            this.activeConversation.numberOfMembers = this.totalItems;
+            this.activeConversation.update((current) => {
+                if (current) {
+                    return {
+                        ...current,
+                        numberOfMembers: this.totalItems,
+                    };
+                }
+                return current;
+            });
         }
         this.members = members || [];
         this.cdr.detectChanges();

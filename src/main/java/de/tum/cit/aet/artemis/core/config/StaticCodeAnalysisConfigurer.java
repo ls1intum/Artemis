@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static java.util.Map.entry;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +15,82 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
  */
 public class StaticCodeAnalysisConfigurer {
 
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,
-            createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(), ProgrammingLanguage.C, createDefaultCategoriesForC());
+    // @formatter:off
+    private static final List<String> CATEGORY_NAMES_RUFF = List.of(
+        "Pyflakes",
+        "pycodestyle",
+        "mccabe",
+        "isort",
+        "pep8-naming",
+        "pydocstyle",
+        "pyupgrade",
+        "flake8-2020",
+        "flake8-annotations",
+        "flake8-async",
+        "flake8-bandit",
+        "flake8-blind-except",
+        "flake8-boolean-trap",
+        "flake8-bugbear",
+        "flake8-builtins",
+        "flake8-commas",
+        "flake8-copyright",
+        "flake8-comprehensions",
+        "flake8-datetimez",
+        "flake8-debugger",
+        "flake8-django",
+        "flake8-errmsg",
+        "flake8-executable",
+        "flake8-future-annotations",
+        "flake8-implicit-str-concat",
+        "flake8-import-conventions",
+        "flake8-logging",
+        "flake8-logging-format",
+        "flake8-no-pep420",
+        "flake8-pie",
+        "flake8-print",
+        "flake8-pyi",
+        "flake8-pytest-style",
+        "flake8-quotes",
+        "flake8-raise",
+        "flake8-return",
+        "flake8-self",
+        "flake8-slots",
+        "flake8-simplify",
+        "flake8-tidy-imports",
+        "flake8-type-checking",
+        "flake8-gettext",
+        "flake8-unused-arguments",
+        "flake8-use-pathlib",
+        "flake8-todos",
+        "flake8-fixme",
+        "eradicate",
+        "pandas-vet",
+        "pygrep-hooks",
+        "Pylint",
+        "tryceratops",
+        "flynt",
+        "NumPy-specific rules",
+        "FastAPI",
+        "Airflow",
+        "Perflint",
+        "refurb",
+        "pydoclint",
+        "Ruff-specific rules",
+        "Unknown"
+    );
+    // @formatter:on
+
+    private static final List<String> CATEGORY_NAMES_RUBOCOP = List.of("Bundler", "Gemspec", "Layout", "Lint", "Metrics", "Migration", "Naming", "Security", "Style");
+
+    // @formatter:off
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
+            entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
+            entry(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava()),
+            entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
+            entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
+            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
+    );
+    // @formatter:on
 
     /**
      * Create an unmodifiable List of default static code analysis categories for Java
@@ -83,6 +159,10 @@ public class StaticCodeAnalysisConfigurer {
                         List.of(createMapping(StaticCodeAnalysisTool.GCC, "UndefinedBehavior"))),
                 new StaticCodeAnalysisDefaultCategory("Security", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Security"))),
                 new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.2D, 2D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Misc"))));
+    }
+
+    private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesSingleTool(List<String> categories, StaticCodeAnalysisTool tool) {
+        return categories.stream().map(name -> new StaticCodeAnalysisDefaultCategory(name, 0.0, 1.0, CategoryState.FEEDBACK, List.of(createMapping(tool, name)))).toList();
     }
 
     public static Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisConfiguration() {

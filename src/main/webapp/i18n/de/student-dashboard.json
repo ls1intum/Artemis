@@ -76,13 +76,16 @@
                 "exerciseChannels": "Aufgaben",
                 "lectureChannels": "Vorlesungen",
                 "examChannels": "Klausuren",
+                "feedbackDiscussion": "Feedback Diskussion",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "createGroupChat": "Gruppenchat erstellen",
                 "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
-                "filterConversationPlaceholder": "Konversationen filtern"
+                "filterConversationPlaceholder": "Konversationen filtern",
+                "setChannelAsRead": "Alle Kanäle als gelesen markieren",
+                "recents": "Kürzliches"
             },
             "menu": {
                 "exercises": "Aufgaben",

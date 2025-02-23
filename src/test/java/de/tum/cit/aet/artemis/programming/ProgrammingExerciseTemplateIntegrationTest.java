@@ -124,7 +124,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Use which to find all java installations on Linux
         var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
         for (String path : javaInstallations) {
-            File binFolder = new File(path).getParentFile();
+            File binFolder = Path.of(path).toFile().getParentFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -139,8 +139,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static void findAndSetJava17Mac() throws Exception {
         var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
         for (String path : alternativeInstallations) {
-            File binFolder = new File(path).getParentFile();
-            binFolder = new File(binFolder, "Home/bin");
+            File binFolder = Path.of(path).toFile().getParentFile();
+            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -190,7 +190,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -204,7 +204,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     @AfterEach
     void tearDown() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
         exerciseRepo.resetLocalRepo();
@@ -237,18 +237,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 }
                 argumentBuilder.add(Arguments.of(language, projectType, false));
             }
-
-            if (languageFeatures.testwiseCoverageAnalysisSupported()) {
-                if (projectTypes.isEmpty()) {
-                    argumentBuilder.add(Arguments.of(language, null, true));
-                }
-                for (ProjectType projectType : projectTypes) {
-                    if (projectType == ProjectType.MAVEN_BLACKBOX) {
-                        continue;
-                    }
-                    argumentBuilder.add(Arguments.of(language, projectType, true));
-                }
-            }
         }
         return argumentBuilder.build();
     }
@@ -256,17 +244,17 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    void testTemplateExercise(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+    void testTemplateExercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);
-        runTests(language, projectType, exerciseRepo, TestResult.FAILED, testwiseCoverageAnalysis);
+        runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    void testTemplateSolution(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+    void testTemplateSolution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);
-        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL, testwiseCoverageAnalysis);
+        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
     }
 
     private void checkPreconditionsForJavaTemplateExecution(final ProjectType projectType) {
@@ -276,24 +264,20 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
-    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult, boolean testwiseCoverageAnalysis)
-            throws Exception {
+    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
-        if (testwiseCoverageAnalysis) {
-            exercise.getBuildConfig().setTestwiseCoverageEnabled(true);
-        }
         request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
-            exitCode = invokeGradle(testwiseCoverageAnalysis);
+            exitCode = invokeGradle();
         }
         else {
-            exitCode = invokeMaven(testwiseCoverageAnalysis);
+            exitCode = invokeMaven();
         }
 
         if (TestResult.SUCCESSFUL.equals(testResult)) {
@@ -308,14 +292,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
-    private int invokeMaven(boolean testwiseCoverageAnalysis) throws MavenInvocationException {
+    private int invokeMaven() throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setJavaHome(java17Home);
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.addArgs(List.of("clean", "test"));
-        if (testwiseCoverageAnalysis) {
-            mvnRequest.addArg("-Pcoverage");
-        }
         mvnRequest.setShowVersion(true);
 
         Invoker mvnInvoker = new DefaultInvoker();
@@ -325,17 +306,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         return result.getExitCode();
     }
 
-    private int invokeGradle(boolean recordTestwiseCoverage) {
+    private int invokeGradle() {
         try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
             launcher.setJavaHome(java17Home);
-            String[] tasks;
-            if (recordTestwiseCoverage) {
-                tasks = new String[] { "clean", "test", "tiaTests", "--run-all-tests" };
-            }
-            else {
-                tasks = new String[] { "clean", "test" };
-            }
+            String[] tasks = new String[] { "clean", "test" };
             launcher.forTasks(tasks);
             launcher.run();
         }

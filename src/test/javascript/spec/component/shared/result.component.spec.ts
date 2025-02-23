@@ -1,7 +1,7 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { SimpleChange } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -13,14 +13,12 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import * as utils from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { By } from '@angular/platform-browser';
-import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Router } from '@angular/router';
@@ -87,7 +85,7 @@ describe('ResultComponent', () => {
         global.URL.revokeObjectURL = jest.fn();
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -398,5 +396,21 @@ describe('ResultComponent', () => {
 
         expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
         expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+    });
+
+    it('should trigger Interval creation on estimatedCompletionDate change', () => {
+        jest.useFakeTimers();
+        comp.buildStartDate = dayjs().subtract(20, 'seconds');
+        comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
+        comp.ngOnChanges({});
+
+        jest.advanceTimersByTime(1200);
+        expect(comp.estimatedDurationInterval).toBeDefined();
+        expect(comp.estimatedRemaining).toBeGreaterThan(0);
+        expect(comp.estimatedRemaining).toBeLessThan(40);
+        expect(comp.estimatedDuration).toBe(40);
+
+        jest.clearAllTimers();
+        jest.useRealTimers();
     });
 });

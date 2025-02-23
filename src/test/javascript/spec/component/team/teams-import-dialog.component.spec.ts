@@ -1,25 +1,17 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { NgForm, NgModel } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
-import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
-import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { flatMap } from 'lodash-es';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
@@ -56,19 +48,7 @@ describe('TeamsImportDialogComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                TeamsImportDialogComponent,
-                MockComponent(TeamsImportFromFileFormComponent),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(TranslateDirective),
-                TranslatePipeMock,
-                MockComponent(TeamExerciseSearchComponent),
-                MockComponent(TeamStudentsListComponent),
-                MockComponent(HelpIconComponent),
-                MockDirective(NgModel),
-                MockDirective(NgForm),
-            ],
-            providers: [MockProvider(TeamService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TeamService)],
         }).compileComponents();
     }));
 

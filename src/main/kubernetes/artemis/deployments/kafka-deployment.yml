@@ -27,7 +27,7 @@ spec:
         - configMapRef:
             name: kafka
             optional: false
-        image: confluentinc/cp-kafka:5.5.3
+        image: docker.io/confluentinc/cp-kafka:7.8.0
         imagePullPolicy: Always
         name: kafka
         resources: {}

@@ -136,51 +136,12 @@ describe('FileService', () => {
         });
     });
 
-    describe('getAeolusTemplateFile', () => {
-        it('should fetch the aeolus template file with all parameters', () => {
-            const language = ProgrammingLanguage.PYTHON;
-            const projectType = ProjectType.PLAIN;
-            const staticAnalysis = true;
-            const sequentialRuns = false;
-            const coverage = true;
-            const expectedUrl = `api/files/aeolus/templates/PYTHON/PLAIN?staticAnalysis=true&sequentialRuns=false&testCoverage=true`;
-            const response = 'aeolus template content';
-
-            fileService.getAeolusTemplateFile(language, projectType, staticAnalysis, sequentialRuns, coverage).subscribe((data) => {
-                expect(data).toEqual(response);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'GET',
-            });
-            expect(req.request.responseType).toBe('text');
-            req.flush(response);
-        });
-
-        it('should fetch the aeolus template file with missing optional parameters', () => {
-            const expectedUrl = `api/files/aeolus/templates/PYTHON?staticAnalysis=false&sequentialRuns=false&testCoverage=false`;
-            const response = 'aeolus template content';
-
-            fileService.getAeolusTemplateFile(ProgrammingLanguage.PYTHON).subscribe((data) => {
-                expect(data).toEqual(response);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'GET',
-            });
-            expect(req.request.responseType).toBe('text');
-            req.flush(response);
-        });
-    });
-
     describe('getTemplateCodeOfConduct', () => {
         it('should fetch the template code of conduct', () => {
             const expectedUrl = `api/files/templates/code-of-conduct`;
             const response = 'code of conduct content';
 
-            fileService.getTemplateCodeOfCondcut().subscribe((data) => {
+            fileService.getTemplateCodeOfConduct().subscribe((data) => {
                 expect(data.body).toEqual(response);
             });
 

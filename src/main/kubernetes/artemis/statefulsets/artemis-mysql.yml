@@ -31,7 +31,7 @@ spec:
         envFrom:
         - configMapRef:
             name: artemis-mysql
-        image: mysql:9.0.1
+        image: docker.io/library/mysql:9.1.0
         imagePullPolicy: IfNotPresent
         name: artemis-mysql
         ports:

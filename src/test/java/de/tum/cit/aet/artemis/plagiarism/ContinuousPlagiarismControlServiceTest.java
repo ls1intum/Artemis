@@ -19,8 +19,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import de.jplag.exceptions.BasecodeException;
-import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -69,7 +67,7 @@ class ContinuousPlagiarismControlServiceTest {
             plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository);
 
     @Test
-    void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
+    void shouldExecuteChecks() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         // given: text exercise with cpc enabled
         var textExercise = new TextExercise();
         textExercise.setId(101L);
@@ -114,7 +112,7 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
-    void shouldAddSubmissionsToPlagiarismCase() throws ExitException {
+    void shouldAddSubmissionsToPlagiarismCase() {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
         exercise.setId(99L);
@@ -152,7 +150,7 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
-    void shouldRemoveStalePlagiarismCase() throws ExitException {
+    void shouldRemoveStalePlagiarismCase() {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
         exercise.setId(99L);
@@ -211,12 +209,12 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
-    void shouldSilentAnyJPlagExceptionsThrown() throws Exception {
+    void shouldSilentAnyJPlagExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
         textExercise.setId(123L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
-        when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new BasecodeException("msg"));
+        when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new NullPointerException("null"));
 
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
@@ -224,7 +222,7 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
-    void shouldSilentAnyUnknownExceptionsThrown() throws Exception {
+    void shouldSilentAnyUnknownExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
         textExercise.setId(101L);

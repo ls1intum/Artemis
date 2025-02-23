@@ -22,7 +22,6 @@ export type ProgrammingExerciseCreationConfig = {
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
-    appNamePatternForSwift: string;
     modePickerOptions?: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
     onWithDependenciesChanged: (withDependencies: boolean) => boolean;
@@ -38,7 +37,6 @@ export type ProgrammingExerciseCreationConfig = {
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
     sequentialTestRunsAllowed: boolean;
-    testwiseCoverageAnalysisSupported: boolean;
     problemStatementLoaded: boolean;
     templateParticipationResultLoaded: boolean;
     hasUnsavedChanges: boolean;

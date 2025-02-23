@@ -55,6 +55,10 @@
                 "expiresOn": "Expires on",
                 "hasExpiredOn": "Expired on",
                 "fingerprint": "Fingerprint",
+                "fingerprints": "Show SSH fingerprints",
+                "sshFingerprints": "SSH Fingerprints",
+                "fingerprintsExplanation": "SSH keys allow you to establish a secure connection between your computer and Artemis. SSH fingerprints verify that you connect to the correct device.",
+                "fingerprintsLearnMore": "Learn more about fingerprints",
                 "commentUsedAsLabel": "If you do not add a label, the key comment will be used as the default label if present.",
                 "expiry": {
                     "title": "Expiry",

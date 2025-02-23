@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-student-upload-images-button',
@@ -16,8 +17,11 @@ import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openUploadImagesDialog($event)"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class StudentsUploadImagesButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -30,8 +34,6 @@ export class StudentsUploadImagesButtonComponent {
     // Icons
     faPlus = faPlus;
     faUpload = faUpload;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open up upload dialog for exam users image upload

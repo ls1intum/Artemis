@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +21,6 @@ import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.clustering.ClusteringOptions;
-import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -84,7 +83,6 @@ public class TextPlagiarismDetectionService {
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
-     * @throws ExitException is thrown if JPlag exits unexpectedly
      */
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // Only one plagiarism check per course allowed
@@ -101,7 +99,7 @@ public class TextPlagiarismDetectionService {
 
             // TODO: why do we have such a strange folder name?
             final var submissionsFolderName = "./tmp/submissions";
-            final var submissionFolderFile = new File(submissionsFolderName);
+            final var submissionFolderFile = Path.of(submissionsFolderName).toFile();
             submissionFolderFile.mkdirs();
 
             final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);

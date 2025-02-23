@@ -3,6 +3,4 @@ import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-manage
 export class CourseManagementStatisticsDTO {
     averageScoreOfCourse: number;
     averageScoresOfExercises: CourseManagementStatisticsModel[];
-
-    constructor() {}
 }

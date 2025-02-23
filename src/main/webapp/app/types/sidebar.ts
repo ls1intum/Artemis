@@ -16,18 +16,19 @@ export type AccordionGroups = Record<
 >;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
+    | 'recents'
     | 'generalChannels'
     | 'exerciseChannels'
     | 'lectureChannels'
     | 'groupChats'
     | 'directMessages'
     | 'examChannels'
+    | 'feedbackDiscussion'
     | 'savedPosts'
     | 'hiddenChannels';
 export type CollapseState = {
     [key: string]: boolean;
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
-export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 export type SidebarItemShowAlways = {
     [key: string]: boolean;
@@ -135,4 +136,6 @@ export interface SidebarCardElement {
      * Set for Conversation. Will be removed after refactoring
      */
     conversation?: ConversationDTO;
+
+    isCurrent?: boolean;
 }

@@ -304,7 +304,12 @@
                     "paragraph1": "Lernkompetenzen können aufeinander aufbauen oder voneinander abhängig sein, weshalb Sie verschiedene Arten von Beziehungen zwischen ihnen herstellen können. Die Kompetenzen können sich entweder \"Stimmt überein mit\", \"Erweitert\" oder \"Setzt voraus\". Im Folgenden werden diese Beziehungen ausführlich beschrieben.",
                     "paragraph2": "Zusammenfassend:",
                     "paragraph3": "Bei \"Stimmt überein mit\" geht es um die Gleichwertigkeit zweier Fähigkeiten.<br />\"Erweitert\" bedeutet, dass man auf einer vorhandenen Fähigkeit aufbaut.<br />\"Setzt voraus\" bedeutet, dass eine Fähigkeit Voraussetzung für eine andere ist.",
-                    "paragraph4": "Um diese Beziehungen zu erstellen, öffne das Modal „Beziehungen bearbeiten“. In diesem Modal kann man die verbundenen Kompetenzen auswählen oder nacheinander auf jede einzelne klicken. Danach kann der gewünschte Beziehungstyp gewählt und die Beziehung erstellt werden. Um eine Beziehung zu aktualisieren oder zu löschen, klicke einfach auf die betreffende Beziehung und aktualisiere entweder den Beziehungstyp im Formular oder lösche ihn.",
+                    "paragraph4": "Um diese Beziehungen zu erstellen, öffne das Fenster „Beziehungen bearbeiten“. In diesem Fenster kann man die verbundenen Kompetenzen auswählen oder nacheinander auf jede einzelne klicken. Danach kann der gewünschte Beziehungstyp gewählt und die Beziehung erstellt werden. Um eine Beziehung zu aktualisieren oder zu löschen, klicke einfach auf die betreffende Beziehung und aktualisiere entweder den Beziehungstyp im Formular oder lösche ihn.",
+                    "relationVideoParagraph": {
+                        "first": "Ihr Browser unterstützt kein HTML5-Video. Hier ist ein ",
+                        "link": "Link zum Video",
+                        "last": " stattdessen."
+                    },
                     "relationTitle1": "1. Stimmt überein mit",
                     "relationParagraph1": "Diese Beziehung impliziert, dass zwei Kompetenzen auf demselben Niveau sind und dieselben Fähigkeiten und Anforderungen abdecken. Wenn man die eine hat, hat man auch schon die andere, und sie können als austauschbar betrachtet werden.",
                     "exampleLabel": "Beispiel:",

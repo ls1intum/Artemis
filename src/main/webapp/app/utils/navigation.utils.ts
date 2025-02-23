@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -6,12 +6,14 @@ import { filter, skip, take } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
+    private router = inject(Router);
+    private location = inject(Location);
+
     private onFirstPage = true;
 
-    constructor(
-        private router: Router,
-        private location: Location,
-    ) {
+    constructor() {
+        const router = this.router;
+
         router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),

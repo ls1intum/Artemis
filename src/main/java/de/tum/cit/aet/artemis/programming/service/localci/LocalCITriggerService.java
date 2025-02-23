@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIREC
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,20 +34,21 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -97,18 +97,26 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private RPriorityQueue<BuildJobQueueItem> queue;
 
+    private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
+
     private RMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
     private final ExerciseDateService exerciseDateService;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
+    private static final int DEFAULT_BUILD_DURATION = 17;
+
+    // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
+    private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
+
     public LocalCITriggerService(RedissonClient redissonClient, AeolusTemplateService aeolusTemplateService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService,
             Optional<VersionControlService> versionControlService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
         this.redissonClient = redissonClient;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -122,6 +130,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.exerciseDateService = exerciseDateService;
         this.buildScriptProviderService = buildScriptProviderService;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
+        this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
     }
 
     @PostConstruct
@@ -192,9 +201,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
-
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+
+        var buildStatistics = loadBuildStatistics(programmingExercise);
+
+        long estimatedDuration = (buildStatistics != null && buildStatistics.getBuildDurationSeconds() > 0) ? buildStatistics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
+        estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
@@ -214,12 +228,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     // -------Helper methods for triggerBuild()-------
 
-    private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
-        List<String> testResultPaths = new ArrayList<>();
-        for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
-        }
-        return testResultPaths;
+    private List<String> getTestResultPaths(Windfile windfile) {
+        return windfile.results().stream().map(result -> LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
     }
 
     /**
@@ -300,13 +310,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
-        boolean testwiseCoverageEnabled = buildConfig.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
         try {
             windfile = buildConfig.getWindfile();
-            dockerImage = windfile.getMetadata().docker().getFullImageName();
+            dockerImage = windfile.metadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -324,12 +333,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
-                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
+                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
         return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+    }
+
+    private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildStatisticsRepository.findByExerciseId(programmingExercise.getId()).orElse(null);
     }
 
     /**

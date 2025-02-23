@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -40,14 +40,12 @@ type CompetencyJolMapResponseType = HttpResponse<{
     providedIn: 'root',
 })
 export class CourseCompetencyService {
-    protected resourceURL = 'api';
+    protected httpClient = inject(HttpClient);
+    protected entityTitleService = inject(EntityTitleService);
+    protected lectureUnitService = inject(LectureUnitService);
+    protected accountService = inject(AccountService);
 
-    constructor(
-        protected httpClient: HttpClient,
-        protected entityTitleService: EntityTitleService,
-        protected lectureUnitService: LectureUnitService,
-        protected accountService: AccountService,
-    ) {}
+    protected resourceURL = 'api';
 
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);

@@ -1,27 +1,35 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
+import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { round } from 'app/shared/util/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
-export class QuizStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
+export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private websocketService = inject(WebsocketService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     quizExercise: QuizExercise;
-    private sub: Subscription;
 
     label: string[] = [];
     backgroundColor: string[] = [];
@@ -34,26 +42,13 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
     // Icons
     faSync = faSync;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        protected translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        private changeDetector: ChangeDetectorRef,
-    ) {
-        super(translateService);
+    ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
             this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
             this.ngxData = [...this.ngxData];
         });
-    }
-
-    ngOnInit() {
-        this.sub = this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
@@ -63,10 +58,10 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.jhiWebsocketService.subscribe(this.websocketChannelForData);
+            this.websocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
+            this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
@@ -78,14 +73,14 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
     }
 
     ngOnDestroy() {
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      * And it loads the new Data if the Websocket has been notified
      *
-     * @param {QuizExercise} quiz: the quizExercise, which this quiz-statistic presents.
+     * @param quiz the quizExercise, which this quiz-statistic presents.
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses

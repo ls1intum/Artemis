@@ -316,9 +316,9 @@
                                                 } @else {
                                                     <jhi-code-button
                                                         class="me-1"
-                                                        [routerLinkForRepositoryView]="['/courses', course.id, 'exercises', exercise.id, 'repository', value.id]"
                                                         [smallButtons]="true"
                                                         [repositoryUri]="getRepositoryLink(value) || ''"
+                                                        [routerLinkForRepositoryView]="['/courses', course.id, 'exercises', exercise.id, 'repository', value.id]"
                                                     />
                                                 }
                                             }

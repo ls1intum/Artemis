@@ -7,11 +7,7 @@
                 </button>
                 <h4 class="pointer d-inline-block rounded py-2 info mb-0" (click)="openConversationDetailDialog($event, INFO)">
                     @if (activeConversationAsChannel) {
-                        <jhi-channel-icon
-                            [isPublic]="activeConversationAsChannel.isPublic!"
-                            [isArchived]="activeConversationAsChannel.isArchived!"
-                            [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
-                        />
+                        <jhi-channel-icon [isPublic]="activeConversationAsChannel.isPublic!" [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!" />
                     }
                     @if (getAsGroupChat(activeConversation)) {
                         <fa-icon [icon]="faPeopleGroup" size="xs" />
@@ -28,8 +24,7 @@
                             class="me-2"
                             [imageUrl]="otherUser.imageUrl"
                             [isEditable]="false"
-                        >
-                        </jhi-profile-picture>
+                        />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
                 </h4>

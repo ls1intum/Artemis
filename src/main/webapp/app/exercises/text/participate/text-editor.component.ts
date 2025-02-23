@@ -1,8 +1,12 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import dayjs from 'dayjs/esm';
@@ -14,7 +18,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
@@ -33,12 +37,48 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { TextResultComponent } from './text-result/text-result.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
+import { UpperCasePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { onTextEditorTab } from 'app/utils/text.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
+    imports: [
+        HeaderParticipationPageComponent,
+        ButtonComponent,
+        RouterLink,
+        RequestFeedbackButtonComponent,
+        ResultHistoryComponent,
+        ResizeableContainerComponent,
+        TeamParticipateInfoBoxComponent,
+        TranslateDirective,
+        FormsModule,
+        TeamSubmissionSyncComponent,
+        TextResultComponent,
+        AdditionalFeedbackComponent,
+        RatingComponent,
+        ComplaintsStudentViewComponent,
+        FaIconComponent,
+        IrisExerciseChatbotButtonComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
@@ -50,6 +90,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private accountService = inject(AccountService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private translateService = inject(TranslateService);
 
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
@@ -58,14 +99,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly ChatServiceMode = ChatServiceMode;
     protected readonly isAthenaAIResult = isAthenaAIResult;
 
-    @Input() participationId?: number;
-    @Input() displayHeader: boolean = true;
-    @Input() expandProblemStatement?: boolean = true;
-
-    @Input() inputExercise?: TextExercise;
-    @Input() inputSubmission?: TextSubmission;
-    @Input() inputParticipation?: StudentParticipation;
-    @Input() isExamSummary = false;
+    participationId = input<number>();
+    displayHeader = input<boolean>(true);
+    expandProblemStatement = input<boolean>(true);
+    inputExercise = input<TextExercise>();
+    inputSubmission = input<TextSubmission>();
+    inputParticipation = input<StudentParticipation>();
+    isExamSummary = input<boolean>(false);
 
     textExercise: TextExercise;
     participation: StudentParticipation;
@@ -73,7 +113,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     resultWithComplaint?: Result;
     submission: TextSubmission;
     course?: Course;
-    isSaving: boolean = false;
+    isSaving = false;
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
@@ -92,24 +132,28 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
-    isReadOnlyWithShowResult: boolean = false;
+    isReadOnlyWithShowResult = false;
     // Icon
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
     faTimeline = faTimeline;
     faEye = faEye;
+
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
+
     participationUpdateListener: Subscription;
     sortedHistoryResults: Result[];
-    hasAthenaResultForLatestSubmission: boolean = false;
-    showHistory: boolean = false;
+    hasAthenaResultForLatestSubmission = false;
+    showHistory = false;
     submissionId: number | undefined;
 
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
+            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId'));
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
@@ -121,7 +165,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            this.textService.get(participationId).subscribe({
+            this.textService.get(participationId!).subscribe({
                 next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -129,20 +173,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.isReadOnlyWithShowResult = !!this.submissionId;
         }
         this.participationUpdateListener?.unsubscribe();
-        // Triggers on new result recieved
+        // Triggers on new result received
         this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                const results = changedParticipation.results;
                 if (
-                    changedParticipation.results &&
-                    ((changedParticipation.results?.length || 0) > (this.participation?.results?.length || 0) ||
-                        changedParticipation.results?.last()?.completionDate === undefined) &&
-                    changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    changedParticipation.results.last()?.successful !== undefined
+                    results &&
+                    ((results?.length || 0) > (this.participation?.results?.length || 0) || results?.last()?.completionDate === undefined) &&
+                    results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                    results.last()?.successful !== undefined
                 ) {
                     this.isGeneratingFeedback = false;
-                    if (changedParticipation.results.last()?.successful === false) {
+                    if (results.last()?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
@@ -152,7 +196,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation);
             });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
+            // only load the settings if Iris is available and this is not an exam exercise
+            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {
                 this.route.params.subscribe((params) => {
                     this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
                         this.irisSettings = irisSettings;
@@ -163,7 +208,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -174,14 +219,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.textExercise = this.inputExercise;
+        if (this.inputExercise() !== undefined) {
+            this.textExercise = this.inputExercise()!;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        if (this.inputSubmission() !== undefined) {
+            this.submission = this.inputSubmission()!;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        if (this.inputParticipation() !== undefined) {
+            this.participation = this.inputParticipation()!;
         }
 
         if (this.submission?.text) {
@@ -242,6 +287,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
             if (this.submission?.text) {
                 this.answer = this.submission.text;
+            } else {
+                // handles the case when a submission is empty
+                this.answer = '';
             }
         }
         // check whether the student looks at the result
@@ -330,6 +378,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return this.submission.text === this.answer;
     }
 
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
+    }
+
     submit() {
         if (this.isSaving) {
             return;
@@ -353,6 +415,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
             next: (response) => {
                 this.submission = response.body!;
+                if (this.participation.team) {
+                    // Make sure the team is not lost during update
+                    const studentParticipation = this.submission.participation as StudentParticipation;
+                    studentParticipation.team = this.participation.team;
+                }
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
@@ -403,17 +470,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
-        this.updateParticipation(submission.participation as StudentParticipation);
-    }
-
-    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
+        // Keep the existing team on the participation
+        const studentParticipation = submission.participation as StudentParticipation;
+        studentParticipation.team = this.participation.team;
+        this.updateParticipation(studentParticipation);
     }
 
     onTextEditorInput(event: Event) {

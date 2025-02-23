@@ -8,6 +8,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
+import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -66,7 +69,7 @@ class LtiDynamicRegistrationServiceTest {
         registrationToken = "token";
 
         platformConfiguration = new Lti13PlatformConfiguration(null, "token", "auth", "jwks", "register");
-        clientRegistrationResponse = new Lti13ClientRegistration();
+        clientRegistrationResponse = Lti13ClientRegistrationFactory.createRegistration("http://artemis.com", "artemis-" + UUID.randomUUID());
     }
 
     @AfterEach

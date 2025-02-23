@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -36,6 +39,8 @@ public class LocalCIQueueWebsocketService {
 
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
+    private final ProgrammingMessagingService programmingMessagingService;
+
     private final SharedQueueManagementService sharedQueueManagementService;
 
     private final RedissonClient redissonClient;
@@ -48,10 +53,11 @@ public class LocalCIQueueWebsocketService {
      * @param sharedQueueManagementService     the local ci shared build job queue service
      */
     public LocalCIQueueWebsocketService(RedissonClient redissonClient, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
-            SharedQueueManagementService sharedQueueManagementService) {
+            SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService) {
         this.redissonClient = redissonClient;
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -66,6 +72,7 @@ public class LocalCIQueueWebsocketService {
         queue.addListener((ListAddListener) item -> {
             log.info("Build job added to queue: {}", item);
             // TODO: how to get the courseId here?
+            // TODO: https://redisson.org/docs/data-and-services/collections/#listeners
             long courseId = 1L;
             sendQueuedJobsOverWebsocket(courseId);
         });
@@ -153,8 +160,8 @@ public class LocalCIQueueWebsocketService {
      */
     private static BuildConfig removeUnnecessaryInformationFromBuildConfig(BuildConfig buildConfig) {
         // We pass "" instead of null strings to avoid errors when serializing to JSON
-        return new BuildConfig("", "", buildConfig.commitHashToBuild(), "", "", "", null, null, buildConfig.scaEnabled(), buildConfig.sequentialTestRunsEnabled(),
-                buildConfig.testwiseCoverageEnabled(), null, buildConfig.timeoutSeconds(), "", "", "", null);
+        return new BuildConfig("", "", buildConfig.commitHashToBuild(), "", "", "", null, null, buildConfig.scaEnabled(), buildConfig.sequentialTestRunsEnabled(), null,
+                buildConfig.timeoutSeconds(), "", "", "", null);
     }
 
     /**
@@ -180,5 +187,11 @@ public class LocalCIQueueWebsocketService {
                     agent.status(), null, null));
         }
         return filteredBuildAgentSummary;
+    }
+
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
+            ZonedDateTime estimatedCompletionDate) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
+        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }

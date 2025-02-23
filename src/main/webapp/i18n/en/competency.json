@@ -161,13 +161,13 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists.",
                 "type": {
-                    "ASSUMES": "Assumes",
+                    "ASSUMES": "Requires",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"
                 },
                 "typeExplanation": {
-                    "ASSUMES": "The head competency assumes that the student mastered the tail competency and teaches new knowledge that builds upon the tail competency.",
-                    "EXTENDS": "The head competency assumes that the student mastered the tail competency and deepens that knowledge further.",
+                    "ASSUMES": "The head competency requires the student to master the tail competency and teaches new knowledge that builds upon the tail competency.",
+                    "EXTENDS": "The head competency requires the student to master the tail competency and deepens that knowledge further.",
                     "MATCHES": "The head and tail competency match and cover the same knowledge."
                 }
             }
@@ -254,7 +254,7 @@
             "relations": {
                 "modalTitle": "Course competency relations",
                 "relationTypes": {
-                    "ASSUMES": "Assumes",
+                    "ASSUMES": "Requires",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"
                 },
@@ -300,21 +300,26 @@
                     "paragraph5": "In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more information on this process, please refer to the user <a href={{ link }} target=\"_blank\">manual for Artemis.</a>"
                 },
                 "courseCompetencyRelations": {
-                    "title": "What are course competency relations?",
-                    "paragraph1": "Course competencies can build upon or depend on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or ASSUME each other. Detailed descriptions of these relationships are provided below.",
+                    "title": "What are course competency relationships?",
+                    "paragraph1": "Course competencies can support or rely on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or REQUIRE each other. Detailed descriptions of these relationships are provided below.",
                     "paragraph2": "In summary:",
-                    "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />ASSUME means one skill is a prerequisite for another.",
-                    "paragraph4": "To create these relationships, open the 'Edit Relations' modal. In this modal, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />REQUIRE means one skill is a prerequisite for another.",
+                    "paragraph4": "To create these relationships, open the 'Edit Relations' window. In this window, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "relationVideoParagraph": {
+                        "first": "Your browser doesn't support HTML5 video. Here is a ",
+                        "link": "link to the video",
+                        "last": " instead."
+                    },
                     "relationTitle1": "1. MATCH",
                     "relationParagraph1": "This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.",
                     "exampleLabel": "Example:",
-                    "relationParagraph2": "Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might \"MATCH\" balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core competency (balance) is the same in both scenarios.",
+                    "relationParagraph2": "Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might \"MATCH\" with balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core competency (balance) is the same in both scenarios.",
                     "relationTitle2": "2. EXTEND",
-                    "relationParagraph3": "This relationship means one competency builds upon another by adding more complexity or breadth. In other words, once you have mastered one competency, you can move on to mastering the extended one, which takes that skill further.",
-                    "relationParagraph4": "Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that \"EXTENDS\" into riding around curves and turns. Competency B extends Competency A by adding the need to navigate changes in direction while maintaining balance and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios.",
-                    "relationTitle3": "3. ASSUME",
+                    "relationParagraph3": "This relationship means one competency adds complexity or expands on another. In other words, once you have mastered one competency, you can move on to mastering the extended one, which takes that skill further.",
+                    "relationParagraph4": "Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that \"EXTENDS\" into riding around curves and turns. Competency B builds upon Competency A by adding the need to navigate changes in direction while maintaining balance and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios.",
+                    "relationTitle3": "3. REQUIRES",
                     "relationParagraph5": "This relationship implies that one competency relies on another being already mastered. To perform the more advanced competency, the learner must first have the underlying skill or knowledge.",
-                    "relationParagraph6": "Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill ASSUMES that the learner has already mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill."
+                    "relationParagraph6": "Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill \"REQUIRES\" that the learner has already mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill."
                 }
             }
         },

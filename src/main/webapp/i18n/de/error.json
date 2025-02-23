@@ -83,7 +83,6 @@
         },
         "idNull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
-        "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",

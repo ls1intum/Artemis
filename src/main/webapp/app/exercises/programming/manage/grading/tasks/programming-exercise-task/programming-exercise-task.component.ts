@@ -1,16 +1,23 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseTaskService } from '../programming-exercise-task.service';
 import { Subject } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TestCasePassedBuildsChartComponent } from '../../charts/test-case-passed-builds-chart.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table.scss'],
+    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
+    private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
+
     @Input() index: number;
     @Input() task: ProgrammingExerciseTask;
     @Input() openSubject: Subject<boolean>;
@@ -30,8 +37,6 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
     }
-
-    constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
         this.openSubject.subscribe((open) => (this.open = open));

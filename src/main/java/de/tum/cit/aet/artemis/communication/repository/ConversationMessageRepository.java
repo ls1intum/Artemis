@@ -114,7 +114,6 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
                 LEFT JOIN FETCH p.conversation
                 LEFT JOIN FETCH p.reactions
                 LEFT JOIN FETCH p.tags
-                LEFT JOIN FETCH p.savedPosts
                 LEFT JOIN FETCH p.answers a
                     LEFT JOIN FETCH a.reactions
                     LEFT JOIN FETCH a.post

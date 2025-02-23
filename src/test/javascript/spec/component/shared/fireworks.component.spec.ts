@@ -10,7 +10,6 @@ describe('Fireworks', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FireworksComponent],
         })
             .compileComponents()
             .then(() => {

@@ -5,8 +5,6 @@ import dayjs from 'dayjs/esm';
     providedIn: 'root',
 })
 export class SortService {
-    constructor() {}
-
     /**
      * Sorts the given array based on the defined keys
      * @param array The array that should be sorted

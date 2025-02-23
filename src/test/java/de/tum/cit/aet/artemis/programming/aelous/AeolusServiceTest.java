@@ -31,13 +31,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -48,19 +48,19 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     @Qualifier("aeolusRestTemplate")
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
 
     @Autowired
-    AeolusBuildPlanService aeolusBuildPlanService;
+    private AeolusBuildPlanService aeolusBuildPlanService;
 
     @Autowired
-    AeolusTemplateService aeolusTemplateService;
+    private AeolusTemplateService aeolusTemplateService;
 
     @Autowired
-    AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+    private AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -84,9 +84,9 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      */
     @Test
     void testSuccessfulPublishBuildPlan() throws JsonProcessingException {
-        Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
-        mockWindfile.setPreProcessingMetadata("PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
+        var metadata = new WindfileMetadata(null, "PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
+        Windfile mockWindfile = new Windfile(null, metadata, null, null);
 
         aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, expectedPlanKey);
         String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
@@ -98,9 +98,9 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      */
     @Test
     void testFailedPublishBuildPlan() throws JsonProcessingException {
-        Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
-        mockWindfile.setPreProcessingMetadata("PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
+        var metadata = new WindfileMetadata(null, "PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
+        Windfile mockWindfile = new Windfile(null, metadata, null, null);
 
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.JENKINS);
@@ -172,7 +172,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testReturnsNullonUrlNull() throws JsonProcessingException {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
-        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.JENKINS)).isNull();
+        assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(null, null, null, null), AeolusTarget.JENKINS)).isNull();
     }
 
     @Test
@@ -184,11 +184,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Windfile getWindfile() {
-        Windfile windfile = new Windfile();
-        windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
-        windfile.setActions(List.of(new ScriptAction()));
-        return windfile;
+        var action = new ScriptAction(null, null, null, null, null, false, null, null);
+        return new Windfile("v0.0.1", new WindfileMetadata("test", "test", "test", null, null, null, null, null), List.of(action), null);
     }
 
     private String getSerializedWindfile() throws JsonProcessingException {
@@ -204,17 +201,16 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
     }
 
     @Test
     void testGetWindfileFor() throws IOException {
-        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false);
         assertThat(windfile).isNotNull();
-        assertThat(windfile.getActions()).isNotNull();
-        assertThat(windfile.getActions()).hasSize(1);
+        assertThat(windfile.actions()).isNotNull();
+        assertThat(windfile.actions()).hasSize(1);
     }
 
     @Test
@@ -224,7 +220,6 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         assertThat(windfile).isNull();
     }

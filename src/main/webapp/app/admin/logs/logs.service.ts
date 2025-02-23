@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Level, LoggersResponse } from './log.model';
 
 @Injectable({ providedIn: 'root' })
 export class LogsService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     changeLevel(name: string, configuredLevel: Level): Observable<any> {
         return this.http.post(`management/loggers/${name}`, { configuredLevel });

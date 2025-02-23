@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,13 +12,22 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { takeUntil } from 'rxjs/operators';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFreePeriodFormComponent],
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
 
     @Input()
@@ -34,11 +43,6 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
 
     ngUnsubscribe = new Subject<void>();
     formData: TutorialGroupFreePeriodFormData;
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initializes the component by setting up the form data based on the tutorial group free period, course, and tutorial groups configuration.
@@ -48,7 +52,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
      */
     initialize() {
         if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
             return;
         }
 

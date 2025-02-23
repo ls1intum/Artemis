@@ -6,6 +6,7 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
 
 @Component({
     template: '<div [jhiStickyPopover]="content" placement="right" triggers="manual"></div><ng-template #content><span>some content</span></ng-template>',
+    imports: [StickyPopoverDirective],
 })
 class StickyPopoverComponent {
     pattern: string;
@@ -19,8 +20,7 @@ describe('StickyPopoverDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [StickyPopoverDirective, StickyPopoverComponent],
+            imports: [ArtemisTestModule, StickyPopoverComponent],
         })
             .compileComponents()
             .then(() => {

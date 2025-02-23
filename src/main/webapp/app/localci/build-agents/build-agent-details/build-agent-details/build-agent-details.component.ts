@@ -5,24 +5,26 @@ import { Subscription } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { ActivatedRoute } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    standalone: true,
-    imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, SubmissionResultStatusModule],
+    imports: [NgxDatatableModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
-    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
     private readonly buildQueueService = inject(BuildQueueService);

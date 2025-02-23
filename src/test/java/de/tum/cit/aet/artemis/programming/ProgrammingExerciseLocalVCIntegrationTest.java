@@ -174,30 +174,28 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-    // programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-    // programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void testRedirectGetParticipationRepositoryFilesWithContentAtCommit() throws Exception {
-    // programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden() throws Exception {
-    // programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden();
-    // }
 
-    // TODO add all other tests
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_redirectGetTemplateRepositoryFilesWithContentAndOmitBinaries() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationFilesWithContentAtCommitShouldRedirect() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit(TEST_PREFIX);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(TEST_PREFIX);
+    }
 }

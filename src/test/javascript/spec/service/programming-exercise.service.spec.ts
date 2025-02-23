@@ -14,12 +14,11 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { Course } from 'app/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -283,24 +282,6 @@ describe('ProgrammingExercise Service', () => {
         }));
     });
 
-    it('should make post request for structural solution entries', fakeAsync(() => {
-        const expected = [new ProgrammingExerciseSolutionEntry()];
-        expected[0].filePath = 'src/test.java';
-        service.createStructuralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/structural-solution-entries` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make post request for behavioral solution entries', fakeAsync(() => {
-        const expected = [new ProgrammingExerciseSolutionEntry()];
-        expected[0].filePath = 'src/test.java';
-        service.createBehavioralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/behavioral-solution-entries` });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should make post request for import from file', fakeAsync(() => {
         const course = new Course();
         course.id = 1;
@@ -444,12 +425,7 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
-        { uri: 'tasks', method: 'getTasksAndTestsExtractedFromProblemStatement' },
         { uri: 'diff-report', method: 'getDiffReport' },
-        { uri: 'full-testwise-coverage-report', method: 'getLatestFullTestwiseCoverageReport' },
-        { uri: 'file-names', method: 'getSolutionFileNames' },
-        { uri: 'exercise-hints', method: 'getCodeHintsForExercise' },
-        { uri: 'test-cases', method: 'getAllTestCases' },
         { uri: 'build-log-statistics', method: 'getBuildLogStatistics' },
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
@@ -460,7 +436,14 @@ describe('ProgrammingExercise Service', () => {
             }
             functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
-            const req = httpMock.expectOne({ method: 'GET', url });
+
+            // Custom matcher function
+            const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+
+            const req = httpMock.expectOne((request) => {
+                return request.method === 'GET' && urlMatcher(request.url);
+            });
+
             req.flush({});
             tick();
         })(),

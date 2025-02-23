@@ -5,7 +5,6 @@ import { BehaviorSubject } from 'rxjs';
     providedIn: 'root',
 })
 export class LtiService {
-    constructor() {}
     private shownViaLtiSubject = new BehaviorSubject<boolean>(false);
     isShownViaLti$ = this.shownViaLtiSubject.asObservable();
 

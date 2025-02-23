@@ -1,7 +1,7 @@
-import { Location } from '@angular/common';
+import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -24,19 +24,51 @@ import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
-    styles: [],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        AssessmentLayoutComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TranslateDirective,
+        FaIconComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private accountService = inject(AccountService);
+    private location = inject(Location);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private complaintService = inject(ComplaintService);
+    private fileService = inject(FileService);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    submissionService = inject(SubmissionService);
+
     text: string;
     participation: StudentParticipation;
     submission?: FileUploadSubmission;
@@ -73,21 +105,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private changeDetectorRef: ChangeDetectorRef,
-        private alertService: AlertService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private accountService: AccountService,
-        private location: Location,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private complaintService: ComplaintService,
-        private fileService: FileService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        public submissionService: SubmissionService,
-        translateService: TranslateService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -113,7 +133,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
-            this.resultId = Number(params['resultId']) ?? 0;
+            this.resultId = Number(params['resultId']) || 0;
             this.exerciseId = exerciseId;
 
             const examId = params['examId'];
@@ -270,9 +290,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.submission = undefined;
                     return;
                 }
-
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
 
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.FILE_UPLOAD,

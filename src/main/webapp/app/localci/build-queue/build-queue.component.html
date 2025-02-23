@@ -504,7 +504,7 @@
         <div>
             <button
                 class="btn"
-                (click)="this.open(content)"
+                (click)="this.openModal(filterModal)"
                 [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter.numberOfAppliedFilters }"
             >
                 <fa-icon [icon]="faFilter" />
@@ -617,7 +617,7 @@
                                 }
                             </td>
                             <td class="finish-jobs-column-strings">
-                                <a class="detail-link" (click)="viewBuildLogs(finishedBuildJob.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                                <a class="detail-link" (click)="viewBuildLogs(buildLogsModal, finishedBuildJob.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
                             </td>
                             <td class="finish-jobs-column-strings">
                                 <span>{{ finishedBuildJob.buildAgentAddress }}</span>
@@ -742,7 +742,7 @@
     }
 </div>
 <!-- Modal -->
-<ng-template #content let-modal>
+<ng-template #filterModal let-modal>
     <div class="modal-header">
         <h5 class="modal-title">
             <span jhiTranslate="artemisApp.buildQueue.filter.title"></span>
@@ -876,6 +876,35 @@
         </button>
         <button class="btn btn-primary" (click)="applyFilter()">
             <span jhiTranslate="artemisApp.buildQueue.filter.apply"></span>
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #buildLogsModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
+            <span> {{ this.displayedBuildJobId }}</span>
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <table class="table table-borderless">
+            <tbody>
+                @if (rawBuildLogsString) {
+                    <pre>{{ rawBuildLogsString }}</pre>
+                } @else {
+                    <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.close()">
+            <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
+        </button>
+        <button class="btn btn-primary" (click)="downloadBuildLogs()">
+            <span jhiTranslate="artemisApp.buildQueue.logs.download"></span>
         </button>
     </div>
 </ng-template>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,12 +10,40 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        SortByDirective,
+        SortDirective,
+        ArtemisDatePipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+    ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
+    route = inject(ActivatedRoute);
+    private sortService = inject(SortService);
+    private courseManagementService = inject(CourseManagementService);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+
     courseId: number;
     exercises: Exercise[];
     selectedExercises?: Set<number> = new Set();
@@ -29,16 +57,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
-    constructor(
-        public route: ActivatedRoute,
-        private sortService: SortService,
-        private courseManagementService: CourseManagementService,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private router: Router,
-        private alertService: AlertService,
-        private sessionStorageService: SessionStorageService,
-    ) {}
 
     /**
      * Initializes the component.

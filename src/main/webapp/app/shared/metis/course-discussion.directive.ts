@@ -1,4 +1,4 @@
-import { Directive } from '@angular/core';
+import { Directive, inject } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
@@ -12,6 +12,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
     providers: [MetisService],
 })
 export abstract class CourseDiscussionDirective {
+    protected metisService = inject(MetisService);
+
     searchText?: string;
     currentPostContextFilter: PostContextFilter;
     formGroup: FormGroup;
@@ -36,8 +38,6 @@ export abstract class CourseDiscussionDirective {
     faSearch = faSearch;
     faLongArrowAltUp = faLongArrowAltUp;
     faLongArrowAltDown = faLongArrowAltDown;
-
-    protected constructor(protected metisService: MetisService) {}
 
     /**
      * on changing any filter, the metis service is invoked to deliver all posts for the

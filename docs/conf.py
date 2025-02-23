@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Artemis'
-copyright = '2024, Technical University of Munich, Applied Software Engineering'
-author = 'Technical University of Munich, Applied Software Engineering'
+copyright = '2025, Applied Education Technologies, Technical University of Munich'
+author = 'Applied Education Technologies, Technical University of Munich'
 
 
 # -- General configuration ---------------------------------------------------

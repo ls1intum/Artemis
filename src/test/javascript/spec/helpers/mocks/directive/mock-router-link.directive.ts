@@ -2,7 +2,6 @@ import { Directive, HostListener, Input, Optional } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[routerLink]',
 })
 export class MockRouterLinkDirective {
@@ -17,7 +16,6 @@ export class MockRouterLinkDirective {
 }
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[routerLinkActiveOptions]',
 })
 export class MockRouterLinkActiveOptionsDirective {
@@ -25,7 +23,6 @@ export class MockRouterLinkActiveOptionsDirective {
 }
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[queryParams]',
 })
 export class MockQueryParamsDirective {

@@ -176,6 +176,7 @@
             "athenaFeedbackSuccessful": "AI feedback successfully generated. Click on the result to view details.",
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
+            "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",
@@ -239,7 +240,8 @@
                         "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
-                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects"
+                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\"."
                     }
                 },
                 "points": {

@@ -4,7 +4,7 @@
  *
  */
 
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -38,6 +38,9 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
  * </jhi-virtual-scroll>
  */
 export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
+    private renderer = inject(Renderer2);
+    private router = inject(Router);
+
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     /**
@@ -87,9 +90,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     public startIndex = 0;
 
     public endIndex = 0;
-    private scrollIsUp = false;
-
-    private lastScrollIsUp = false;
 
     scrollUnListener: () => void;
     focusInUnListener: () => void;
@@ -97,10 +97,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     screenHeight: any;
     windowScrollTop: any;
 
-    constructor(
-        private renderer: Renderer2,
-        private router: Router,
-    ) {
+    constructor() {
         this.getScreenSize();
     }
 
@@ -183,9 +180,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * calls prepareDataItems() to continue with the virtual scrolling logic
      */
     onScroll() {
-        this.lastScrollIsUp = this.scrollIsUp;
-        this.scrollIsUp = window.scrollY < this.windowScrollTop;
-
         this.windowScrollTop = window.scrollY;
         // delays virtualScrolling due to page elements above items such as page title, menu, filter elements, etc.
         this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop * 2, 0);
@@ -246,7 +240,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
             itemsThatAreGone: 0,
         };
 
-        dimensions.contentHeight = this.originalItems!.reduce((prev, curr, i) => {
+        dimensions.contentHeight = this.originalItems!.reduce((prev, _curr, i) => {
             const height = this.previousItemsHeight[i];
             return prev + (height ? height : this.minItemHeight);
         }, 0);

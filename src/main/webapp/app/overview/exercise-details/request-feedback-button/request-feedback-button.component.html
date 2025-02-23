@@ -1,6 +1,6 @@
 @if (!isExamExercise && requestFeedbackEnabled) {
     @if (athenaEnabled) {
-        @if (exercise().type === ExerciseType.TEXT) {
+        @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             <button
                 class="btn btn-primary"
                 (click)="requestFeedback()"
@@ -11,6 +11,13 @@
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+                <span
+                    class="badge"
+                    [class.bg-warning]="this.currentFeedbackRequestCount < this.feedbackRequestLimit"
+                    [class.bg-danger]="this.currentFeedbackRequestCount >= this.feedbackRequestLimit"
+                >
+                    {{ this.currentFeedbackRequestCount }} / {{ this.feedbackRequestLimit }}
+                </span>
             </button>
         } @else {
             <a
@@ -22,6 +29,13 @@
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+                <span
+                    class="badge"
+                    [class.bg-warning]="this.currentFeedbackRequestCount < this.feedbackRequestLimit"
+                    [class.bg-danger]="this.currentFeedbackRequestCount >= this.feedbackRequestLimit"
+                >
+                    {{ this.currentFeedbackRequestCount }} / {{ this.feedbackRequestLimit }}
+                </span>
             </a>
         }
     } @else {

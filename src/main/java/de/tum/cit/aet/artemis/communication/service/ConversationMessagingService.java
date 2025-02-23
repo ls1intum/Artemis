@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -370,6 +371,10 @@ public class ConversationMessagingService extends PostingService {
         conversationMessageRepository.deleteById(postId);
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
+
+        // Delete all connected saved posts
+        var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(postId, PostingType.POST);
+        savedPostRepository.deleteAll(savedPosts);
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);

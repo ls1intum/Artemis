@@ -16,10 +16,27 @@ In case you stop the client, you can simply re-run it at the root of the Artemis
 ## 2. Setup users
 
 Playwright needs users for it's tests. If you do not have users set up, you can simply do so by running:
-`setupUsers.sh`
+
+```bash
+setupUsers.sh
+```
+
 This will create 20 test users.
 
-## 3. Setup Playwright and run Playwright in UI-mode
+## 3. Setup Playwright and run Playwright tests
 
-Simply run: `startPlaywright.sh`. This will install the necessary dependencies for playwright and start it in UI mode.
-If you already have playwright installed, you can also start playwright directly from the `src/test/playwright` directory with `npm run playwright:open`.
+You can run Playwright tests in two different ways: running all tests or running in UI mode.
+
+### Running All Tests
+The `startPlaywright.sh` script runs the full suite of Playwright tests in a headless mode, outputting the results to the command line.
+- Executes all test cases defined in the Playwright test suite.
+- Runs in a headless environment for faster execution.
+- Outputs test results, including logs, in the terminal.
+
+### Running Tests in UI mode
+The `startPlaywrightUI.sh` script starts Playwright in a graphical mode for debugging and interactive test execution.
+- Launches a browser window to display available test cases.
+- Allows manual selection and execution of individual or multiple tests.
+- Provides real-time debugging features, such as visual test steps and screenshots. 
+- Useful for debugging and inspecting browser behavior during test execution.
+

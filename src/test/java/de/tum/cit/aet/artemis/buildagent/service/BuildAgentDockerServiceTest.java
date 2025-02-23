@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -81,7 +82,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         buildAgentDockerService.deleteOldDockerImages();
 
         // Verify that removeImageCmd() was not called.
-        verify(dockerClient, times(0)).removeImageCmd(anyString());
+        verify(dockerClient, never()).removeImageCmd(anyString());
     }
 
     @Test
@@ -90,8 +91,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null,
-                null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
         var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { PageableResult, PageableSearch, SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
-import { HttpHeaders, HttpParams } from '@angular/common/http';
-import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { HttpParams } from '@angular/common/http';
+import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export interface FeedbackAnalysisResponse {
@@ -11,18 +11,19 @@ export interface FeedbackAnalysisResponse {
     taskNames: string[];
     testCaseNames: string[];
     errorCategories: string[];
+    highestOccurrenceOfGroupedFeedback: number;
 }
 export interface FeedbackDetail {
-    concatenatedFeedbackIds: number[];
+    feedbackIds: number[];
     count: number;
     relativeCount: number;
-    detailText: string;
+    detailTexts: string[];
     testCaseName: string;
     taskName: string;
     errorCategory: string;
+    hasLongFeedbackText: boolean;
 }
 export interface FeedbackAffectedStudentDTO {
-    courseId: number;
     participationId: number;
     firstName: string;
     lastName: string;
@@ -31,11 +32,12 @@ export interface FeedbackAffectedStudentDTO {
 }
 export interface FeedbackChannelRequestDTO {
     channel: ChannelDTO;
-    feedbackDetailText: string;
+    feedbackDetailTexts: string[];
+    testCaseName: string;
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    search(pageable: SearchTermPageableSearch, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
+    search(pageable: SearchTermPageableSearch, groupFeedback: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
@@ -45,7 +47,8 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterTasks', options.filters.tasks.join(','))
             .set('filterTestCases', options.filters.testCases.join(','))
             .set('filterOccurrence', options.filters.occurrence.join(','))
-            .set('filterErrorCategories', options.filters.errorCategories.join(','));
+            .set('filterErrorCategories', options.filters.errorCategories.join(','))
+            .set('groupFeedback', groupFeedback.toString());
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }
@@ -54,26 +57,18 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 
-    async getParticipationForFeedbackIds(exerciseId: number, feedbackIds: number[], pageable: PageableSearch): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
-        const feedbackIdsHeader = feedbackIds.join(',');
+    async getParticipationForFeedbackDetailText(exerciseId: number, feedbackIds: number[]): Promise<FeedbackAffectedStudentDTO[]> {
+        let params = new HttpParams();
+        const topFeedbackIds = feedbackIds.slice(0, 5);
 
-        const params = new HttpParams()
-            .set('page', pageable.page.toString())
-            .set('pageSize', pageable.pageSize.toString())
-            .set('sortedColumn', pageable.sortedColumn)
-            .set('sortingOrder', pageable.sortingOrder);
+        topFeedbackIds.forEach((id, index) => {
+            params = params.set(`feedbackId${index + 1}`, id.toString());
+        });
 
-        const headers = new HttpHeaders().set('feedbackIds', feedbackIdsHeader);
-
-        return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params, headers });
+        return this.get<FeedbackAffectedStudentDTO[]>(`exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
         return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
-    }
-
-    getAffectedStudentCount(exerciseId: number, feedbackDetailText: string): Promise<number> {
-        const params = new HttpParams().set('detailText', feedbackDetailText);
-        return this.get<number>(`exercises/${exerciseId}/feedback-detail/affected-students`, { params });
     }
 }

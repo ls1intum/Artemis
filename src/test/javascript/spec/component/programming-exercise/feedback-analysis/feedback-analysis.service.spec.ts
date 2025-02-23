@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { ChannelDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
 
 describe('FeedbackAnalysisService', () => {
     let service: FeedbackAnalysisService;
@@ -10,22 +11,24 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Feedback 1',
+            feedbackIds: [1],
+            detailTexts: ['Feedback 1'],
             testCaseName: 'test1',
             count: 5,
             relativeCount: 25.0,
             taskName: '1',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Feedback 2',
+            feedbackIds: [2],
+            detailTexts: ['Feedback 2'],
             testCaseName: 'test2',
             count: 3,
             relativeCount: 15.0,
             taskName: '2',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
     ];
 
@@ -60,18 +63,16 @@ describe('FeedbackAnalysisService', () => {
                 sortedColumn: 'detailText',
             };
             const filters = { tasks: [], testCases: [], occurrence: [], errorCategories: [] };
-            const responsePromise = service.search(pageable, { exerciseId: 1, filters });
+            const responsePromise = service.search(pageable, false, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=',
+                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
-            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toStrictEqual([1, 2]);
-            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toStrictEqual([3, 4]);
         });
     });
 
@@ -88,65 +89,59 @@ describe('FeedbackAnalysisService', () => {
         });
     });
 
-    describe('getParticipationForFeedbackIds', () => {
-        it('should retrieve paginated participation details for specified feedback IDs', async () => {
-            const feedbackIds = [1, 2];
-            const pageable = {
-                page: 1,
-                pageSize: 10,
-                sortedColumn: 'participationId',
-                sortingOrder: SortingOrder.ASCENDING,
-            };
-            const participationResponseMock = {
-                content: [
-                    {
-                        courseId: 1,
-                        participationId: 101,
-                        firstName: 'John',
-                        lastName: 'Doe',
-                        login: 'johndoe',
-                        repositoryName: 'repo1',
-                    },
-                    {
-                        courseId: 1,
-                        participationId: 102,
-                        firstName: 'Jane',
-                        lastName: 'Smith',
-                        login: 'janesmith',
-                        repositoryName: 'repo2',
-                    },
-                ],
-                numberOfPages: 1,
-                totalItems: 2,
-            };
+    describe('getParticipationForFeedbackDetailText', () => {
+        it('should retrieve paginated participation details for up to 5 feedback details', async () => {
+            const feedbackDetailsId = [1, 2, 3, 4, 5];
+            const participationResponseMock = [
+                {
+                    participationId: 101,
+                    firstName: 'A',
+                    lastName: 'Z',
+                    login: 'AZ',
+                    repositoryName: 'repo1',
+                },
+                {
+                    participationId: 102,
+                    firstName: 'I',
+                    lastName: 'B',
+                    login: 'IB',
+                    repositoryName: 'repo2',
+                },
+            ];
 
-            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2&feedbackId3=3&feedbackId4=4&feedbackId5=5');
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
             const result = await responsePromise;
             expect(result).toEqual(participationResponseMock);
-            expect(result.content[0].firstName).toBe('John');
-            expect(result.content[1].firstName).toBe('Jane');
+            expect(result[0].firstName).toBe('A');
+            expect(result[1].firstName).toBe('I');
         });
-    });
 
-    describe('getAffectedStudentCount', () => {
-        it('should retrieve the count of affected students for a feedback detail text', async () => {
-            const exerciseId = 1;
-            const feedbackDetailText = 'Test feedback detail';
-            const affectedStudentCountMock = 42;
+        it('should handle less than 5 feedback details gracefully', async () => {
+            const feedbackDetailsId = [1, 2];
+            const participationResponseMock = [
+                {
+                    participationId: 101,
+                    firstName: 'A',
+                    lastName: 'Z',
+                    login: 'AZ',
+                    repositoryName: 'repo1',
+                },
+            ];
 
-            const responsePromise = service.getAffectedStudentCount(exerciseId, feedbackDetailText);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId);
 
-            const req = httpMock.expectOne(`api/exercises/${exerciseId}/feedback-detail/affected-students?detailText=${encodeURIComponent(feedbackDetailText)}`);
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2');
             expect(req.request.method).toBe('GET');
-            req.flush(affectedStudentCountMock);
+            req.flush(participationResponseMock);
 
             const result = await responsePromise;
-            expect(result).toBe(affectedStudentCountMock);
+            expect(result).toEqual(participationResponseMock);
+            expect(result[0].firstName).toBe('A');
         });
     });
 
@@ -160,11 +155,12 @@ describe('FeedbackAnalysisService', () => {
                 description: 'Discussion channel for feedback',
                 isPublic: true,
                 isAnnouncementChannel: false,
-            };
+            } as ChannelDTO;
 
             const feedbackChannelRequestMock = {
                 channel: channelDtoMock,
-                feedbackDetailText: 'Sample feedback detail text',
+                feedbackDetailTexts: ['Sample feedback detail text'],
+                testCaseName: 'test1',
             };
 
             const createdChannelMock = {

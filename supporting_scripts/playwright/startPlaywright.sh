@@ -2,7 +2,7 @@
 
 set -e
 
-artemis_path="$(readlink -f "$(dirname $0)/../..")"
+artemis_path="$(readlink -f "$(dirname "$0")/../..")"
 
 echo "Installing Playwright and dependencies"
 
@@ -12,5 +12,5 @@ npm install
 
 npm run playwright:setup-local || true
 
-echo "Starting Playwright in UI mode"
-npm run playwright:open
+echo "Run all playwright tests"
+npm run playwright:test

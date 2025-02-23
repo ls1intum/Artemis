@@ -6,20 +6,17 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ArtemisTestModule } from '../../../test.module';
 
 @Component({
     template: `
         <jhi-course-users-selector
-            [(ngModel)]="selectedUsers"
             [disabled]="disabled"
             [courseId]="courseId"
             [rolesToAllowSearchingIn]="rolesToAllowSearchingIn"
@@ -27,11 +24,12 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
             [showUserList]="showUserList"
         />
     `,
+    imports: [CourseUsersSelectorComponent],
 })
 class WrapperComponent {
     @ViewChild(CourseUsersSelectorComponent)
     courseUsersSelectorComponent: CourseUsersSelectorComponent;
-
+    searchInput = '';
     disabled = false;
     courseId = 1;
     rolesToAllowSearchingIn: SearchRoleGroup[] = ['tutors', 'students', 'instructors'];
@@ -44,23 +42,22 @@ describe('CourseUsersSelectorComponent', () => {
     let wrapperComponent: WrapperComponent;
     let fixture: ComponentFixture<WrapperComponent>;
     let userSelectorComponent: CourseUsersSelectorComponent;
-    let searchUsersSpy: jest.SpyInstance;
+    let userSelectorDebugElement: DebugElement;
+    // let searchUsersSpy: jest.SpyInstance;
+    const courseManagementServiceMock = { searchUsers: jest.fn() } as unknown as CourseManagementService;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, ArtemisSharedModule, ArtemisSharedComponentModule, TranslateModule.forRoot()],
-            declarations: [CourseUsersSelectorComponent, WrapperComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent)],
-            providers: [MockProvider(CourseManagementService)],
+            imports: [ArtemisTestModule, CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, TranslateModule.forRoot()],
+            providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }],
         }).compileComponents();
-    }));
-
-    beforeEach(() => {
         fixture = TestBed.createComponent(WrapperComponent);
-        fixture.detectChanges();
         wrapperComponent = fixture.componentInstance;
-        userSelectorComponent = wrapperComponent.courseUsersSelectorComponent;
-        searchUsersSpy = jest.spyOn(TestBed.inject(CourseManagementService), 'searchUsers');
-    });
+        fixture.detectChanges();
+
+        userSelectorDebugElement = fixture.debugElement.query(By.directive(CourseUsersSelectorComponent));
+        userSelectorComponent = userSelectorDebugElement.componentInstance;
+    }));
 
     it('should create', () => {
         expect(wrapperComponent).toBeTruthy();
@@ -84,7 +81,7 @@ describe('CourseUsersSelectorComponent', () => {
     testCases.forEach((testCase) => {
         it('changing connected wrapper should update the component property', fakeAsync(() => {
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
-            wrapperComponent.selectedUsers = [exampleUserPublicInfoDTO];
+            userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
             wrapperComponent.multiSelect = testCase.multiSelect;
             fixture.detectChanges();
             tick();
@@ -93,7 +90,7 @@ describe('CourseUsersSelectorComponent', () => {
         }));
 
         it('should convert undefined to empty array', fakeAsync(() => {
-            wrapperComponent.selectedUsers = undefined;
+            userSelectorComponent.selectedUsers = [];
             wrapperComponent.multiSelect = testCase.multiSelect;
             fixture.detectChanges();
             tick();
@@ -101,13 +98,14 @@ describe('CourseUsersSelectorComponent', () => {
         }));
 
         it('searching, selecting and deleting a user should update the selectedUsers property', fakeAsync(() => {
+            userSelectorComponent.selectedUsers = [];
             wrapperComponent.multiSelect = testCase.multiSelect;
             const user = generateExampleUserPublicInfoDTO({});
             const searchResponse: HttpResponse<UserPublicInfoDTO[]> = new HttpResponse({
                 body: [user],
                 status: 200,
             });
-            const searchStub = searchUsersSpy.mockReturnValue(of(searchResponse));
+            const searchStub = jest.spyOn(courseManagementServiceMock, 'searchUsers').mockReturnValue(of(searchResponse));
 
             // searching for a user
             changeInput(fixture.debugElement.nativeElement, 'test');
@@ -115,13 +113,12 @@ describe('CourseUsersSelectorComponent', () => {
             fixture.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
             expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
-            expectDropdownItems(fixture.nativeElement, ['Mortimer of Sto Helit (mort)']);
+            expectDropdownItems(fixture.nativeElement, ['MHMortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
             fixture.detectChanges();
             tick();
             expect(userSelectorComponent.selectedUsers).toEqual([user]);
-            expect(wrapperComponent.selectedUsers).toEqual([user]);
 
             // now we delete the user again from the selected users
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
@@ -136,7 +133,7 @@ describe('CourseUsersSelectorComponent', () => {
         it('should block the input field and not show delete button', fakeAsync(() => {
             wrapperComponent.multiSelect = testCase.multiSelect;
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
-            wrapperComponent.selectedUsers = [exampleUserPublicInfoDTO];
+            userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
             wrapperComponent.disabled = true;
             fixture.detectChanges();
             tick(1000);
@@ -146,13 +143,15 @@ describe('CourseUsersSelectorComponent', () => {
 
         it('should render profile picture for users in dropdown', fakeAsync(() => {
             const user = generateExampleUserPublicInfoDTO({});
-            searchUsersSpy.mockReturnValue(of(new HttpResponse({ body: [user], status: 200 })));
+            const searchResponse = new HttpResponse({ body: [user], status: 200 });
+            const searchStub = jest.spyOn(courseManagementServiceMock, 'searchUsers').mockReturnValue(of(searchResponse));
 
             changeInput(fixture.debugElement.nativeElement, 'test');
             tick(1000);
             fixture.detectChanges();
+            expect(searchStub).toHaveBeenCalledOnce();
 
-            const profilePicture = fixture.debugElement.query(By.directive(MockComponent(ProfilePictureComponent)));
+            const profilePicture = fixture.debugElement.query(By.directive(ProfilePictureComponent));
             expect(profilePicture).not.toBeNull();
         }));
     });

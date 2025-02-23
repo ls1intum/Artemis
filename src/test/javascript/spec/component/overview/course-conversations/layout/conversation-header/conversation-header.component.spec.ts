@@ -23,7 +23,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
@@ -32,10 +31,10 @@ import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
-    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 } as ChannelDTO),
 ];
 examples.forEach((activeConversation) => {
     describe('ConversationHeaderComponent with' + +(activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') + activeConversation.type, () => {
@@ -55,7 +54,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
                 ],
-                imports: [MetisModule],
+                imports: [],
                 providers: [
                     provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },

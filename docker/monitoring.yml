@@ -9,8 +9,9 @@
 services:
   prometheus:
     container_name: artemis-prometheus
-    image: docker.io/prom/prometheus:v2.52.0
-    pull_policy: if_not_present
+    # TODO: check if we can upgrade to 3.x
+    image: docker.io/prom/prometheus:v2.55.1
+    pull_policy: missing
     volumes:
         - ./monitoring/prometheus/:/etc/prometheus/
     # If you want to expose these ports outside your dev PC,
@@ -25,8 +26,9 @@ services:
     network_mode: 'host' # to test locally running service
   grafana:
     container_name: artemis-grafana
-    image: docker.io/grafana/grafana:10.1.10
-    pull_policy: if_not_present
+    # TODO: check if we can upgrade to 11.x
+    image: docker.io/grafana/grafana:10.4.14
+    pull_policy: missing
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
     environment:

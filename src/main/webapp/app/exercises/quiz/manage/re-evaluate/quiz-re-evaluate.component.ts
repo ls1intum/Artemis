@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -18,6 +19,14 @@ import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
+import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
+import { JsonPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -25,8 +34,28 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
     styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        IncludedInOverallScorePickerComponent,
+        ReEvaluateMultipleChoiceQuestionComponent,
+        ReEvaluateDragAndDropQuestionComponent,
+        ReEvaluateShortAnswerQuestionComponent,
+        JsonPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
+    private quizExerciseService = inject(QuizExerciseService);
+    private route = inject(ActivatedRoute);
+    private modalServiceC = inject(NgbModal);
+    private quizExercisePopupService = inject(QuizExercisePopupService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     private subscription: Subscription;
 
     @ViewChildren(ReEvaluateDragAndDropQuestionComponent)
@@ -42,19 +71,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     faUndo = faUndo;
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private quizExerciseService: QuizExerciseService,
-        private route: ActivatedRoute,
-        private modalServiceC: NgbModal,
-        private quizExercisePopupService: QuizExercisePopupService,
-        public changeDetector: ChangeDetectorRef,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-    ) {
-        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
-    }
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {

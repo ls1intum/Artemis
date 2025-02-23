@@ -7,14 +7,15 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,10 +39,11 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -166,6 +167,7 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
@@ -297,7 +299,7 @@ public class ResultResource {
      * Pagination, sorting, and filtering options allow flexible data retrieval:
      * <ul>
      * <li><b>Pagination:</b> Based on page number and page size, as specified in the request.</li>
-     * <li><b>Sorting:</b> By column (e.g., "count" or "detailText") and sorting order (ASCENDING or DESCENDING).
+     * <li><b>Sorting:</b> By column (e.g., "count" or "detailTexts") and sorting order (ASCENDING or DESCENDING).
      * If the specified column is not valid for sorting, the default sorting column is "count".</li>
      * <li><b>Filtering:</b>
      * <ul>
@@ -310,18 +312,19 @@ public class ResultResource {
      * </li>
      * </ul>
      *
-     * @param exerciseId The unique identifier of the exercise for which feedback details are requested.
-     * @param data       A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
-     *                       <ul>
-     *                       <li>Page number and page size</li>
-     *                       <li>Search term (optional)</li>
-     *                       <li>Sorting order (ASCENDING or DESCENDING)</li>
-     *                       <li>Sorted column</li>
-     *                       <li>Filter task names (optional)</li>
-     *                       <li>Filter test case names (optional)</li>
-     *                       <li>Occurrence range (optional)</li>
-     *                       <li>Error categories (optional)</li>
-     *                       </ul>
+     * @param exerciseId    The unique identifier of the exercise for which feedback details are requested.
+     * @param groupFeedback Should the feedback be grouped
+     * @param data          A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
+     *                          <ul>
+     *                          <li>Page number and page size</li>
+     *                          <li>Search term (optional)</li>
+     *                          <li>Sorting order (ASCENDING or DESCENDING)</li>
+     *                          <li>Sorted column</li>
+     *                          <li>Filter task names (optional)</li>
+     *                          <li>Filter test case names (optional)</li>
+     *                          <li>Occurrence range (optional)</li>
+     *                          <li>Error categories (optional)</li>
+     *                          </ul>
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
      *         <ul>
      *         <li>{@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated and filtered feedback details for the exercise.</li>
@@ -333,8 +336,9 @@ public class ResultResource {
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @ModelAttribute FeedbackPageableDTO data) {
-        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data);
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("groupFeedback") boolean groupFeedback,
+            @ModelAttribute FeedbackPageableDTO data) {
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, groupFeedback);
         return ResponseEntity.ok(response);
     }
 
@@ -359,32 +363,24 @@ public class ResultResource {
      * and participation details.
      * <br>
      *
-     * @param exerciseId        for which the participation data is requested.
-     * @param feedbackIdsHeader to filter affected students by specific feedback entries.
-     * @param data              A {@link PageableSearchDTO} object containing pagination and sorting parameters.
-     * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
+     * @param exerciseId  for which the participation data is requested.
+     * @param feedbackId1 Optional first detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId2 Optional second detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId3 Optional third detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId4 Optional fourth detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId5 Optional fifth detail text id to filter affected students by specific feedback entries.
+     * @return A {@link ResponseEntity} containing a {@link List} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId, @RequestHeader("feedbackIds") String feedbackIdsHeader,
-            @ModelAttribute PageableSearchDTO<String> data) {
+    public ResponseEntity<List<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId,
+            @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
+            @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
+            @RequestParam(value = "feedbackId5", required = false) Long feedbackId5) {
 
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackId(exerciseId, feedbackIdsHeader, data);
+        List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
 
+        List<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds);
         return ResponseEntity.ok(participation);
-    }
-
-    /**
-     * GET /exercises/{exerciseId}/feedback-detail/affected-students : Retrieves the count of students affected by a specific feedback detail text.
-     *
-     * @param exerciseId The ID of the exercise for which affected students are counted.
-     * @param detailText The feedback detail text to filter by.
-     * @return A {@link ResponseEntity} containing the count of affected students.
-     */
-    @GetMapping("exercises/{exerciseId}/feedback-detail/affected-students")
-    @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Long> countAffectedStudentsByFeedbackDetailText(@PathVariable long exerciseId, @RequestParam("detailText") String detailText) {
-        long affectedStudentCount = resultService.getAffectedStudentCountByFeedbackDetailText(exerciseId, detailText);
-        return ResponseEntity.ok(affectedStudentCount);
     }
 }

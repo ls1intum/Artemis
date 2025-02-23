@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { Course } from 'app/entities/course.model';
@@ -7,7 +7,6 @@ import { EMPTY, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -16,24 +15,15 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
-
-@Component({
-    selector: 'jhi-channel-item',
-    template: '',
-})
-class ChannelItemStubComponent {
-    @Output()
-    channelAction = new EventEmitter<ChannelAction>();
-    @Input()
-    channel: ChannelDTO;
-}
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 const examples: ChannelDTO[] = [
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXAM }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM } as ChannelDTO),
 ];
 
 examples.forEach((exampleChannel) => {
@@ -44,7 +34,7 @@ examples.forEach((exampleChannel) => {
         const allowChannelCreation = exampleChannel.subType === ChannelSubType.GENERAL;
         const createChannelFn = allowChannelCreation ? jest.fn() : undefined;
         const canCreateChannel = jest.fn();
-        let channelItems: ChannelItemStubComponent[];
+        let channelItems: ChannelItemComponent[];
 
         let channelOne: ChannelDTO;
         let channelTwo: ChannelDTO;
@@ -57,15 +47,16 @@ examples.forEach((exampleChannel) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbCollapseMocksModule],
-                declarations: [
-                    ChannelsOverviewDialogComponent,
-                    LoadingIndicatorContainerStubComponent,
-                    ChannelItemStubComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
+                imports: [],
+                declarations: [ChannelsOverviewDialogComponent, LoadingIndicatorContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                providers: [
+                    MockProvider(ChannelService),
+                    MockProvider(ConversationService),
+                    MockProvider(AlertService),
+                    MockProvider(NgbModal),
+                    MockProvider(NgbActiveModal),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
-                providers: [MockProvider(ChannelService), MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), MockProvider(NgbActiveModal)],
             }).compileComponents();
         }));
 
@@ -76,8 +67,8 @@ examples.forEach((exampleChannel) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ChannelsOverviewDialogComponent);
             component = fixture.componentInstance;
-            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType });
-            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType });
+            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType } as ChannelDTO);
+            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType } as ChannelDTO);
             channelService = TestBed.inject(ChannelService);
             getChannelsOfCourseSpy = jest.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
                 of(
@@ -98,7 +89,7 @@ examples.forEach((exampleChannel) => {
             component.canCreateChannel = canCreateChannel;
             initializeDialog(component, fixture, { course, createChannelFn, channelSubType: exampleChannel.subType });
 
-            channelItems = fixture.debugElement.queryAll(By.directive(ChannelItemStubComponent)).map((debugElement) => debugElement.componentInstance);
+            channelItems = fixture.debugElement.queryAll(By.css('jhi-channel-item')).map((debugElement) => debugElement.componentInstance);
         });
 
         it('should create', () => {

@@ -5,9 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,8 +18,11 @@ import jakarta.annotation.PostConstruct;
 
 import org.redisson.api.RMap;
 import org.redisson.api.RPriorityQueue;
+import org.redisson.api.RQueue;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
+import org.redisson.api.listener.MapPutListener;
+import org.redisson.api.listener.MapRemoveListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -31,6 +36,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -54,6 +60,8 @@ public class SharedQueueManagementService {
 
     private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
+    private RQueue<ResultQueueItem> resultQueue;
+
     /**
      * Map of build jobs currently being processed across all nodes
      */
@@ -69,6 +77,10 @@ public class SharedQueueManagementService {
 
     private RTopic resumeBuildAgentTopic;
 
+    private int buildAgentsCapacity;
+
+    private int runningBuildJobCount;
+
     public SharedQueueManagementService(BuildJobRepository buildJobRepository, RedissonClient redissonClient, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
         this.redissonClient = redissonClient;
@@ -81,6 +93,15 @@ public class SharedQueueManagementService {
     @PostConstruct
     public void init() {
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
+        // TODO check if can simplify adding those listeners in general
+        this.buildAgentInformation.addListener((MapPutListener) item -> {
+            updateBuildAgentCapacity();
+        });
+
+        this.buildAgentInformation.addListener((MapRemoveListener) item -> {
+            updateBuildAgentCapacity();
+        });
+
         this.processingJobs = this.redissonClient.getMap("processingJobs");
         this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
         this.buildJobQueue.trySetComparator(new LocalCIPriorityQueueComparator());
@@ -88,6 +109,9 @@ public class SharedQueueManagementService {
         this.pauseBuildAgentTopic = this.redissonClient.getTopic("pauseBuildAgentTopic");
         this.resumeBuildAgentTopic = this.redissonClient.getTopic("resumeBuildAgentTopic");
         this.dockerImageCleanupInfo = this.redissonClient.getMap("dockerImageCleanupInfo");
+        this.updateBuildAgentCapacity();
+        this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
+
     }
 
     /**
@@ -290,6 +314,18 @@ public class SharedQueueManagementService {
     }
 
     /**
+     * Clear all build related data from the distributed data structures.
+     * This method should only be called by an admin user.
+     */
+    public void clearDistributedData() {
+        buildJobQueue.clear();
+        processingJobs.clear();
+        dockerImageCleanupInfo.clear();
+        resultQueue.clear();
+        buildAgentInformation.clear();
+    }
+
+    /**
      * Get all finished build jobs that match the search criteria.
      *
      * @param search   the search criteria
@@ -316,5 +352,103 @@ public class SharedQueueManagementService {
         List<BuildJob> orderedBuildJobs = buildJobIds.stream().map(buildJobMap::get).toList();
 
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
+    }
+
+    /**
+     * Estimates how long the job will be queued for on the participation ID.
+     *
+     * @param participationId the ID of the participation for which the queue release date is estimated
+     * @return the estimated queue release date as a {@link ZonedDateTime}
+     */
+    public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
+        if (buildJobQueue.isEmpty() || this.buildAgentsCapacity > this.runningBuildJobCount + buildJobQueue.size()) {
+            return ZonedDateTime.now();
+        }
+
+        String buildJobId = getIdOfQueuedJobFromParticipation(participationId);
+
+        if (buildJobId == null) {
+            return ZonedDateTime.now();
+        }
+
+        // Get the jobs queued before the job for the participation
+        List<BuildJobQueueItem> jobsQueuedBefore = getQueuedJobs().stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        // Get the remaining duration of the build jobs currently being processed
+        List<Long> agentsAvailabilities = new ArrayList<>(getProcessingJobs().stream().map(job -> getBuildJobRemainingDuration(job, now)).sorted().toList());
+
+        if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
+            int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
+            agentsAvailabilities.addAll(Collections.nCopies(agentsToAdd, 0L));
+        }
+        else {
+            agentsAvailabilities = agentsAvailabilities.subList(0, this.buildAgentsCapacity);
+            log.warn("There are more processing jobs than the build agents' capacity. This should not happen. Processing jobs: {}, Build agents: {}", processingJobs,
+                    buildAgentInformation);
+        }
+
+        if (jobsQueuedBefore.size() < agentsAvailabilities.size()) {
+            return now.plusSeconds(agentsAvailabilities.get(jobsQueuedBefore.size()));
+        }
+        else {
+            return now.plusSeconds(calculateNextJobQueueDuration(agentsAvailabilities, jobsQueuedBefore));
+        }
+    }
+
+    private String getIdOfQueuedJobFromParticipation(long participationId) {
+        var participationBuildJobIds = getQueuedJobs().stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
+        if (participationBuildJobIds.isEmpty()) {
+            return null;
+        }
+        return participationBuildJobIds.getLast();
+    }
+
+    private Long calculateNextJobQueueDuration(List<Long> agentsAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {
+        PriorityQueue<Long> agentAvailabilitiesQueue = new PriorityQueue<>(agentsAvailabilities);
+        for (BuildJobQueueItem job : jobsQueuedBefore) {
+            Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+            long agentRemainingTime = agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+            agentRemainingTime = Math.max(0, agentRemainingTime);
+            agentAvailabilitiesQueue.add(agentRemainingTime + job.jobTimingInfo().estimatedDuration());
+        }
+        Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+        return agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+    }
+
+    private long getBuildJobRemainingDuration(BuildJobQueueItem buildJob, ZonedDateTime now) {
+        ZonedDateTime estimatedCompletionDate = buildJob.jobTimingInfo().estimatedCompletionDate();
+        if (estimatedCompletionDate == null) {
+            return 0;
+        }
+        if (estimatedCompletionDate.isBefore(now)) {
+            return 0;
+        }
+        return Duration.between(now, estimatedCompletionDate).toSeconds();
+    }
+
+    private void updateBuildAgentCapacity() {
+        buildAgentsCapacity = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
+        runningBuildJobCount = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
+    }
+
+    /**
+     * Check if a submission is currently being processed.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit hash
+     * @return the build start date and estimated completion date of the submission if it is currently being processed, null otherwise
+     */
+    public BuildTimingInfo isSubmissionProcessing(long participationId, String commitHash) {
+        var buildJob = getProcessingJobs().stream().filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().assignmentCommitHash()))
+                .findFirst();
+        if (buildJob.isPresent()) {
+            return new BuildTimingInfo(buildJob.get().jobTimingInfo().buildStartDate(), buildJob.get().jobTimingInfo().estimatedCompletionDate());
+        }
+        return null;
+    }
+
+    public record BuildTimingInfo(ZonedDateTime buildStartDate, ZonedDateTime estimatedCompletionDate) {
     }
 }

@@ -1,12 +1,15 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
@@ -14,23 +17,25 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
+    imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
 })
 export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
+    private router = inject(Router);
+
     @Input() contentType: DoughnutChartType;
-    @Input() currentPercentage: number | undefined;
-    @Input() currentAbsolute: number | undefined;
-    @Input() currentMax: number | undefined;
+    @Input() currentPercentage?: number;
+    @Input() currentAbsolute?: number;
+    @Input() currentMax?: number;
     @Input() course: Course;
+    @Input() showText?: string;
 
     receivedStats = false;
     doughnutChartTitle: string;
     stats: number[];
-    titleLink: string | undefined;
+    titleLink?: string;
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor(private router: Router) {}
 
     // ngx-charts
     ngxData: NgxChartsSingleSeriesDataEntry[] = [
@@ -46,10 +51,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         // [0, 0, 0] will lead to the chart not being displayed,
         // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
-        if (this.currentAbsolute == undefined && !this.receivedStats) {
+        if (this.currentAbsolute == undefined && !this.receivedStats && !this.showText) {
             this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
         } else {
             this.receivedStats = true;
@@ -83,6 +88,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
                     this.titleLink = 'scores';
                 }
                 this.ngxData[0].name = 'Average score';
+                break;
+            case DoughnutChartType.CURRENT_LLM_COST:
+                this.doughnutChartTitle = 'currentTotalLLMCost';
+                this.titleLink = undefined;
                 break;
             default:
                 this.doughnutChartTitle = '';

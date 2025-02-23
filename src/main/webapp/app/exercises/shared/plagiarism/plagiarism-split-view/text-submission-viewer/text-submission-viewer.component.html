@@ -1,4 +1,12 @@
-<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}" />
+<jhi-split-pane-header
+    [files]="files"
+    [isLockFilesEnabled]="this.isLockFilesEnabled"
+    [fileSelectedSubject]="fileSelectedSubject"
+    (selectFile)="handleFileSelect($event)"
+    [showFilesSubject]="showFilesSubject"
+    [dropdownHoverSubject]="dropdownHoverSubject"
+    studentLogin="{{ plagiarismSubmission?.studentLogin }}"
+/>
 @if (cannotLoadFiles) {
     <div class="text-submission-viewer text-warning">
         <div class="text-submission-viewer-warning">

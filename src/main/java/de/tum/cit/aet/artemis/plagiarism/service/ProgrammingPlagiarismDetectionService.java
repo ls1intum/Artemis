@@ -32,7 +32,7 @@ import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.cpp.CPPLanguage;
 import de.jplag.csharp.CSharpLanguage;
-import de.jplag.exceptions.ExitException;
+import de.jplag.golang.GoLanguage;
 import de.jplag.java.JavaLanguage;
 import de.jplag.javascript.JavaScriptLanguage;
 import de.jplag.kotlin.KotlinLanguage;
@@ -58,8 +58,8 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -116,8 +116,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
-     * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException   is thrown for file handling errors
+     * @throws IOException is thrown for file handling errors
      */
     public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws IOException {
         long start = System.nanoTime();
@@ -317,6 +316,7 @@ public class ProgrammingPlagiarismDetectionService {
             case C -> new CLanguage();
             case C_PLUS_PLUS -> new CPPLanguage();
             case C_SHARP -> new CSharpLanguage();
+            case GO -> new GoLanguage();
             case JAVA -> new JavaLanguage();
             case JAVASCRIPT -> new JavaScriptLanguage();
             case KOTLIN -> new KotlinLanguage();
@@ -325,7 +325,7 @@ public class ProgrammingPlagiarismDetectionService {
             case RUST -> new RustLanguage();
             case SWIFT -> new SwiftLanguage();
             case TYPESCRIPT -> new TypeScriptLanguage();
-            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, SQL, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
+            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, SQL, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
                     "Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.", "ProgrammingExercise", "notSupported");
         };
     }

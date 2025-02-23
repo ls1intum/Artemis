@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -13,11 +13,19 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/entities/competency.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
+import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -27,6 +35,17 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
+    imports: [
+        FontAwesomeModule,
+        StandardizedCompetencyDetailComponent,
+        KnowledgeAreaTreeComponent,
+        NgbCollapse,
+        HtmlForMarkdownPipe,
+        ArtemisTranslatePipe,
+        NgbTooltipModule,
+        TranslateDirective,
+        ButtonComponent,
+    ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
@@ -52,7 +71,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importExample = `\`\`\`
 {
     "knowledgeAreas": [{
-        "title": "Artifical Intelligence",
+        "title": "Artificial Intelligence",
         "shortTitle": "AI",
         "description": "AI is a field in computer science...", //(optional)
         "competencies": [{
@@ -76,12 +95,10 @@ export class AdminImportStandardizedCompetenciesComponent {
 }
 \`\`\``;
 
-    public constructor(
-        private alertService: AlertService,
-        private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-    ) {}
+    private alertService = inject(AlertService);
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it

@@ -4,6 +4,7 @@
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
+                "editLabel": "Edit Lecture",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Past",
@@ -12,9 +13,6 @@
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
                 "createOrEditLabel": "Create or Edit Lecture",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next",
                 "ingestLecturesInPyrisLabel": "Send Lectures to Iris"
             },
             "created": "Created new lecture with identifier {{ param }}",
@@ -71,26 +69,23 @@
                 "loading": "Loading...",
                 "label": "Import Lecture"
             },
-            "wizardMode": {
-                "steps": {
-                    "titleStepTitle": "Title",
-                    "titleStepMessage": "Add a title and meaningful description to the new lecture.",
-                    "periodStepTitle": "Period",
-                    "periodStepMessage": "Specify the begin and end dates of the lecture.",
-                    "attachmentsStepTitle": "Attachments",
-                    "attachmentsStepMessage": "Upload attachments to this lecture.",
-                    "unitsStepTitle": "Units",
-                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
-                    "competenciesStepTitle": "Competencies",
-                    "competenciesStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
-                },
-                "newLectureUnit": "New Lecture Unit",
-                "editLectureUnit": "Edit Lecture Unit",
-                "newExercise": "Create new exercise",
-                "backToWizard": "Back to lecture",
-                "competencyTitle": "Title",
-                "competencyConnectedUnits": "Connected Units",
-                "competencyNoConnectedUnits": "No connected units"
+            "sections": {
+                "title": "Title",
+                "titleDescription": "Add a title and meaningful description to the lecture.",
+                "period": "Period",
+                "periodDescription": "Specify the begin and end dates of the lecture.",
+                "attachments": "Attachments",
+                "attachmentsDescription": "Upload attachments to this lecture.",
+                "units": "Units",
+                "unitsDescription": "Add content to the lecture by creating different kinds of lecture units."
+            },
+            "newLectureUnit": "New Lecture Unit",
+            "editLectureUnit": "Edit Lecture Unit",
+            "dismissChangesModal": {
+                "title": "Discard unsaved lecture changes",
+                "message": "Are you sure you want to discard your unsaved changes?",
+                "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
+                "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
             }
         },
         "attachment": {

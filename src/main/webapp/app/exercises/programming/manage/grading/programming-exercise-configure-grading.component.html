@@ -10,24 +10,20 @@
     @if (!isLoading) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
-                <ng-container
-                    *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }"
-                ></ng-container>
+                <ng-container *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }" />
                 @if (programmingExercise.staticCodeAnalysisEnabled) {
                     <ng-container
                         *ngTemplateOutlet="tabTemplate; context: { type: 'code-analysis', translation: 'artemisApp.programmingExercise.configureGrading.categories.titleHeader' }"
-                    ></ng-container>
+                    />
                 }
-                <ng-container
-                    *ngTemplateOutlet="tabTemplate; context: { type: 'submission-policy', translation: 'artemisApp.programmingExercise.submissionPolicy.title' }"
-                ></ng-container>
+                <ng-container *ngTemplateOutlet="tabTemplate; context: { type: 'submission-policy', translation: 'artemisApp.programmingExercise.submissionPolicy.title' }" />
                 @if (programmingExercise.isAtLeastEditor) {
                     <ng-container
                         *ngTemplateOutlet="
                             tabTemplate;
                             context: { type: 'feedback-analysis', translation: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader' }
                         "
-                    ></ng-container>
+                    />
                 }
             </div>
             <ng-template>
@@ -274,9 +270,10 @@
                 <jhi-feedback-analysis
                     [exerciseTitle]="programmingExercise.title"
                     [exerciseId]="programmingExercise.id"
+                    [exerciseDueDate]="programmingExercise.dueDate"
                     [courseId]="course.id"
                     [isCommunicationEnabled]="isCommunicationEnabled(course)"
-                ></jhi-feedback-analysis>
+                />
             }
         </div>
     }

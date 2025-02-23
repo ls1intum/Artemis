@@ -16,7 +16,7 @@ public record GradingCriterionDTO(long id, String title, Set<GradingInstructionD
      * Convert GradingCriterion to GradingCriterionDTO. Used in the exercise DTOs for Athena.
      *
      * @param gradingCriterion GradingCriterion to convert
-     * @return GradingCriterionDTO
+     * @return a GradingCriterionDTO based on the GradingCriterion
      */
     public static GradingCriterionDTO of(@NotNull GradingCriterion gradingCriterion) {
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),

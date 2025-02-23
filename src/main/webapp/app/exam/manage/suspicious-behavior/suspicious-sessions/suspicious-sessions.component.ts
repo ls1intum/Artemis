@@ -1,16 +1,19 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, input } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
+    imports: [ArtemisDatePipe, RouterModule, CommonModule],
 })
 export class SuspiciousSessionsComponent implements OnInit {
-    @Input() suspiciousSessions: SuspiciousExamSessions;
+    suspiciousSessions = input.required<SuspiciousExamSessions>();
     suspiciousFingerprint = false;
     suspiciousIpAddress = false;
     ngOnInit(): void {
@@ -31,6 +34,6 @@ export class SuspiciousSessionsComponent implements OnInit {
     }
 
     private isSuspiciousFor(reason: SuspiciousSessionReason) {
-        return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
+        return this.suspiciousSessions().examSessions.some((session) => session.suspiciousReasons.includes(reason));
     }
 }

@@ -13,7 +13,7 @@
             <div class="d-flex flex-wrap">
                 <p>
                     <span class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
-                    <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'"> </jhi-documentation-link>
+                    <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'" />
                 </p>
             </div>
 
@@ -27,7 +27,7 @@
                 </div>
             }
             <div>
-                <textarea class="form-control" rows="10" [readonly]="!isCreateMode" [(ngModel)]="displayedSshKey"></textarea>
+                <textarea class="form-control" rows="10" [readonly]="!isCreateMode" [(ngModel)]="displayedSshKey" data-testid="sshKeyField"></textarea>
             </div>
 
             <!-- input fields for key creation -->
@@ -121,6 +121,7 @@
                             [icon]="faSave"
                             [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
                             (onClick)="saveSshKey()"
+                            data-testid="saveSshKeyButton"
                         />
                     </div>
                 }

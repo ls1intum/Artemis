@@ -20,13 +20,24 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
     styleUrls: ['./conversation-header.component.scss'],
+    imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink],
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    metisConversationService = inject(MetisConversationService);
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Output() collapseSearch = new EventEmitter<void>();
@@ -50,14 +61,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     readonly faPeopleGroup = faPeopleGroup;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        private modalService: NgbModal,
-        // instantiated at course-conversation.component.ts
-        public metisConversationService: MetisConversationService,
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-    ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;

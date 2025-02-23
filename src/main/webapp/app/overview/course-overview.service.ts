@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -20,6 +20,7 @@ import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { Course } from 'app/entities/course.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -58,10 +59,12 @@ const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGro
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
+    recents: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
     hiddenChannels: { entityData: [] },
 };
 
@@ -69,11 +72,9 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     providedIn: 'root',
 })
 export class CourseOverviewService {
-    constructor(
-        private participationService: ParticipationService,
-        private translate: TranslateService,
-        private conversationService: ConversationService,
-    ) {}
+    private participationService = inject(ParticipationService);
+    private translate = inject(TranslateService);
+    private conversationService = inject(ConversationService);
 
     readonly faBullhorn = faBullhorn;
     readonly faHashtag = faHashtag;
@@ -169,20 +170,28 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    getConversationGroup(conversation: ConversationDTO): ChannelGroupCategory {
-        if (conversation.isFavorite) {
-            return 'favoriteChannels';
-        }
+    getConversationGroup(conversation: ConversationDTO): ChannelGroupCategory[] {
+        const groups: ChannelGroupCategory[] = [];
+
         if (conversation.isHidden) {
-            return 'hiddenChannels';
+            groups.push('hiddenChannels');
+            return groups;
         }
+
+        if (conversation.isFavorite) {
+            groups.push('favoriteChannels');
+        }
+
         if (isGroupChatDTO(conversation)) {
-            return 'groupChats';
+            groups.push('groupChats');
+        } else if (isOneToOneChatDTO(conversation)) {
+            groups.push('directMessages');
+        } else {
+            const subTypeGroup = this.getCorrespondingChannelSubType(getAsChannelDTO(conversation)?.subType);
+            groups.push(subTypeGroup);
         }
-        if (isOneToOneChatDTO(conversation)) {
-            return 'directMessages';
-        }
-        return this.getCorrespondingChannelSubType(getAsChannelDTO(conversation)?.subType);
+
+        return groups;
     }
 
     getCorrespondingChannelSubType(channelSubType: ChannelSubType | undefined): ChannelGroupCategory {
@@ -191,6 +200,7 @@ export class CourseOverviewService {
             [ChannelSubType.GENERAL]: 'generalChannels',
             [ChannelSubType.LECTURE]: 'lectureChannels',
             [ChannelSubType.EXAM]: 'examChannels',
+            [ChannelSubType.FEEDBACK_DISCUSSION]: 'feedbackDiscussion',
         };
         return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
     }
@@ -219,7 +229,7 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
-    groupConversationsByChannelType(conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
+    groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
         const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
@@ -251,11 +261,21 @@ export class CourseOverviewService {
         };
 
         for (const conversation of conversations) {
-            const conversationGroup = this.getConversationGroup(conversation);
-            const conversationCardItem = this.mapConversationToSidebarCardElement(conversation);
-            groupedConversationGroups[conversationGroup].entityData.push(conversationCardItem);
+            const conversationGroups = this.getConversationGroup(conversation);
+            const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
+
+            for (const group of conversationGroups) {
+                groupedConversationGroups[group].entityData.push(conversationCardItem);
+            }
         }
 
+        for (const group in groupedConversationGroups) {
+            groupedConversationGroups[group].entityData.sort((a, b) => {
+                const aIsFavorite = a.conversation?.isFavorite ? 1 : 0;
+                const bIsFavorite = b.conversation?.isFavorite ? 1 : 0;
+                return bIsFavorite - aIsFavorite;
+            });
+        }
         return groupedConversationGroups;
     }
 
@@ -273,8 +293,8 @@ export class CourseOverviewService {
         return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
-    mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
-        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
+    mapConversationsToSidebarCardElements(course: Course, conversations: ConversationDTO[]) {
+        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -338,18 +358,39 @@ export class CourseOverviewService {
         return examCardItem;
     }
 
-    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+    getChannelIcon(conversation: ConversationDTO): IconDefinition {
         const channelDTO = getAsChannelDTO(conversation);
-        if (channelDTO?.isPublic === false) {
-            return this.faLock;
-        } else if (channelDTO?.name === 'announcement') {
+        if (channelDTO?.isAnnouncementChannel) {
             return this.faBullhorn;
-        } else {
+        } else if (channelDTO?.isPublic) {
             return this.faHashtag;
+        } else {
+            return this.faLock;
         }
     }
 
-    mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
+    mapConversationToSidebarCardElement(course: Course, conversation: ConversationDTO): SidebarCardElement {
+        let isCurrent = false;
+        const channelDTO = getAsChannelDTO(conversation);
+        const subTypeRefId = channelDTO?.subTypeReferenceId;
+        const now = dayjs();
+        const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
+        const oneAndHalfWeekLater = now.add(1.5, 'week');
+        let relevantDate = null;
+        if (subTypeRefId && course.exercises && channelDTO?.subType === 'exercise') {
+            const exercise = course.exercises.find((exercise) => exercise.id === subTypeRefId);
+            const relevantDates = [exercise?.releaseDate, exercise?.dueDate].filter(Boolean);
+            isCurrent = relevantDates.some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
+        } else if (subTypeRefId && course.lectures && channelDTO?.subType === 'lecture') {
+            const lecture = course.lectures.find((lecture) => lecture.id === subTypeRefId);
+            relevantDate = lecture?.startDate || null;
+            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
+        } else if (subTypeRefId && course.exams && channelDTO?.subType === 'exam') {
+            const exam = course.exams.find((exam) => exam.id === subTypeRefId);
+            relevantDate = exam?.startDate || null;
+            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
+        }
+
         const conversationCardItem: SidebarCardElement = {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
@@ -357,6 +398,7 @@ export class CourseOverviewService {
             icon: this.getChannelIcon(conversation),
             conversation: conversation,
             size: 'S',
+            isCurrent: isCurrent,
         };
         return conversationCardItem;
     }

@@ -15,6 +15,7 @@ import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 import { provideHttpClient } from '@angular/common/http';
+import { BuildLogEntry } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
@@ -31,6 +32,17 @@ describe('BuildQueueService', () => {
     filterOptions.buildStartDateFilterFrom = dayjs('2024-01-01');
     filterOptions.buildStartDateFilterTo = dayjs('2024-01-02');
     filterOptions.status = 'SUCCESSFUL';
+
+    const buildLogEntries: BuildLogEntry[] = [
+        {
+            time: dayjs('2024-01-01'),
+            log: 'log1',
+        },
+        {
+            time: dayjs('2024-01-02'),
+            log: 'log2',
+        },
+    ];
 
     const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
         expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);
@@ -80,7 +92,6 @@ describe('BuildQueueService', () => {
         buildConfig.projectType = 'type1';
         buildConfig.scaEnabled = false;
         buildConfig.sequentialTestRunsEnabled = false;
-        buildConfig.testwiseCoverageEnabled = false;
         buildConfig.resultPaths = ['path1'];
 
         elem1.id = '1';
@@ -150,7 +161,7 @@ describe('BuildQueueService', () => {
 
         service.cancelBuildJobInCourse(courseId, buildJobId).subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
@@ -163,7 +174,7 @@ describe('BuildQueueService', () => {
 
         service.cancelBuildJob(buildJobId).subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-job/${buildJobId}`);
@@ -174,7 +185,7 @@ describe('BuildQueueService', () => {
     it('should cancel all running build jobs', () => {
         service.cancelAllRunningBuildJobs().subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs`);
@@ -187,7 +198,7 @@ describe('BuildQueueService', () => {
 
         service.cancelAllRunningBuildJobsInCourse(courseId).subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`);
@@ -198,7 +209,7 @@ describe('BuildQueueService', () => {
     it('should cancel all queued build jobs', () => {
         service.cancelAllQueuedBuildJobs().subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-queued-jobs`);
@@ -211,7 +222,7 @@ describe('BuildQueueService', () => {
 
         service.cancelAllQueuedBuildJobsInCourse(courseId).subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
@@ -224,7 +235,7 @@ describe('BuildQueueService', () => {
 
         service.cancelAllRunningBuildJobsForAgent(agentName).subscribe(() => {
             // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
+            expect(true).toBeTruthy();
         });
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
@@ -262,7 +273,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling a specific build job in a course', fakeAsync(() => {
@@ -300,7 +311,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling all running build jobs', fakeAsync(() => {
@@ -325,7 +336,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling all running build jobs in a course', fakeAsync(() => {
@@ -358,7 +369,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling all queued build jobs', fakeAsync(() => {
@@ -383,7 +394,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling all queued build jobs in a course', fakeAsync(() => {
@@ -416,7 +427,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when cancelling all running build jobs for a specific agent', fakeAsync(() => {
@@ -449,7 +460,7 @@ describe('BuildQueueService', () => {
         tick();
 
         // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should return all finished build jobs', () => {
@@ -496,7 +507,7 @@ describe('BuildQueueService', () => {
 
         tick();
 
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should return all finished build jobs for a specific course', () => {
@@ -557,7 +568,7 @@ describe('BuildQueueService', () => {
 
         tick();
 
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
     }));
 
     it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
@@ -587,7 +598,42 @@ describe('BuildQueueService', () => {
 
         tick();
 
-        expect(errorOccurred).toBeTrue();
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should return build log entries for a specific build job', () => {
+        const buildJobId = '1';
+        const expectedResponse = buildLogEntries;
+
+        service.getBuildJobLogs(buildJobId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting build log entries for a specific build job', fakeAsync(() => {
+        const buildJobId = '1';
+
+        let errorOccurred = false;
+
+        service.getBuildJobLogs(buildJobId).subscribe({
+            error: (err) => {
+                expect(err.message).toBe('artemisApp.buildQueue.logs.errorFetchingLogs');
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTruthy();
     }));
 
     afterEach(() => {

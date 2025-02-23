@@ -21,17 +21,25 @@
                     "course": {
                         "title": "Iris",
                         "tooltip": "Bearbeite die Iris Einstellungen für diesen Kurs"
+                    },
+                    "lecture": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Vorlesung"
                     }
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
+                    "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
-                    "hestiaSettings": "Hestia Einstellungen",
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "FAQs automatisch an Pyris senden"
+                    },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
@@ -70,8 +78,7 @@
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
-                        "chat": "Iris Chat",
-                        "hestia": "Hestia Integration"
+                        "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
@@ -113,7 +120,9 @@
                 "lectureSuccess": "Vorlesung Ingestion in Pyris erfolgreich gestartet",
                 "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
                 "allLecturesSuccess": "Alle Vorlesungen Ingestion in Pyris erfolgreich gestartet",
+                "allFaqsSuccess": "Alle Faqs Ingestion in Pyris erfolgreich gestartet",
                 "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
+                "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
                 "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
                 "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
                 "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten."

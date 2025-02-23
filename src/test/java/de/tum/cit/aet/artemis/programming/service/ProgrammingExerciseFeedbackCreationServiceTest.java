@@ -19,11 +19,11 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -219,7 +219,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         assertThat(createFeedbackFromTestCase("test1", List.of(), true)).isNull();
     }
 
-    private AbstractBuildResultNotificationDTO generateResult(List<String> successfulTests, List<String> failedTests) {
+    private BuildResultNotification generateResult(List<String> successfulTests, List<String> failedTests) {
         return ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false, successfulTests, failedTests, null,
                 null, null);
     }

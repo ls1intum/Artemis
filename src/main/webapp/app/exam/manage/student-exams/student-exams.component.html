@@ -162,7 +162,7 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                     @if (isTestExam) {
-                        <jhi-testexam-working-time [studentExam]="row" />
+                        <jhi-test-exam-working-time [studentExam]="row" />
                     }
                     @if (!isTestExam) {
                         <jhi-student-exam-working-time [studentExam]="row" />

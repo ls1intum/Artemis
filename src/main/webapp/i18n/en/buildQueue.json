@@ -74,6 +74,13 @@
                 "daySpan": "1 day",
                 "weekSpan": "7 days",
                 "monthSpan": "30 days"
+            },
+            "logs": {
+                "title": "Build Logs for Job",
+                "download": "Download",
+                "noLogs": "No logs available",
+                "errorFetchingLogs": "Failed to get build log entries for build job",
+                "downloadError": "Failed to download the build log of the build job"
             }
         }
     }

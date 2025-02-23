@@ -55,14 +55,14 @@
                 <ngx-datatable-column [maxWidth]="150">
                     <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
                         <button class="btn btn-sm btn-danger" (click)="removeEnvVar(rowIndex)">
-                            <fa-icon [icon]="faTrash"></fa-icon>
+                            <fa-icon [icon]="faTrash" />
                             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
                         </button>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>
             <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faPlus" />
                 <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
             </button>
         </div>

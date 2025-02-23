@@ -1,7 +1,6 @@
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbDatepickerConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
@@ -20,9 +19,10 @@ import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from './helpers/mocks/service/mock-profile.service';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @NgModule({
-    imports: [HttpClientTestingModule],
     providers: [
         DatePipe,
         ParseLinks,
@@ -65,6 +65,8 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
             provide: ProfileService,
             useClass: MockProfileService,
         },
+        provideHttpClient(),
+        provideHttpClientTesting(),
     ],
     exports: [FontAwesomeTestingModule],
 })

@@ -4,8 +4,8 @@ import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -33,17 +33,20 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -71,16 +74,17 @@ describe('PostComponent', () => {
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
             declarations: [
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(PostHeaderComponent),
+                MockComponent(PostingHeaderComponent),
                 MockComponent(PostingContentComponent),
-                MockComponent(PostFooterComponent),
+                MockComponent(PostingFooterComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
-                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -93,6 +97,7 @@ describe('PostComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
                 metisService = TestBed.inject(MetisService);
+                metisService.course = metisCourse;
 
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
@@ -162,7 +167,7 @@ describe('PostComponent', () => {
     });
 
     it('should contain a post footer', () => {
-        const footer = getElement(debugElement, 'jhi-post-footer');
+        const footer = getElement(debugElement, 'jhi-posting-footer');
         expect(footer).not.toBeNull();
     });
 
@@ -177,7 +182,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
@@ -186,7 +192,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
         component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });

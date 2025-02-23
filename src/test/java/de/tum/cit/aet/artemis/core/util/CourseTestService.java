@@ -2488,7 +2488,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 

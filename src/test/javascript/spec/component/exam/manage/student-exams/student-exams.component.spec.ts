@@ -2,13 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, convertToParamMap, provideRouter } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
@@ -23,15 +20,14 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
@@ -169,7 +165,8 @@ describe('StudentExamsComponent', () => {
         },
         { provide: AccountService, useClass: MockAccountService },
         { provide: TranslateService, useClass: MockTranslateService },
-        { provide: JhiWebsocketService, useClass: MockWebsocketService },
+        { provide: WebsocketService, useClass: MockWebsocketService },
+        { provide: NgbModal, useClass: MockNgbModalService },
         MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
     ];
 
@@ -208,16 +205,7 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [MockModule(NgxDatatableModule)],
-            declarations: [
-                StudentExamsComponent,
-                MockComponent(StudentExamStatusComponent),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisDurationFromSecondsPipe),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(DataTableComponent),
-            ],
+            imports: [ArtemisTestModule],
             providers,
         })
             .compileComponents()

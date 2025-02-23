@@ -6,7 +6,7 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -19,30 +19,35 @@ import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/for
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 
     let translateService: TranslateService;
+    const prerequisiteServiceMock = { getAllForCourse: jest.fn() } as unknown as PrerequisiteService;
+    const courseCompetencyServiceMock = { getCourseCompetencyTitles: jest.fn() } as unknown as CourseCompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
-            providers: [MockProvider(PrerequisiteService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents()
-            .then(() => {
-                prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
-                prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
-            });
+            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            providers: [
+                { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseCompetencyService, useValue: courseCompetencyServiceMock },
+                MockProvider(LectureUnitService),
+            ],
+        }).compileComponents();
+
+        prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
+        prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
@@ -56,8 +61,9 @@ describe('PrerequisiteFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         // stubbing prerequisite service for asynchronous validator
-        const prerequisiteService = TestBed.inject(PrerequisiteService);
-        const getAllTitlesSpy = jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+        const getCourseCompetencyTitlesSpy = jest
+            .spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles')
+            .mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         const competencyOfResponse: Prerequisite = { id: 1, title: 'test' };
 
@@ -66,7 +72,7 @@ describe('PrerequisiteFormComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(prerequisiteServiceMock, 'getAllForCourse').mockReturnValue(of(response));
 
         prerequisiteFormComponentFixture.detectChanges();
 
@@ -84,7 +90,7 @@ describe('PrerequisiteFormComponent', () => {
         prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
-        expect(getAllTitlesSpy).toHaveBeenCalledOnce();
+        expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
@@ -157,9 +163,15 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
-        const prerequisiteService = TestBed.inject(PrerequisiteService);
         const existingTitles = ['nameExisting'];
-        jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        jest.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: existingTitles,
+                    status: 200,
+                }),
+            ),
+        );
         prerequisiteFormComponent.isEditMode = true;
         prerequisiteFormComponent.formData.title = 'initialName';
 
@@ -180,7 +192,7 @@ describe('PrerequisiteFormComponent', () => {
         titleControl.setValue('nameExisting');
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeDefined();
-        flush();
+        tick();
         discardPeriodicTasks();
     }));
 

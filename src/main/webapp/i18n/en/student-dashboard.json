@@ -76,13 +76,16 @@
                 "exerciseChannels": "Exercises",
                 "lectureChannels": "Lectures",
                 "examChannels": "Exams",
+                "feedbackDiscussion": "Feedback Discussion",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
                 "createGroupChat": "Create group chat",
                 "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
-                "filterConversationPlaceholder": "Filter conversations"
+                "filterConversationPlaceholder": "Filter conversations",
+                "setChannelAsRead": "Mark all channels as read",
+                "recents": "Recents"
             },
             "menu": {
                 "exercises": "Exercises",

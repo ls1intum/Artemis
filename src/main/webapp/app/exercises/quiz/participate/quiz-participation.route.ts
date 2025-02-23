@@ -1,12 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { QuizParticipationComponent } from './quiz-participation.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-export const quizParticipationRoute: Routes = [
+export const routes: Routes = [
     {
         path: 'live',
-        component: QuizParticipationComponent,
+        loadComponent: () => import('./quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -16,7 +15,7 @@ export const quizParticipationRoute: Routes = [
     },
     {
         path: 'practice',
-        component: QuizParticipationComponent,
+        loadComponent: () => import('./quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',

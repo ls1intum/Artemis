@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -28,6 +28,9 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from '../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -53,6 +56,17 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         { testName: 'test3', active: false },
     ];
 
+    const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+        url: {
+            pipe: () => ({
+                subscribe: () => {},
+            }),
+        },
+    } as ActivatedRoute;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
@@ -69,6 +83,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ActivatedRoute, useValue: route },
+                MockProvider(ProfileService, {
+                    getProfileInfo: () => of(mockProfileInfo),
+                }),
             ],
         })
             .compileComponents()

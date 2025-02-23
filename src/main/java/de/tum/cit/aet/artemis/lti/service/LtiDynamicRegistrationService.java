@@ -20,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
+import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 
@@ -62,8 +63,7 @@ public class LtiDynamicRegistrationService {
                 throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
             }
 
-            Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.registrationEndpoint(), clientRegistrationId,
-                    registrationToken);
+            var clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.registrationEndpoint(), clientRegistrationId, registrationToken);
 
             LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
             ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
@@ -100,7 +100,7 @@ public class LtiDynamicRegistrationService {
             headers.setBearerAuth(registrationToken);
         }
 
-        Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(artemisServerUrl, clientRegistrationId);
+        Lti13ClientRegistration lti13ClientRegistration = Lti13ClientRegistrationFactory.createRegistration(artemisServerUrl, clientRegistrationId);
         Lti13ClientRegistration registrationResponse = null;
         try {
             ResponseEntity<Lti13ClientRegistration> response = restTemplate.postForEntity(registrationEndpoint, new HttpEntity<>(lti13ClientRegistration, headers),
@@ -123,7 +123,7 @@ public class LtiDynamicRegistrationService {
             Lti13ClientRegistration clientRegistrationResponse) {
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId(registrationId);
-        ltiPlatformConfiguration.setClientId(clientRegistrationResponse.getClientId());
+        ltiPlatformConfiguration.setClientId(clientRegistrationResponse.clientId());
         ltiPlatformConfiguration.setAuthorizationUri(platformConfiguration.authorizationEndpoint());
         ltiPlatformConfiguration.setJwkSetUri(platformConfiguration.jwksUri());
         ltiPlatformConfiguration.setTokenUri(platformConfiguration.tokenEndpoint());

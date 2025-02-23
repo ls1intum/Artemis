@@ -1,11 +1,10 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,6 +14,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -22,15 +23,18 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbCollapseMocksModule],
-            declarations: [
-                AdminImportStandardizedCompetenciesComponent,
+            imports: [ArtemisTestModule],
+            providers: [
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(StandardizedCompetencyDetailComponent),
+                MockModule(FontAwesomeModule),
+                MockComponent(StandardizedCompetencyDetailComponent),
+                MockComponent(KnowledgeAreaTreeComponent),
+                MockProvider(AlertService),
+                { provide: Router, useClass: MockRouter },
             ],
-            providers: [{ provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

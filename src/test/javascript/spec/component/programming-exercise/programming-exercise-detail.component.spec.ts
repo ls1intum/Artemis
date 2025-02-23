@@ -22,18 +22,16 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { BuildConfig } from '../../../../../main/webapp/app/entities/programming/build-config.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
 
@@ -64,9 +62,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
-        buildConfig: {
-            testwiseCoverageEnabled: true,
-        } as BuildConfig,
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -114,7 +109,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [ProgrammingExerciseDetailComponent],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -163,14 +157,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should reload on participation change', fakeAsync(() => {
         const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         tick();
         expect(loadDiffSpy).toHaveBeenCalledOnce();
         expect(gitDiffReportStub).toHaveBeenCalledOnce();
-        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
     }));
 
     describe('onInit for course exercise', () => {
@@ -220,6 +212,19 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 }
             },
         );
+
+        it('should create detail sections after getDiffReport error', fakeAsync(() => {
+            const errorSpy = jest.spyOn(alertService, 'error');
+            gitDiffReportStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            comp.ngOnInit();
+            tick();
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(comp.exerciseDetailSections).toBeDefined();
+            expect(comp.addedLineCount).toBeUndefined();
+            expect(comp.removedLineCount).toBeUndefined();
+        }));
     });
 
     describe('onInit for exam exercise', () => {
@@ -260,42 +265,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
-    });
-
-    it('should create structural solution entries', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(exerciseService, 'createStructuralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
-        jest.spyOn(alertService, 'addAlert');
-
-        comp.createStructuralSolutionEntries();
-
-        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledWith({
-            type: AlertType.SUCCESS,
-            message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
-        });
-    });
-
-    it('should create behavioral solution entries', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(exerciseService, 'createBehavioralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
-        jest.spyOn(alertService, 'addAlert');
-
-        comp.createBehavioralSolutionEntries();
-
-        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledWith({
-            type: AlertType.SUCCESS,
-            message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
-        });
     });
 
     it.each([

@@ -10,8 +10,7 @@ describe('ChatStatusBarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule],
-            declarations: [ChatStatusBarComponent],
+            imports: [FontAwesomeModule, ChatStatusBarComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ChatStatusBarComponent);

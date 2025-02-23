@@ -1,15 +1,7 @@
-# Copyright VMware, Inc.
-# SPDX-License-Identifier: APACHE-2.0
-
-# Disclaimer: The service marks and trademarks mentioned herein belong to their respective owners.
-# No commercial licensing for these products is provided through this file.
-# This docker-compose configuration is derived from Bitnami's publicly shared files, accessible at https://github.com/bitnami/containers/tree/main/bitnami/moodle, and is distributed under an open-source license.
-# The Moodle™ LMS included in this docker-compose is developed and overseen by Moodle HQ, an independent project from this adaptation and Bitnami.
-
 version: '2'
 services:
   mariadb:
-    image: docker.io/bitnami/mariadb:10.6
+    image: docker.io/bitnami/mariadb:11.6.2
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
       - ALLOW_EMPTY_PASSWORD=yes
@@ -23,7 +15,7 @@ services:
     extra_hosts:
         - "host.docker.internal:host-gateway"
   moodle:
-    image: docker.io/bitnami/moodle:4.2
+    image: docker.io/bitnami/moodle:4.5.1
     ports:
       - '8085:8080'
       - '443:8443'

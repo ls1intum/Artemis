@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
@@ -59,7 +59,6 @@ describe('BuildAgentDetailsComponent', () => {
         projectType: 'Maven',
         scaEnabled: false,
         sequentialTestRunsEnabled: false,
-        testwiseCoverageEnabled: false,
         resultPaths: [],
     };
 
@@ -126,7 +125,7 @@ describe('BuildAgentDetailsComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [],
             providers: [
-                { provide: JhiWebsocketService, useValue: mockWebsocketService },
+                { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },

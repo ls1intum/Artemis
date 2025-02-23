@@ -126,7 +126,6 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         }
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.getBuildConfig().setBuildScript("Some script");
@@ -140,7 +139,12 @@ public class ProgrammingExerciseFactory {
         else {
             programmingExercise.setProjectType(null);
         }
-        programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
+        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
+            programmingExercise.setPackageName("de.test");
+        }
+        else {
+            programmingExercise.setPackageName("testPackage");
+        }
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
@@ -168,7 +172,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setTotalNumberOfAssessments(template.getTotalNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
-        toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
         buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
@@ -184,7 +187,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
-        buildConfig.setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -237,7 +239,7 @@ public class ProgrammingExerciseFactory {
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && !commits.isEmpty() ? commits : List.of(commitDTO),
-                List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
+                List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
     /**
@@ -341,6 +343,8 @@ public class ProgrammingExerciseFactory {
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
+            case RUFF -> "Pylint";
+            case RUBOCOP -> "Lint";
             case OTHER -> "Other";
         };
 
@@ -388,21 +392,20 @@ public class ProgrammingExerciseFactory {
      * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
      */
     public static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
-        populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
+        populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
     }
 
     /**
      * Populates the provided programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
      *
-     * @param programmingExercise            The exercise to be populated.
-     * @param shortName                      The short name of the exercise.
-     * @param title                          The title of the exercise.
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language used in the exercise.
+     * @param programmingExercise      The exercise to be populated.
+     * @param shortName                The short name of the exercise.
+     * @param title                    The title of the exercise.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
      */
     public static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
-            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
+            ProgrammingLanguage programmingLanguage) {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -438,7 +441,6 @@ public class ProgrammingExerciseFactory {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");

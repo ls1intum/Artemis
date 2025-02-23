@@ -4,20 +4,16 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
-import { MockComponent } from 'ng-mocks';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
     let component: ModelingExamSummaryComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ModelingExamSummaryComponent, MockComponent(ModelingSubmissionComponent)],
-            schemas: [],
-        })
+        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);

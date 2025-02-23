@@ -1,6 +1,10 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 export enum PresentationType {
     NONE = 'none',
@@ -22,6 +26,7 @@ export interface PresentationsConfig {
     selector: 'jhi-grading-system-presentations',
     templateUrl: './grading-system-presentations.component.html',
     styleUrls: ['./grading-system-presentations.component.scss'],
+    imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent],
 })
 export class GradingSystemPresentationsComponent implements OnChanges {
     readonly NONE = PresentationType.NONE;
@@ -52,7 +57,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
     @Input()
     presentationsConfig: PresentationsConfig;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializePresentationConfig();
     }
 

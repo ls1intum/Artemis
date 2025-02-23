@@ -416,7 +416,7 @@ public class QuizExerciseResource {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+        if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
         quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
@@ -442,11 +442,11 @@ public class QuizExerciseResource {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
-            throw new AccessForbiddenException();
-        }
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("Students cannot join quiz batches for exam exercises", ENTITY_NAME, "notAllowedInExam");
+        }
+        if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
+            throw new AccessForbiddenException();
         }
 
         try {
