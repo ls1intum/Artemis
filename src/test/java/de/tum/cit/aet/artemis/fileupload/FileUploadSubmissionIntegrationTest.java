@@ -700,4 +700,19 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamExerciseSubmission_noStudentExam() throws Exception {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+
+        var exam = examRepository.findByCourseId(course.getId()).getFirst();
+        var fileUploadExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof FileUploadExercise).findFirst().orElseThrow();
+
+        FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
+        var file = new MockMultipartFile("file", "file.pdf", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
+                HttpStatus.NOT_FOUND);
+    }
 }
