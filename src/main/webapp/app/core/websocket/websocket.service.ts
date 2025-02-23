@@ -1,15 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
-import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Message, Subscription as StompSubscription } from 'webstomp-client';
 import { gzip, ungzip } from 'pako';
 import { captureException } from '@sentry/angular';
-
-interface SockJSExtended extends WebSocket {
-    _transport?: {
-        url?: string;
-    };
-}
 
 // must be the same as in GzipMessageConverter.java
 export const COMPRESSION_HEADER_KEY = 'X-Compressed';
@@ -105,8 +98,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
-    private socket: SockJSExtended | undefined = undefined;
-    private subscriptionCounter = 0;
 
     constructor() {
         this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
@@ -164,18 +155,16 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             return; // don't connect, if already connected or connecting
         }
         this.connecting = true;
-        const url = `//${window.location.host}/websocket`;
-        // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
-        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
-        this.socket = new SockJS(url, undefined, { transports: 'websocket' });
+        // NOTE: we add 'websocket' twice to use STOMP without SockJS
+        const url = `ws://${window.location.host}/websocket/websocket`;
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
         // TODO: consider to switch to RxStomp (like in the latest jhipster version)
-        this.stompClient = Stomp.over(this.socket, options);
-        // Note: at the moment, debugging is deactivated to prevent console log statements
+        this.stompClient = Stomp.client(url, options);
+        // Note: debugging is deactivated to prevent console log statements
         this.stompClient.debug = () => {};
         const headers = {} as ConnectionHeaders;
 
@@ -205,9 +194,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @param channel the path (e.g. '/courses/5/exercises/10') that should be subscribed
      */
     private addSubscription(channel: string) {
-        const subscription = this.stompClient!.subscribe(channel, this.handleIncomingMessage(channel), {
-            id: this.getSessionId() + '-' + this.subscriptionCounter++,
-        });
+        const subscription = this.stompClient!.subscribe(channel, this.handleIncomingMessage(channel));
         this.stompSubscriptions.set(channel, subscription);
     }
 
@@ -440,12 +427,5 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         } catch {
             return response as T;
         }
-    }
-
-    // see https://stackoverflow.com/a/35651029/3802758
-    private getSessionId(): string {
-        const url = this.socket?._transport?.url;
-        const match = url?.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*');
-        return match ? match[1] : 'unsubscribed';
     }
 }

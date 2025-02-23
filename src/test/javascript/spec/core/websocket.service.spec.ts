@@ -8,7 +8,6 @@ import { defer, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { Message, Subscription as StompSubscription } from 'webstomp-client';
 
-jest.mock('sockjs-client');
 jest.mock('webstomp-client', () => ({
     over: jest.fn().mockReturnValue({
         connect: jest.fn(),
