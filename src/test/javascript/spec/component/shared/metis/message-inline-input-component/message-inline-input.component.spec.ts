@@ -20,10 +20,13 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { mockSettings } from '../../../iris/settings/mock-settings';
 import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ComponentRef } from '@angular/core';
+import { Course } from 'app/entities/course.model';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
     let fixture: ComponentFixture<MessageInlineInputComponent>;
+    let componentRef: ComponentRef<MessageInlineInputComponent>;
     let metisService: MetisService;
     let metisServiceCreateStub: jest.SpyInstance;
     let metisServiceUpdateStub: jest.SpyInstance;
@@ -49,6 +52,7 @@ describe('MessageInlineInputComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MessageInlineInputComponent);
                 component = fixture.componentInstance;
+                componentRef = fixture.componentRef;
                 metisService = TestBed.inject(MetisService);
                 metisServiceCreateStub = jest.spyOn(metisService, 'createPost');
                 metisServiceUpdateStub = jest.spyOn(metisService, 'updatePost');
@@ -183,6 +187,27 @@ describe('MessageInlineInputComponent', () => {
             expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should be enabled for general chat if Iris is activated for the course chat', fakeAsync(() => {
+            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+
+            component.posting = directMessageUser1;
+            componentRef.setInput('course', { id: 42 } as Course);
+
+            const mockChannelDTO = {
+                type: ConversationType.CHANNEL,
+                subType: ChannelSubType.GENERAL,
+                subTypeReferenceId: 42,
+            } as ConversationDTO;
+
+            jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+
+            component.ngOnInit();
+            tick();
+
+            expect(component.irisEnabled).toBeTrue();
+            expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
+        }));
+
         it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
             const disabledIrisSettings = mockSettings();
             disabledIrisSettings.irisChatSettings!.enabled = false;
@@ -205,4 +230,69 @@ describe('MessageInlineInputComponent', () => {
             expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
         }));
     });
+
+    it('should be disabled for general chats if Iris is disabled for the course chat', fakeAsync(() => {
+        const disabledIrisSettings = mockSettings();
+        disabledIrisSettings.irisCourseChatSettings!.enabled = false;
+        const getLectureSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(disabledIrisSettings));
+
+        component.posting = directMessageUser1;
+        componentRef.setInput('course', { id: 42 } as Course);
+
+        const mockChannelDTO = {
+            type: ConversationType.CHANNEL,
+            subType: ChannelSubType.GENERAL,
+            subTypeReferenceId: 42,
+        } as ConversationDTO;
+
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.irisEnabled).toBeFalse();
+        expect(getLectureSettingsSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should be disabled for lecture chats if Iris is disabled for the lecture', fakeAsync(() => {
+        const disabledIrisSettings = mockSettings();
+        disabledIrisSettings.irisLectureChatSettings!.enabled = false;
+        const getLectureSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(disabledIrisSettings));
+
+        component.posting = directMessageUser1;
+
+        const mockChannelDTO = {
+            type: ConversationType.CHANNEL,
+            subType: ChannelSubType.LECTURE,
+            subTypeReferenceId: 42,
+        } as ConversationDTO;
+
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.irisEnabled).toBeFalse();
+        expect(getLectureSettingsSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should handle errors when retrieving Iris settings', fakeAsync(() => {
+        const getSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(throwError(() => new Error('Failed to fetch settings')));
+
+        component.posting = directMessageUser1;
+
+        const mockChannelDTO = {
+            type: ConversationType.CHANNEL,
+            subType: ChannelSubType.EXERCISE,
+            subTypeReferenceId: 42,
+        } as ConversationDTO;
+
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.irisEnabled).toBeFalse();
+        expect(getSettingsSpy).toHaveBeenCalledOnce();
+    }));
 });

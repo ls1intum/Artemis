@@ -126,7 +126,9 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.numNewMessagesSubscription?.unsubscribe();
         this.paramsSubscription.unsubscribe();
         this.latestIrisMessageSubscription.unsubscribe();
-        this.queryParamsSubscription.unsubscribe();
+        if (this.queryParamsSubscription) {
+            this.queryParamsSubscription.unsubscribe();
+        }
         this.newIrisMessage = undefined;
         this.isOverflowing = false;
     }

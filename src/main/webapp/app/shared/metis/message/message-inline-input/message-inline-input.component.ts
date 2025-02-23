@@ -15,7 +15,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ButtonType } from 'app/shared/components/button.component';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, of } from 'rxjs';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -111,23 +111,47 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         switch (channelDTO?.subType) {
             case ChannelSubType.GENERAL:
                 if (courseId) {
-                    this.irisSettingsService.getCombinedCourseSettings(courseId).subscribe((irisSettings) => {
-                        this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-                    });
+                    this.irisSettingsService
+                        .getCombinedCourseSettings(courseId)
+                        .pipe(
+                            catchError(() => {
+                                this.setIrisStatus(false, '');
+                                return of(undefined);
+                            }),
+                        )
+                        .subscribe((irisSettings) => {
+                            this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                        });
                 }
                 break;
             case ChannelSubType.LECTURE:
                 if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
-                        this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-                    });
+                    this.irisSettingsService
+                        .getCombinedCourseSettings(channelDTO.subTypeReferenceId)
+                        .pipe(
+                            catchError(() => {
+                                this.setIrisStatus(false, '');
+                                return of(undefined);
+                            }),
+                        )
+                        .subscribe((irisSettings) => {
+                            this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                        });
                 }
                 break;
             case ChannelSubType.EXERCISE:
                 if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId).subscribe((irisSettings) => {
-                        this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-                    });
+                    this.irisSettingsService
+                        .getCombinedExerciseSettings(channelDTO.subTypeReferenceId)
+                        .pipe(
+                            catchError(() => {
+                                this.setIrisStatus(false, '');
+                                return of(undefined);
+                            }),
+                        )
+                        .subscribe((irisSettings) => {
+                            this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                        });
                 }
                 break;
             default:
