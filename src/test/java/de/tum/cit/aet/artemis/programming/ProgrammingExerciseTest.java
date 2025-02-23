@@ -172,69 +172,6 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
-    /*
-     * ToDo: Move into participationfilterservicetest
-     * @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-     * @ValueSource(booleans = { true, false })
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void findAppropriateSubmissionRespectingIndividualDueDate(boolean isSubmissionAfterIndividualDueDate) {
-     * ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-     * exercise.setDueDate(ZonedDateTime.now());
-     * exercise = programmingExerciseRepository.save(exercise);
-     * ProgrammingSubmission submission = new ProgrammingSubmission();
-     * submission.setType(SubmissionType.OTHER);
-     * if (isSubmissionAfterIndividualDueDate) {
-     * submission.setSubmissionDate(ZonedDateTime.now().plusHours(26));
-     * }
-     * else {
-     * // submission time after exercise due date but before individual due date
-     * submission.setSubmissionDate(ZonedDateTime.now().plusHours(1));
-     * }
-     * submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
-     * ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1")
-     * .orElseThrow();
-     * participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
-     * participation.setExercise(exercise);
-     * submission.setParticipation(participation);
-     * Submission latestValidSubmission = exercise.findAppropriateSubmissionByResults(Set.of(submission));
-     * if (isSubmissionAfterIndividualDueDate) {
-     * assertThat(latestValidSubmission).isNull();
-     * }
-     * else {
-     * assertThat(latestValidSubmission).isEqualTo(submission);
-     * }
-     * }
-     * @Test
-     * void testFindRelevantParticipations() {
-     * ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-     * StudentParticipation gradedParticipationInitialized = new StudentParticipation();
-     * gradedParticipationInitialized.setInitializationState(InitializationState.INITIALIZED);
-     * gradedParticipationInitialized.setExercise(exercise);
-     * StudentParticipation gradedParticipationFinished = new StudentParticipation();
-     * gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
-     * gradedParticipationFinished.setExercise(exercise);
-     * StudentParticipation practiceParticipation = new StudentParticipation();
-     * practiceParticipation.setPracticeMode(true);
-     * practiceParticipation.setExercise(exercise);
-     * List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
-     * // Create all possible combinations of the entries in allParticipations
-     * for (int i = 0; i < 2 << allParticipations.size(); i++) {
-     * Set<StudentParticipation> participationsToTest = new HashSet<>();
-     * for (int j = 0; j < allParticipations.size(); j++) {
-     * if (((i >> j) & 1) == 1) {
-     * participationsToTest.add(allParticipations.get(j));
-     * }
-     * }
-     * Set<StudentParticipation> expectedParticipations = new HashSet<>(participationsToTest);
-     * if (expectedParticipations.contains(gradedParticipationInitialized)) {
-     * expectedParticipations.remove(gradedParticipationFinished);
-     * }
-     * Set<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
-     * assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
-     * }
-     * }
-     */
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExerciseChannel() throws Exception {
