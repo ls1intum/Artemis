@@ -203,7 +203,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
         studentExam.addExercise(fileUploadExercise);
-        studentExamRepository.save(studentExam);
+        studentExamTestRepository.save(studentExam);
 
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.pdf", "application/json", "some data".getBytes());
