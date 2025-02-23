@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -23,9 +23,9 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
     isHidden = true;
-    @Input() exercise: Exercise;
+    exercise = input.required<Exercise>();
 
-    @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
+    problemStatementUpdateEvent = output<string>();
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
@@ -64,14 +64,14 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      * @param updatedProblemStatement is the new problem statement that should replace the old one.
      */
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
-        if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
-            this.outdatedProblemStatement = this.exercise.problemStatement!;
+        if (updatedProblemStatement != undefined && exerciseId === this.exercise().id) {
+            this.outdatedProblemStatement = this.exercise().problemStatement!;
             this.updatedProblemStatement = updatedProblemStatement;
-            this.exercise.problemStatement = updatedProblemStatement;
+            this.exercise().problemStatement = updatedProblemStatement;
             this.showHighlightedDifferences = true;
             // Highlighting of the changes in the problem statement of a programming exercise id handled
             // in ProgrammingExerciseInstructionComponent
-            if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+            if (this.exercise().type !== ExerciseType.PROGRAMMING) {
                 this.highlightProblemStatementDifferences();
             }
             this.isHidden = false;

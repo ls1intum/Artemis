@@ -2,10 +2,10 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { ArtemisTestModule } from '../../../test.module';
-
 import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { MockDirective } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -13,9 +13,9 @@ describe('TitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [FormsModule],
             declarations: [TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
-            providers: [NgForm],
+            providers: [NgForm, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TitleChannelNameComponent);

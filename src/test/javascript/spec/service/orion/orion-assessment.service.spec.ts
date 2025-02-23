@@ -1,11 +1,10 @@
 import { BehaviorSubject, of } from 'rxjs';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { MockProvider } from 'ng-mocks';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { OrionState } from 'app/shared/orion/orion';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -24,13 +23,13 @@ describe('OrionAssessmentService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ProgrammingAssessmentRepoExportService),
                 MockProvider(ProgrammingAssessmentManualResultService),
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()

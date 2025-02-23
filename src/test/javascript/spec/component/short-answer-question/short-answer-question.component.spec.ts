@@ -20,7 +20,6 @@ describe('ShortAnswerQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent), MockComponent(FaIconComponent)],
             providers: [],
         }).compileComponents();

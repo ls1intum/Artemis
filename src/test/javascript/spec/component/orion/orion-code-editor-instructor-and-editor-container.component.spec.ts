@@ -1,5 +1,4 @@
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
-import { ArtemisTestModule } from '../../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -15,10 +14,13 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
@@ -28,7 +30,6 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorInstructorAndEditorOrionContainerComponent,
                 MockComponent(UpdatingResultComponent),
@@ -48,6 +49,8 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
                 MockProvider(ProgrammingExerciseParticipationService),
                 MockProvider(Location),
                 MockProvider(ParticipationService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .compileComponents()

@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -13,11 +12,12 @@ import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-pla
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -32,7 +32,6 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 BuildPlanEditorComponent,
                 TranslatePipeMock,
@@ -45,6 +44,7 @@ describe('Build Plan Editor', () => {
                 { provide: AlertService, useValue: new MockAlertService() },
                 { provide: BuildPlanService, useValue: new MockBuildPlanService() },
                 { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
