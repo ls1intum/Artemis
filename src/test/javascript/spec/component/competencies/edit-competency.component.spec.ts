@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -12,19 +11,17 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CompetencyFormStubComponent } from './competency-form-stub.component';
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditCompetencyComponent, CompetencyFormStubComponent],
-            declarations: [],
+            imports: [EditCompetencyComponent, MockModule(OwlNativeDateTimeModule), MockComponent(CompetencyFormComponent)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),
@@ -57,12 +54,12 @@ describe('EditCompetencyComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents();
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
         editCompetencyComponent = editCompetencyComponentFixture.componentInstance;
     });

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -35,7 +34,7 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
-    private static final Path PATH_TMP_THEME = Paths.get(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
+    private static final Path PATH_TMP_THEME = Path.of(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
 
     private final ResourceLoaderService resourceLoaderService;
 

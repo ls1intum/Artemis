@@ -6,6 +6,9 @@
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
+            [isButtonLoading]="isLoading"
+            [isFormGroupValid]="formGroup.valid"
+            [editType]="editType"
         />
         <div class="col mt-1 text-end">
             @if (!warningDismissed) {
@@ -24,27 +27,16 @@
                     class="btn btn-sm btn-outline-secondary"
                     (click)="isModalOpen.emit()"
                 ></button>
-            }
-            @if (irisEnabled) {
                 <button
-                    jhi-redirect-to-iris-button
+                    jhi-posting-button
                     [buttonLoading]="isLoading"
                     [disabled]="isLoading || !formGroup.valid"
-                    class="btn btn-sm btn-outline-secondary"
-                    id="redirect-iris"
-                    type="button"
-                    (click)="redirectToIris()"
+                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                    class="btn btn-sm btn-outline-primary"
+                    id="save"
+                    type="submit"
                 ></button>
             }
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="isLoading || !formGroup.valid"
-                [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
-                class="btn btn-sm btn-outline-secondary"
-                id="save"
-                type="submit"
-            ></button>
         </div>
     </div>
 </form>

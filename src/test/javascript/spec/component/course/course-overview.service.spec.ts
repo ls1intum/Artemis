@@ -38,7 +38,6 @@ describe('CourseOverviewService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -525,5 +524,31 @@ describe('CourseOverviewService', () => {
 
         expect(sidebarCardWithinRange.isCurrent).toBeTrue();
         expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
+    });
+
+    it('should return faBullhorn for announcement channels', () => {
+        const announcementChannel = new ChannelDTO();
+        announcementChannel.isAnnouncementChannel = true;
+
+        const icon = service.getChannelIcon(announcementChannel);
+        expect(icon).toBe(service.faBullhorn);
+    });
+
+    it('should return faHashtag for public channels', () => {
+        const publicChannel = new ChannelDTO();
+        publicChannel.isAnnouncementChannel = false;
+        publicChannel.isPublic = true;
+
+        const icon = service.getChannelIcon(publicChannel);
+        expect(icon).toBe(service.faHashtag);
+    });
+
+    it('should return faLock for private channels', () => {
+        const privateChannel = new ChannelDTO();
+        privateChannel.isAnnouncementChannel = false;
+        privateChannel.isPublic = false;
+
+        const icon = service.getChannelIcon(privateChannel);
+        expect(icon).toBe(service.faLock);
     });
 });

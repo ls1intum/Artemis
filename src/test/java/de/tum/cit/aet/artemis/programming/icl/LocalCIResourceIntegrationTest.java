@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -299,8 +298,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         LinkedMultiValueMap<String, String> searchParams = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
         searchParams.add("buildStatus", "FAILED");
-        searchParams.add("startDate", jobTimingInfo.buildStartDate().minusSeconds(10).toString());
-        searchParams.add("endDate", jobTimingInfo.buildCompletionDate().plusSeconds(10).toString());
+        searchParams.add("startDate", jobTimingInfo.submissionDate().minusSeconds(10).toString());
+        searchParams.add("endDate", jobTimingInfo.submissionDate().plusSeconds(10).toString());
         searchParams.add("searchTerm", "short");
         searchParams.add("buildDurationLower", "120");
         searchParams.add("buildDurationUpper", "600");
@@ -339,30 +338,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
             var response = request.get("/api/build-log/6", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
-        }
-        finally {
-            Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())
-                    .resolve(programmingExercise.getShortName()).resolve("6.log");
-            Files.deleteIfExists(buildLogFile);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetBuildLogsEntriesForResult() throws Exception {
-        try {
-            buildJobRepository.save(finishedJobForLogs);
-            BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
-            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
-            var response = request.get("/api/build-log/6/entries", HttpStatus.OK, List.class);
-
-            LinkedHashMap<?, ?> responseMap = ((LinkedHashMap<?, ?>) response.getFirst());
-            String log = responseMap.get("log").toString();
-            ZonedDateTime time = ZonedDateTime.parse(responseMap.get("time").toString());
-            assertThat(response).hasSize(1);
-            assertThat(buildLogEntry.log()).isEqualTo(log);
-            assertThat(buildLogEntry.time()).isEqualTo(time);
-
         }
         finally {
             Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())

@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -89,10 +91,10 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setIrisAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
+        student1.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student1);
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setIrisAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
+        student2.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -299,8 +301,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, never()).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -314,8 +316,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, never()).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(result);
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test

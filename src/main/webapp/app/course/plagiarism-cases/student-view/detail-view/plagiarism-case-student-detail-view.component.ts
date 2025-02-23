@@ -28,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, PlagiarismCaseVerdictComponent, FaIconComponent, RouterLink, PostComponent, ButtonComponent, PlagiarismCaseReviewComponent, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private activatedRoute = inject(ActivatedRoute);
 

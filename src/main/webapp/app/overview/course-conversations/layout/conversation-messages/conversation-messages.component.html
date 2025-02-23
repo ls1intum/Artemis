@@ -1,122 +1,111 @@
 @if (course) {
-    <div class="py-3 pt-0 justify-content-center conversation-messages">
-        <div class="justify-content-center">
-            <div class="justify-content-center px-3 py-0">
-                <!-- search bar -->
-                @if (!searchbarCollapsed) {
-                    <div class="input-group ps-0" [class.search-active]="!!searchText">
-                        <span class="input-group-text">
-                            <fa-icon [icon]="faSearch" size="sm" />
-                            <span [hidden]="true" id="inputLabel" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchLabel"></span>
-                        </span>
-                        <input
-                            id="searchInput"
-                            aria-labelledby="inputLabel"
-                            aria-describedby="searchResult"
-                            #searchInput
-                            (input)="onSearchQueryInput($event)"
-                            class="form-control"
-                            type="text"
-                            placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
-                        />
-                        @if (!!searchText) {
-                            <button
-                                class="btn btn-outline-secondary border-end-0 border-start-0"
-                                type="button"
-                                (click)="clearSearchInput()"
-                                aria-labelledby="clearSearchLabel"
-                                id="clearSearchButton"
-                            >
-                                <span id="clearSearchLabel" [hidden]="true" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.clearSearch"></span>
-                                <fa-icon [icon]="faTimes" size="xs" />
-                            </button>
+    <div class="justify-content-center conversation-messages">
+        <div class="justify-content-center px-3">
+            <!-- search bar -->
+            @if (!searchbarCollapsed) {
+                <div class="input-group channel-search" [class.search-active]="!!searchText">
+                    <span class="input-group-text">
+                        <fa-icon [icon]="faSearch" size="sm" />
+                        <span [hidden]="true" id="inputLabel" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchLabel"></span>
+                    </span>
+                    <input
+                        id="searchInput"
+                        aria-labelledby="inputLabel"
+                        aria-describedby="searchResult"
+                        #searchInput
+                        (input)="onSearchQueryInput($event)"
+                        class="form-control"
+                        type="text"
+                        placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
+                    />
+                    @if (!!searchText) {
+                        <button
+                            class="btn btn-outline-secondary border-end-0 border-start-0"
+                            type="button"
+                            (click)="clearSearchInput()"
+                            aria-labelledby="clearSearchLabel"
+                            id="clearSearchButton"
+                        >
+                            <span id="clearSearchLabel" [hidden]="true" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.clearSearch"></span>
+                            <fa-icon [icon]="faTimes" size="xs" />
+                        </button>
+                    }
+                    <span class="input-group-text" [hidden]="!searchText" id="searchResult">
+                        @switch (totalNumberOfPosts) {
+                            @case (0) {
+                                <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsNone"></span>
+                            }
+                            @case (1) {
+                                <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsSingle"></span>
+                            }
+                            @default {
+                                <span
+                                    jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple"
+                                    [translateValues]="{ count: totalNumberOfPosts }"
+                                ></span>
+                            }
                         }
-                        <span class="input-group-text" [hidden]="!searchText" id="searchResult">
-                            @switch (totalNumberOfPosts) {
-                                @case (0) {
-                                    <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsNone"></span>
-                                }
-                                @case (1) {
-                                    <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsSingle"></span>
-                                }
-                                @default {
-                                    <span
-                                        jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple"
-                                        [translateValues]="{ count: totalNumberOfPosts }"
-                                    ></span>
-                                }
-                            }
-                        </span>
-                    </div>
-                }
-            </div>
-            <div class="mt-3">
-                <!-- loading messages -->
-                @if (isFetchingPosts) {
-                    <div class="envelope">
-                        <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
-                    </div>
-                }
-                <!-- no message exist -->
-                @if (!isFetchingPosts && (posts.length === 0 || !_activeConversation)) {
-                    <div class="envelope">
-                        <fa-icon size="5x" [icon]="faEnvelope" />
-                    </div>
-                }
-                <!-- list of messages -->
-                <div
-                    id="scrollableDiv"
-                    #container
-                    [ngClass]="{
-                        'posting-infinite-scroll-container': posts.length !== 0,
-                        'content-height-dev': contentHeightDev,
-                        'is-fetching-posts': isFetchingPosts,
-                        'hide-input-full': isHiddenInputFull,
-                        'hide-input': isHiddenInputWithCallToAction,
-                    }"
-                    infinite-scroll
-                    class="conversation-messages-message-list position-relative"
-                    [scrollWindow]="false"
-                    (scrolledUp)="fetchNextPage()"
-                >
-                    <!-- list of all top level posts -->
-                    <!-- answers are opened in the thread sidebar -->
-                    @for (group of groupedPosts; track postsGroupTrackByFn($index, group)) {
-                        <div class="message-group">
-                            @for (post of group.posts; track postsTrackByFn($index, post)) {
-                                <div class="post-item">
-                                    <jhi-posting-thread
-                                        #postingThread
-                                        [lastReadDate]="_activeConversation?.lastReadDate"
-                                        [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
-                                        [id]="'item-' + post.id"
-                                        [post]="post"
-                                        [showAnswers]="false"
-                                        [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
-                                        [isCommunicationPage]="true"
-                                        (openThread)="setPostForThread($event)"
-                                        [isConsecutive]="post.isConsecutive || false"
-                                    />
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
-                        <div class="px-3">
-                            @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
-                                <div class="pt-2">
-                                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
-                                    <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
-                                </div>
-                            } @else {
-                                <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" [course]="course" />
-                            }
-                        </div>
-                    }
+                    </span>
                 </div>
-                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
-                    <div class="d-none d-sm-block px-3">
+            }
+        </div>
+        <div class="channel-content">
+            <!-- loading messages -->
+            @if (isFetchingPosts) {
+                <div class="envelope">
+                    <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
+                </div>
+            }
+            <!-- no message exist -->
+            @if (!isFetchingPosts && (posts.length === 0 || !_activeConversation)) {
+                <div class="envelope">
+                    <fa-icon size="5x" [icon]="faEnvelope" />
+                </div>
+            }
+            <!-- list of messages -->
+            <div
+                id="scrollableDiv"
+                #container
+                [ngClass]="{
+                    'posting-infinite-scroll-container': posts.length !== 0,
+                    'content-height-dev': contentHeightDev,
+                    'is-fetching-posts': isFetchingPosts,
+                    'hide-input-full': isHiddenInputFull,
+                    'hide-input': isHiddenInputWithCallToAction,
+                }"
+                infinite-scroll
+                class="conversation-messages-message-list position-relative"
+                [scrollWindow]="false"
+                (scrolledUp)="fetchNextPage()"
+            >
+                <!-- list of all top level posts -->
+                <!-- answers are opened in the thread sidebar -->
+                @for (group of groupedPosts; track postsGroupTrackByFn($index, group)) {
+                    <div class="message-group">
+                        @for (post of group.posts; track postsTrackByFn($index, post)) {
+                            <div class="post-item">
+                                <jhi-posting-thread
+                                    #postingThread
+                                    [lastReadDate]="_activeConversation?.lastReadDate"
+                                    [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
+                                    [id]="'item-' + post.id"
+                                    [post]="post"
+                                    [showAnswers]="false"
+                                    [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
+                                    [isCommunicationPage]="true"
+                                    (openThread)="setPostForThread($event)"
+                                    [isConsecutive]="post.isConsecutive || false"
+                                    [forwardedPosts]="post.forwardedPosts || []"
+                                    [forwardedAnswerPosts]="post.forwardedAnswerPosts || []"
+                                    (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                                />
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
+                    <div class="px-3">
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
                                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
@@ -128,6 +117,18 @@
                     </div>
                 }
             </div>
+            @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
+                <div class="d-none d-sm-block px-3">
+                    @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
+                        <div class="pt-2">
+                            <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                            <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
+                        </div>
+                    } @else {
+                        <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" />
+                    }
+                </div>
+            }
         </div>
     </div>
 }

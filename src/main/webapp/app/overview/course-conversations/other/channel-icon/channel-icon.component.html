@@ -1,14 +1,3 @@
 <ng-container>
-    @if (isArchived()) {
-        <fa-icon [icon]="faBoxArchive" size="xs" />
-    }
-    @if (isPublic()) {
-        <fa-icon [icon]="faHashtag" size="xs" />
-    }
-    @if (!isPublic()) {
-        <fa-icon [icon]="faLock" size="xs" />
-    }
-    @if (isAnnouncementChannel()) {
-        <fa-icon [icon]="faBullhorn" size="xs" />
-    }
+    <fa-icon [icon]="getIcon()" size="xs" />
 </ng-container>

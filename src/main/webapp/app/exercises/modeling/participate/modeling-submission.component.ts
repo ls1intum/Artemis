@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
@@ -57,6 +57,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -87,7 +88,7 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private jhiWebsocketService = inject(WebsocketService);
+    private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
@@ -95,6 +96,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
@@ -415,8 +417,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.automaticSubmissionWebsocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
-        this.jhiWebsocketService.subscribe(this.automaticSubmissionWebsocketChannel);
-        this.jhiWebsocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
+        this.websocketService.subscribe(this.automaticSubmissionWebsocketChannel);
+        this.websocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.model) {
@@ -631,7 +633,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
                     this.subscribeToWebsockets();
                     if (this.automaticSubmissionWebsocketChannel) {
-                        this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+                        this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
                     }
                     this.onSaveSuccess();
                 },
@@ -694,7 +696,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         clearInterval(this.autoSaveInterval);
 
         if (this.automaticSubmissionWebsocketChannel) {
-            this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+            this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }
         if (this.manualResultUpdateListener) {
             this.manualResultUpdateListener.unsubscribe();
@@ -827,6 +829,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const model: UMLModel = this.modelingEditor.getCurrentModel();
         const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
     }
 
     /**

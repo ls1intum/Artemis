@@ -28,6 +28,12 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
+    stage('Install Dependencies') {
+        sh '''
+        cd tests
+        bundler install
+        '''
+    }
     stage('Test') {
         sh '''
         cd tests

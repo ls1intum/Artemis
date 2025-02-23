@@ -16,7 +16,8 @@ import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { ArtemisTestModule } from '../../../../../test.module';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupSessionRowComponent', () => {
     let component: TutorialGroupSessionRowComponent;
@@ -26,9 +27,9 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTestModule],
+            imports: [FormsModule, MockDirective(NgbPopover), ArtemisTranslatePipe, ArtemisDatePipe],
             declarations: [TutorialGroupSessionRowComponent],
-            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService)],
+            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupSessionRowComponent);

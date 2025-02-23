@@ -7,11 +7,7 @@
                 </button>
                 <h4 class="pointer d-inline-block rounded py-2 info mb-0" (click)="openConversationDetailDialog($event, INFO)">
                     @if (activeConversationAsChannel) {
-                        <jhi-channel-icon
-                            [isPublic]="activeConversationAsChannel.isPublic!"
-                            [isArchived]="activeConversationAsChannel.isArchived!"
-                            [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
-                        />
+                        <jhi-channel-icon [isPublic]="activeConversationAsChannel.isPublic!" [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!" />
                     }
                     @if (getAsGroupChat(activeConversation)) {
                         <fa-icon [icon]="faPeopleGroup" size="xs" />
@@ -37,7 +33,7 @@
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
                     <div class="p-2">
                         <a
-                            class="btn btn-info"
+                            class="btn btn-info btn-sm"
                             [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
                             role="button"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
@@ -49,6 +45,29 @@
             <div class="d-flex flex-wrap gap-2 py-2 px-3">
                 <div class="btn-toolbar" role="toolbar">
                     <div class="btn-group me-1" role="group">
+                        @if (pinnedMessageCount() > 0) {
+                            <div class="pinned-messages-button">
+                                <button type="button" (click)="togglePinnedMessages()" class="btn btn-sm btn-outline-secondary">
+                                    @if (showPinnedMessages) {
+                                        <jhi-emoji class="fs-x-small" emoji="x" />
+                                    } @else {
+                                        <jhi-emoji emoji="pushpin" />
+                                    }
+                                    <span>
+                                        {{
+                                            showPinnedMessages
+                                                ? ('artemisApp.metis.showing' | artemisTranslate) +
+                                                  (pinnedMessageCount() === 1
+                                                      ? ('artemisApp.metis.singlePinned' | artemisTranslate)
+                                                      : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
+                                                : pinnedMessageCount() === 1
+                                                  ? ('artemisApp.metis.singlePinned' | artemisTranslate)
+                                                  : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
+                                        }}
+                                    </span>
+                                </button>
+                            </div>
+                        }
                         <button type="button" class="btn btn-outline-secondary btn-sm search" (click)="toggleSearchBar()">
                             <fa-icon [icon]="faSearch" />
                         </button>

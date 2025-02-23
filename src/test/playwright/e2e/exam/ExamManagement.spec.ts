@@ -39,7 +39,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await examManagement.openExerciseGroups(exam.id!);
                 await examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
                 const textExerciseTitle = 'Text ' + generateUUID();
-                await textExerciseCreation.typeTitle(textExerciseTitle);
+                await textExerciseCreation.setTitle(textExerciseTitle);
                 await textExerciseCreation.typeMaxPoints(10);
                 const response = await textExerciseCreation.create();
                 expect(response.status()).toBe(201);

@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
 export class PostService extends PostingService<Post> {
-    protected http = inject(HttpClient);
+    private http = inject(HttpClient);
 
     public resourceUrl = 'api/courses/';
 
@@ -24,9 +24,9 @@ export class PostService extends PostingService<Post> {
 
     /**
      * creates a post
-     * @param {number} courseId
-     * @param {Post} post
-     * @return {Observable<EntityResponseType>}
+     * @param courseId
+     * @param post
+     * @return the created post
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
@@ -38,9 +38,9 @@ export class PostService extends PostingService<Post> {
     /**
      * gets all posts for course by its id, filtered by context if PostContextFilter is passed
      * a context to filter posts for can be a course-wide topic, a lecture, or an exercise within a course
-     * @param {number} courseId
-     * @param {PostContextFilter} postContextFilter
-     * @return {Observable<EntityArrayResponseType>}
+     * @param courseId
+     * @param postContextFilter
+     * @return the posts
      */
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
         let params = new HttpParams();
@@ -77,6 +77,9 @@ export class PostService extends PostingService<Post> {
             params = params.set('page', postContextFilter.page!);
             params = params.set('size', postContextFilter.pageSize!);
         }
+        if (postContextFilter.pinnedOnly) {
+            params = params.set('pinnedOnly', postContextFilter.pinnedOnly);
+        }
         return this.http
             .get<Post[]>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(postContextFilter, undefined)}`, {
                 params,
@@ -87,9 +90,9 @@ export class PostService extends PostingService<Post> {
 
     /**
      * updates a post
-     * @param {number} courseId
-     * @param {Post} post
-     * @return {Observable<EntityResponseType>}
+     * @param courseId
+     * @param post
+     * @return the updated post
      */
     update<T extends Posting>(courseId: number, post: T): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
@@ -100,10 +103,10 @@ export class PostService extends PostingService<Post> {
 
     /**
      * updates the display priority of a post
-     * @param {number} courseId
-     * @param {number} postId
-     * @param {DisplayPriority} displayPriority
-     * @return {Observable<EntityResponseType>}
+     * @param courseId
+     * @param postId
+     * @param displayPriority
+     * @return the updated post
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
@@ -113,18 +116,29 @@ export class PostService extends PostingService<Post> {
 
     /**
      * deletes a post
-     * @param {number} courseId
-     * @param {Post} post
-     * @return {Observable<HttpResponse<void>>}
+     * @param courseId
+     * @param post
+     * @return void
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
     }
 
     /**
+     * gets source posts(original (forwarded) posts in posts) of posts
+     * @param {number} courseId
+     * @param {number[]} postIds
+     * @return {Observable<Post[]>}
+     */
+    getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
+        const params = new HttpParams().set('postIds', postIds.join(','));
+        return this.http.get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
+    }
+
+    /**
      * takes an array of posts and converts the date from the server
-     * @param   {HttpResponse<Post[]>} res
-     * @return  {HttpResponse<Post[]>}
+     * @param res
+     * @return the response with the converted date
      */
     convertPostResponseArrayDatesFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
         if (res.body) {

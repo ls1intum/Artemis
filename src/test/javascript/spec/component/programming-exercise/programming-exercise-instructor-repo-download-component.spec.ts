@@ -4,7 +4,8 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorRepoDownloadComponent;
@@ -41,7 +42,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
 
     it('should download the repos', () => {
         component.exerciseId = 1;
-        const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS', 'AUXILIARY'];
+        const repoTypes: RepositoryType[] = [RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS, RepositoryType.AUXILIARY];
         repoTypes.forEach((repoType) => {
             const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
             component.repositoryType = repoType;

@@ -28,7 +28,6 @@ describe('WebsocketService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), IrisWebsocketService, WebsocketService, { provide: AccountService, useClass: MockAccountService }],
         });
         irisWebsocketService = TestBed.inject(IrisWebsocketService);
