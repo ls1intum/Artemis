@@ -430,7 +430,6 @@ public class ResultService {
                 continue;
             }
             var submission = optionalSubmission.get();
-
             participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
                 submission.getLatestResult().setSubmission(submission);

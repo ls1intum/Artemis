@@ -132,10 +132,7 @@ public class SubmissionFilterService {
         }
         else {
             var result = quizSubmission.getLatestResult();
-            if (result == null) {
-                return false;
-            }
-            return Boolean.TRUE.equals(result.isRated()) && result.isAssessmentComplete();
+            return result != null && Boolean.TRUE.equals(result.isRated()) && result.isAssessmentComplete();
         }
     }
 }

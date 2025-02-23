@@ -70,24 +70,22 @@ public class ParticipationFilterService {
 
         Set<Result> results = Set.of();
 
-        if (optionalSubmission.isPresent() && optionalSubmission.get().getLatestResult() != null) {
-            results = Set.of(optionalSubmission.get().getLatestResult());
-            // remove inner participation from result
-            optionalSubmission.get().getLatestResult().setParticipation(null);
-            // filter sensitive information about the assessor if the current user is a student
-            if (isStudent) {
-                optionalSubmission.get().getLatestResult().filterSensitiveInformation();
+        if (optionalSubmission.isPresent()) {
+            var submission = optionalSubmission.get();
+            var latestResult = submission.getLatestResult();
+            if (latestResult != null) {
+                results = Set.of(latestResult);
+                latestResult.setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    latestResult.filterSensitiveInformation();
+                }
             }
-        }
-
-        // filter sensitive information in submission's result
-        if (isStudent && optionalSubmission.isPresent() && optionalSubmission.get().getLatestResult() != null) {
-            optionalSubmission.get().getLatestResult().filterSensitiveInformation();
+            submission.setResults(new ArrayList<>(results));
         }
 
         // add submission to participation or set it to null
         participation.setSubmissions(optionalSubmission.map(Set::of).orElse(null));
-
         participation.setResults(results);
         if (optionalSubmission.isPresent()) {
             optionalSubmission.get().setResults(new ArrayList<>(results));
