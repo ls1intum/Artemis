@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -11,9 +11,13 @@ import { of, throwError } from 'rxjs';
 import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
 import { Team } from '../../../../../main/webapp/app/entities/team.model';
 import { mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('TeamComponent', () => {
     let comp: TeamComponent;
@@ -28,8 +32,18 @@ describe('TeamComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [MockProvider(SessionStorageService), MockProvider(LocalStorageService), MockProvider(AccountService), TeamService, ExerciseService],
+            providers: [
+                MockProvider(SessionStorageService),
+                MockProvider(LocalStorageService),
+                TeamService,
+                ExerciseService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

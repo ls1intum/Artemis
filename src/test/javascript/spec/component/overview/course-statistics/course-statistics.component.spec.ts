@@ -18,8 +18,11 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -319,12 +322,15 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NoopAnimationsModule],
+            imports: [NoopAnimationsModule],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: { parent: { params: of(1) } },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

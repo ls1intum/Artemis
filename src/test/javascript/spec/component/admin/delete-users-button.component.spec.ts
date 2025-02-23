@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { AlertService } from 'app/core/util/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('DeleteUsersButtonComponent', () => {
     let comp: DeleteUsersButtonComponent;
@@ -20,7 +21,7 @@ describe('DeleteUsersButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

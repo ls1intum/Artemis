@@ -23,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
     metisChannel,
     metisCourse,
@@ -41,14 +41,17 @@ import {
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
-import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import 'jest-extended';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
+import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -60,6 +63,7 @@ describe('Metis Service', () => {
     let websocketService: WebsocketService;
     let reactionService: ReactionService;
     let postService: PostService;
+    let forwardedMessageService: ForwardedMessageService;
     let answerPostService: AnswerPostService;
     let conversationService: ConversationService;
     let post: Post;
@@ -68,10 +72,13 @@ describe('Metis Service', () => {
     let course: Course;
     let savedPostService: SavedPostService;
     let setIsSavedAndStatusOfPostSpy: jest.SpyInstance;
+    let originalPosts: Posting[];
+    let targetConversation: Conversation;
+    let newContent: string;
+    let forwardedMessageCreateSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -81,6 +88,7 @@ describe('Metis Service', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
+                { provide: ForwardedMessageService, useClass: MockForwardedMessageService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -92,6 +100,7 @@ describe('Metis Service', () => {
         websocketService = TestBed.inject(WebsocketService);
         reactionService = TestBed.inject(ReactionService);
         postService = TestBed.inject(PostService);
+        forwardedMessageService = TestBed.inject(ForwardedMessageService);
         answerPostService = TestBed.inject(AnswerPostService);
         conversationService = TestBed.inject(ConversationService);
         savedPostService = TestBed.inject(SavedPostService);
@@ -106,6 +115,17 @@ describe('Metis Service', () => {
         answerPost = metisResolvingAnswerPostUser1;
         reaction = metisReactionUser2;
         course = metisCourse;
+        originalPosts = [{ id: 111 }, { id: 222 }] as Posting[];
+        targetConversation = { id: 999, type: ConversationType.CHANNEL } as Conversation;
+        newContent = 'Forwarded content';
+
+        forwardedMessageCreateSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
+            of(
+                new HttpResponse({
+                    body: { ...fm, id: Math.floor(Math.random() * 10000) } as ForwardedMessage,
+                }),
+            ),
+        );
     });
 
     afterEach(() => {
@@ -693,6 +713,181 @@ describe('Metis Service', () => {
             expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
         });
     });
+
+    it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', fakeAsync(() => {
+        metisService.setCourse(course);
+        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+        const postIds = [1, 2, 3];
+
+        metisService.getForwardedMessagesByIds(postIds, PostingType.POST);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST, course.id);
+        forwardedMessageServiceSpy.mockClear();
+
+        metisService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER, course.id);
+        tick();
+    }));
+
+    it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', fakeAsync(() => {
+        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+
+        metisService.getForwardedMessagesByIds([], PostingType.POST);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
+        metisService.getForwardedMessagesByIds([], PostingType.ANSWER);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
+        metisService.getForwardedMessagesByIds(undefined as any, PostingType.POST);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+        tick();
+    }));
+
+    it('should call PostService.getSourcePostsByIds with correct parameters', fakeAsync(() => {
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
+        const postIds = [4, 5, 6];
+
+        metisService.getSourcePostsByIds(postIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        tick();
+    }));
+
+    it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', fakeAsync(() => {
+        const postServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        const answerPostIds = [7, 8, 9];
+
+        metisService.getSourceAnswerPostsByIds(answerPostIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], answerPostIds);
+        tick();
+    }));
+
+    it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
+        const postIds: number[] | undefined = undefined;
+        metisService.getSourcePostsByIds(postIds as any);
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
+
+        expect(postServiceSpy).not.toHaveBeenCalled();
+        tick();
+    }));
+
+    it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
+        const answerPostIds: number[] | undefined = undefined;
+        metisService.getSourceAnswerPostsByIds(answerPostIds as any);
+        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        expect(answerPostServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should create forwarded messages and update cached posts', fakeAsync(() => {
+        const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
+        metisService.setCourse(course);
+        const targetConversation: Conversation = { id: 1, type: ConversationType.CHANNEL } as Conversation;
+        const isAnswer = false;
+        const newContent = 'Forwarded content';
+
+        const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
+        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, isAnswer, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(postService.create).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({ content: newContent }));
+        expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
+        expect(result?.length).toBe(originalPosts.length);
+        expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBeTrue();
+    }));
+
+    it('should throw an error if course ID is not set before forwarding', fakeAsync(() => {
+        metisService.setCourse(undefined);
+        let errorThrown: Error | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        tick();
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toContain('Course ID is not set');
+        expect(forwardedMessageCreateSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should fail if any forwardedMessageService.createForwardedMessage fails', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        forwardedMessageCreateSpy
+            .mockReturnValueOnce(
+                of(
+                    new HttpResponse({
+                        body: { id: 5678, sourcePostId: 111 } as unknown as ForwardedMessage,
+                    }),
+                ),
+            )
+            .mockReturnValueOnce(throwError(() => new Error('Some forwardedMessage creation error')));
+
+        let errorThrown: Error | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        tick();
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toBe('Some forwardedMessage creation error');
+        expect(forwardedMessageCreateSpy).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should NOT update local cache if target conversation differs from currentConversation', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        metisService.getFilteredPosts({ conversationId: 101 } as PostContextFilter, false, { id: 101 } as ChannelDTO);
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(result).toHaveLength(originalPosts.length);
+        expect(metisService['cachedPosts'].findIndex((p) => p.id === 123)).toBe(-1);
+    }));
+
+    it('should NOT add newly created post to cache if it already exists in cache', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        metisService.getFilteredPosts({ conversationId: targetConversation.id } as PostContextFilter, false, targetConversation);
+
+        metisService['cachedPosts'] = [{ id: 123, content: 'cached content', conversation: targetConversation } as Post];
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(result).toHaveLength(originalPosts.length);
+        const matchesInCache = metisService['cachedPosts'].filter((p) => p.id === 123);
+        expect(matchesInCache).toHaveLength(1);
+    }));
+
+    it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', fakeAsync(() => {
+        metisService.setCourse(course);
+        const targetConversation: Conversation = { id: 2 } as Conversation;
+        const originalAnswerPosts: Posting[] = [{ id: 10, content: 'originalAnswer1' } as Posting, { id: 11, content: 'originalAnswer2' } as Posting];
+
+        const createdPost: Post = { id: 200, content: 'Forwarded answer container', hasForwardedMessages: true } as Post;
+        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+
+        const createFwSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1234 } as ForwardedMessage })));
+
+        let result: ForwardedMessage[] = [];
+        metisService.createForwardedMessages(originalAnswerPosts, targetConversation, true, 'some content').subscribe((res) => (result = res));
+        tick();
+
+        expect(postService.create).toHaveBeenCalled();
+        expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
+
+        createFwSpy.mock.calls.forEach(([argForwardedMessage]) => {
+            expect(argForwardedMessage.sourceType).toBe(1); // ANSWER==1
+        });
+
+        expect(result).toHaveLength(originalAnswerPosts.length);
+    }));
 
     describe('Save post methods', () => {
         it('should save a post and update cached posts', () => {
