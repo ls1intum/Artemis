@@ -31,22 +31,22 @@
                 "commitHash": "Commit Hash",
                 "timeStamp": "Timestamp",
                 "error": "VCS Access log could not be retrieved"
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Solution-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Auxiliary Repository"
             }
-        },
-        "userRepository": {
-            "title": "Assignment-Repository"
-        },
-        "templateRepository": {
-            "title": "Template-Repository"
-        },
-        "solutionRepository": {
-            "title": "Solution-Repository"
-        },
-        "testsRepository": {
-            "title": "Test-Repository"
-        },
-        "auxiliaryRepository": {
-            "title": "Auxiliary Repository"
         }
     }
 }
