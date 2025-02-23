@@ -33,7 +33,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
     router = inject(Router);
 
-    //@Input() course?: Course;
     course = input<Course>();
 
     warningDismissed = false;
