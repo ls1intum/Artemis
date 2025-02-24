@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,6 +5,7 @@ import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
@@ -51,7 +51,7 @@ describe('SCA category distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);

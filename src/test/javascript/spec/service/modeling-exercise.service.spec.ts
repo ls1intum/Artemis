@@ -27,7 +27,6 @@ describe('ModelingExercise Service', () => {
     const categories = [JSON.stringify(category) as unknown as ExerciseCategory] as ExerciseCategory[];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
+import dayjs from 'dayjs/esm';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -361,6 +362,16 @@ export class AccountService implements IAccountService {
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
         return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Sets externalLLMUsageAccepted to current timestamp locally, to omit accepting external LLM usage
+     * popup appearing multiple time before user refreshes the page.
+     */
+    setUserAcceptedExternalLLMUsage(): void {
+        if (this.userIdentity) {
+            this.userIdentity.externalLLMUsageAccepted = dayjs();
+        }
     }
 
     /**

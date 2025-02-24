@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
@@ -8,6 +7,8 @@ import { By } from '@angular/platform-browser';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('JvmThreadsComponent', () => {
     let comp: JvmThreadsComponent;
@@ -16,9 +17,12 @@ describe('JvmThreadsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbProgressbar)],
+            imports: [MockComponent(NgbProgressbar)],
             declarations: [JvmThreadsComponent],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(JvmThreadsComponent);

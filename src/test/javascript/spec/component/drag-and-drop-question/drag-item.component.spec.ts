@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('DragItemComponent', () => {
     let fixture: ComponentFixture<DragItemComponent>;
@@ -9,7 +8,7 @@ describe('DragItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDropModule],
+            imports: [DragDropModule],
         })
             .compileComponents()
             .then(() => {

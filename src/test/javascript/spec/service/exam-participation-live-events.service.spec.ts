@@ -35,7 +35,6 @@ describe('ExamParticipationLiveEventsService', () => {
         mockWebsocketService = tmpMockWebsocketService as unknown as WebsocketService;
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

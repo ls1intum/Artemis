@@ -3,7 +3,6 @@ import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programm
 import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -16,6 +15,12 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let comp: ProgrammingExerciseCustomAeolusBuildPlanComponent;
@@ -58,14 +63,19 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ProgrammingExerciseCustomAeolusBuildPlanComponent,
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(MonacoEditorComponent),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

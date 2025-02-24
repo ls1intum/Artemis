@@ -17,9 +17,10 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -48,7 +49,7 @@ describe('Course LTI Configuration Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule)],
+            imports: [NgbNavModule, MockModule(NgbTooltipModule)],
             declarations: [CourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [
                 MockProvider(CourseManagementService),
@@ -61,6 +62,7 @@ describe('Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

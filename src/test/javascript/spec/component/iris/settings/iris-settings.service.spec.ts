@@ -11,7 +11,6 @@ describe('Iris Settings Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), IrisSettingsService],
         });
         service = TestBed.inject(IrisSettingsService);
