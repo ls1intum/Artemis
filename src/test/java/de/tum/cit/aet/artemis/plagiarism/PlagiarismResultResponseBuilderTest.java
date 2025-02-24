@@ -29,7 +29,7 @@ class PlagiarismResultResponseBuilderTest {
     @Test
     void shouldReturnCorrectResponseForManualChecks() {
         // given
-        var plagiarismResult = createPlagiarismResult("user abc");
+        var plagiarismResult = createPlagiarismResult();
 
         // when
         var response = PlagiarismResultResponseBuilder.buildPlagiarismResultResponse(plagiarismResult);
@@ -42,13 +42,12 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
-        assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("user abc");
     }
 
     @Test
     void shouldReturnCorrectResponseForCpcChecks() {
         // given
-        var plagiarismResult = createPlagiarismResult("system");
+        var plagiarismResult = createPlagiarismResult();
 
         // when
         var response = PlagiarismResultResponseBuilder.buildPlagiarismResultResponse(plagiarismResult);
@@ -61,10 +60,9 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
-        assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("CPC");
     }
 
-    private static TextPlagiarismResult createPlagiarismResult(String system) {
+    private static TextPlagiarismResult createPlagiarismResult() {
         var submissionA = new PlagiarismSubmission<>();
         submissionA.setSubmissionId(1L);
         var submissionB = new PlagiarismSubmission<>();
@@ -84,7 +82,6 @@ class PlagiarismResultResponseBuilderTest {
 
         var plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setComparisons(Set.of(comparison1, comparison2));
-        plagiarismResult.setCreatedBy(system);
         return plagiarismResult;
     }
 

@@ -55,16 +55,8 @@ public abstract class ExamLiveEvent extends DomainObject {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public Instant getCreatedDate() {
         return createdDate;
-    }
-
-    public void setCreatedDate(Instant createdDate) {
-        this.createdDate = createdDate;
     }
 
     public Long getExamId() {
