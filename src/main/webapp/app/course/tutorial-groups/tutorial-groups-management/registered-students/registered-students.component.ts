@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -7,22 +7,29 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, CourseGroupComponent],
 })
 export class RegisteredStudentsComponent implements OnDestroy {
-    @Input()
-    course: Course;
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private courseService = inject(CourseManagementService);
+    private cdr = inject(ChangeDetectorRef);
 
-    @Input()
-    tutorialGroupId: number;
+    @Input() course: Course;
+    @Input() tutorialGroupId: number;
 
     tutorialGroup: TutorialGroup;
     isLoading = false;
@@ -48,15 +55,6 @@ export class RegisteredStudentsComponent implements OnDestroy {
         }
     }
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private cdr: ChangeDetectorRef,
-    ) {}
-
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
@@ -64,7 +62,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
             this.loadAll();

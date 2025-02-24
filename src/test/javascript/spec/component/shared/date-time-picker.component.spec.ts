@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockModule } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -15,13 +15,14 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
-            declarations: [FormDateTimePickerComponent, MockDirective(NgModel)],
+            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
+            declarations: [FormDateTimePickerComponent],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FormDateTimePickerComponent);
                 component = fixture.componentInstance;
+                component.dateInput = { reset: jest.fn() } as any;
             });
     });
 
@@ -62,13 +63,13 @@ describe('FormDateTimePickerComponent', () => {
         it('should write the correct date if date is dayjs object', () => {
             component.writeValue(normalDate);
 
-            expect(component.value).toEqual(normalDateAsDateObject);
+            expect(component.value()).toEqual(normalDateAsDateObject);
         });
 
         it('should write the correct date if date is date object', () => {
             component.writeValue(normalDateAsDateObject);
 
-            expect(component.value).toEqual(normalDateAsDateObject);
+            expect(component.value()).toEqual(normalDateAsDateObject);
         });
     });
 
@@ -87,27 +88,40 @@ describe('FormDateTimePickerComponent', () => {
         component.registerOnChange(onChangeSpy);
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
         const newDate = normalDate.add(2, 'days');
-        component.value = normalDate;
+        fixture.componentRef.setInput('value', normalDate);
+        fixture.detectChanges();
 
         component.updateField(newDate);
 
-        expect(component.value).toEqual(newDate);
+        expect(component.value()).toEqual(newDate);
         expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
         expect(valueChangedStub).toHaveBeenCalledOnce();
     });
 
     it('should have working getters', () => {
-        component.min = normalDate;
-        component.max = normalDate;
-        component.startAt = normalDate;
+        const expectedMinDate = normalDate.subtract(2, 'day');
+        const expectedMaxDate = normalDate.add(2, 'day');
+        const expectedStartDate = normalDate.add(1, 'day');
+
+        fixture.componentRef.setInput('min', expectedMinDate);
+        fixture.componentRef.setInput('max', expectedMaxDate);
+        fixture.componentRef.setInput('startAt', expectedStartDate);
         const timeZone = component.currentTimeZone;
-        const minDate = component.minDate;
-        const maxDate = component.maxDate;
-        const startDate = component.startDate;
+
         expect(timeZone).toBeDefined();
-        expect(minDate).toBeDefined();
-        expect(maxDate).toBeDefined();
-        expect(startDate).toBeDefined();
+        expect(dayjs(component.minDate())).toEqual(expectedMinDate);
+        expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
+        expect(dayjs(component.startDate())).toEqual(expectedStartDate);
+    });
+
+    it('should clear the datepicker value', () => {
+        const resetSpy = jest.spyOn(component.dateInput, 'reset').mockImplementation();
+        const updateSignalsSpy = jest.spyOn(component, 'updateSignals').mockImplementation();
+
+        component.clearDate();
+
+        expect(resetSpy).toHaveBeenCalledWith(undefined);
+        expect(updateSignalsSpy).toHaveBeenCalled();
     });
 });

@@ -1,38 +1,47 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, model } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import {
-    CompetencyRelation,
-    CompetencyRelationDTO,
-    CompetencyWithTailRelationDTO,
-    CourseCompetency,
-    CourseCompetencyType,
-    dtoToCompetencyRelation,
-    getIcon,
-} from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RouterModule } from '@angular/router';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
-    standalone: true,
-    imports: [ArtemisSharedModule, ArtemisMarkdownModule],
+    imports: [
+        NgbProgressbar,
+        NgbDropdown,
+        NgbDropdownMenu,
+        NgbDropdownToggle,
+        HtmlForMarkdownPipe,
+        TranslateDirective,
+        FontAwesomeModule,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+        RouterModule,
+        ArtemisDatePipe,
+    ],
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
-    @Input() courseCompetencies: CourseCompetency[];
-    @Input() relations: CompetencyRelation[];
+    @Input() courseCompetencies: CourseCompetency[] = [];
     @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
+
+    allCompetencies = model.required<CourseCompetency[]>();
 
     @Output() competencyDeleted = new EventEmitter<number>();
 
@@ -103,14 +112,9 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-
-        const importedRelations = res
-            .map((dto) => dto.tailRelations)
-            .flat()
-            .filter((element): element is CompetencyRelationDTO => !!element)
-            .map((dto) => dtoToCompetencyRelation(dto));
-        this.courseCompetencies.push(...importedCompetencies);
-        this.relations.push(...importedRelations);
+        const newCourseCompetencies = importedCompetencies.filter((competency) => !this.courseCompetencies.some((existingCompetency) => existingCompetency.id === competency.id));
+        this.courseCompetencies.push(...newCourseCompetencies);
+        this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
     }
 
     /**

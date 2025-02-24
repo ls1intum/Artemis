@@ -11,32 +11,30 @@
                 [showBadge]="showBadge"
                 [showIcon]="showIcon"
                 [isInSidebarCard]="isInSidebarCard"
+                [showCompletion]="showCompletion"
                 [short]="short"
                 [personalParticipation]="true"
+                [showProgressBar]="showProgressBar"
             />
         </span>
     } @else {
         <div>
             @if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort"></span>
-            }
-            @if (uninitialized) {
+            } @else if (uninitialized) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort"></span>
-            }
-            @if (exerciseMissedDueDate) {
+            } @else if (exerciseMissedDueDate) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort"></span>
-            }
-            @if (notSubmitted) {
+            } @else if (notSubmitted) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort"></span>
-            }
-            @if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
+            } @else if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userSubmittedShort"></span>
-            }
-            @if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ) {
+            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
-            }
-            @if (quizNotStarted) {
+            } @else if (quizNotStarted) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
+            } @else {
+                <span class="text-body-secondary">-</span>
             }
         </div>
     }

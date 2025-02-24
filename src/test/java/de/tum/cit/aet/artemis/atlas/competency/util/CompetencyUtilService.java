@@ -8,19 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
@@ -32,16 +34,16 @@ public class CompetencyUtilService {
     private CompetencyRepository competencyRepo;
 
     @Autowired
-    private LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    private ExerciseTestRepository exerciseRepository;
-
-    @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
     private CompetencyJolRepository competencyJOLRepository;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
+
+    @Autowired
+    private CompetencyLectureUnitLinkTestRepository competencyLectureUnitLinkRepository;
 
     /**
      * Creates and saves a Competency for the given Course.
@@ -72,8 +74,11 @@ public class CompetencyUtilService {
         Competency competency = new Competency();
         competency.setTitle("ExampleCompetency");
         competency.setCourse(course);
-        competency.addExercise(exercise);
-        return competencyRepo.save(competency);
+        competency = competencyRepo.save(competency);
+
+        var link = new CompetencyExerciseLink(competency, exercise, 1);
+        link = competencyExerciseLinkRepository.save(link);
+        return (Competency) link.getCompetency();
     }
 
     /**
@@ -136,8 +141,8 @@ public class CompetencyUtilService {
      * @param lectureUnit The LectureUnit to update
      */
     public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
-        lectureUnit.getCompetencies().add(competency);
-        return lectureUnitRepository.save(lectureUnit);
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, lectureUnit, 1);
+        return competencyLectureUnitLinkRepository.save(link).getLectureUnit();
     }
 
     /**
@@ -148,8 +153,8 @@ public class CompetencyUtilService {
      * @return The updated Exercise
      */
     public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
-        exercise.getCompetencies().add(competency);
-        return exerciseRepository.save(exercise);
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, exercise, 1);
+        return competencyExerciseLinkRepository.save(link).getExercise();
     }
 
     /**

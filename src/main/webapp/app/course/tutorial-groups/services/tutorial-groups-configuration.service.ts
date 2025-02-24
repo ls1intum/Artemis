@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
@@ -9,9 +9,9 @@ type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsConfigurationService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
 
-    constructor(private httpClient: HttpClient) {}
+    private resourceURL = 'api';
 
     getOneOfCourse(courseId: number) {
         return this.httpClient

@@ -17,16 +17,18 @@
     </nav>
 }
 @if (exercise) {
-    <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== REPOSITORY.TEST" [course]="course" [allowHiddenFiles]="true">
+    <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== RepositoryType.TESTS" [course]="course" [allowHiddenFiles]="true">
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
-            <!-- prettier-ignore -->
-            <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-                <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-            }]
-            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"/>
-            }</span>
+            <span
+                [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+            ></span>
+            <span>
+                @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                }
+            </span>
         </div>
         <div editorTitleActions class="d-flex align-items-center ms-2">
             <jhi-programming-exercise-instructor-exercise-status
@@ -37,13 +39,15 @@
             />
             <!-- repository select -->
             <div ngbDropdown class="d-inline-block me-2">
-                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                    {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
+                </button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <button
                         [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                         (click)="selectTemplateParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? '#3e8acc' : 'transparent'"
                     >
                         <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                     </button>
@@ -51,7 +55,7 @@
                         [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                     >
                         <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
@@ -67,7 +71,7 @@
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
                     >
                         Assignment Participation
@@ -76,9 +80,23 @@
                         [disabled]="!exercise"
                         (click)="selectTestRepository()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
+                    @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
+                        @if (auxiliaryRepository.id) {
+                            <button
+                                [disabled]="!exercise"
+                                (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
+                                ngbDropdownItem
+                                [style.background-color]="
+                                    selectedRepository === RepositoryType.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? 'var(--link-color)' : 'transparent'
+                                "
+                            >
+                                {{ auxiliaryRepository.name }}
+                            </button>
+                        }
+                    }
                 </div>
             </div>
             <!-- action buttons -->
@@ -108,17 +126,19 @@
             </div>
         </div>
         <div editorToolbar class="ms-auto d-flex align-items-center">
-            @if (selectedParticipation && selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedParticipation && selectedRepository !== RepositoryType.TESTS) {
                 <jhi-updating-result
                     [exercise]="exercise"
                     [participation]="selectedParticipation!"
                     [showUngradedResults]="true"
-                    [showBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                    [showBadge]="selectedRepository === RepositoryType.ASSIGNMENT"
                     [personalParticipation]="false"
+                    [showProgressBar]="true"
+                    [showProgressBarBorder]="true"
                     class="me-2"
                 />
             }
-            @if (selectedRepository !== REPOSITORY.TEST) {
+            @if (selectedRepository !== RepositoryType.TESTS) {
                 <jhi-programming-exercise-student-trigger-build-button class="me-3" [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
             }
         </div>

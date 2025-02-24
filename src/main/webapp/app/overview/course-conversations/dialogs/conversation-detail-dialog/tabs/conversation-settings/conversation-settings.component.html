@@ -1,4 +1,4 @@
-@if (activeConversation && course) {
+@if (activeConversation() && course()) {
     <div class="container-fluid conversation-settings">
         @if (canLeaveConversation || canChangeChannelArchivalState || canDeleteChannel) {
             <div class="row settings-container">
@@ -13,24 +13,32 @@
                     }
                 </div>
                 @if (conversationAsChannel; as channel) {
-                    @if (!channel.isArchived && canChangeChannelArchivalState) {
+                    @if (canChangeChannelPrivacyState) {
                         <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger archive"
-                                (click)="openArchivalModal($event)"
-                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.archiveChannel"
-                            ></button>
+                            <button type="button" class="btn btn-danger privacy-toggle" (click)="toggleChannelPrivacy()">
+                                <fa-icon [icon]="channel.isPublic ? faLock : faHashtag" class="me-2" />
+                                <span
+                                    jhiTranslate="{{
+                                        channel.isPublic
+                                            ? 'artemisApp.dialogs.conversationSettings.actions.privateChannel'
+                                            : 'artemisApp.dialogs.conversationSettings.actions.publicChannel'
+                                    }}"
+                                ></span>
+                            </button>
                         </div>
                     }
-                    @if (channel.isArchived && canChangeChannelArchivalState) {
+                    @if (canChangeChannelArchivalState) {
                         <div class="col-12 settings-section text-center">
-                            <button
-                                type="button"
-                                class="btn btn-danger unarchive"
-                                (click)="openUnArchivalModal($event)"
-                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.unarchiveChannel"
-                            ></button>
+                            <button type="button" class="btn btn-danger archive-toggle" (click)="toggleChannelArchivalState($event)">
+                                <fa-icon [icon]="channel.isArchived ? faBoxOpen : faBoxArchive" class="me-2" />
+                                <span
+                                    jhiTranslate="{{
+                                        channel.isArchived
+                                            ? 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel'
+                                            : 'artemisApp.dialogs.conversationSettings.actions.archiveChannel'
+                                    }}"
+                                ></span>
+                            </button>
                         </div>
                     }
                     @if (canDeleteChannel) {
@@ -40,13 +48,15 @@
                                 [id]="'delete-' + channel.id"
                                 jhiDeleteButton
                                 [renderButtonStyle]="false"
+                                [renderButtonText]="false"
                                 [entityTitle]="channel.name || ''"
                                 deleteQuestion="artemisApp.dialogs.deleteChannel.question"
                                 deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
                                 (delete)="deleteChannel()"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faTimes" />
+                                <fa-icon [icon]="faTrash" />
+                                <span class="ms-2" jhiTranslate="artemisApp.dialogs.conversationSettings.actions.deleteChannel"></span>
                             </button>
                         </div>
                     }

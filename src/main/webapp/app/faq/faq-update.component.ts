@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -9,41 +9,53 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
-import { TranslateService } from '@ngx-translate/core';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { AccountService } from 'app/core/auth/account.service';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
 })
 export class FaqUpdateComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private faqService = inject(FaqService);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+
     faq: Faq;
     isSaving: boolean;
     isAllowedToSave: boolean;
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
+    isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faSave = faSave;
-    faBan = faBan;
+    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    artemisIntelligenceActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId)] : []));
 
-    private alertService = inject(AlertService);
-    private faqService = inject(FaqService);
-    private activatedRoute = inject(ActivatedRoute);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private translateService = inject(TranslateService);
+    // Icons
+    readonly faQuestionCircle = faQuestionCircle;
+    readonly faSave = faSave;
+    readonly faBan = faBan;
 
     ngOnInit() {
         this.isSaving = false;
@@ -56,6 +68,7 @@ export class FaqUpdateComponent implements OnInit {
             if (course) {
                 this.faq.course = course;
                 this.loadCourseFaqCategories(course.id);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
@@ -77,10 +90,10 @@ export class FaqUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
         } else {
-            this.faq.faqState = FaqState.ACCEPTED;
             this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
         }
     }
@@ -107,15 +120,25 @@ export class FaqUpdateComponent implements OnInit {
                     if (faqBody) {
                         this.faq = faqBody;
                     }
-                    this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
+                    this.showSuccessAlert(faq, false);
                     this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
-            this.isSaving = false;
-            this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
+            this.showSuccessAlert(faq, true);
             this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
+    }
+
+    private showSuccessAlert(faq: Faq, newlyCreated: boolean): void {
+        let messageKey: string;
+
+        if (this.isAtLeastInstructor) {
+            messageKey = newlyCreated ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
+        } else {
+            messageKey = newlyCreated ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
+        }
+        this.alertService.success(messageKey, { title: faq.questionTitle });
     }
 
     /**

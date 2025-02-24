@@ -45,14 +45,6 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'Postgres'
-        command: >
-            sh -c '
-            chmod 777 /root &&
-            cd /app/artemis/src/test/playwright &&
-            npm ci &&
-            npm run playwright:setup &&
-            npm run playwright:test
-            '
 
 networks:
     artemis:

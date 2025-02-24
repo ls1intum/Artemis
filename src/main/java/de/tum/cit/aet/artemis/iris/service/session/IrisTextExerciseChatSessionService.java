@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Comparator;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
                 "default",
+                Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
                 dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
@@ -115,8 +117,10 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
      *
      * @param job          The job that is updated
      * @param statusUpdate The status update
+     * @return The same job that was passed in
      */
-    public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+    public TextExerciseChatJob handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+        // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
@@ -127,6 +131,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages());
         }
+
+        return job;
     }
 
     @Override

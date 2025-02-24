@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
+import 'app/shared/util/map.extension';
+import 'app/shared/util/string.extension';
+import 'app/shared/util/array.extension';
 
 /**
  * Read environment variables from file.
@@ -19,7 +22,8 @@ export default defineConfig({
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
+    reporter: [['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }]],
+    globalSetup: require.resolve('./init/global-setup.ts'),
 
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
@@ -30,10 +34,30 @@ export default defineConfig({
         ignoreHTTPSErrors: true,
     },
 
-    /* Configure projects for major browsers */
+    /* Configure projects for fast and slow tests */
     projects: [
+        // Tests with @fast tag or without any tags. These are the lightweight tests with lower timeout.
         {
-            name: 'chromium',
+            name: 'fast-tests',
+            grep: /@fast|^[^@]*$/,
+            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
+            use: { ...devices['Desktop Chrome'] },
+        },
+        // Tests with @slow tag. These tests are expected to run longer
+        // than faster tests and have higher timeout.
+        {
+            name: 'slow-tests',
+            grep: /@slow/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+            use: { ...devices['Desktop Chrome'] },
+        },
+        // Tests with @sequential tag. These tests are triggering programming exercise submissions.
+        // Running only one programming exercise evaluation at a time could make the tests more stable.
+        // Thus, it is recommended to run this project with a single worker.
+        {
+            name: 'sequential-tests',
+            grep: /@sequential/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
     ],

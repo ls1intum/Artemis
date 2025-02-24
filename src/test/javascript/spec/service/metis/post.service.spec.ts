@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1, metisTags } from '../../helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Post Service', () => {
@@ -13,7 +13,6 @@ describe('Post Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(PostService);
@@ -27,18 +26,6 @@ describe('Post Service', () => {
             service
                 .create(1, new Post())
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should return all similar posts in a course', fakeAsync(() => {
-            const returnedFromService = metisCoursePosts.slice(0, 4);
-            const expected = returnedFromService;
-            service
-                .computeSimilarityScoresWithCoursePosts(metisPostExerciseUser1, metisCourse.id!)
-                .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
@@ -102,18 +89,6 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should return all post tags for a course', fakeAsync(() => {
-            const returnedFromService = metisTags;
-            const expected = returnedFromService;
-            service
-                .getAllPostTagsByCourseId(metisCourse.id!)
-                .pipe(take(2))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
         it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
             const plagiarismCaseId = 123;
             const expectedUrl = `${service.resourceUrl}${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
@@ -141,6 +116,24 @@ describe('Post Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
 
             req.flush(mockResponse);
+            tick();
+        }));
+
+        it('should get source posts by IDs', fakeAsync(() => {
+            const postIds = [1, 2, 3];
+            const returnedFromService = metisCoursePosts.slice(0, 3);
+            const expected = returnedFromService;
+
+            service
+                .getSourcePostsByIds(metisCourse.id!, postIds)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toEqual(expected));
+
+            const req = httpMock.expectOne({
+                method: 'GET',
+                url: `api/communication/courses/${metisCourse.id}/messages-source-posts?postIds=${postIds.join(',')}`,
+            });
+            req.flush(returnedFromService);
             tick();
         }));
     });

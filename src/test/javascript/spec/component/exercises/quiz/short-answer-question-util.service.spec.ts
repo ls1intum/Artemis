@@ -1,7 +1,6 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
@@ -45,7 +44,7 @@ describe('ShortAnswerQuestionUtil', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [TranslateModule.forRoot()],
         });
 
         service = TestBed.inject(ShortAnswerQuestionUtil);
@@ -216,7 +215,7 @@ describe('ShortAnswerQuestionUtil', () => {
         const originalTextParts2 = [['`random code`'], ['`    some more code`', '[-spot 1]'], ['`last code paragraph`']];
         const formattedTextParts2 = [
             ['<p><code>random code</code></p>'],
-            ['<p><code>&nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>    &nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
             ['<p><code>last code paragraph</code></p>'],
         ];
         expect(service.transformTextPartsIntoHTML(originalTextParts2)).toEqual(formattedTextParts2);

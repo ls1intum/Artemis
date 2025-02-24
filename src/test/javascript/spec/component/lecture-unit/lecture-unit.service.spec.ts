@@ -5,14 +5,15 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureUnitService', () => {
     let service: LectureUnitService;
@@ -27,8 +28,7 @@ describe('LectureUnitService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         expectedResultArray = {} as HttpResponse<LectureUnit[]>;
         service = TestBed.inject(LectureUnitService);
@@ -154,4 +154,44 @@ describe('LectureUnitService', () => {
         expect(convertDateFromServerEntitySpy).not.toHaveBeenCalled();
         expect(result).toBe(emptyResponse);
     }));
+
+    it('should fetch the ingestion state for lecture units and return an OK response', () => {
+        const courseId = 123;
+        const lectureId = 456;
+        const expectedUrl = `api/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`;
+
+        const expectedResponse: Record<number, IngestionState> = {
+            1: IngestionState.DONE,
+            2: IngestionState.NOT_STARTED,
+        };
+
+        service.getIngestionState(courseId, lectureId).subscribe((response) => {
+            expect(response.body).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne({
+            url: expectedUrl,
+            method: 'GET',
+        });
+
+        req.flush(expectedResponse, { status: 200, statusText: 'OK' });
+
+        expect(req.request.method).toBe('GET');
+    });
+
+    it('should send a POST request to ingest a lecture unit and return an OK response', () => {
+        const lectureUnitId = 123;
+        const lectureId = 456;
+        const expectedUrl = `api/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`;
+
+        service.ingestLectureUnitInPyris(lectureUnitId, lectureId).subscribe((response) => {
+            expect(response.status).toBe(200);
+        });
+        const req = httpMock.expectOne({
+            url: expectedUrl,
+            method: 'POST',
+        });
+        req.flush(null, { status: 200, statusText: 'OK' });
+        expect(req.request.method).toBe('POST');
+    });
 });

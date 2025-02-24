@@ -44,10 +44,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             """)
     List<ParticipantScore> findAllOutdated();
 
-    @Override
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    List<ParticipantScore> findAll();
-
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 

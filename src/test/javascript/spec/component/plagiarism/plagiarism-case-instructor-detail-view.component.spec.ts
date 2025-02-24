@@ -1,13 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCaseInstructorDetailViewComponent } from 'app/course/plagiarism-cases/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, ReplaySubject, of } from 'rxjs';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Observable, of, ReplaySubject } from 'rxjs';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
@@ -16,13 +14,14 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Post } from 'app/entities/metis/post.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { User } from 'app/core/user/user.model';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { NotificationService } from '../../../../../main/webapp/app/shared/notification/notification.service';
 import { MockProvider } from 'ng-mocks';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -48,17 +47,16 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCaseInstructorDetailViewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 

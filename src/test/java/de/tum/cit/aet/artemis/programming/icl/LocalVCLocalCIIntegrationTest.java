@@ -38,33 +38,27 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
-import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -83,33 +77,11 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     private static final String TEST_PREFIX = "localvcciint";
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private BuildJobTestRepository buildJobRepository;
-
-    @Autowired
-    protected LocalCITriggerService localCITriggerService;
-
-    @Autowired
-    private SharedQueueProcessingService sharedQueueProcessingService;
-
-    @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
-
-    @Value("${artemis.user-management.internal-admin.username}")
-    private String localVCUsername;
-
-    @Value("${artemis.user-management.internal-admin.password}")
-    private String localVCPassword;
 
     // ---- Repository handles ----
     private LocalRepository templateRepository;
@@ -911,6 +883,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
+        // practiceParticipation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
@@ -950,6 +925,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 instructor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.
@@ -971,11 +948,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Nested
-    class BuildJobPriorityTest {
+    class BuildJobConfigurationTest {
 
         @BeforeEach
-        void setUp() {
-            sharedQueueProcessingService.removeListener();
+        void setup() {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
         }
 
         @AfterEach
@@ -1045,9 +1023,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
             await().until(() -> {
                 BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
-                log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+                log.info("Poll queue jobs: is null {}", buildJobQueueItem == null ? "true" : "false");
                 if (buildJobQueueItem == null) {
-                    queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
+                    queuedJobs.forEach(item -> log.info("Item in Queue: {}", item));
                 }
                 return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
             });
@@ -1057,6 +1035,29 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
             log.info("Assertions done");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerFlagsParsing() {
+            String dockerFlags = "{\"network\": \"none\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}";
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setDockerFlags(dockerFlags);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
     }
 }

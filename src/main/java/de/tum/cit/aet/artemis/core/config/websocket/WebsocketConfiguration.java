@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
-import jakarta.servlet.http.Cookie;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -28,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -35,6 +35,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -52,7 +53,6 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
-import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -142,6 +142,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         }
     }
 
+    @Override
+    protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
+        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
+        messageConverters.add(gzipMessageConverter);
+        return false;
+    }
+
     /**
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
@@ -182,12 +189,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @NotNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
-        // NOTE: We need to adapt the default messageConverter for WebSocket messages
-        // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.
-        // This gives us consistency in how specific data types are serialized (e.g. timestamps)
-        MappingJackson2MessageConverter converter = super.createJacksonConverter();
-        converter.setObjectMapper(objectMapper);
-        return converter;
+        return new GzipMessageConverter(objectMapper);
     }
 
     /**
@@ -201,9 +203,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
-                    attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
-                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
+                    try {
+                        attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
+                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+                    }
+                    catch (IllegalArgumentException e) {
+                        response.setStatusCode(HttpStatusCode.valueOf(400));
+                        return false;
+                    }
                 }
                 return false;
             }
@@ -276,6 +283,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(@Nullable Principal principal, String destination) {
+            log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
             /*
              * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
              * is an instructor in a course)
@@ -304,7 +312,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
+                final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {

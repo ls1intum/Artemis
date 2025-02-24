@@ -11,9 +11,24 @@ import {
     Signal,
     ViewChild,
     computed,
+    inject,
+    input,
+    signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
+import {
+    NgbDropdown,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavChangeEvent,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+    NgbTooltip,
+} from '@ng-bootstrap/ng-bootstrap';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -23,31 +38,45 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingEditType, ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { facArtemisIntelligence } from 'app/icons/icons';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 
 export enum MarkdownEditorHeight {
-    INLINE = 100,
+    INLINE = 125,
     SMALL = 300,
     MEDIUM = 500,
     LARGE = 1000,
@@ -64,6 +93,8 @@ interface MarkdownActionsByGroup {
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: LectureAttachmentReferenceAction;
+    // AI assistance in the editor
+    artemisIntelligence: TextEditorAction[];
     meta: TextEditorAction[];
 }
 
@@ -84,8 +115,40 @@ const BORDER_HEIGHT_OFFSET = 2;
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        NgbNav,
+        NgbNavItem,
+        NgbNavLink,
+        NgbNavLinkBase,
+        TranslateDirective,
+        NgbNavContent,
+        NgClass,
+        MonacoEditorComponent,
+        FaIconComponent,
+        NgbTooltip,
+        NgTemplateOutlet,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        ColorSelectorComponent,
+        PostingButtonComponent,
+        MatMenuTrigger,
+        MatMenu,
+        MatMenuItem,
+        NgbNavOutlet,
+        CdkDrag,
+        MatButton,
+        ArtemisTranslatePipe,
+    ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    private readonly alertService = inject(AlertService);
+    // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
+    private readonly metisService = inject(MetisService, { optional: true });
+    private readonly fileUploaderService = inject(FileUploaderService);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
+
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
@@ -147,13 +210,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
+        new StrikethroughAction(),
         new QuoteAction(),
         new CodeAction(),
         new CodeBlockAction('java'),
         new UrlAction(),
         new AttachmentAction(),
         new OrderedListAction(),
-        new UnorderedListAction(),
+        new BulletedListAction(),
     ];
 
     @Input()
@@ -173,7 +237,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     domainActions: TextEditorDomainAction[] = [];
 
     @Input()
+    artemisIntelligenceActions: TextEditorAction[] = [];
+
+    @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
+
+    isButtonLoading = input<boolean>(false);
+    isFormGroupValid = input<boolean>(false);
+    editType = input<PostingEditType>();
+
+    readonly useCommunicationForFileUpload = input<boolean>(false);
+    readonly fallbackConversationId = input<number>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -212,6 +286,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         color: undefined,
         domain: { withoutOptions: [], withOptions: [] },
         lecture: undefined,
+        artemisIntelligence: [],
         meta: [],
     };
 
@@ -227,6 +302,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ]);
 
     colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = 'editor_edit';
     static readonly TAB_PREVIEW = 'editor_preview';
@@ -235,8 +311,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSpinner = faSpinner;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faPaperPlane = faPaperPlane;
     // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
@@ -245,11 +324,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    constructor(
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {
+    readonly EditType = PostingEditType;
+
+    constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 
@@ -264,9 +341,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
                 withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
+                withOptions: this.filterDisplayedActions(
+                    this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
             meta: this.filterDisplayedActions(this.metaActions),
         };
     }
@@ -277,6 +357,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    handleActionClick(event: MouseEvent, action: TextEditorAction): void {
+        const x = event.clientX;
+        const y = event.clientY;
+        if (action instanceof EmojiAction) {
+            action.setPoint({ x, y });
+        }
+
+        action.executeInCurrentEditor();
     }
 
     ngAfterViewInit(): void {
@@ -300,6 +390,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.domainActions,
             ...(this.colorAction ? [this.colorAction] : []),
             ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
+            ...this.artemisIntelligenceActions,
             this.metaActions,
         ]
             .flat()
@@ -307,6 +398,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                    action.setUploadCallback(this.embedFiles.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -356,7 +449,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param newContentHeight The new height of the content in the editor.
      */
     onContentHeightChanged(newContentHeight: number | undefined): void {
-        if (this.linkEditorHeightToContentHeight) {
+        // Upon switching back from the preview tab, the file upload footer will briefly have a height of 0. We ignore this case to avoid an incorrect height.
+        if (this.linkEditorHeightToContentHeight && !(this.enableFileUpload && this.getElementClientHeight(this.fileUploadFooter) === 0)) {
             const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
             // Clamp the height so it is between the minimum and maximum height.
             this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
@@ -396,6 +490,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
+        // Prevents an issue with line wraps in the editor
+        this.monacoEditor.layout();
     }
 
     /**
@@ -441,7 +537,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onFileUpload(event: any): void {
         if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files));
+            this.embedFiles(Array.from(event.target.files), event.target);
         }
     }
 
@@ -459,37 +555,58 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /**
      * Embed the given files into the editor by uploading them and inserting the appropriate markdown.
      * For PDFs, a link to the file is inserted. For other files, the file is embedded as an image.
-     * @param files
+     * @param files The files to embed.
+     * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
-    embedFiles(files: File[]): void {
+    embedFiles(files: File[], inputElement?: HTMLInputElement): void {
+        if (!this.enableFileUpload) {
+            return;
+        }
         files.forEach((file) => {
-            this.fileUploaderService.uploadMarkdownFile(file).then(
-                (response) => {
-                    const extension = file.name.split('.').last()?.toLocaleLowerCase();
-
-                    const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
-                    const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
-                    if (!attachmentAction || !urlAction || !response.path) {
-                        throw new Error('Cannot process file upload.');
-                    }
-                    const payload = { text: file.name, url: response.path };
-                    if (extension !== 'pdf') {
-                        // Embedded image
-                        attachmentAction?.executeInCurrentEditor(payload);
-                    } else {
-                        // For PDFs, just link to the file
-                        urlAction?.executeInCurrentEditor(payload);
-                    }
-                },
-                (error) => {
-                    this.alertService.addAlert({
-                        type: AlertType.DANGER,
-                        message: error.message,
-                        disableTranslation: true,
-                    });
-                },
-            );
+            (this.useCommunicationForFileUpload()
+                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                      file,
+                      this.metisService?.getCourse()?.id,
+                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                  )
+                : this.fileUploaderService.uploadMarkdownFile(file)
+            )
+                .then(
+                    (response) => this.processFileUploadResponse(response, file),
+                    (error) => {
+                        this.alertService.addAlert({
+                            type: AlertType.DANGER,
+                            message: error.message,
+                            disableTranslation: true,
+                        });
+                    },
+                )
+                .then(() => this.resetInputElement(inputElement));
         });
+    }
+
+    private processFileUploadResponse(response: FileUploadResponse, file: File): void {
+        const extension = file.name.split('.').last()?.toLocaleLowerCase();
+
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction) as AttachmentAction;
+        const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
+        if (!attachmentAction || !urlAction || !response.path) {
+            throw new Error('Cannot process file upload.');
+        }
+        const payload = { text: file.name, url: response.path };
+        if (extension !== 'pdf') {
+            // Embedded image
+            attachmentAction?.executeInCurrentEditor(payload);
+        } else {
+            // For PDFs, just link to the file
+            urlAction?.executeInCurrentEditor(payload);
+        }
+    }
+
+    private resetInputElement(inputElement?: HTMLInputElement): void {
+        if (inputElement) {
+            inputElement.value = '';
+        }
     }
 
     /**

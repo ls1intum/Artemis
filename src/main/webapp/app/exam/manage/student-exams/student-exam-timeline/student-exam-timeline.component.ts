@@ -1,30 +1,52 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
+import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
+import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
     styleUrls: ['./student-exam-timeline.component.scss'],
+    imports: [
+        TranslateDirective,
+        MatSlider,
+        MatSliderThumb,
+        FormsModule,
+        ExamNavigationBarComponent,
+        QuizExamSubmissionComponent,
+        FileUploadExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
+        ProgrammingExerciseExamDiffComponent,
+    ],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private submissionService = inject(SubmissionService);
+    private submissionVersionService = inject(SubmissionVersionService);
+    private cdr = inject(ChangeDetectorRef);
+
     readonly ExerciseType = ExerciseType;
     readonly SubmissionVersion = SubmissionVersion;
 
@@ -51,13 +73,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
 
     private activatedRouteSubscription: Subscription;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private submissionService: SubmissionService,
-        private submissionVersionService: SubmissionVersionService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {
@@ -145,7 +160,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateFileUploadExerciseView() {
         const fileUploadComponent = this.activePageComponent as FileUploadExamSubmissionComponent;
         if (fileUploadComponent) {
-            fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
+            fileUploadComponent.studentSubmission.update(() => this.currentSubmission as FileUploadSubmission);
             fileUploadComponent.updateViewFromSubmission();
         }
     }
@@ -203,7 +218,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 );
             }
         });
-        return forkJoin([...submissionObservables]);
+
+        return forkJoin([...submissionObservables]).pipe(tap(() => this.cdr.detectChanges()));
     }
 
     /**

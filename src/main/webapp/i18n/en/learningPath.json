@@ -15,7 +15,8 @@
                 "recapLabel": "Recap learning units"
             },
             "competencyGraphModal": {
-                "title": "Learning path competency relations"
+                "title": "Learning path competency relations",
+                "titleWithName": "Learning path competency relations for {{ name }}"
             },
             "generation": {
                 "title": "Welcome to your learning path!",

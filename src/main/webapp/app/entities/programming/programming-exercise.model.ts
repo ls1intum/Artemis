@@ -2,8 +2,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
@@ -15,16 +14,24 @@ import dayjs from 'dayjs/esm';
 export enum ProgrammingLanguage {
     EMPTY = 'EMPTY',
     ASSEMBLER = 'ASSEMBLER',
+    BASH = 'BASH',
     C = 'C',
+    C_PLUS_PLUS = 'C_PLUS_PLUS',
+    C_SHARP = 'C_SHARP',
+    DART = 'DART',
+    GO = 'GO',
     HASKELL = 'HASKELL',
     JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',
     KOTLIN = 'KOTLIN',
+    MATLAB = 'MATLAB',
     OCAML = 'OCAML',
     PYTHON = 'PYTHON',
     R = 'R',
+    RUBY = 'RUBY',
     RUST = 'RUST',
     SWIFT = 'SWIFT',
+    TYPESCRIPT = 'TYPESCRIPT',
     VHDL = 'VHDL',
 }
 
@@ -59,7 +66,6 @@ export class ProgrammingExercise extends Exercise {
     public showTestNamesToStudents?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
-    public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildLogStatistics?: BuildLogStatisticsDTO;
     public buildConfig?: ProgrammingExerciseBuildConfig;
@@ -69,11 +75,6 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
-
-    // helper attributes
-
-    // this attribute is used to display the covered lines ratio
-    public coveredLinesRatio?: number;
 
     /**
      * This attribute is used to generate a programming exercise with no connection to the VCS and CI.
@@ -122,8 +123,6 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
     buildConfig.windfile = exerciseJson.windfile ?? undefined;
     buildConfig.buildScript = exerciseJson.buildScript ?? '';
-    buildConfig.testwiseCoverageEnabled = exerciseJson.testwiseCoverageEnabled ?? false;
     buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
-
     return buildConfig;
 }

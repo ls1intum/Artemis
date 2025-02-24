@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.core.service.export;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
@@ -13,8 +15,9 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 
 /**
  * A Service to create the science event export data for users.
@@ -25,10 +28,10 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 @Service
 public class DataExportScienceEventService {
 
-    private final ScienceEventRepository scienceEventRepository;
+    private final Optional<ScienceEventApi> scienceEventApi;
 
-    public DataExportScienceEventService(ScienceEventRepository scienceEventRepository) {
-        this.scienceEventRepository = scienceEventRepository;
+    public DataExportScienceEventService(Optional<ScienceEventApi> scienceEventApi) {
+        this.scienceEventApi = scienceEventApi;
     }
 
     /**
@@ -39,7 +42,8 @@ public class DataExportScienceEventService {
      * @throws IOException if the file cannot be created
      */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
-        var scienceEvents = scienceEventRepository.findAllByIdentity(login);
+        var api = scienceEventApi.orElseThrow(() -> new ApiNotPresentException(ScienceEventApi.class, PROFILE_ATLAS));
+        var scienceEvents = api.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }
 
@@ -57,7 +61,7 @@ public class DataExportScienceEventService {
         }
 
         String[] header = { "timestamp", "event_type", "resource_id" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("science_events" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var scienceEvent : scienceEvents) {

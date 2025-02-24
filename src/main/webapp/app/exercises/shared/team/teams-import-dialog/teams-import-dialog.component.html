@@ -263,7 +263,7 @@
             </div>
         }
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <button type="button" class="btn btn-secondary cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (importStrategy !== ImportStrategy.PURGE_EXISTING) {

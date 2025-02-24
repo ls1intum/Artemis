@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Result } from 'app/entities/result.model';
@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -38,14 +38,49 @@ import { captureException } from '@sentry/angular';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
     styleUrls: ['./quiz-participation.component.scss'],
+    imports: [
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ButtonComponent,
+        NgbTooltip,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        JhiConnectionStatusComponent,
+        FormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
+    private websocketService = inject(WebsocketService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private quizParticipationService = inject(QuizParticipationService);
+    private translateService = inject(TranslateService);
+    private quizService = inject(ArtemisQuizService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -106,6 +141,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     password = '';
     previousRunning = false;
     isMobile = false;
+    isManagementView = false;
 
     /**
      * Websocket channels
@@ -117,7 +153,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
-     * @type {Function}
      */
     timeoutJustSaved = debounce(() => {
         this.justSaved = false;
@@ -127,17 +162,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     faSync = faSync;
     faCircleNotch = faCircleNotch;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private quizExerciseService: QuizExerciseService,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private quizParticipationService: QuizParticipationService,
-        private translateService: TranslateService,
-        private quizService: ArtemisQuizService,
-        private serverDateService: ArtemisServerDateService,
-    ) {
+    constructor() {
         smoothscroll.polyfill();
     }
 
@@ -171,6 +196,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.updateDisplayedTimes();
             this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
+        this.isManagementView = this.router.url.startsWith('/course-management');
     }
 
     ngOnDestroy() {
@@ -184,10 +210,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         });
 
         if (this.participationChannel) {
-            this.jhiWebsocketService.unsubscribe(this.participationChannel);
+            this.websocketService.unsubscribe(this.participationChannel);
         }
         if (this.quizExerciseChannel) {
-            this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
+            this.websocketService.unsubscribe(this.quizExerciseChannel);
         }
         this.websocketSubscription?.unsubscribe();
         this.routeAndDataSubscription?.unsubscribe();
@@ -198,7 +224,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     initLiveMode() {
         // listen to connect / disconnect events
-        this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
+        this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
                 // if the disconnect happened during the live quiz and there are unsaved changes, we save the submission on the server
                 this.triggerSave(false);
@@ -323,8 +349,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
             // participation channel => react to new results
-            this.jhiWebsocketService.subscribe(this.participationChannel);
-            this.jhiWebsocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
+            this.websocketService.subscribe(this.participationChannel);
+            this.websocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
                 if (changedParticipation && this.quizExercise && changedParticipation.exercise!.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
@@ -340,8 +366,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (!this.quizExerciseChannel) {
             this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
-            this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+            this.websocketService.subscribe(this.quizExerciseChannel);
+            this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
                 if (this.waitingForQuizStart && this.quizId === quiz.id) {
                     this.applyQuizFull(quiz);
                 }
@@ -352,8 +378,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             const batchChannel = this.quizExerciseChannel + '/' + this.quizBatch.id;
             if (this.quizBatchChannel !== batchChannel) {
                 this.quizBatchChannel = batchChannel;
-                this.jhiWebsocketService.subscribe(this.quizBatchChannel);
-                this.jhiWebsocketService.receive(this.quizBatchChannel).subscribe((quiz) => {
+                this.websocketService.subscribe(this.quizBatchChannel);
+                this.websocketService.receive(this.quizBatchChannel).subscribe((quiz) => {
                     this.applyQuizFull(quiz);
                 });
             }
@@ -421,8 +447,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
         if (remainingTimeSeconds > 210) {
@@ -478,7 +504,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -520,7 +546,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -544,7 +570,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return selectedQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -561,7 +587,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -577,7 +603,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -633,7 +659,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.waitingForQuizStart = true;
 
             // enable automatic websocket reconnect
-            this.jhiWebsocketService.enableReconnect();
+            this.websocketService.enableReconnect();
 
             if (this.quizBatch && this.quizBatch.startTime) {
                 // synchronize time with server
@@ -650,7 +676,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // check if quiz hasn't ended
             if (!this.quizBatch.ended) {
                 // enable automatic websocket reconnect
-                this.jhiWebsocketService.enableReconnect();
+                this.websocketService.enableReconnect();
 
                 // apply randomized order where necessary
                 this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
@@ -745,11 +771,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.result = result;
         if (this.result) {
             this.showingResult = true;
-
-            // at the moment, this is always enabled
-            // disable automatic websocket reconnect
-            // this.jhiWebsocketService.disableReconnect();
-
             const course = this.quizExercise.course || this.quizExercise?.exerciseGroup?.exam?.course;
 
             // assign user score (limit decimal places to 2)

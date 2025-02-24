@@ -1,18 +1,25 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
     templateUrl: './exam-exercise-import.component.html',
     styleUrls: ['./exam-exercise-import.component.scss'],
+    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
 })
 export class ExamExerciseImportComponent implements OnInit {
-    @Input() exam: Exam;
-    @Input() importInSameCourse = false;
+    exam = input.required<Exam>();
+    importInSameCourse = input(false);
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
     // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
@@ -41,12 +48,10 @@ export class ExamExerciseImportComponent implements OnInit {
 
     getExerciseIcon = getIcon;
 
-    constructor() {}
-
     ngOnInit(): void {
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
         // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
-        if (this.importInSameCourse) {
+        if (this.importInSameCourse()) {
             this.initializeTitleAndShortNameMap();
         }
     }
@@ -79,12 +84,12 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
         // Initialize selectedExercises
-        this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+        this.exam().exerciseGroups?.forEach((exerciseGroup) => {
             this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises));
         });
         const duplicated = new Set<string>();
         // Initialize containsProgrammingExercises
-        this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+        this.exam().exerciseGroups!.forEach((exerciseGroup) => {
             const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
             this.containsProgrammingExercises.set(exerciseGroup, hasProgrammingExercises);
             // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.

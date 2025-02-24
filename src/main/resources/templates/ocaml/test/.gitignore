@@ -38,6 +38,8 @@ setup.log
 _opam/
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

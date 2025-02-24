@@ -1,31 +1,16 @@
+import { signal } from '@angular/core';
 import { Theme } from 'app/core/theme/theme.service';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 export class MockThemeService {
-    private currentTheme: Theme = Theme.LIGHT;
-    private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
-    private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
+    private _currentTheme = signal(Theme.LIGHT);
+    public readonly currentTheme = this._currentTheme.asReadonly();
 
-    public isByAutoDetection = false;
+    private _userPreference = signal<Theme | undefined>(undefined);
+    public readonly userPreference = this._userPreference.asReadonly();
 
-    public getCurrentTheme(): Theme {
-        return this.currentTheme;
-    }
-
-    public getCurrentThemeObservable(): Observable<Theme> {
-        return this.currentThemeSubject.asObservable();
-    }
-
-    public getPreferenceObservable(): Observable<Theme | undefined> {
-        return this.preferenceSubject.asObservable();
-    }
-
-    public restoreTheme() {}
-
-    public applyThemeExplicitly(theme: Theme) {
-        this.currentTheme = theme;
-        this.currentThemeSubject.next(theme);
-        this.preferenceSubject.next(theme);
+    public applyThemePreference(preference: Theme | undefined) {
+        this._userPreference.set(preference);
+        this._currentTheme.set(preference ?? Theme.LIGHT);
     }
 
     public print() {}

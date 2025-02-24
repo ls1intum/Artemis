@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -49,6 +50,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Repository
 public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
+    Set<StudentParticipation> findWithTeamInformationByExerciseId(long exerciseId);
+
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
     @Query("""
@@ -58,7 +62,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE p.exercise.course.id = :courseId
-                AND (r.rated IS NULL OR r.rated = TRUE)
+                AND (r.rated IS NULL
+                    OR r.rated = TRUE)
             """)
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
 
@@ -68,8 +73,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
-                AND (p.student.id = :studentId OR ts.id = :studentId)
-                AND (r.rated IS NULL OR r.rated = TRUE)
+                AND (p.student.id = :studentId
+                    OR ts.id = :studentId)
+                AND (r.rated IS NULL
+                    OR r.rated = TRUE)
             """)
     List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
@@ -78,7 +85,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
-                AND (p.student.id = :studentId OR ts.id = :studentId)
+                AND (p.student.id = :studentId
+                    OR ts.id = :studentId)
             """)
     boolean existsByCourseIdAndStudentId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
@@ -90,7 +98,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.testRun = FALSE
                 AND p.exercise.exerciseGroup.exam.id = :examId
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") long examId);
 
@@ -124,7 +133,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
@@ -134,7 +144,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
                 AND p.testRun = :testRun
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId, @Param("username") String username,
@@ -156,7 +167,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
@@ -174,8 +186,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN p.team.students u
                 LEFT JOIN p.student s
-            WHERE p.id = :participationId AND
-                (s.login = :login OR u.login = :login)
+            WHERE p.id = :participationId
+                AND (s.login = :login
+                    OR u.login = :login)
             """)
     boolean existsByIdAndParticipatingStudentLogin(@Param("participationId") long participationId, @Param("login") String login);
 
@@ -186,7 +199,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH s.results
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = :testRun
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
@@ -204,20 +218,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND p.testRun = :testRun
-            """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("studentId") long studentId, @Param("testRun") boolean testRun);
-
     /**
      * Get all participations for an exercise with each manual and latest results (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -234,7 +234,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
-                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
+                    r.id = (
+                         SELECT MAX(p_r.id)
+                         FROM p.results p_r
+                    )
                     OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                     OR r IS NULL
                 )
@@ -259,7 +262,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students
             WHERE p.exercise.id = :exerciseId
                 AND (
-                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
+                    r.id = (
+                         SELECT MAX(p_r.id)
+                         FROM p.results p_r
+                    )
                     OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                     OR r IS NULL
                 )
@@ -271,27 +277,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
-                LEFT JOIN FETCH p.submissions
-                LEFT JOIN FETCH r.assessmentNote
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated = TRUE)
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
-            """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = :testRun
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                AND r.id = (SELECT MAX(r2.id) FROM p.results r2 WHERE r2.completionDate IS NOT NULL)
+                AND r.id = (
+                    SELECT MAX(r2.id)
+                    FROM p.results r2
+                    WHERE r2.completionDate IS NOT NULL
+                )
             """)
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
@@ -342,16 +336,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.submission s
             WHERE p.id = :participationId
-                AND (r.id = (
+                AND r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                         LEFT JOIN pr.submission prs
                     WHERE pr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                        AND (
-                            prs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
-                            OR prs.type IS NULL
-                        )
-                ))
+                        AND (prs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                            OR prs.type IS NULL)
+                )
             """)
     Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("participationId") long participationId);
 
@@ -365,10 +357,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
-                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                )
+                AND (r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
             """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
 
@@ -384,11 +374,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.submission s
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
-                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                )
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
+                AND (r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") long participationId);
 
@@ -398,7 +387,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerLegalSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
@@ -417,7 +407,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
-             """)
+            """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
@@ -426,7 +416,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerLegalSubmissions(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
@@ -450,17 +441,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR rs.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
+                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR rs.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -471,7 +463,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         LEFT JOIN pr.submission prs
                     WHERE prs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
                         OR prs.type IS NULL
-                ) OR r.id IS NULL)
+                )
+                    OR r.id IS NULL)
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
@@ -487,13 +480,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId      the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions submission
                 LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks feedbacks
-                LEFT JOIN FETCH feedbacks.testCase
                 LEFT JOIN FETCH result.assessor
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
@@ -503,7 +495,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHERE r2.assessor IS NOT NULL
                         AND (r2.rated IS NULL OR r2.rated = FALSE)
                         AND r2.submission = submission
-                ) AND :correctionRound = (
+                )
+                AND :correctionRound = (
                     SELECT COUNT(r)
                     FROM Result r
                     WHERE r.assessor IS NOT NULL
@@ -514,28 +507,32 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                             de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
                             de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                         ) AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-                ) AND :correctionRound = (
+                )
+                AND :correctionRound = (
                     SELECT COUNT(prs)
                     FROM p.results prs
                     WHERE prs.assessmentType IN (
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                     )
-                ) AND submission.submitted = TRUE
-                AND submission.id = (SELECT MAX(s.id) FROM p.submissions s)
+                )
+                AND submission.submitted = TRUE
+                AND submission.id = (
+                    SELECT MAX(s.id)
+                    FROM p.submissions s
+                )
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
             @Param("correctionRound") long correctionRound);
 
     Set<StudentParticipation> findDistinctAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
@@ -547,7 +544,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                     )
                 ) AND s.submitted = TRUE
-                AND s.id = (SELECT MAX(s.id) FROM p.submissions s)
+                AND s.id = (
+                    SELECT MAX(s.id)
+                    FROM p.submissions s
+                )
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("now") ZonedDateTime now);
@@ -557,7 +557,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
 
@@ -592,8 +593,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR rs.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
+                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR rs.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(@Param("participationId") long participationId);
 
@@ -616,10 +619,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 JOIN Result r ON r.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
+                AND (p.student.firstName LIKE %:partialStudentName%
+                    OR p.student.lastName LIKE %:partialStudentName%)
+                AND r.completionDate IS NOT NULL
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
@@ -631,10 +633,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 JOIN Result r ON r.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
+                AND (p.student.firstName LIKE %:partialStudentName%
+                    OR p.student.lastName LIKE %:partialStudentName%)
+                AND r.completionDate IS NOT NULL
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 
@@ -665,8 +666,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results sr
             WHERE p.exercise.id = :exerciseId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR rs.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
+                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR rs.type IS NULL)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId);
 
@@ -696,12 +699,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND s.id = (SELECT MAX(s2.id)
-                            FROM p.submissions s2
-                            WHERE s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s2.type IS NULL)
-                AND r.id = (SELECT MAX(r2.id)
-                            FROM s.results r2
-                            WHERE r2.rated = TRUE)
+                AND s.id = (
+                    SELECT MAX(s2.id)
+                    FROM p.submissions s2
+                    WHERE s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                        OR s2.type IS NULL
+                )
+                AND r.id = (
+                    SELECT MAX(r2.id)
+                    FROM s.results r2
+                    WHERE r2.rated = TRUE
+                )
             """)
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
@@ -712,7 +720,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH s.results r
             WHERE p.student.id = :studentId
                 AND p.exercise IN :exercises
-                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND (p.testRun = FALSE
+                    OR :includeTestRuns = TRUE)
             """)
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
@@ -785,7 +794,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students teamStudent
             WHERE teamStudent.id = :studentId
                 AND p.exercise IN :exercises
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     Set<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
@@ -798,7 +808,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team t
             WHERE p.exercise.course.id = :courseId
                 AND t.shortName = :teamShortName
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             """)
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
@@ -830,7 +841,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN p.submissions s
             WHERE p.team.shortName = :teamShortName
                 AND p.exercise.course.id = :courseId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
             GROUP BY p.id
             """)
     List<long[]> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
@@ -849,7 +861,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     FROM p.submissions s1
                     WHERE s1.participation.id = p.id
                         AND s1.submitted = TRUE
-                        AND (r.assessor = :assessor OR r.assessor.id IS NULL)
+                        AND (r.assessor = :assessor
+                            OR r.assessor.id IS NULL)
                 )
             """)
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") long exerciseId,
@@ -1016,7 +1029,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Get a mapping of participation ids to the number of submission for each participation.
      *
      * @param exerciseId the id of the exercise for which to consider participations
-     * @return the number of submissions per participation in the given exercise
+     * @return a map of submissions per participation in the given exercise
      */
     default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
         return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
@@ -1027,7 +1040,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param courseId      the id of the course for which to consider participations
      * @param teamShortName the short name of the team for which to consider participations
-     * @return the number of submissions per participation in the given course for the team
+     * @return a map of submissions per participation in the given course for the team
      */
     default Map<Long, Integer> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(long courseId, String teamShortName) {
         return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
@@ -1199,51 +1212,192 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text and test case name.
+     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text,
+     * test case name, task, and error category.
      * <br>
-     * The relative count and task number are initially set to 0 and are calculated in a separate step in the service layer.
+     * The query calculates:
+     * - The number of occurrences of each feedback detail (COUNT).
+     * - The relative count as a percentage of the total distinct results.
+     * - The corresponding task name for each feedback item by checking if the feedback test case name is associated with a task.
+     * If a feedback item is not assigned to a task, it is labeled as "Not assigned to task."
+     * - The error category for each feedback item, classified as one of "Student Error", "Ares Error", or "AST Error".
+     * <br>
+     * It supports filtering by:
+     * - Search term: Case-insensitive filtering on feedback detail text.
+     * - Test case names: Filters feedback based on specific test case names (optional).
+     * - Task names: Filters feedback based on specific task names by mapping them to their associated test cases.
+     * If "Not assigned to task" is specified, only feedback items without an associated task will be included.
+     * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is between the specified minimum and maximum values (inclusive).
+     * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
+     * <br>
+     * Grouping is done by feedback detail text, test case name and error category. The occurrence count is filtered using the HAVING clause.
      *
-     * @param exerciseId Exercise ID.
-     * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
+     * @param exerciseId            The ID of the exercise for which feedback details should be retrieved.
+     * @param searchTerm            The search term used for filtering the feedback detail text (optional).
+     * @param filterTestCases       List of active test case names to filter the feedback results (optional).
+     * @param filterTaskNames       List of task names to filter feedback results based on the associated test cases (optional).
+     *                                  If "Not assigned to task" is specified, only feedback entries without an associated task will be returned.
+     * @param minOccurrence         The minimum number of occurrences to include in the results.
+     * @param maxOccurrence         The maximum number of occurrences to include in the results.
+     * @param filterErrorCategories List of error categories to filter the feedback results. Supported categories include "Student Error",
+     *                                  "Ares Error", and "AST Error".
+     * @param pageable              Pagination information to apply.
+     * @return A page of {@link FeedbackDetailDTO} objects representing the aggregated feedback details.
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                COUNT(f.id),
-                0,
-                f.detailText,
-                f.testCase.testName,
-                0
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
+                    LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
+                    COUNT(f.id),
+                    0,
+                    f.detailText,
+                    f.testCase.testName,
+                    COALESCE((
+                        SELECT MAX(t.taskName)
+                        FROM ProgrammingExerciseTask t
+                        LEFT JOIN t.testCases tct
+                        WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                    ), 'Not assigned to task'),
+                    CASE
+                        WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
+                        WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                        ELSE 'Student Error'
+                    END,
+                    f.hasLongFeedbackText
                 )
-            FROM StudentParticipation p
-                 JOIN p.results r
-                 JOIN r.feedbacks f
-                    WHERE p.exercise.id = :exerciseId
-                        AND p.testRun = FALSE
-                        AND r.id = (
-                            SELECT MAX(pr.id)
-                            FROM p.results pr
-                            )
-                        AND f.positive = FALSE
-                        GROUP BY f.detailText, f.testCase.testName
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                    AND p.testRun = FALSE
+                    AND f.positive = FALSE
+                    AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                    AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
+                    AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
+                            SELECT tct.testName
+                            FROM ProgrammingExerciseTask t
+                            LEFT JOIN t.testCases tct
+                            WHERE t.taskName IN (:filterTaskNames)
+                        ))
+                    AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
+                                WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
+                                WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                                ELSE 'Student Error'
+                            END IN (:filterErrorCategories))
+                GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
+                HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
-    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+    Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
+            @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
+            @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, @Param("pageable") Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     * <br>
+     * For each participation, it selects only the latest result (using MAX) and ensures that the participation is not a test run.
      *
-     * @param exerciseId Exercise ID.
-     * @return The count of distinct latest results for the exercise.
+     * @param exerciseId Exercise ID for which distinct results should be counted.
+     * @return The total number of distinct latest results for the given exercise.
      */
     @Query("""
-                SELECT COUNT(DISTINCT r.id)
-                FROM StudentParticipation p
-                    JOIN p.results r
-                WHERE p.exercise.id = :exerciseId
-                      AND p.testRun = FALSE
-                      AND r.id = (
-                          SELECT MAX(pr.id)
-                          FROM p.results pr
-                      )
+            SELECT COUNT(DISTINCT r.id)
+            FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                         SELECT MAX(pr.id)
+                         FROM p.results pr
+                         WHERE pr.participation.id = p.id
+                     )
+            WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
             """)
     long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Retrieves the maximum feedback count for a given exercise.
+     * <br>
+     * This query calculates the maximum number of feedback occurrences across all feedback entries for a specific exercise.
+     * It considers only the latest result per participation and excludes test runs.
+     * <br>
+     * Grouping is done by feedback detail text and test case name, and the maximum feedback count is returned.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
+     * @return The maximum count of feedback occurrences for the given exercise.
+     */
+    // TODO: move this query to a more appropriate repository, either feedbackRepository or exerciseRepository
+    @Query("""
+            SELECT MAX(feedbackCounts.feedbackCount)
+            FROM (
+                SELECT COUNT(f.id) AS feedbackCount
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
+                  AND f.positive = FALSE
+                GROUP BY f.detailText, f.testCase.testName
+            ) AS feedbackCounts
+            """)
+    long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
+     * <br>
+     *
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     */
+    @Query("""
+                SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
+                                p.id,
+                                p.student.firstName,
+                                p.student.lastName,
+                                p.student.login,
+                                p.repositoryUri
+                            )
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                      AND f.id IN :feedbackIds
+                      AND p.testRun = FALSE
+                ORDER BY p.student.firstName ASC
+            """)
+    List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
+
+    /**
+     * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
+     *
+     * @param exerciseId   The ID of the exercise for which affected students are requested.
+     * @param detailTexts  The feedback detail text to filter by.
+     * @param testCaseName The name of the test case for which the feedback is given.
+     * @return A list of student logins affected by the given feedback detail text in the specified exercise.
+     */
+    @Query("""
+                SELECT DISTINCT p.student.login
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                  AND f.detailText IN :detailTexts
+                  AND f.testCase.testName = :testCaseName
+                  AND p.testRun = FALSE
+            """)
+    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
+            @Param("testCaseName") String testCaseName);
 }

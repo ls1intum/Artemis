@@ -7,7 +7,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 
-test.describe('Quiz Exercise Management', () => {
+test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

@@ -45,6 +45,10 @@ export const UPLOAD_FILE_EXTENSIONS = [
     'odf',
 ];
 
+export const ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE = UPLOAD_FILE_EXTENSIONS.join(', ');
+// The list of file extensions for the "accept" attribute of the file input field
+export const ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
 /**
  * The list of file extensions that are readable in a file editor.
  * Extensions are case-sensitive.

@@ -26,6 +26,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Action;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.DockerConfig;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
 
@@ -84,7 +88,7 @@ public class AeolusTemplateService {
                     script = buildScriptProviderService.replacePlaceholders(script, null, null, null);
                 }
                 Windfile windfile = readWindfile(script);
-                this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
+                windfile = addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
                 templateCache.put(uniqueKey, windfile);
             }
             catch (IOException | IllegalArgumentException e) {
@@ -127,17 +131,15 @@ public class AeolusTemplateService {
      * @param projectType         the project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis      whether the static analysis template should be used
      * @param sequentialRuns      whether the sequential runs template should be used
-     * @param testCoverage        whether the test coverage template should be used
      * @return the requested template as a {@link Windfile} object
      * @throws IOException if the file does not exist
      */
-    public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
-            throws IOException {
+    public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns) throws IOException {
         if (programmingLanguage.equals(ProgrammingLanguage.JAVA) && projectType.isEmpty()) {
             // to be backwards compatible, we assume that java exercises without project type are plain maven projects
             projectType = Optional.of(ProjectType.PLAIN_MAVEN);
         }
-        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
+        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
@@ -151,7 +153,7 @@ public class AeolusTemplateService {
             scriptCache = buildScriptProviderService.replacePlaceholders(scriptCache, null, null, null);
         }
         Windfile windfile = readWindfile(scriptCache);
-        this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
+        windfile = addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
     }
@@ -184,7 +186,7 @@ public class AeolusTemplateService {
         try {
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
             log.info("No windfile for the settings of exercise {}", exercise.getId(), e);
@@ -202,23 +204,24 @@ public class AeolusTemplateService {
      * @param windfile    the Windfile template to be updated with Docker configuration
      * @param language    the programming language used, which determines the Docker image and flags
      * @param projectType an optional specifying the project type; influences the Docker configuration
+     * @return the updated Windfile instance with Docker configuration
      */
-    private void addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
+    private Windfile addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
 
-        WindfileMetadata metadata = windfile.getMetadata();
+        WindfileMetadata metadata = windfile.metadata();
         if (metadata == null) {
             metadata = new WindfileMetadata();
         }
         if (projectType.isPresent() && ProjectType.XCODE.equals(projectType.get())) {
             // xcode does not support docker
             metadata = new WindfileMetadata();
-            windfile.setMetadata(metadata);
-            return;
         }
-        String image = programmingLanguageConfiguration.getImage(language, projectType);
-        DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
-        metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig, metadata.resultHook(),
-                metadata.resultHookCredentials());
-        windfile.setMetadata(metadata);
+        else {
+            String image = programmingLanguageConfiguration.getImage(language, projectType);
+            DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
+            metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig,
+                    metadata.resultHook(), metadata.resultHookCredentials());
+        }
+        return new Windfile(windfile, metadata);
     }
 }

@@ -1,18 +1,13 @@
-import { Locator, Page, expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 import { Dayjs } from 'dayjs';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
 const OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT = 'MMMM D, YYYY';
 
-export class ProgrammingExerciseCreationPage {
-    private readonly page: Page;
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async setTitle(title: string) {
-        await this.page.locator('#field_title').fill(title);
+export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
+    async changeEditMode() {
+        await this.page.locator('#switch-edit-mode-button').click();
     }
 
     async setShortName(shortName: string) {

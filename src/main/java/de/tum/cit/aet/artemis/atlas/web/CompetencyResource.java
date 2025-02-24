@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,9 +43,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @RestController
 @RequestMapping("api/")
 public class CompetencyResource {
@@ -67,21 +66,18 @@ public class CompetencyResource {
 
     private final CompetencyService competencyService;
 
-    private final LectureUnitService lectureUnitService;
-
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, CompetencyService competencyService, LectureUnitService lectureUnitService,
-            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
+            CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
+            CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.competencyRepository = competencyRepository;
         this.competencyService = competencyService;
-        this.lectureUnitService = lectureUnitService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
     }
@@ -301,7 +297,6 @@ public class CompetencyResource {
         checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
-        lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
 
         return ResponseEntity.ok(persistedCompetency);
     }
@@ -342,8 +337,12 @@ public class CompetencyResource {
     }
 
     private void checkCompetencyAttributes(Competency competency) {
-        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty() || competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
-            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
+        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+            throw new BadRequestAlertException("The title of a competency is invalid!", ENTITY_NAME, "invalidCompetencyTitle");
+        }
+        if (competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
+            throw new BadRequestAlertException("The mastery threshold of the competency '" + competency.getTitle() + "' is invalid!", ENTITY_NAME,
+                    "invalidCompetencyMasteryThreshold");
         }
     }
 

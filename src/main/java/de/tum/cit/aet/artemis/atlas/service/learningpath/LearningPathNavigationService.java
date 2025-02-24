@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Comparator;
 import java.util.List;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 /**
  * Service for navigating through a learning path.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningPathNavigationService {
 
@@ -82,7 +82,8 @@ public class LearningPathNavigationService {
     private CourseCompetency findCorrespondingCompetencyForLearningObject(RecommendationState recommendationState, LearningObject learningObject, boolean firstCompetency) {
         Stream<CourseCompetency> potentialCompetencies = recommendationState.recommendedOrderOfCompetencies().stream()
                 .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .filter(competency -> competency.getLectureUnits().contains(learningObject) || competency.getExercises().contains(learningObject));
+                .filter(competency -> competency.getLectureUnitLinks().stream().anyMatch(lul -> lul.getLectureUnit().equals(learningObject))
+                        || competency.getExerciseLinks().stream().anyMatch(el -> el.getExercise().equals(learningObject)));
 
         // There will always be at least one competency that contains the learning object, otherwise the learning object would not be in the learning path
         Comparator<CourseCompetency> comparator = Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()));

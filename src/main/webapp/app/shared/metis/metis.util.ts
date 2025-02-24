@@ -53,6 +53,7 @@ export interface PostContextFilter {
     pagingEnabled?: boolean;
     page?: number;
     pageSize?: number;
+    pinnedOnly?: boolean;
 }
 
 /**
@@ -79,6 +80,7 @@ export interface PostingContentPart {
     referenceStr?: string; // string that is within the anchor tag
     referenceType?: ReferenceType; // type of artifact to reference
     contentAfterReference?: string; // string after occurrence of reference pattern
+    imageToReference?: string; // image link the reference opens
 }
 
 /**
@@ -105,6 +107,8 @@ export enum ReferenceType {
     FILE_UPLOAD = 'file-upload',
     USER = 'USER',
     CHANNEL = 'CHANNEL',
+    FAQ = 'FAQ',
+    IMAGE = 'IMAGE',
 }
 
 export enum UserRole {

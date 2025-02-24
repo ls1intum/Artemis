@@ -194,6 +194,12 @@ export class MonacoTextEditorAdapter implements TextEditor {
         this.editor.revealRangeInCenter(this.toMonacoRange(range));
     }
 
+    addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable {
+        return this.editor.onDidPaste((pasteEvent) => {
+            callback(this.getTextAtRange(this.fromMonacoRange(pasteEvent.range)));
+        });
+    }
+
     private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {
         return new monaco.Position(position.getLineNumber(), position.getColumn());
     }
@@ -225,5 +231,12 @@ export class MonacoTextEditorAdapter implements TextEditor {
         const keyCode = MonacoTextEditorAdapter.KEY_CODE_MAP.get(keybinding.getKey()) ?? monaco.KeyCode.Unknown;
         const modifier = MonacoTextEditorAdapter.MODIFIER_MAP.get(keybinding.getModifier()) ?? 0;
         return keyCode | modifier;
+    }
+
+    getFullText(): string {
+        const firstPosition = new TextEditorPosition(1, 1);
+        const lastPosition = this.getEndPosition();
+        const range = new TextEditorRange(firstPosition, lastPosition);
+        return this.getTextAtRange(range);
     }
 }

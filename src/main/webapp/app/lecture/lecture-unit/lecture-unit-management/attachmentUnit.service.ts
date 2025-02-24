@@ -1,7 +1,7 @@
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
@@ -12,12 +12,10 @@ type EntityResponseType = HttpResponse<AttachmentUnit>;
     providedIn: 'root',
 })
 export class AttachmentUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private lectureUnitService = inject(LectureUnitService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    private resourceURL = 'api';
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient
@@ -26,18 +24,27 @@ export class AttachmentUnitService {
     }
 
     create(formData: FormData, lectureId: number): Observable<EntityResponseType> {
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.httpClient
-            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, { observe: 'response' })
+            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, {
+                headers: { 'ngsw-bypass': 'true' },
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.httpClient
             .put<AttachmentUnit>(
                 `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
-                { observe: 'response' },
+                { headers: { 'ngsw-bypass': 'true' }, observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }

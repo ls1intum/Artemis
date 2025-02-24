@@ -131,9 +131,10 @@ $footer-height-dev: 3rem;
 $footer-height-prod: 2rem;
 
 // Sidebar
-$sidebar-width: 275px;
-$sidebar-footer-height-dev: 134px;
-$sidebar-footer-height-prod: 118px;
+$sidebar-width: 255px;
+$sidebar-footer-height-dev: 104px;
+$sidebar-footer-height-prod: 88px;
+$spacing-modules: 1rem;
 
 //Module and Navigationbar
 $module-bg: $neutral-dark;
@@ -236,7 +237,7 @@ $code-password-hover: white;
 $unreferenced-feedback-background: transparentize(#fff, 0.95);
 $displaycolor-background: #f8f9fa;
 
-$markdown-preview-editor-background: transparent;
+$markdown-preview-editor-background: $module-bg;
 $markdown-preview-red: #ca2024;
 $markdown-preview-green: #3ea119;
 $markdown-preview-white: #ffffff;
@@ -451,7 +452,6 @@ $monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alp
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: $success;
 $monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
-$monaco-editor-test-coverage-highlight: scale-color($warning, $alpha: -80%);
 $monaco-editor-add-feedback-button-background: $gray-600;
 $monaco-editor-add-feedback-button-hover-background: lighten($gray-600, 10%);
 $monaco-editor-add-feedback-button-text: $gray-300;
@@ -652,6 +652,7 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
 $iris-chat-widget-background: var(--neutral-dark-l-5);
+$iris-chat-bubble-fade: $black;
 $iris-client-chat-background: var(--neutral-dark-l-10);
 $iris-client-chat-input: var(--neutral-dark-l-5);
 $iris-my-chat-background: #008462;
@@ -664,7 +665,7 @@ $iris-rate-background: var(--neutral-dark-l-15);
 $cropper-overlay-color: transparent;
 
 // Settings
-$ssh-key-table-hover-background: $gray-900;
+$ssh-key-settings-table-hover-background: $gray-900;
 $ssh-key-settings-dropdown-buttons: $gray-800;
 $ssh-key-settings-dropdown-buttons-hover: $gray-700;
 $ssh-key-settings-text-color: $white;

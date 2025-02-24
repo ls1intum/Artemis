@@ -1,47 +1,50 @@
 <div>
     <div class="d-flex flex-wrap mt-4">
-        <h2 jhiTranslate="artemisApp.competency.manage.title"></h2>
-        <jhi-documentation-button [type]="documentationType" />
+        <div class="d-flex justify-content-center align-items-center">
+            <h2 class="m-0" jhiTranslate="artemisApp.competency.manage.title"></h2>
+            <button class="ms-3 btn btn-sm btn-warning" (click)="openCourseCompetencyExplanation()">
+                <fa-icon [icon]="faCircleQuestion" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.helpButton"></span>
+            </button>
+        </div>
         <div class="ms-auto justify-content-end">
-            @if (irisCompetencyGenerationEnabled) {
-                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
+            @if (irisCompetencyGenerationEnabled()) {
+                <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId(), 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
+            <button class="btn btn-primary" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
+                <fa-icon [icon]="faEdit" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButton"></span>
+            </button>
             <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
             </button>
         </div>
     </div>
-    @if (isLoading) {
+    @if (isLoading()) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
                 <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     }
-    <jhi-competency-relation-graph
-        [competencies]="courseCompetencies"
-        [relations]="relations"
-        (onCreateRelation)="createRelation($event)"
-        (onRemoveRelation)="onRemoveRelation($event)"
-    />
     <jhi-competency-management-table
-        [courseId]="courseId"
-        [courseCompetencies]="competencies"
-        [relations]="relations"
+        [courseId]="courseId()"
+        [(allCompetencies)]="courseCompetencies"
+        [courseCompetencies]="competencies()"
         [competencyType]="CourseCompetencyType.COMPETENCY"
-        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
     <jhi-competency-management-table
-        [courseId]="courseId"
-        [courseCompetencies]="prerequisites"
-        [relations]="relations"
+        [courseId]="courseId()"
+        [(allCompetencies)]="courseCompetencies"
+        [courseCompetencies]="prerequisites()"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
-        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
 </div>

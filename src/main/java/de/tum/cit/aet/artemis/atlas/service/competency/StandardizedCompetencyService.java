@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 /**
  * Service for managing {@link StandardizedCompetency} entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class StandardizedCompetencyService {
 
@@ -191,6 +191,7 @@ public class StandardizedCompetencyService {
      */
     public String exportStandardizedCompetencyCatalog() {
         List<KnowledgeArea> knowledgeAreas = getAllForTreeView();
+        // TODO: we should avoid using findAll() here, as it might return a huge amount of data
         List<Source> sources = sourceRepository.findAll();
         var catalog = StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
 

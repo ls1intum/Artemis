@@ -39,11 +39,12 @@ test.describe('Import exercises', () => {
     });
 
     test.describe('Imports exercises', () => {
-        test('Imports text exercise', async ({ login, page, courseManagementExercises, textExerciseCreation, courseOverview, textExerciseEditor }) => {
+        test('Imports text exercise', { tag: '@fast' }, async ({ login, page, courseManagementExercises, textExerciseCreation, courseOverview, textExerciseEditor }) => {
             await login(instructor, `/course-management/${secondCourse.id}/exercises`);
             await courseManagementExercises.importTextExercise();
             await courseManagementExercises.clickImportExercise(textExercise.id!);
 
+            await textExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(textExercise.title!);
             await expect(page.locator('#field_points')).toHaveValue(`${textExercise.maxPoints!}`);
 
@@ -69,15 +70,16 @@ test.describe('Import exercises', () => {
             expect(submissionResponse.status()).toBe(200);
         });
 
-        test('Imports quiz exercise', async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseMultipleChoice }) => {
+        test('Imports quiz exercise', { tag: '@fast' }, async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseMultipleChoice }) => {
             await login(instructor, `/course-management/${secondCourse.id}/exercises`);
             await courseManagementExercises.importQuizExercise();
             await courseManagementExercises.clickImportExercise(quizExercise.id!);
 
+            await quizExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(quizExercise.title!);
             await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${quizExercise.duration! / 60}`);
 
-            await quizExerciseCreation.setVisibleFrom(dayjs());
+            await quizExerciseCreation.setReleaseDate(dayjs());
 
             const importResponse = await quizExerciseCreation.import();
             const exercise: QuizExercise = await importResponse.json();
@@ -92,54 +94,63 @@ test.describe('Import exercises', () => {
             expect(submitResponse.status()).toBe(200);
         });
 
-        test('Imports modeling exercise', async ({ login, page, courseManagementExercises, modelingExerciseCreation, courseOverview, modelingExerciseEditor }) => {
-            await login(instructor, `/course-management/${secondCourse.id}/exercises`);
-            await courseManagementExercises.importModelingExercise();
-            await courseManagementExercises.clickImportExercise(modelingExercise.id!);
+        test(
+            'Imports modeling exercise',
+            { tag: '@fast' },
+            async ({ login, page, courseManagementExercises, modelingExerciseCreation, courseOverview, modelingExerciseEditor }) => {
+                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.importModelingExercise();
+                await courseManagementExercises.clickImportExercise(modelingExercise.id!);
 
-            await page.waitForTimeout(10000);
-            await expect(page.locator('#field_title')).toHaveValue(modelingExercise.title!);
-            await expect(page.locator('#field_points')).toHaveValue(`${modelingExercise.maxPoints!}`);
+                await modelingExerciseCreation.waitForFormToLoad();
+                await expect(page.locator('#field_title')).toHaveValue(modelingExercise.title!);
+                await expect(page.locator('#field_points')).toHaveValue(`${modelingExercise.maxPoints!}`);
 
-            await modelingExerciseCreation.setReleaseDate(dayjs());
-            await modelingExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-            await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+                await modelingExerciseCreation.setReleaseDate(dayjs());
+                await modelingExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+                await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
-            const importResponse = await modelingExerciseCreation.import();
-            const exercise: ModelingExercise = await importResponse.json();
-            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-            await courseOverview.startExercise(exercise.id!);
-            await courseOverview.openRunningExercise(exercise.id!);
-            await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
-            await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
-            await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);
-            const submitResponse = await modelingExerciseEditor.submit();
-            const submission: ModelingSubmission = await submitResponse.json();
-            expect(submission.submitted).toBe(true);
-            expect(submitResponse.status()).toBe(200);
-        });
+                const importResponse = await modelingExerciseCreation.import();
+                const exercise: ModelingExercise = await importResponse.json();
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await courseOverview.startExercise(exercise.id!);
+                await courseOverview.openRunningExercise(exercise.id!);
+                await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
+                await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
+                await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);
+                const submitResponse = await modelingExerciseEditor.submit();
+                const submission: ModelingSubmission = await submitResponse.json();
+                expect(submission.submitted).toBe(true);
+                expect(submitResponse.status()).toBe(200);
+            },
+        );
 
-        test('Imports programming exercise', async ({ login, page, courseManagementExercises, programmingExerciseCreation, courseOverview, programmingExerciseEditor }) => {
-            await login(instructor, `/course-management/${secondCourse.id}/exercises`);
-            await courseManagementExercises.importProgrammingExercise();
-            await courseManagementExercises.clickImportExercise(programmingExercise.id!);
+        test(
+            'Imports programming exercise',
+            { tag: '@sequential' },
+            async ({ login, page, courseManagementExercises, programmingExerciseCreation, courseOverview, programmingExerciseEditor }) => {
+                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.importProgrammingExercise();
+                await courseManagementExercises.clickImportExercise(programmingExercise.id!);
 
-            await expect(page.locator('#field_points')).toHaveValue(`${programmingExercise.maxPoints!}`);
+                await programmingExerciseCreation.waitForFormToLoad();
+                await expect(page.locator('#field_points')).toHaveValue(`${programmingExercise.maxPoints!}`);
 
-            await programmingExerciseCreation.setTitle('Import Test');
-            await programmingExerciseCreation.setShortName('importtest' + generateUUID());
-            await programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
+                await programmingExerciseCreation.setTitle('Import Test');
+                await programmingExerciseCreation.setShortName('importtest' + generateUUID());
+                await programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
 
-            const importResponse = await programmingExerciseCreation.import();
-            const exercise: ProgrammingExercise = await importResponse.json();
-            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-            await courseOverview.startExercise(exercise.id!);
-            await courseOverview.openRunningExercise(exercise.id!);
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
-                await expect(resultScore.getByText(javaPartiallySuccessfulSubmission.expectedResult)).toBeVisible();
-            });
-        });
+                const importResponse = await programmingExerciseCreation.import();
+                const exercise: ProgrammingExercise = await importResponse.json();
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await courseOverview.startExercise(exercise.id!);
+                await courseOverview.openRunningExercise(exercise.id!);
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(javaPartiallySuccessfulSubmission.expectedResult)).toBeVisible();
+                });
+            },
+        );
     });
 
     test.afterEach('Delete Courses', async ({ courseManagementAPIRequests }) => {

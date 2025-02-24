@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .coursewide-search {
     .bold-line {
         height: 1px;
@@ -26,5 +30,41 @@
         height: 250px;
         padding-top: 100px;
         padding-bottom: 100px;
+    }
+}
+
+.course-wide-search-mobile-disclaimer {
+    display: none;
+}
+
+@include media-breakpoint-down(sm) {
+    .is-not-in-active-search {
+        display: none;
+    }
+
+    .course-wide-search-mobile-disclaimer {
+        pointer-events: none;
+        position: absolute;
+        top: 10%;
+        left: 0;
+        height: 80%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        opacity: 0;
+
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .course-wide-search-mobile-disclaimer.is-not-in-active-search {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .coursewide-search .posting-infinite-scroll-container {
+        max-height: calc(60vh - var(--header-height) - var(--search-channel-header-height));
+        max-height: calc(60dvh - var(--header-height) - var(--search-channel-header-height));
     }
 }

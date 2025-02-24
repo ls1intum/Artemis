@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 
 /**
@@ -76,7 +77,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
-                LEFT JOIN FETCH e.competencies
+                LEFT JOIN FETCH e.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
@@ -299,7 +301,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
-     * @return list of exercises
+     * @return set of exercises
      */
     @Query("""
             SELECT e
@@ -421,7 +423,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param courseId the course to get the exercises for
      * @param now      the current date time
-     * @return a set of exercises
+     * @return a list of exercises
      */
     @Query("""
             SELECT DISTINCT e
@@ -566,7 +568,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN FETCH f.testCase
             WHERE p.student.id = :userId
                 OR students.id = :userId
-             """)
+            """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
@@ -607,7 +609,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
-     * @return a list of exercises with potential plagiarism
+     * @return a set of exercises with potential plagiarism
      */
     @Query("""
             SELECT e
@@ -626,4 +628,21 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 AND e.exerciseGroup IS NOT NULL
             """)
     boolean isExamExercise(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns a mapping from exercise type to count for a given course id. Note that there are way fewer courses
+     * than exercise, so loading the course and joining the course is way faster than vice versa.
+     *
+     * @param courseId the courseId to get the exerciseType->count mapping for
+     * @return a list of mappings from exercise type to count
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO(TYPE(e), COUNT(e))
+            FROM Course c
+                JOIN c.exercises e
+            WHERE c.id = :courseId
+                AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeCountDTO> countByCourseIdGroupedByType(@Param("courseId") long courseId);
 }

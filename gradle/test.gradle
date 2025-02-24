@@ -1,0 +1,97 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+tasks.withType(Test).configureEach {
+
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+
+    // a collection to track failedTests
+    ext.failedTests = []
+
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.FAILED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+    }
+
+    afterTest { descriptor, result ->
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            var failedTest = "${descriptor.className}::${descriptor.name}"
+            logger.debug("Adding " + failedTest + " to failedTests...")
+            failedTests << [failedTest]
+        }
+    }
+
+    afterSuite { suite, result ->
+        if (!suite.parent) { // will match the outermost suite
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = "|  ", endItem = "  |"
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+            // logs each failed test
+            if (!failedTests.empty) {
+                logger.lifecycle("Failed tests:")
+                failedTests.each { failedTest ->
+                    println("${failedTest}")
+                }
+            }
+        }
+    }
+}
+
+// Allow using in jacoco.gradle
+ext {
+    includedTestTags = System.getProperty("includeTags")
+    includedTags = !includedTestTags ? new String[]{} : includedTestTags.split(",") as String[]
+    includedModulesTag = System.getProperty("includeModules")
+    includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    BasePath = "de/tum/cit/aet/artemis"
+}
+
+
+// Execute the test cases: ./gradlew test
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
+test {
+    if (runAllTests) {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    } else if (includedModules.size() == 0) {
+        // not running all tests, but not module-specific ones -> use tags
+        useJUnitPlatform() {
+            includeTags includedTags
+        }
+    } else {
+        useJUnitPlatform()
+        // Always execute "shared"-folder when executing module-specifc tests
+        includedModules += "shared"
+        filter { testFilter ->
+            includedModules.each { val ->
+                testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
+            }
+        }
+    }
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "6g" // maximum heap size
+}
+
+// Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
+apply from: "gradle/jacoco.gradle"

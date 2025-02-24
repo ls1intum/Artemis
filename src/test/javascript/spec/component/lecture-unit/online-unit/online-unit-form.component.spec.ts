@@ -3,7 +3,7 @@ import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
@@ -11,6 +11,10 @@ import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -18,15 +22,15 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 OnlineUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [MockProvider(OnlineUnitService)],
+            providers: [MockProvider(OnlineUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -111,7 +115,7 @@ describe('OnlineUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                competencies: null,
+                competencyLinks: null,
                 source: 'https://www.example.com',
             });
 
@@ -121,7 +125,7 @@ describe('OnlineUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        onlineUnitFormComponent.isEditMode = true;
+        onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: OnlineUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
@@ -130,7 +134,7 @@ describe('OnlineUnitFormComponent', () => {
         };
         onlineUnitFormComponentFixture.detectChanges();
 
-        onlineUnitFormComponent.formData = formData;
+        onlineUnitFormComponentFixture.componentRef.setInput('formData', formData);
         onlineUnitFormComponent.ngOnChanges();
 
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(formData.name);
@@ -151,10 +155,10 @@ describe('OnlineUnitFormComponent', () => {
         const getOnlineResourceStub = jest.spyOn(onlineUnitService, 'getOnlineResource').mockReturnValue(of(response));
 
         onlineUnitFormComponentFixture.detectChanges();
-        onlineUnitFormComponent.isEditMode = true;
-        onlineUnitFormComponent.formData = {
+        onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        onlineUnitFormComponentFixture.componentRef.setInput('formData', {
             source: 'example.com',
-        };
+        });
         onlineUnitFormComponent.ngOnChanges();
 
         // WHEN

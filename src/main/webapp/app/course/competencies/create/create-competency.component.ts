@@ -1,44 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-competency',
     templateUrl: './create-competency.component.html',
-    styles: [],
-    standalone: true,
-    imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
+    imports: [CompetencyFormComponent, DocumentationButtonComponent, TranslateDirective],
 })
 export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
-    competencyToCreate: Competency = new Competency();
+    private competencyService = inject(CompetencyService);
 
-    constructor(
-        activatedRoute: ActivatedRoute,
-        router: Router,
-        alertService: AlertService,
-        lectureService: LectureService,
-        private competencyService: CompetencyService,
-    ) {
-        super(activatedRoute, router, alertService, lectureService);
-    }
+    competencyToCreate: Competency = new Competency();
 
     createCompetency(formData: CourseCompetencyFormData) {
         if (!formData?.title) {
             return;
         }
 
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
         this.competencyToCreate.title = title;
         this.competencyToCreate.description = description;
@@ -46,7 +34,6 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.competencyToCreate.taxonomy = taxonomy;
         this.competencyToCreate.masteryThreshold = masteryThreshold;
         this.competencyToCreate.optional = optional;
-        this.competencyToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
 

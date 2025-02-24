@@ -1,21 +1,20 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -25,27 +24,26 @@ describe('TutorialGroupRowButtonsComponent', () => {
     } as Course;
     let tutorialGroup: TutorialGroup;
 
-    const router = new MockRouter();
+    let router: MockRouter;
 
     beforeEach(() => {
+        router = new MockRouter();
         TestBed.configureTestingModule({
-            declarations: [
-                TutorialGroupRowButtonsComponent,
-                MockComponent(FaIconComponent),
-                MockRouterLinkDirective,
-                MockDirective(DeleteButtonDirective),
-                MockPipe(ArtemisTranslatePipe),
+            imports: [MockModule(RouterModule)],
+            providers: [
+                MockProvider(TutorialGroupsService),
+                MockProvider(NgbModal),
+                { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(NgbModal), { provide: Router, useValue: router }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);
-                component = fixture.componentInstance;
-                tutorialGroup = generateExampleTutorialGroup({});
-                setInputValues();
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);
+        component = fixture.componentInstance;
+        tutorialGroup = generateExampleTutorialGroup({});
+        setInputValues();
+        fixture.detectChanges();
     });
     const setInputValues = () => {
         component.course = course;
@@ -99,6 +97,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));
+
     it('should navigate to edit', fakeAsync(() => {
         testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id!, 'edit']);
     }));
@@ -124,7 +123,11 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(expectedRoute);
+            const expectedUrlTree = router.createUrlTree(expectedRoute);
+            const actualUrlTree = navigateSpy.mock.calls[0][0];
+
+            expect(actualUrlTree).toEqual(expectedUrlTree);
+
             navigateSpy.mockReset();
         });
     };

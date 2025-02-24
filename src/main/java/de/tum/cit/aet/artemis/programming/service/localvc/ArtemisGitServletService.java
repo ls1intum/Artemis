@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.UploadPack;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,13 @@ public class ArtemisGitServletService extends GitServlet {
 
     /**
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
+     * Sets the pre/post receive/upload hooks.
+     * <p>
+     * For general information on the different hooks and git packs see the git documentation:
+     * <p>
+     * <a href="https://git-scm.com/docs/git-receive-pack">https://git-scm.com/docs/git-receive-pack</a>
+     * <p>
+     * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
      */
     @PostConstruct
     @Override
@@ -50,10 +58,20 @@ public class ArtemisGitServletService extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
+            // the user inside the request is always null here
             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;
         });
+
+        this.setUploadPackFactory((request, repository) -> {
+            UploadPack uploadPack = new UploadPack(repository);
+
+            // Add the custom pre-upload hook, to distinguish between clone and pull operations
+            uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            return uploadPack;
+        });
     }
+
 }

@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
 import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
@@ -51,7 +52,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
             FROM Conversation conv
                 LEFT JOIN Channel channel ON conv.id = channel.id
                 LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
-                LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide = TRUE AND cp.lastRead IS NULL))
+                LEFT JOIN Post p ON conv.id = p.conversation.id AND p.author.id <> :userId AND (p.creationDate > cp.lastRead OR (channel.isCourseWide = TRUE AND cp.lastRead IS NULL))
             WHERE conv.id IN :conversationIds
                 AND (channel.isCourseWide = TRUE OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
             GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
@@ -83,10 +84,25 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
                 LEFT JOIN Channel ch ON c.id = ch.id
             WHERE c.course.id = :courseId
+            AND p.author.id <> :userId
             AND (
                 p.creationDate > cp.lastRead OR
                 (ch.isCourseWide = TRUE AND cp.id IS NULL)
             )
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Conversation c
+            WHERE c.course.id = :courseId
+                AND TYPE(c) = Channel
+                AND c.isCourseWide = TRUE
+                AND c.id NOT IN (
+                    SELECT cp.conversation.id
+                    FROM ConversationParticipant cp
+                    WHERE cp.user.id = :userId
+                )
+            """)
+    List<Channel> findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

@@ -1,9 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
-import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, of } from 'rxjs';
@@ -20,6 +18,8 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { HtmlForMarkdownPipe } from '../../../../../../main/webapp/app/shared/pipes/html-for-markdown.pipe';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
@@ -38,10 +38,10 @@ describe('ExerciseChatbotButtonComponent', () => {
         handleRateLimitInfo: jest.fn(),
     };
     const userMock = {
-        acceptIris: jest.fn(),
+        acceptExternalLLMUsage: jest.fn(),
     };
     const accountMock = {
-        userIdentity: { irisAccepted: dayjs() },
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
     };
 
     beforeEach(async () => {
@@ -69,8 +69,8 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule],
-            declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [FontAwesomeModule, NoopAnimationsModule, MockPipe(HtmlForMarkdownPipe)],
+            declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -161,6 +161,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).not.toBeNull();
+        flush();
     }));
 
     it('should not show new message indicator when chatbot is open', fakeAsync(() => {
@@ -177,5 +178,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
+        flush();
     }));
 });

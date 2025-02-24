@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FinishedBuildJobDTO(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, BuildStatus status,
-        RepositoryType repositoryType, String repositoryName, RepositoryType triggeredByPushTo, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, String commitHash,
-        ResultDTO submissionResult) {
+        RepositoryType repositoryType, String repositoryName, RepositoryType triggeredByPushTo, ZonedDateTime buildSubmissionDate, ZonedDateTime buildStartDate,
+        ZonedDateTime buildCompletionDate, String commitHash, ResultDTO submissionResult) {
 
     /**
      * A DTO representing a result
@@ -36,7 +36,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
          * @return the converted DTO
          */
         public static ResultDTO of(Result result) {
-            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission());
+            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission(), false, null, null);
 
             return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
                     ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
@@ -65,6 +65,6 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
 
         return new FinishedBuildJobDTO(buildJob.getBuildJobId(), buildJob.getName(), buildJob.getBuildAgentAddress(), buildJob.getParticipationId(), buildJob.getCourseId(),
                 buildJob.getExerciseId(), buildJob.getBuildStatus(), buildJob.getRepositoryType(), buildJob.getRepositoryName(), buildJob.getTriggeredByPushTo(),
-                buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate(), buildJob.getCommitHash(), resultDTO);
+                buildJob.getBuildSubmissionDate(), buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate(), buildJob.getCommitHash(), resultDTO);
     }
 }

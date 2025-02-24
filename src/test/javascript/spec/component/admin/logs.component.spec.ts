@@ -15,8 +15,6 @@ describe('Component Tests', () => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [],
-                declarations: [LogsComponent],
                 providers: [provideHttpClient(), provideHttpClientTesting(), LogsService],
             }).compileComponents();
         }));

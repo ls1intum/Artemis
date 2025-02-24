@@ -4,6 +4,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { metisTutor, metisUser1, metisUser2 } from '../helpers/sample/metis-sample-data';
+import { MockPipe } from 'ng-mocks';
 
 describe('ReactingUsersOnPostingsPipe', () => {
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
@@ -11,15 +12,15 @@ describe('ReactingUsersOnPostingsPipe', () => {
     let updateReactingUsersStringSpy: jest.SpyInstance;
     let transformedStringWithReactingUsers: string;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [HtmlForPostingMarkdownPipe],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockPipe(HtmlForPostingMarkdownPipe)],
+            providers: [ReactingUsersOnPostingPipe, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
-                reactingUsersPipe = new ReactingUsersOnPostingPipe(translateService);
+                reactingUsersPipe = TestBed.inject(ReactingUsersOnPostingPipe);
                 updateReactingUsersStringSpy = jest.spyOn(reactingUsersPipe as any, 'updateReactingUsersString');
             });
     });

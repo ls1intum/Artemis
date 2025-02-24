@@ -1,18 +1,12 @@
 import { Routes } from '@angular/router';
-import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
-import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
-import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
-import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.component';
-import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
-import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 
-export const userSettingsState: Routes = [
+export const routes: Routes = [
     {
         path: 'user-settings',
-        component: UserSettingsContainerComponent,
+        loadComponent: () => import('app/shared/user-settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],
@@ -26,42 +20,69 @@ export const userSettingsState: Routes = [
             },
             {
                 path: 'account',
-                component: AccountInformationComponent,
+                loadComponent: () => import('app/shared/user-settings/account-information/account-information.component').then((m) => m.AccountInformationComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.accountInformation',
                 },
             },
             {
                 path: 'notifications',
-                component: NotificationSettingsComponent,
+                loadComponent: () => import('app/shared/user-settings/notification-settings/notification-settings.component').then((m) => m.NotificationSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
                 },
             },
             {
                 path: 'science',
-                component: ScienceSettingsComponent,
+                loadComponent: () => import('app/shared/user-settings/science-settings/science-settings.component').then((m) => m.ScienceSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SCIENCE_SETTINGS',
                 },
             },
             {
                 path: 'ssh',
-                component: SshUserSettingsComponent,
+                loadComponent: () => import('app/shared/user-settings/ssh-settings/ssh-user-settings.component').then((m) => m.SshUserSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/add',
+                loadComponent: () =>
+                    import('app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/fingerprints',
+                loadComponent: () =>
+                    import('app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component').then((m) => m.SshUserSettingsFingerprintsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/view/:keyId',
+                loadComponent: () =>
+                    import('app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
             },
             {
                 path: 'vcs-token',
-                component: VcsAccessTokensSettingsComponent,
+                loadComponent: () =>
+                    import('app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component').then((m) => m.VcsAccessTokensSettingsComponent),
                 data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'ide-preferences',
-                component: IdeSettingsComponent,
+                loadComponent: () => import('app/shared/user-settings/ide-preferences/ide-settings.component').then((m) => m.IdeSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
                 },

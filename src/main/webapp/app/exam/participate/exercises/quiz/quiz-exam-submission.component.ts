@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, inject, input, output, viewChildren } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -20,14 +20,34 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        NgbTooltip,
+        NgClass,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private quizService = inject(ArtemisQuizService);
+
     exerciseType = ExerciseType.QUIZ;
 
     // make constants available to html for comparison
@@ -38,48 +58,40 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly ButtonType = ButtonType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
-    @ViewChildren(MultipleChoiceQuestionComponent)
-    mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
+    mcQuestionComponents = viewChildren(MultipleChoiceQuestionComponent);
 
-    @ViewChildren(DragAndDropQuestionComponent)
-    dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
+    dndQuestionComponents = viewChildren(DragAndDropQuestionComponent);
 
-    @ViewChildren(ShortAnswerQuestionComponent)
-    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
+    shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input() studentSubmission: AbstractQuizSubmission;
-    @Input() exercise: QuizExercise;
-    @Input() examTimeline = false;
-    @Input() quizConfiguration: QuizConfiguration;
+    studentSubmission = input.required<AbstractQuizSubmission>();
+    exercise = input<QuizExercise>();
+    examTimeline = input(false);
+    quizConfiguration = input.required<QuizConfiguration>();
+
+    saveCurrentExercise = output<void>();
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(
-        private quizService: ArtemisQuizService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-        smoothscroll.polyfill();
-    }
-
     ngOnInit(): void {
+        smoothscroll.polyfill();
         this.initQuiz();
         this.updateViewFromSubmission();
     }
 
     getSubmission(): Submission {
-        return this.studentSubmission;
+        return this.studentSubmission();
     }
 
     getExerciseId(): number | undefined {
-        return this.quizConfiguration.id;
+        return this.quizConfiguration().id;
     }
 
     getExercise(): Exercise {
-        return this.exercise;
+        return this.quizConfiguration() as Exercise;
     }
 
     /**
@@ -88,16 +100,18 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     initQuiz() {
         // randomize order
         // in the exam timeline, we do not want to randomize the order as this makes it difficult to view the changes between submissions.
-        if (!this.examTimeline) {
-            this.quizService.randomizeOrder(this.quizConfiguration.quizQuestions, this.quizConfiguration.randomizeQuestionOrder);
+        if (!this.examTimeline()) {
+            this.quizService.randomizeOrder(this.quizConfiguration().quizQuestions, this.quizConfiguration().randomizeQuestionOrder);
         }
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizConfiguration.quizQuestions) {
-            this.quizConfiguration.quizQuestions.forEach((question) => {
+        const quizQuestions = this.quizConfiguration().quizQuestions;
+
+        if (quizQuestions) {
+            quizQuestions.forEach((question) => {
                 switch (question.type) {
                     case QuizQuestionType.MULTIPLE_CHOICE:
                         // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
@@ -112,7 +126,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -148,11 +162,12 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizConfiguration.quizQuestions?.length) {
+        const quizQuestions = this.quizConfiguration().quizQuestions;
+        if (quizQuestions?.length) {
             // iterate through all questions of this quiz
-            this.quizConfiguration.quizQuestions.forEach((question) => {
+            quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.studentSubmission?.submittedAnswers?.find((answer) => {
+                const submittedAnswer = this.studentSubmission()?.submittedAnswers?.find((answer) => {
                     return answer.quizQuestion?.id === question.id;
                 });
 
@@ -191,7 +206,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         }
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -202,14 +217,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
-        this.studentSubmission.isSynced = false;
+        this.studentSubmission().isSynced = false;
     }
 
     /**
      * return true if the user changed any answer in the quiz
      */
     hasUnsavedChanges(): boolean {
-        return !this.studentSubmission.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     /**
@@ -223,66 +238,73 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     updateSubmissionFromView(): void {
         // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
         // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
-        this.studentSubmission.submittedAnswers = [];
+        this.studentSubmission().submittedAnswers = [];
 
         // for multiple-choice questions
         this.selectedAnswerOptions.forEach((answerOptions, questionID) => {
             // find the question object for the given question id
-            const question = this.quizConfiguration.quizQuestions?.find(function (selectedQuestion) {
+            const question = this.quizConfiguration().quizQuestions?.find(function (selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
             const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
             mcSubmittedAnswer.quizQuestion = question;
             mcSubmittedAnswer.selectedOptions = answerOptions;
-            this.studentSubmission.submittedAnswers!.push(mcSubmittedAnswer);
+            this.studentSubmission().submittedAnswers!.push(mcSubmittedAnswer);
         }, this);
 
         // for drag-and-drop questions
         this.dragAndDropMappings.forEach((mappings, questionID) => {
             // find the question object for the given question id
-            const question = this.quizConfiguration.quizQuestions?.find(function (localQuestion) {
+            const question = this.quizConfiguration().quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
             const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
             dndSubmittedAnswer.quizQuestion = question;
             dndSubmittedAnswer.mappings = mappings;
-            this.studentSubmission.submittedAnswers!.push(dndSubmittedAnswer);
+            this.studentSubmission().submittedAnswers!.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
         this.shortAnswerSubmittedTexts.forEach((submittedTexts, questionID) => {
             // find the question object for the given question id
-            const question = this.quizConfiguration.quizQuestions?.find(function (localQuestion) {
+            const question = this.quizConfiguration().quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
             shortAnswerSubmittedAnswer.quizQuestion = question;
             shortAnswerSubmittedAnswer.submittedTexts = submittedTexts;
-            this.studentSubmission.submittedAnswers!.push(shortAnswerSubmittedAnswer);
+            this.studentSubmission().submittedAnswers!.push(shortAnswerSubmittedAnswer);
         }, this);
     }
 
     updateViewFromSubmissionVersion(): void {
-        this.studentSubmission.submittedAnswers = JSON.parse(this.submissionVersion.content);
+        this.studentSubmission().submittedAnswers = JSON.parse(this.submissionVersion.content);
         this.updateViewFromSubmission();
     }
 
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
     }
 }

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { ArtemisTestModule } from '../../test.module';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
@@ -11,6 +10,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { MockComponent } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
@@ -19,11 +20,11 @@ describe('RatingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [RatingComponent, MockComponent(StarRatingComponent)],
             providers: [
                 { provide: RatingService, useClass: MockRatingService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -68,6 +69,48 @@ describe('RatingComponent', () => {
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
         ratingComponent.ngOnInit();
         expect(ratingComponent.rating).toBe(1);
+    });
+
+    it('should call loadRating on ngOnInit', () => {
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        ratingComponent.ngOnInit();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not set rating if result participation is not defined', () => {
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponent.result.submission = { id: 1 } as Submission;
+        // result.participation undefined
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.detectChanges();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        expect(ratingComponent.rating).toBeUndefined();
+    });
+
+    it('should call loadRating when result changes', () => {
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponent.result.submission = { id: 1 } as Submission;
+        ratingComponent.result.participation = { id: 1 } as Participation;
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.detectChanges();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        expect(ratingComponent.rating).toBe(2);
+    });
+
+    it('should not call loadRating if result ID remains the same', () => {
+        // without this condition the loadRating might be spammed making unnecessary api calls
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponent.result.submission = { id: 1 } as Submission;
+        ratingComponent.result.participation = { id: 1 } as Participation;
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.detectChanges();
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponentFixture.detectChanges();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        expect(ratingComponent.rating).toBe(2);
     });
 
     describe('OnRate', () => {

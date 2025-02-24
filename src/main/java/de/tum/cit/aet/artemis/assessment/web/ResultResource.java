@@ -7,8 +7,10 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,12 +30,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -280,16 +286,98 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/feedback-details : Retrieves all aggregated feedback details for a given exercise.
-     * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
+     * GET /exercises/{exerciseId}/feedback-details : Retrieves paginated and filtered aggregated feedback details for a specified exercise.
+     * <br>
+     * This endpoint provides detailed feedback analytics, including:
+     * - The count and relative count (percentage) of each unique feedback entry.
+     * - Associated test case names.
+     * - Task names, mapped from test cases.
+     * <br>
+     * Pagination, sorting, and filtering options allow flexible data retrieval:
+     * <ul>
+     * <li><b>Pagination:</b> Based on page number and page size, as specified in the request.</li>
+     * <li><b>Sorting:</b> By column (e.g., "count" or "detailTexts") and sorting order (ASCENDING or DESCENDING).
+     * If the specified column is not valid for sorting, the default sorting column is "count".</li>
+     * <li><b>Filtering:</b>
+     * <ul>
+     * <li><b>Task names:</b> Filters feedback entries by specific task names, including "Not assigned to task" if unassigned feedback is requested.</li>
+     * <li><b>Test case names:</b> Filters feedback by specified test cases, using only active test cases from the exercise.</li>
+     * <li><b>Occurrence range:</b> Filters by the minimum and maximum number of occurrences (inclusive).</li>
+     * <li><b>Search term:</b> Case-insensitive filter applied to feedback detail text.</li>
+     * <li><b>Error categories:</b> Filters feedback entries by specified error categories (e.g., "Student Error," "Ares Error," and "AST Error").</li>
+     * </ul>
+     * </li>
+     * </ul>
      *
-     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A ResponseEntity containing a list of {@link FeedbackDetailDTO}s
+     * @param exerciseId    The unique identifier of the exercise for which feedback details are requested.
+     * @param groupFeedback Should the feedback be grouped
+     * @param data          A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
+     *                          <ul>
+     *                          <li>Page number and page size</li>
+     *                          <li>Search term (optional)</li>
+     *                          <li>Sorting order (ASCENDING or DESCENDING)</li>
+     *                          <li>Sorted column</li>
+     *                          <li>Filter task names (optional)</li>
+     *                          <li>Filter test case names (optional)</li>
+     *                          <li>Occurrence range (optional)</li>
+     *                          <li>Error categories (optional)</li>
+     *                          </ul>
+     * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
+     *         <ul>
+     *         <li>{@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated and filtered feedback details for the exercise.</li>
+     *         <li>long totalItems: The total count of feedback entries (for pagination).</li>
+     *         <li>Set<String> taskNames: A set of task names relevant to the feedback items, including "Not assigned to task" if applicable.</li>
+     *         <li>List<String> testCaseNames: A list of active test case names used in the feedback.</li>
+     *         <li>List<String> errorCategories: The list of error categories included in the feedback details, such as "Student Error," "Ares Error," and "AST Error".</li>
+     *         </ul>
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<List<FeedbackDetailDTO>> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
-        return ResponseEntity.ok(resultService.findAggregatedFeedbackByExerciseId(exerciseId));
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("groupFeedback") boolean groupFeedback,
+            @ModelAttribute FeedbackPageableDTO data) {
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, groupFeedback);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-details-max-count : Retrieves the maximum number of feedback occurrences for a given exercise.
+     * This method is useful for determining the highest count of feedback occurrences across all feedback items for the exercise,
+     * which can then be used to filter or adjust feedback analysis results.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count should be retrieved.
+     * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
+        long maxCount = resultService.getMaxCountForExercise(exerciseId);
+        return ResponseEntity.ok(maxCount);
+    }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-details-participation : Retrieves paginated details of students affected by specific feedback entries for a specified exercise.
+     * This endpoint returns details of students whose submissions were impacted by specified feedback entries, including student information
+     * and participation details.
+     * <br>
+     *
+     * @param exerciseId  for which the participation data is requested.
+     * @param feedbackId1 Optional first detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId2 Optional second detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId3 Optional third detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId4 Optional fourth detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId5 Optional fifth detail text id to filter affected students by specific feedback entries.
+     * @return A {@link ResponseEntity} containing a {@link List} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details-participation")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<List<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId,
+            @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
+            @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
+            @RequestParam(value = "feedbackId5", required = false) Long feedbackId5) {
+
+        List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
+
+        List<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds);
+        return ResponseEntity.ok(participation);
     }
 }

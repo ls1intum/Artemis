@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -35,8 +36,6 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private UserUtilService userUtilService;
 
-    private Lecture lecture;
-
     private LectureUnit unit1;
 
     private LectureUnit unit2;
@@ -45,7 +44,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void init() {
-        lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         unit1 = lectureUtilService.createAttachmentUnit(false);
         unit2 = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2));
@@ -86,5 +85,19 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit1.getId(), student1.getId())).isEmpty();
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit2.getId(), student1.getId())).isEmpty();
+    }
+
+    @Test
+    void testSaveWithCompetencyLinksWithNullLinks() {
+        AttachmentUnit lectureUnit = new AttachmentUnit();
+        lectureUnit.setCompetencyLinks(null);
+
+        LectureUnit savedLectureUnit = lectureUnitService.saveWithCompetencyLinks(lectureUnit, unit -> {
+            unit.setId(1L);
+            return unit;
+        });
+
+        assertThat(savedLectureUnit).isNotNull();
+        assertThat(savedLectureUnit.getCompetencyLinks()).isEmpty();
     }
 }

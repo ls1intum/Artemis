@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -94,9 +96,12 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
-                .orElse(null);
-        return ResponseEntity.ok(buildAgentDetails);
+        Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
+                .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+        if (buildAgentDetails.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(buildAgentDetails.get());
     }
 
     /**
@@ -187,5 +192,101 @@ public class AdminBuildJobQueueResource {
         List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
+    }
+
+    /**
+     * {@code PUT /api/admin/agents/{agentName}/pause} : Pause the specified build agent.
+     * This endpoint allows administrators to pause a specific build agent by its name.
+     * Pausing a build agent will prevent it from picking up any new build jobs until it is resumed.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @param agentName the name of the build agent to be paused (provided as a path variable)
+     * @return {@link ResponseEntity} with status code 204 (No Content) if the agent was successfully paused
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agents/{agentName}/pause")
+    public ResponseEntity<Void> pauseBuildAgent(@PathVariable String agentName) {
+        log.debug("REST request to pause agent {}", agentName);
+        localCIBuildJobQueueService.pauseBuildAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/agents/pause-all} : Pause all build agents.
+     * This endpoint allows administrators to pause all build agents.
+     * Pausing all build agents will prevent them from picking up any new build jobs until they are resumed.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @return {@link ResponseEntity} with status code 204 (No Content) if all agents were successfully paused
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agents/pause-all")
+    public ResponseEntity<Void> pauseAllBuildAgents() {
+        log.debug("REST request to pause all agents");
+        localCIBuildJobQueueService.pauseAllBuildAgents();
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/agents/{agentName}/resume} : Resume the specified build agent.
+     * This endpoint allows administrators to resume a specific build agent by its name.
+     * Resuming a build agent will allow it to pick up new build jobs again.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @param agentName the name of the build agent to be resumed (provided as a path variable)
+     * @return {@link ResponseEntity} with status code 204 (No Content) if the agent was successfully resumed
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agents/{agentName}/resume")
+    public ResponseEntity<Void> resumeBuildAgent(@PathVariable String agentName) {
+        log.debug("REST request to resume agent {}", agentName);
+        localCIBuildJobQueueService.resumeBuildAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/agents/resume-all} : Resume all build agents.
+     * This endpoint allows administrators to resume all build agents.
+     * Resuming all build agents will allow them to pick up new build jobs again.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @return {@link ResponseEntity} with status code 204 (No Content) if all agents were successfully resumed
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agents/resume-all")
+    public ResponseEntity<Void> resumeAllBuildAgents() {
+        log.debug("REST request to resume all agents");
+        localCIBuildJobQueueService.resumeAllBuildAgents();
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/clear-distributed-data} : Clear all distributed data.
+     * This endpoint allows administrators to clear all distributed data. See {@link SharedQueueManagementService#clearDistributedData()}.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @return {@link ResponseEntity} with status code 200 (OK) if the distributed data was successfully cleared
+     *         or an appropriate error response if something went wrong
+     */
+    @DeleteMapping("clear-distributed-data")
+    public ResponseEntity<Void> clearDistributedData() {
+        log.debug("REST request to clear distributed data");
+        localCIBuildJobQueueService.clearDistributedData();
+        return ResponseEntity.noContent().build();
     }
 }

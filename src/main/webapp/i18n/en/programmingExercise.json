@@ -7,9 +7,10 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next"
+                "switchToSimpleMode": "Switch to simple mode",
+                "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
+                "switchToAdvancedMode": "Switch to advanced mode",
+                "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -147,18 +148,21 @@
             },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
+                "description": "Enables students to download the exercise via Git and to work on it locally using their preferred IDE.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
@@ -212,22 +216,8 @@
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
+            "diffReportError": "Diff report could not be generated.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
-            "extractTasksFromProblemStatementWarning": "Only for testing purpose: Extract all tasks and test cases from problems statement.",
-            "extractTasksFromProblemStatementSuccess": "Loaded {{numberTasks}} extracted tasks with {{numberTestCases}} tests from the problem statement:\n{{detailedResult}}",
-            "extractTasksFromProblemStatementTitle": "Get Extracted Tasks",
-            "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and Solution Code Snippets.",
-            "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and Solution Code Snippets.",
-            "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
-            "generateCodeHintsTooltip": "Generates code hints for all tasks in this exercise using the already created Solution Code Snippets.",
-            "generateCodeHintsTitle": "Generate code hints",
-            "generateCodeHintsSuccess": "Code hints have been generated",
-            "createStructuralSolutionEntriesTooltip": "Creates Solution Code Snippets for all structural test cases of this exercise.",
-            "createStructuralSolutionEntriesTitle": "Create structural Solution Code Snippets",
-            "createStructuralSolutionEntriesSuccess": "Structural Solution Code Snippets have been created successfully",
-            "createBehavioralSolutionEntriesTooltip": "Creates Solution Code Snippets for all behavioral test cases of this exercise.",
-            "createBehavioralSolutionEntriesTitle": "Create behavioral Solution Code Snippets",
-            "createBehavioralSolutionEntriesSuccess": "Behavioral Solution Code Snippets have been created successfully",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -347,8 +337,68 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} items",
-                    "error": "An error occurred while loading the feedback."
+                    "totalItems": "In total {{count}} item(s)",
+                    "error": "An error occurred while loading the feedback.",
+                    "search": "Search ...",
+                    "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
+                    "groupFeedback": "Group Feedback",
+                    "groupFeedbackTooltip": "Group feedback enables the grouping of similar feedback entries that share the same test case and task name into a single entry. This is useful for reducing the number of entries in the table, especially when random values or similar inputs are used and compared in the test cases.",
+                    "feedbackModal": {
+                        "header": "Error Details",
+                        "feedbackTitle": "Test Case Feedback",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filter Options",
+                        "task": "Tasks",
+                        "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
+                        "occurrence": "Occurrence",
+                        "clear": "Clear Filter",
+                        "cancel": "Cancel",
+                        "apply": "Apply Filter"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Sample for Affected Students",
+                        "description": "The following is a sample of affected students for the selected feedback entry, as this is sufficient to analyze the feedback. The list is limited to 5 students. In total, {{count}} students received this feedback.",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "dueDate": "The exercise due date has not passed yet. Keep in mind that this means the result is not final, and the affected students may change in the future. Additionally, the feedback might not be visible to students yet if there are hidden test cases in the exercise. Please verify if you still intend to create a feedback channel!",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Create"
+                        }
+                    }
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
@@ -465,6 +515,8 @@
                 "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
+                "feedbackRequestsEnabled": "Feedback requests are enabled.",
+                "feedbackRequestsDisabled": "Feedback requests are disabled.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
@@ -514,7 +566,7 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
-                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted at the specified Checkout Directory during the build of the submission.",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The additional code is inserted in the specified checkout directory before the build is created. The inserted files overwrite all files in the checkout directory which have the same name. Files that are not overwritten are retained.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
@@ -529,7 +581,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Adjust the auxiliary repository configuration to a valid configuration to switch to the simple mode."
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
@@ -578,10 +631,10 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
                     }
                 },
-                "submissionLimitTitle": "Submission limit",
+                "submissionLimitTitle": "Submissions",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
@@ -638,20 +691,9 @@
             },
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
-            "recordTestwiseCoverage": "Record Testwise Coverage",
-            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
             "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
-            "testwiseCoverageReport": {
-                "button": "Show testwise coverage",
-                "tooltip": "Shows the testwise coverage for the solution repository.",
-                "title": "Testwise Coverage",
-                "404": "Testwise Coverage has not been generated yet. Please do a push to the solution or test repository to generate the report.",
-                "selectTests": "Select the tests for which the covered lines are marked:",
-                "filePath": "File Path",
-                "coveredLines": "Covered Lines"
-            },
             "buildLogStatistics": {
                 "title": "Average build log statistics",
                 "numberOfBuilds": "# Builds",
@@ -688,10 +730,29 @@
                 "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
                 "pushSolution": "Push the solution code to its repository. It will not be checked out.",
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Disable internet access when executing the student submission",
+                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
+                    "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                },
+                "envVars": {
+                    "title": "Environment Variables",
+                    "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
+                    "addEnvVar": "Add Environment Variable",
+                    "removeEnvVar": "Remove"
+                }
+            },
+            "artemisIntelligence": {
+                "consistencyCheckAlert": {
+                    "title": "Consistency Check Result"
+                }
             }
         },
         "error": {
-            "noparticipations": "No existing user was specified or no submission exists."
+            "noparticipations": "No existing user was specified or no submission exists.",
+            "shortNameGenerationFailed": "The short name could not be generated, please switch to the advanced mode and set the short name manually."
         }
     }
 }

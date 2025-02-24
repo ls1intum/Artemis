@@ -12,12 +12,14 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronLeft,
     faChevronRight,
     faCircleNotch,
@@ -29,7 +31,6 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
-    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faQuestion,
@@ -38,9 +39,9 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -56,7 +57,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
-import { facSidebar } from '../../content/icons/icons';
+import { facSidebar } from 'app/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
@@ -67,6 +68,15 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
+import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { SecuredImageComponent } from '../shared/image/secured-image.component';
+import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
+import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
 
 interface CourseActionItem {
     title: string;
@@ -93,9 +103,52 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
+    imports: [
+        NgClass,
+        MatSidenavContainer,
+        MatSidenav,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgTemplateOutlet,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        MatSidenavContent,
+        NgStyle,
+        RouterLink,
+        RouterOutlet,
+        SecuredImageComponent,
+        OrionFilterDirective,
+        RouterLinkActive,
+        FeatureToggleHideDirective,
+        SlicePipe,
+    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseService = inject(CourseManagementService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private teamService = inject(TeamService);
+    private websocketService = inject(WebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private examParticipationService = inject(ExamParticipationService);
+    private ltiService = inject(LtiService);
+
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
     private courseId: number;
@@ -110,10 +163,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     communicationRouteLoaded: boolean;
+    atlasEnabled = false;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
-    hasSidebar: boolean = false;
+    hasSidebar = false;
     sidebarItems: SidebarItem[];
     courseActionItems: CourseActionItem[];
     isNotManagementView: boolean;
@@ -121,23 +175,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
-    showRefreshButton: boolean = false;
+    showRefreshButton = false;
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
-    isLti: boolean = false;
+    isShownViaLti = false;
     private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
-    dropdownOpen: boolean = false;
-    anyItemHidden: boolean = false;
+    anyItemHidden = false;
     hiddenItems: SidebarItem[] = [];
-    thresholdsForEachSidebarItem: number[] = [];
-    dropdownOffset: number;
-    dropdownClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -179,6 +228,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
     faQuestion = faQuestion;
+    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -186,32 +236,27 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
 
-    constructor(
-        private courseService: CourseManagementService,
-        private courseExerciseService: CourseExerciseService,
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private examParticipationService: ExamParticipationService,
-        private ltiService: LtiService,
-    ) {}
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     async ngOnInit() {
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = true;
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = false;
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
+        });
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -220,16 +265,20 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-        );
+        // If course is not active, it means that it is accessed from course archive, which should not
+        // be stored in local storage and therefore displayed in recently accessed
+        if (this.course && this.isCourseActive(this.course)) {
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+            );
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+            );
+        }
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -238,8 +287,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
     }
 
@@ -336,7 +385,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem: SidebarItem = this.getCompetenciesItems();
             sidebarItems.push(competenciesItem);
             if (this.course?.learningPathsEnabled) {
@@ -479,7 +528,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
-            icon: faListCheck,
+            icon: faListAlt,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
@@ -487,7 +536,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
-            icon: faListAlt,
+            icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hasInOrionProperty: true,
@@ -574,11 +623,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
-
-            // Listen for changes to the control configuration; works for initial config as well
             this.controlsSubscription =
-                this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
+                this.controlConfiguration.subject?.subscribe(async (controls: TemplateRef<any>) => {
                     this.controls = controls;
+                    this.tryRenderControls();
+                    await firstValueFrom(provider.controlsRendered);
                     this.tryRenderControls();
                 }) || undefined;
         }
@@ -697,9 +746,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.course = res.body;
                 }
 
-                if (refresh) {
-                    this.setUpConversationService();
-                }
+                this.setUpConversationService();
 
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             }),
@@ -738,7 +785,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.teamAssignmentUpdateListener.unsubscribe();
         }
         if (this.quizExercisesChannel) {
-            this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
+            this.websocketService.unsubscribe(this.quizExercisesChannel);
         }
         this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
@@ -747,6 +794,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.ltiSubscription?.unsubscribe();
@@ -758,8 +808,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
-            this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.subscribe(this.quizExercisesChannel);
+            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {
@@ -826,5 +876,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     toggleCollapseState() {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
         localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
+    }
+
+    /**
+     * A course is active if the end date is after the current date or
+     * end date is not set at all
+     *
+     * @param course The given course to be checked if it is active
+     * @returns true if the course is active, otherwise false
+     */
+    isCourseActive(course: Course): boolean {
+        return course.endDate ? dayjs(course.endDate).isAfter(dayjs()) : true;
     }
 }

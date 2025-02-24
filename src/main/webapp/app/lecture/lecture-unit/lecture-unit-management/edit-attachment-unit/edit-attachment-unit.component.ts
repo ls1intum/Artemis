@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -10,28 +10,27 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
     templateUrl: './edit-attachment-unit.component.html',
-    styles: [],
+    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
 })
 export class EditAttachmentUnitComponent implements OnInit {
-    @ViewChild('attachmentUnitForm')
-    attachmentUnitForm: AttachmentUnitFormComponent;
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+
+    @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentUnitFormComponent;
+
     isLoading = false;
     attachmentUnit: AttachmentUnit;
     attachment: Attachment;
     formData: AttachmentUnitFormData;
     lectureId: number;
     notificationText: string;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -62,7 +61,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                             description: this.attachmentUnit.description,
                             releaseDate: this.attachment.releaseDate,
                             version: this.attachment.version,
-                            competencies: this.attachmentUnit.competencies,
+                            competencyLinks: this.attachmentUnit.competencyLinks,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,
@@ -74,7 +73,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     }
 
     updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, competencies } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
@@ -88,7 +87,7 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachment.attachmentType = AttachmentType.FILE;
         // === Setting attachmentUnit ===
         this.attachmentUnit.description = description;
-        this.attachmentUnit.competencies = competencies;
+        this.attachmentUnit.competencyLinks = competencyLinks;
 
         this.isLoading = true;
 

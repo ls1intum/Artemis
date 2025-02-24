@@ -6,6 +6,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: use record in the future
 public class ChannelDTO extends ConversationDTO {
 
     private String name;
@@ -14,25 +15,25 @@ public class ChannelDTO extends ConversationDTO {
 
     private String topic;
 
-    private Boolean isPublic;
+    private boolean isPublic = false; // default value
 
-    private Boolean isAnnouncementChannel;
+    private boolean isAnnouncementChannel = false; // default value
 
-    private Boolean isArchived;
+    private boolean isArchived = false; // default value
 
-    private Boolean isCourseWide;
+    private boolean isCourseWide = false; // default value
 
     // property not taken from entity
     /**
      * A course instructor has channel moderation rights but is not necessarily a moderator of the channel
      */
-    private Boolean hasChannelModerationRights;
+    private boolean hasChannelModerationRights = false; // default value
 
     // property not taken from entity
     /**
      * Member of the channel that is also a moderator of the channel
      */
-    private Boolean isChannelModerator;
+    private boolean isChannelModerator = false; // default value
 
     // property not taken from entity
     /**
@@ -98,43 +99,43 @@ public class ChannelDTO extends ConversationDTO {
         this.topic = topic;
     }
 
-    public Boolean getIsPublic() {
+    public boolean getIsPublic() {
         return isPublic;
     }
 
-    public void setIsPublic(Boolean isPublic) {
+    public void setIsPublic(boolean isPublic) {
         this.isPublic = isPublic;
     }
 
-    public Boolean getIsAnnouncementChannel() {
+    public boolean getIsAnnouncementChannel() {
         return isAnnouncementChannel;
     }
 
-    public void setIsAnnouncementChannel(Boolean announcementChannel) {
+    public void setIsAnnouncementChannel(boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
     }
 
-    public Boolean getIsArchived() {
+    public boolean getIsArchived() {
         return isArchived;
     }
 
-    public void setIsArchived(Boolean archived) {
+    public void setIsArchived(boolean archived) {
         isArchived = archived;
     }
 
-    public Boolean getHasChannelModerationRights() {
+    public boolean getHasChannelModerationRights() {
         return hasChannelModerationRights;
     }
 
-    public void setHasChannelModerationRights(Boolean hasChannelModerationRights) {
+    public void setHasChannelModerationRights(boolean hasChannelModerationRights) {
         this.hasChannelModerationRights = hasChannelModerationRights;
     }
 
-    public Boolean getIsChannelModerator() {
+    public boolean getIsChannelModerator() {
         return isChannelModerator;
     }
 
-    public void setIsChannelModerator(Boolean isChannelModerator) {
+    public void setIsChannelModerator(boolean isChannelModerator) {
         this.isChannelModerator = isChannelModerator;
     }
 
@@ -162,11 +163,11 @@ public class ChannelDTO extends ConversationDTO {
         return subTypeReferenceId;
     }
 
-    public Boolean getIsCourseWide() {
+    public boolean getIsCourseWide() {
         return isCourseWide;
     }
 
-    public void setIsCourseWide(Boolean courseWide) {
+    public void setIsCourseWide(boolean courseWide) {
         isCourseWide = courseWide;
     }
 
@@ -191,8 +192,28 @@ public class ChannelDTO extends ConversationDTO {
             this.subType = ChannelSubType.EXAM;
             this.subTypeReferenceId = channel.getExam().getId();
         }
+        else if (channel.getTopic() != null && channel.getTopic().contains("FeedbackDiscussion")) {
+            this.subType = ChannelSubType.FEEDBACK_DISCUSSION;
+        }
         else {
             this.subType = ChannelSubType.GENERAL;
         }
+    }
+
+    /**
+     * Converts the DTO to a channel entity
+     *
+     * @return the created channel entity based on the attributes in the DTO
+     */
+    public Channel toChannel() {
+        Channel channel = new Channel();
+        channel.setName(this.name);
+        channel.setDescription(this.description);
+        channel.setTopic(this.topic);
+        channel.setIsPublic(this.isPublic);
+        channel.setIsArchived(this.isArchived);
+        channel.setIsAnnouncementChannel(this.isAnnouncementChannel);
+        channel.setIsCourseWide(this.isCourseWide);
+        return channel;
     }
 }

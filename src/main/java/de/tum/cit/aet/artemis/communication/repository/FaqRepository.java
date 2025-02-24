@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -30,8 +31,16 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
             """)
     Set<String> findAllCategoriesByCourseId(@Param("courseId") Long courseId);
 
-    @Transactional
+    @Query("""
+            SELECT DISTINCT faq.categories
+            FROM Faq faq
+            WHERE faq.course.id = :courseId AND faq.faqState = :faqState
+            """)
+    Set<String> findAllCategoriesByCourseIdAndState(@Param("courseId") Long courseId, @Param("faqState") FaqState faqState);
+
+    Set<Faq> findAllByCourseIdAndFaqState(Long courseId, FaqState faqState);
+
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByCourseId(Long courseId);
-
 }

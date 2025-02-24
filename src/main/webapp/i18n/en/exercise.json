@@ -171,10 +171,12 @@
             "noSubmissionExists": "You have to submit your work at least once.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",
             "feedbackRequestAfterDueDate": "You cannot submit feedback requests after the due date.",
+            "feedbackRequestPendingChanges": "You have pending changes. Please submit them first before requesting Feedback.",
             "maxAthenaResultsReached": "You have reached the maximum number of AI feedback requests.",
             "athenaFeedbackSuccessful": "AI feedback successfully generated. Click on the result to view details.",
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
+            "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",
@@ -214,12 +216,14 @@
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
             "errors": {
-                "exerciseNotFound": "This exercise was not found"
+                "exerciseNotFound": "This exercise was not found",
+                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!"
             },
             "form": {
                 "title": {
                     "undefined": "There has to be a title set!",
-                    "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
+                    "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!",
+                    "disallowedValue": "The title is already used for another exercise!"
                 },
                 "channelName": {
                     "empty": "There has to be a channel name set!"
@@ -227,7 +231,8 @@
                 "shortName": {
                     "undefined": "There has to be a short name set!",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
-                    "minlength": "The short name must be at least 3 characters long!"
+                    "minlength": "The short name must be at least 3 characters long!",
+                    "disallowedValue": "The short name is already used for another exercise!"
                 },
                 "packageName": {
                     "undefined": "There has to be a package name set!",
@@ -235,7 +240,9 @@
                         "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
-                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects"
+                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
+                        "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
                     }
                 },
                 "points": {

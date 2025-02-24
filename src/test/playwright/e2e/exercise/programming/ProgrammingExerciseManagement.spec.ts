@@ -7,7 +7,7 @@ import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
-test.describe('Programming Exercise Management', () => {
+test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -23,6 +23,7 @@ test.describe('Programming Exercise Management', () => {
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
             const exerciseTitle = 'Programming exercise ' + generateUUID();
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(exerciseTitle);
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
             await programmingExerciseCreation.setPackageName('de.test');
@@ -47,6 +48,7 @@ test.describe('Programming Exercise Management', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await programmingExerciseCreation.changeEditMode();
 
             const firstSectionHeadline = 'General';
             const firstSectionStatusBarId = 0;

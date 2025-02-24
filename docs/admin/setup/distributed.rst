@@ -17,7 +17,7 @@ Setup with multiple instances
 There are certain scenarios, where a setup with multiple instances of the application server is required.
 This can e.g. be due to special requirements regarding fault tolerance or performance.
 
-Artemis also supports this setup (which is also used at the Chair for Applied Software Engineering at TUM).
+Artemis also supports this setup (which is also used at TUM).
 
 Multiple instances of the application server are used to distribute the load:
 
@@ -528,7 +528,7 @@ For ICL, the run configuration for core nodes need to include the additional pro
 
 ::
 
-        --spring.profiles.active=prod,core,ldap-only,localvc,localci,athena,scheduling,iris,lti
+        --spring.profiles.active=prod,core,atlas,ldap-only,localvc,localci,athena,scheduling,iris,lti
 
 Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
 
@@ -608,7 +608,6 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                 specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
                 concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
                 asynchronous: true
-                timeout-seconds: 240                                # Time limit of a build before it will be cancelled
                 build-container-prefix: local-ci-
                 image-cleanup:
                     enabled: true                                   # If set to true (recommended), old Docker images will be deleted on a schedule.
@@ -617,7 +616,14 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                 container-cleanup:
                     expiry-minutes: 5                               # Time after a hanging container will automatically be removed
                     cleanup-schedule-minutes: 60                    # Schedule for container cleanup
+                build-agent:
+                    short-name: "artemis-build-agent-X"             # Short name of the build agent. This should be unique for each build agent. Only lowercase letters, numbers and hyphens are allowed.
+                    display-name: "Artemis Build Agent X"           # This value is optional. If omitted, the short name will be used as display name. Display name of the build agent. This is shown in the Artemis UI.
+                build-timeout-seconds:
+                    max: 240                                        # (Optional, default 240) Maximum time in seconds a build job is allowed to run. If a build job exceeds this time, it will be cancelled.
 
+
+Please note that ``artemis.continuous-integration.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.
 
 Build agents run as `Hazelcast Lite Members <https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members>`__ and require a full member, in our case a core node, to be running.
 Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.

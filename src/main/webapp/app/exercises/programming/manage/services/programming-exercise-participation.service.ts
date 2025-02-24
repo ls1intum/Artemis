@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -18,14 +18,12 @@ export interface IProgrammingExerciseParticipationService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
+    private http = inject(HttpClient);
+    private entityTitleService = inject(EntityTitleService);
+    private accountService = inject(AccountService);
+
     public resourceUrlParticipations = 'api/programming-exercise-participations/';
     public resourceUrl = 'api/programming-exercise/';
-
-    constructor(
-        private http: HttpClient,
-        private entityTitleService: EntityTitleService,
-        private accountService: AccountService,
-    ) {}
 
     getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
@@ -184,5 +182,17 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId: number, repositoryType: string): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`);
+    }
+
+    /**
+     * Get the commit history for a specific auxiliary repository
+     * @param exerciseId                the exercise the repository belongs to
+     * @param repositoryType            the repositories type
+     * @param auxiliaryRepositoryId     the id of the repository
+     */
+    retrieveCommitHistoryForAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number): Observable<CommitInfo[]> {
+        const params: { [key: string]: number } = {};
+        params['repositoryId'] = auxiliaryRepositoryId;
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/AUXILIARY`, { params: params });
     }
 }

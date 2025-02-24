@@ -49,6 +49,5 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
-
     }
 }

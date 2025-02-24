@@ -1,15 +1,21 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',
+    imports: [TitleChannelNameComponent],
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
+    course = input<Course>();
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    courseId = input<number>();
+
     @Input() exercise: Exercise;
-    @Input() course?: Course;
     @Input() titlePattern: string;
     @Input() minTitleLength: number;
     @Input() isExamMode: boolean;
@@ -18,13 +24,30 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 
-    @Output() onTitleChange = new EventEmitter<string>();
-    @Output() onChannelNameChange = new EventEmitter<string>();
+    onTitleChange = output<string>();
+    onChannelNameChange = output<string>();
+
+    alreadyUsedExerciseNames = signal<Set<string>>(new Set());
 
     hideChannelNameInput = false;
+
+    constructor() {
+        const exerciseService = inject(ExerciseService);
+        effect(
+            function fetchExistingExerciseNamesOnInit() {
+                const courseId = this.courseId() ?? this.course()?.id;
+                if (courseId && this.exercise.type) {
+                    exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
+                    });
+                }
+            }.bind(this),
+        );
+    }
+
     ngOnChanges(changes: SimpleChanges) {
         if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
-            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course, this.isExamMode, this.isImport);
+            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course(), this.isExamMode, this.isImport);
         }
     }
 

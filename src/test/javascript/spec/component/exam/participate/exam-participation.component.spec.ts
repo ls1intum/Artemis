@@ -1,11 +1,11 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -53,11 +53,15 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Subject, of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -93,7 +97,6 @@ describe('ExamParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,
@@ -114,7 +117,13 @@ describe('ExamParticipationComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
@@ -132,6 +141,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
@@ -767,16 +777,6 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('unloadNotification', () => {
-        it('should set event return value', () => {
-            jest.spyOn(comp, 'canDeactivate').mockReturnValue(false);
-            jest.spyOn(comp, 'canDeactivateWarning', 'get').mockReturnValue('warning');
-            const event = { returnValue: undefined };
-            comp.unloadNotification(event);
-            expect(event.returnValue).toBe('warning');
-        });
-    });
-
     describe('isOver', () => {
         it('should return true if exam has ended', () => {
             const studentExam = new StudentExam();
@@ -919,10 +919,7 @@ describe('ExamParticipationComponent', () => {
             comp.studentExam.exercises = [exercise];
             comp.pageComponentVisited = [true];
             comp.examStartConfirmed = true;
-            fixture.detectChanges();
 
-            const pageComponent = comp.currentPageComponents.get(0);
-            jest.spyOn<any, any>(pageComponent, 'getExerciseId').mockReturnValue(exercise.id);
             comp.onPageChange(exerciseChange);
 
             expect(triggerSpy).toHaveBeenCalledWith(true);

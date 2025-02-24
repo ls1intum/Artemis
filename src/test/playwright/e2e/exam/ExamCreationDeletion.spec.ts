@@ -9,37 +9,10 @@ import { Exam } from 'app/entities/exam/exam.model';
 /*
  * Common primitives
  */
-const examData = {
-    title: 'exam' + generateUUID(),
-    visibleDate: dayjs(),
-    startDate: dayjs().add(1, 'hour'),
-    endDate: dayjs().add(2, 'hour'),
-    numberOfExercisesInExam: 4,
-    examMaxPoints: 40,
-    startText: 'Exam start text',
-    endText: 'Exam end text',
-    confirmationStartText: 'Exam confirmation start text',
-    confirmationEndText: 'Exam confirmation end text',
-};
-
-const editedExamData = {
-    title: 'exam' + generateUUID(),
-    visibleDate: dayjs(),
-    startDate: dayjs().add(1, 'hour'),
-    endDate: dayjs().add(5, 'hour'),
-    numberOfExercisesInExam: 3,
-    examMaxPoints: 30,
-    startText: 'Edited exam start text',
-    endText: 'Edited exam end text',
-    confirmationStartText: 'Edited exam confirmation start text',
-    confirmationEndText: 'Edited exam confirmation end text',
-};
-
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-test.describe('Exam creation/deletion', () => {
+test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
     let course: Course;
-    let examId: number;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
@@ -47,6 +20,19 @@ test.describe('Exam creation/deletion', () => {
     });
 
     test('Creates an exam', async ({ navigationBar, courseManagement, examManagement, examCreation }) => {
+        const examData = {
+            title: 'exam' + generateUUID(),
+            visibleDate: dayjs(),
+            startDate: dayjs().add(1, 'hour'),
+            endDate: dayjs().add(2, 'hour'),
+            numberOfExercisesInExam: 4,
+            examMaxPoints: 40,
+            startText: 'Exam start text',
+            endText: 'Exam end text',
+            confirmationStartText: 'Exam confirmation start text',
+            confirmationEndText: 'Exam confirmation end text',
+        };
+
         await navigationBar.openCourseManagement();
         await courseManagement.openExamsOfCourse(course.id!);
 
@@ -64,8 +50,6 @@ test.describe('Exam creation/deletion', () => {
         await examCreation.setConfirmationEndText(examData.confirmationEndText);
 
         const response = await examCreation.submit();
-        const exam: Exam = await response.json();
-        examId = exam.id!;
         expect(response.status()).toBe(201);
 
         await expect(examManagement.getExamTitle()).toContainText(examData.title);
@@ -82,44 +66,60 @@ test.describe('Exam creation/deletion', () => {
     });
 
     test.describe('Exam deletion', () => {
+        let exam: Exam;
+
         test.beforeEach(async ({ examAPIRequests }) => {
-            examData.title = 'exam' + generateUUID();
             const examConfig = {
                 course,
-                title: examData.title,
+                title: 'exam' + generateUUID(),
             };
-            const examResponse = await examAPIRequests.createExam(examConfig);
-            examId = examResponse.id!;
+            exam = await examAPIRequests.createExam(examConfig);
         });
 
         test('Deletes an existing exam', async ({ navigationBar, courseManagement, examManagement, examDetails }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(examId);
-            await examDetails.deleteExam(examData.title);
-            await expect(examManagement.getExamSelector(examData.title)).not.toBeVisible();
+            await examManagement.openExam(exam.id!);
+            await examDetails.deleteExam(exam.title!);
+            await expect(examManagement.getExamSelector(exam.title!)).not.toBeVisible();
         });
     });
 
     test.describe('Edits an exam', () => {
+        let exam: Exam;
+
         test.beforeEach(async ({ examAPIRequests }) => {
-            examData.title = 'exam' + generateUUID();
             const examConfig = {
                 course,
-                title: examData.title,
+                title: 'exam' + generateUUID(),
                 visibleDate: dayjs(),
-                startDate: dayjs().add(1, 'hour'),
             };
-            const examResponse = await examAPIRequests.createExam(examConfig);
-            examId = examResponse.id!;
+            exam = await examAPIRequests.createExam(examConfig);
         });
 
         test('Edits an existing exam', async ({ navigationBar, courseManagement, examManagement, examCreation }) => {
+            const visibleDate = dayjs();
+            const startDate = visibleDate.add(1, 'hour');
+            const endDate = startDate.add(4, 'hour');
+
+            const editedExamData = {
+                title: 'exam' + generateUUID(),
+                visibleDate: visibleDate,
+                startDate: startDate,
+                endDate: endDate,
+                numberOfExercisesInExam: 3,
+                examMaxPoints: 30,
+                startText: 'Edited exam start text',
+                endText: 'Edited exam end text',
+                confirmationStartText: 'Edited exam confirmation start text',
+                confirmationEndText: 'Edited exam confirmation end text',
+            };
+
             await navigationBar.openCourseManagement();
             await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(examId);
+            await examManagement.openExam(exam.id!);
 
-            await expect(examManagement.getExamTitle()).toContainText(examData.title);
+            await expect(examManagement.getExamTitle()).toContainText(exam.title!);
             await examManagement.clickEdit();
 
             await examCreation.setTitle(editedExamData.title);
@@ -136,19 +136,18 @@ test.describe('Exam creation/deletion', () => {
 
             const response = await examCreation.update();
             expect(response.status()).toBe(200);
-            const exam = await response.json();
+            const editedExam = await response.json();
 
-            examId = exam.id;
-            expect(exam.testExam).toBeFalsy();
-            expect(trimDate(exam.visibleDate)).toBe(trimDate(dayjsToString(editedExamData.visibleDate)));
-            expect(trimDate(exam.startDate)).toBe(trimDate(dayjsToString(editedExamData.startDate)));
-            expect(trimDate(exam.endDate)).toBe(trimDate(dayjsToString(editedExamData.endDate)));
-            expect(exam.numberOfExercisesInExam).toBe(editedExamData.numberOfExercisesInExam);
-            expect(exam.examMaxPoints).toBe(editedExamData.examMaxPoints);
-            expect(exam.startText).toBe(editedExamData.startText);
-            expect(exam.endText).toBe(editedExamData.endText);
-            expect(exam.confirmationStartText).toBe(editedExamData.confirmationStartText);
-            expect(exam.confirmationEndText).toBe(editedExamData.confirmationEndText);
+            expect(editedExam.testExam).toBeFalsy();
+            expect(trimDate(editedExam.visibleDate)).toBe(trimDate(dayjsToString(editedExamData.visibleDate)));
+            expect(trimDate(editedExam.startDate)).toBe(trimDate(dayjsToString(editedExamData.startDate)));
+            expect(trimDate(editedExam.endDate)).toBe(trimDate(dayjsToString(editedExamData.endDate)));
+            expect(editedExam.numberOfExercisesInExam).toBe(editedExamData.numberOfExercisesInExam);
+            expect(editedExam.examMaxPoints).toBe(editedExamData.examMaxPoints);
+            expect(editedExam.startText).toBe(editedExamData.startText);
+            expect(editedExam.endText).toBe(editedExamData.endText);
+            expect(editedExam.confirmationStartText).toBe(editedExamData.confirmationStartText);
+            expect(editedExam.confirmationEndText).toBe(editedExamData.confirmationEndText);
 
             await expect(examManagement.getExamTitle()).toContainText(editedExamData.title);
             await expect(examManagement.getExamVisibleDate()).toContainText(dayjs(editedExamData.visibleDate).format(dateFormat));

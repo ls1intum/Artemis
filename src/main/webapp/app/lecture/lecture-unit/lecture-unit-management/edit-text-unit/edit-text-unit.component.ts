@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
@@ -8,24 +8,24 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.component';
 
 @Component({
     selector: 'jhi-edit-text-unit',
     templateUrl: './edit-text-unit.component.html',
-    styles: [],
+    imports: [LectureUnitLayoutComponent, TextUnitFormComponent],
 })
 export class EditTextUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private textUnitService = inject(TextUnitService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
     textUnit: TextUnit;
     formData: TextUnitFormData;
     lectureId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private textUnitService: TextUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -48,7 +48,7 @@ export class EditTextUnitComponent implements OnInit {
                         name: this.textUnit.name,
                         releaseDate: this.textUnit.releaseDate,
                         content: this.textUnit.content,
-                        competencies: this.textUnit.competencies,
+                        competencyLinks: this.textUnit.competencyLinks,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -56,11 +56,12 @@ export class EditTextUnitComponent implements OnInit {
     }
 
     updateTextUnit(formData: TextUnitFormData) {
-        const { name, releaseDate, content, competencies } = formData;
+        const { name, releaseDate, content, competencyLinks } = formData;
         this.textUnit.name = name;
         this.textUnit.releaseDate = releaseDate;
         this.textUnit.content = content;
-        this.textUnit.competencies = competencies;
+        this.textUnit.competencyLinks = competencyLinks;
+
         this.isLoading = true;
         this.textUnitService
             .update(this.textUnit, this.lectureId)

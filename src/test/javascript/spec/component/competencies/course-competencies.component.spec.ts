@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
@@ -13,11 +13,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 class MockActivatedRoute {
     parent: any;
@@ -50,7 +51,6 @@ describe('CourseCompetencies', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [CourseCompetenciesComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideHttpClient(),
@@ -69,6 +69,7 @@ describe('CourseCompetencies', () => {
                         getFeatureToggleActive: () => of(true),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         })
@@ -99,7 +100,7 @@ describe('CourseCompetencies', () => {
         const textUnit = new TextUnit();
         competency.id = 1;
         competency.description = 'test';
-        competency.lectureUnits = [textUnit];
+        competency.lectureUnitLinks = [new CompetencyLectureUnitLink(competency, textUnit, 1)];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
         const getAllCourseCompetenciesForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(

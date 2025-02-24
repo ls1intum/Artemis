@@ -110,7 +110,7 @@ describe('CommitHistoryComponent', () => {
         programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
 
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
 
@@ -131,7 +131,7 @@ describe('CommitHistoryComponent', () => {
 
     it('should load student participation', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -152,7 +152,7 @@ describe('CommitHistoryComponent', () => {
 
     it('should load student commits', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -261,6 +261,27 @@ describe('CommitHistoryComponent', () => {
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
 
+        expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
+        expect(component.commits[0].result).toBeUndefined();
+        expect(component.commits[1].result).toBeUndefined();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
+    });
+
+    it('should load auxiliary repository commits', () => {
+        setupComponent();
+        activatedRoute.setParameters({ repositoryType: 'AUXILIARY', repositoryId: 5 });
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expectations
         expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
         expect(component.commits[0].result).toBeUndefined();
         expect(component.commits[1].result).toBeUndefined();

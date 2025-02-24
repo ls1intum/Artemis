@@ -26,7 +26,6 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()

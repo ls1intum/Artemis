@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockModule } from 'ng-mocks';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardMediumComponent', () => {
     let component: SidebarCardMediumComponent;
@@ -16,9 +16,12 @@ describe('SidebarCardMediumComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
+            imports: [MockModule(RouterModule)],
             declarations: [SidebarCardMediumComponent, SidebarCardItemComponent, MockRouterLinkDirective],
-            providers: [{ provide: Router, useValue: router }],
+            providers: [
+                { provide: Router, useValue: router },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         }).compileComponents();
     });
 
@@ -73,30 +76,28 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should navigate to the item URL on click', async () => {
-        const mockFn = jest.fn();
-        component.emitStoreAndRefresh = mockFn;
+        jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
-        expect(mockFn).toHaveBeenCalledWith('testId');
-        expect(router.navigateByUrl).toHaveBeenCalled();
-        const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('./testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(router.navigate).toHaveBeenCalled();
+        const navigationArray = router.navigate.mock.calls[1][0];
+        expect(navigationArray).toStrictEqual(['./testId']);
     });
 
     it('should navigate to the when no item was selected before', async () => {
-        const mockFn = jest.fn();
-        component.emitStoreAndRefresh = mockFn;
+        jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
-        expect(mockFn).toHaveBeenCalledWith('testId');
-        expect(router.navigateByUrl).toHaveBeenCalled();
-        const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('./testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(router.navigate).toHaveBeenCalled();
+        const navigationArray = router.navigate.mock.calls[1][0];
+        expect(navigationArray).toStrictEqual(['', 'testId']);
     });
 });

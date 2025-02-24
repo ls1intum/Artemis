@@ -1,16 +1,35 @@
-import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HelpIconComponent } from '../../components/help-icon.component';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-ide-preferences',
     templateUrl: './ide-settings.component.html',
     styleUrls: ['./ide-settings.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        NgTemplateOutlet,
+        FaIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgClass,
+    ],
 })
 export class IdeSettingsComponent implements OnInit {
+    private ideSettingsService = inject(IdeSettingsService);
+
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -22,14 +41,12 @@ export class IdeSettingsComponent implements OnInit {
     // languages that have no IDE assigned yet
     remainingProgrammingLanguages: ProgrammingLanguage[] = Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY);
 
-    constructor(private ideSettingsService: IdeSettingsService) {}
-
     ngOnInit() {
         this.ideSettingsService.loadPredefinedIdes().subscribe((predefinedIde) => {
             this.PREDEFINED_IDE = predefinedIde;
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIdeMap) => {
+        this.ideSettingsService.loadIdePreferences(true).then((programmingLanguageToIdeMap) => {
             if (!programmingLanguageToIdeMap.has(ProgrammingLanguage.EMPTY)) {
                 programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]);
             }

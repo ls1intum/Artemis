@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 
 describe('FormStatusBarComponent', () => {
@@ -8,7 +7,6 @@ describe('FormStatusBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [],
         })
@@ -20,10 +18,10 @@ describe('FormStatusBarComponent', () => {
     });
 
     beforeEach(() => {
-        comp.formStatusSections = [
+        fixture.componentRef.setInput('formStatusSections', [
             { title: 'some-translation-key', valid: true },
             { title: 'another-translation-key', valid: false },
-        ];
+        ]);
     });
 
     afterEach(() => {
@@ -34,8 +32,8 @@ describe('FormStatusBarComponent', () => {
         const mockDOMElement = { scrollIntoView: jest.fn(), style: {} };
         const getElementSpy = jest.spyOn(document, 'getElementById').mockReturnValue(mockDOMElement as any as HTMLElement);
         const scrollToSpy = jest.spyOn(mockDOMElement, 'scrollIntoView');
-        comp.scrollToHeadline(comp.formStatusSections[0].title);
-        expect(getElementSpy).toHaveBeenCalledWith(comp.formStatusSections[0].title);
+        comp.scrollToHeadline(comp.formStatusSections()[0].title);
+        expect(getElementSpy).toHaveBeenCalledWith(comp.formStatusSections()[0].title);
         expect(scrollToSpy).toHaveBeenCalledOnce();
     });
 });

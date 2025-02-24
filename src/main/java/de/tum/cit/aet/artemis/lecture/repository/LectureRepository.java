@@ -31,6 +31,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
@@ -63,9 +70,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.posts
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers cu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
@@ -74,12 +83,22 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -162,6 +181,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
+    }
+
+    @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndCompetencies(lectureId), lectureId);
     }
@@ -192,4 +216,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             GROUP BY l.course.id
             """)
     Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
+
+    long countByCourse_Id(Long courseId);
 }

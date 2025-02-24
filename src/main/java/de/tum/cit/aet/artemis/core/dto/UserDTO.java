@@ -76,11 +76,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
-    private String sshPublicKey;
-
-    private String sshKeyHash;
-
-    private ZonedDateTime irisAccepted;
+    private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -89,12 +85,13 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getIrisAcceptedTimestamp());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(),
+                user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime irisAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -118,7 +115,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
-        this.irisAccepted = irisAccepted;
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
     public Long getId() {
@@ -262,14 +259,6 @@ public class UserDTO extends AuditingEntityDTO {
         return vcsAccessTokenExpiryDate;
     }
 
-    public String getSshPublicKey() {
-        return sshPublicKey;
-    }
-
-    public void setSshPublicKey(String sshPublicKey) {
-        this.sshPublicKey = sshPublicKey;
-    }
-
     @Override
     public String toString() {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
@@ -286,19 +275,11 @@ public class UserDTO extends AuditingEntityDTO {
         isInternal = internal;
     }
 
-    public ZonedDateTime getIrisAccepted() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMUsageAccepted() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setIrisAccepted(ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
-    }
-
-    public String getSshKeyHash() {
-        return sshKeyHash;
-    }
-
-    public void setSshKeyHash(String sshKeyHash) {
-        this.sshKeyHash = sshKeyHash;
+    public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 }

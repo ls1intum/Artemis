@@ -116,7 +116,8 @@
                 "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Configuration",
-                "standardizedCompetencies": "Standardized Competencies"
+                "standardizedCompetencies": "Standardized Competencies",
+                "cleanupService": "Cleanup Service"
             },
             "language": "Language",
             "settings": "Settings",
@@ -230,6 +231,9 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
+            "continueSubmission": "Continue",
+            "viewTimeline": "View Timeline",
+            "hideTimeline": "Hide Timeline",
             "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
             "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
             "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",
@@ -352,6 +356,7 @@
         "statistics": "Course statistics",
         "exams": "Exams",
         "communication": "Communication",
+        "archive": "Course archive",
         "faq": "FAQ"
     },
     "connectionStatus": {

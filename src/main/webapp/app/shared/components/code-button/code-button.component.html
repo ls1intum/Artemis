@@ -5,62 +5,84 @@
         class="code-button"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [buttonLabel]="'artemisApp.exerciseActions.code' | artemisTranslate"
-        [buttonLoading]="loading"
-        [smallButton]="smallButtons"
-        [hideLabelMobile]="false"
+        [buttonLoading]="loading()"
+        [smallButton]="smallButtons()"
+        [hideLabelMobile]="hideLabelMobile()"
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
+        (click)="onClick()"
         placement="right auto"
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (useSsh && !copyEnabled) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys) {
             <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
         }
-        @if (useToken && !copyEnabled && tokenMissing) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired) {
+            <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip"></div>
+        }
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && !userTokenPresent) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
         }
-        @if (useToken && !copyEnabled && tokenExpired) {
+        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
-        @if (participations && participations.length > 1) {
+        @if (participations().length > 1) {
             <div class="form-check form-switch">
                 <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
                 <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
-        <h5>{{ cloneHeadline | artemisTranslate }}</h5>
+        <h5 [jhiTranslate]="cloneHeadline"></h5>
+
         <div class="d-flex" style="margin: 0; max-width: 100%">
-            @if (sshEnabled) {
-                <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                    <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
-                        {{ useSsh ? 'SSH' : useToken ? 'Token' : 'HTTPS' }}
-                    </button>
-                    <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                        @if (showCloneUrlWithoutToken) {
-                            <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+            <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
+                <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
+                    {{
+                        this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH
+                            ? 'SSH'
+                            : this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token
+                              ? 'Token'
+                              : 'HTTPS'
+                    }}
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
+                    @for (mechanism of authenticationMechanism; track mechanism) {
+                        @if (mechanism === RepositoryAuthenticationMethod.Password) {
+                            <a
+                                (click)="useHttpsPassword()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
+                                id="useHTTPSButton"
+                                >HTTPS</a
+                            >
                         }
-                        @if (accessTokensEnabled && (!useParticipationVcsAccessToken || participations)) {
-                            <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
+                        @if (mechanism === RepositoryAuthenticationMethod.Token) {
+                            <a
+                                (click)="useHttpsToken()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
+                                id="useHTTPSWithTokenButton"
+                                >Token</a
+                            >
                         }
-                        <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
-                    </div>
+                        @if (mechanism === RepositoryAuthenticationMethod.SSH) {
+                            <a
+                                (click)="useSshUrl()"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
+                                id="useSSHButton"
+                                >SSH</a
+                            >
+                        }
+                    }
                 </div>
-            }
-            <!-- 'url-box-remove-line-left': Remove round edges and edge on the left side (due to dropdown to select ssh or https)
-           `url-box-remove-line-right`: Remove round edges and edge on the right side (not available for LocalVC) -->
+            </div>
             <pre
-                class="clone-url"
-                [ngClass]="{
-                    'url-box-remove-line-left': sshEnabled,
-                    'url-box-remove-line-right': !localVCEnabled || !!routerLinkForRepositoryView,
-                }"
+                class="clone-url url-box-remove-line-left url-box-remove-line-right"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="copyEnabled ? onCopyFinished($event) : null"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
-                @if (!localVCEnabled) {
+                @if (!localVCEnabled()) {
                     <a
                         [style.flex]="1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"
@@ -70,11 +92,11 @@
                     >
                         <fa-icon [icon]="faExternalLink" />
                     </a>
-                } @else if (!!routerLinkForRepositoryView) {
+                } @else {
                     <a
                         [style.flex]="1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [routerLink]="routerLinkForRepositoryView"
+                        [routerLink]="routerLinkForRepositoryView()"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -83,18 +105,13 @@
                 }
             </div>
         </div>
-        @if (repositoryPassword) {
-            <p>
-                {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>
-                {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
-            </p>
-        }
         <button
             [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [disabled]="!copyEnabled"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
+            data-testid="copyRepoUrlButton"
             type="button"
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"

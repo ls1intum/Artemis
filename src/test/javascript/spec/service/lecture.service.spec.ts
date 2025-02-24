@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +10,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
@@ -21,7 +21,6 @@ describe('Lecture Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -211,6 +210,24 @@ describe('Lecture Service', () => {
         it('should convert Dates from server', async () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
+        });
+
+        it('should fetch ingestion state for a course', () => {
+            const courseId = 123;
+            const expectedUrl = `api/iris/courses/${courseId}/lectures/ingestion-state`;
+            const expectedResponse = { 1: IngestionState.DONE, 2: IngestionState.NOT_STARTED };
+
+            service.getIngestionState(courseId).subscribe((resp) => {
+                expect(resp.body).toEqual(expectedResponse);
+            });
+
+            const req = httpMock.expectOne({
+                url: expectedUrl,
+                method: 'GET',
+            });
+
+            req.flush(expectedResponse);
+            expect(req.request.method).toBe('GET');
         });
 
         it('should send a POST request to ingest lectures and return an OK response', () => {

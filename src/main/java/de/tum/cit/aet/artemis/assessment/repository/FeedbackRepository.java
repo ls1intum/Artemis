@@ -32,8 +32,8 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
 
     @Query("""
             SELECT feedback
-            FROM Feedback feedback
-            WHERE feedback.gradingInstruction.id IN :gradingInstructionsIds
+                FROM Feedback feedback
+                WHERE feedback.gradingInstruction.id IN :gradingInstructionsIds
             """)
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 

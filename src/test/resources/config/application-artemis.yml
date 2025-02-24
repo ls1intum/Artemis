@@ -48,6 +48,7 @@ artemis:
         password: fake-password
         token: fake-token
         url: https://continuous-integration.fake.fake
+        concurrent-build-size: 1
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key
         artemis-authentication-token-value: fake-token
@@ -62,7 +63,7 @@ artemis:
     apollon:
         conversion-service-url: http://localhost:8080
     telemetry:
-        enabled: true
+        enabled: false
         sendAdminDetails: true
         destination: http://localhost:8081
     plagiarism-checks:

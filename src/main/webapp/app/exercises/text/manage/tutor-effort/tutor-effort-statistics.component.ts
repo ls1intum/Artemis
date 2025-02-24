@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,6 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
 import { GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -19,8 +24,15 @@ interface TutorEffortRange {
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, BarChartModule, ArtemisTranslatePipe],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private textExerciseService = inject(TextExerciseService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private translateService = inject(TranslateService);
+
     tutorEfforts: TutorEffort[] = [];
     numberOfSubmissions: number;
     totalTimeSpent: number;
@@ -43,13 +55,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     // Icons
     faSync = faSync;
 
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private textAssessmentService: TextAssessmentService,
-        private route: ActivatedRoute,
-        private translateService: TranslateService,
-        private router: Router,
-    ) {
+    constructor() {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.translateLabels();

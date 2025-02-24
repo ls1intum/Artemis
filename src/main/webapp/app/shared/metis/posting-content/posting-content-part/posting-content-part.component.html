@@ -1,36 +1,42 @@
-@if (postingContentPart.contentBeforeReference) {
-    <span class="markdown-preview" [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"></span>
+@if (postingContentPart()?.contentBeforeReference) {
+    <span
+        class="markdown-preview"
+        style="white-space: pre-wrap"
+        [innerHTML]="processedContentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
 }
-@if (postingContentPart.linkToReference) {
-    <a class="reference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
-        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)" />{{ postingContentPart.referenceStr }}
+@if (postingContentPart()?.linkToReference) {
+    <a class="reference" [routerLink]="postingContentPart()?.linkToReference" [queryParams]="postingContentPart()?.queryParams">
+        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart()?.referenceType!)" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
-@if (postingContentPart.referenceType === ReferenceType.POST && !postingContentPart.linkToReference) {
-    <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)" />{{ postingContentPart.referenceStr }} </a>
+@if (postingContentPart()?.referenceType === ReferenceType.POST && !postingContentPart()?.linkToReference) {
+    <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart()?.referenceType!)" />{{ postingContentPart()?.referenceStr }} </a>
 }
-@if (postingContentPart.referenceType === ReferenceType.USER) {
-    <a class="reference" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
-        <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart.referenceStr }}
+@if (postingContentPart()?.referenceType === ReferenceType.USER) {
+    <a class="reference" (click)="onClickUserReference(postingContentPart()?.queryParams?.referenceUserLogin)">
+        <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
-@if (postingContentPart.referenceType === ReferenceType.CHANNEL) {
-    <a class="reference" (click)="onClickChannelReference(postingContentPart.queryParams?.channelId)">
-        <fa-icon class="px-1" [icon]="faHashtag" />{{ postingContentPart.referenceStr }}
+@if (postingContentPart()?.referenceType === ReferenceType.CHANNEL) {
+    <a class="reference" (click)="onClickChannelReference(postingContentPart()?.queryParams?.channelId)">
+        <fa-icon class="px-1" [icon]="faHashtag" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
-@if (postingContentPart.attachmentToReference) {
-    <a class="reference" (click)="openAttachment(postingContentPart.attachmentToReference)"> <fa-icon class="px-1" [icon]="faFile" />{{ postingContentPart.referenceStr }} </a>
+@if (postingContentPart()?.attachmentToReference) {
+    <a class="reference" (click)="openAttachment(postingContentPart()?.attachmentToReference || '')">
+        <fa-icon class="px-1" [icon]="faFile" />{{ postingContentPart()?.referenceStr }}
+    </a>
 }
-@if (postingContentPart.slideToReference) {
+@if (postingContentPart()?.slideToReference) {
     <div style="max-width: 400px">
-        <a class="reference" (click)="enlargeImage(postingContentPart.slideToReference)">
-            @if (postingContentPart.slideToReference && !imageNotFound) {
+        <a class="reference" (click)="enlargeImage(postingContentPart()?.slideToReference || '')">
+            @if (postingContentPart()?.slideToReference && !imageNotFound) {
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
-                    [src]="postingContentPart.slideToReference"
-                    [alt]="postingContentPart.referenceStr"
-                    [title]="postingContentPart.referenceStr"
+                    [src]="postingContentPart()?.slideToReference"
+                    [alt]="postingContentPart()?.referenceStr"
+                    [title]="postingContentPart()?.referenceStr"
                     (error)="toggleImageNotFound()"
                     height="auto"
                     width="100%"
@@ -44,6 +50,33 @@
         }
     </div>
 }
-@if (postingContentPart.contentAfterReference) {
-    <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
+
+@if (postingContentPart()?.imageToReference) {
+    <div [style.user-select]="'none'" [style.max-width.px]="400">
+        @if (postingContentPart()?.imageToReference && !imageNotFound) {
+            <a class="reference" (click)="enlargeImage(postingContentPart()?.imageToReference || '')">
+                <img
+                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    [src]="postingContentPart()?.imageToReference"
+                    [alt]="postingContentPart()?.referenceStr"
+                    [title]="postingContentPart()?.referenceStr"
+                    (error)="toggleImageNotFound()"
+                    height="auto"
+                    width="100%"
+                />
+            </a>
+        } @else if (imageNotFound) {
+            <div class="card">
+                <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
+            </div>
+        }
+    </div>
+}
+
+@if (postingContentPart()?.contentAfterReference) {
+    <span
+        class="markdown-preview"
+        style="white-space: pre-wrap"
+        [innerHTML]="processedContentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
 }

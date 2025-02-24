@@ -8,7 +8,6 @@ import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -22,6 +21,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -37,6 +37,7 @@ class MockHeaderComponent {
             </ng-template>
         </jhi-tutorial-group-detail>
     `,
+    imports: [TutorialGroupDetailComponent, MockHeaderComponent],
 })
 class MockWrapperComponent {
     @Input()
@@ -58,7 +59,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockWrapperComponent,
@@ -69,6 +70,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
+                MockComponent(ProfilePictureComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -110,7 +112,7 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -119,6 +121,7 @@ describe('TutorialGroupDetailComponent', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
                 MockDirective(TranslateDirective),
+                MockComponent(ProfilePictureComponent),
             ],
             providers: [MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(ChangeDetectorRef)],
         })

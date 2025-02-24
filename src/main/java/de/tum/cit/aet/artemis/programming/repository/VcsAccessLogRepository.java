@@ -27,20 +27,35 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
 
     /**
-     * Find the access log entry which does not have any commit hash yet
+     * Retrieves the most recent {@link VcsAccessLog} for a given participation ID.
      *
-     * @param participationId The id of the participation the repository belongs to
-     * @return a log entry belonging to the participationId, which has no commit hash
+     * @param participationId the ID of the participation to filter by.
+     * @return an {@link Optional} containing the newest {@link VcsAccessLog}, or empty if none exists.
      */
     @Query("""
             SELECT vcsAccessLog
             FROM VcsAccessLog vcsAccessLog
             WHERE vcsAccessLog.participation.id = :participationId
-                AND vcsAccessLog.commitHash IS NULL
-            ORDER BY vcsAccessLog.timestamp DESC
+            ORDER BY vcsAccessLog.id DESC
             LIMIT 1
             """)
-    Optional<VcsAccessLog> findNewestByParticipationIdWhereCommitHashIsNull(@Param("participationId") long participationId);
+    Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
+
+    /**
+     * Retrieves the most recent {@link VcsAccessLog} for a specific repository URI of a participation.
+     *
+     * @param repositoryUri the URI of the participation to filter by.
+     * @return an Optional containing the newest {@link VcsAccessLog} of the participation, or empty if none exists.
+     */
+    @Query("""
+            SELECT vcsAccessLog
+            FROM VcsAccessLog vcsAccessLog
+                LEFT JOIN TREAT (vcsAccessLog.participation AS ProgrammingExerciseStudentParticipation) participation
+            WHERE participation.repositoryUri = :repositoryUri
+            ORDER BY vcsAccessLog.id DESC
+            LIMIT 1
+            """)
+    Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.
@@ -62,7 +77,6 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * The results are ordered by the log ID in ascending order.
      *
      * @param date The date before which all log ids should be fetched
-     *
      * @return a list of ids of the access logs, which have a timestamp before the date
      */
     @Query("""

@@ -11,7 +11,7 @@ import { expect } from '@playwright/test';
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
-test.describe('Test Exam management', () => {
+test.describe('Test Exam management', { tag: '@fast' }, () => {
     let course: Course;
     let exam: Exam;
 
@@ -51,7 +51,7 @@ test.describe('Test Exam management', () => {
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
             const textExerciseTitle = 'text' + uid;
-            await textExerciseCreation.typeTitle(textExerciseTitle);
+            await textExerciseCreation.setTitle(textExerciseTitle);
             await textExerciseCreation.typeMaxPoints(10);
             const response = await textExerciseCreation.create();
             expect(response.status()).toBe(201);
@@ -90,6 +90,7 @@ test.describe('Test Exam management', () => {
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
             const programmingExerciseTitle = 'programming' + uid;
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(programmingExerciseTitle);
             await programmingExerciseCreation.setShortName(programmingExerciseTitle);
             await programmingExerciseCreation.setPackageName('de.test');

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { MockProvider } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { By } from '@angular/platform-browser';
 
@@ -13,7 +12,6 @@ describe('HealthModalComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [HealthModalComponent, TranslatePipeMock],
             providers: [MockProvider(NgbActiveModal)],
         })
             .compileComponents()

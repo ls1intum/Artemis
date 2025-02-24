@@ -8,7 +8,6 @@ import { DecimalPipe, KeyValuePipe } from '@angular/common';
     selector: 'jhi-metrics-cache',
     templateUrl: './metrics-cache.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, DecimalPipe, KeyValuePipe],
 })
 export class MetricsCacheComponent {

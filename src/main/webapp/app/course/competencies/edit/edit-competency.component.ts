@@ -1,37 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
 @Component({
     selector: 'jhi-edit-competency',
     templateUrl: './edit-competency.component.html',
-    standalone: true,
-    imports: [ArtemisSharedModule, CompetencyFormComponent],
+    imports: [CompetencyFormComponent],
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
+    private competencyService = inject(CompetencyService);
+
     competency: Competency;
     formData: CourseCompetencyFormData;
-
-    constructor(
-        activatedRoute: ActivatedRoute,
-        lectureService: LectureService,
-        router: Router,
-        alertService: AlertService,
-        private competencyService: CompetencyService,
-    ) {
-        super(activatedRoute, lectureService, router, alertService);
-    }
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -56,10 +44,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                         if (courseProgressResult.body) {
                             this.competency.courseProgress = courseProgressResult.body;
                         }
-                        // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.competency.lectureUnits) {
-                            this.competency.lectureUnits = [];
-                        }
                     }
 
                     this.formData = {
@@ -67,7 +51,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                         title: this.competency.title,
                         description: this.competency.description,
                         softDueDate: this.competency.softDueDate,
-                        connectedLectureUnits: this.competency.lectureUnits,
                         taxonomy: this.competency.taxonomy,
                         masteryThreshold: this.competency.masteryThreshold,
                         optional: this.competency.optional,
@@ -78,7 +61,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     }
 
     updateCompetency(formData: CourseCompetencyFormData) {
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
         this.competency.title = title;
         this.competency.description = description;
@@ -86,7 +69,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
         this.competency.taxonomy = taxonomy;
         this.competency.masteryThreshold = masteryThreshold;
         this.competency.optional = optional;
-        this.competency.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
 

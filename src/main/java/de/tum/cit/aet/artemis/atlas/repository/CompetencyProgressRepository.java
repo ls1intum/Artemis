@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Repository
 public interface CompetencyProgressRepository extends ArtemisJpaRepository<CompetencyProgress, Long> {
 
@@ -94,4 +94,16 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 AND c = :competency
             """)
     Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") CourseCompetency competency, @Param("user") User userId);
+
+    @Query("""
+            SELECT COALESCE(GREATEST(0.0, LEAST(1.0, AVG(cp.progress * cp.confidence / com.masteryThreshold))), 0.0)
+            FROM CompetencyProgress cp
+                LEFT JOIN cp.competency com
+                LEFT JOIN com.course c
+                LEFT JOIN cp.user u
+            WHERE com.id = :competencyId
+                AND cp.progress > 0
+                AND c.studentGroupName MEMBER OF u.groups
+            """)
+    double findAverageOfAllNonZeroStudentProgressByCompetencyId(@Param("competencyId") long competencyId);
 }

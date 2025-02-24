@@ -6,8 +6,8 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Injectable } from '@angular/core';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Injectable, inject } from '@angular/core';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -19,13 +19,11 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
     providedIn: 'root',
 })
 export class LectureUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private attachmentService = inject(AttachmentService);
+    private alertService = inject(AlertService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private attachmentService: AttachmentService,
-        private alertService: AlertService,
-    ) {}
+    private resourceURL = 'api';
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // Send an ordered list of ids of the lecture units
@@ -166,5 +164,29 @@ export class LectureUnitService {
 
     getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
+    }
+    /**
+     * Fetch the actual ingestion state for all lecture units from an external service (e.g., Pyris).
+     * @param courseId
+     * @param lectureId ID of the lecture
+     * @returns Observable with the ingestion state
+     */
+    getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
+        return this.httpClient.get<Record<number, IngestionState>>(`${this.resourceURL}/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Triggers the ingestion of one lecture unit.
+     *
+     * @param lectureUnitId - The ID of the lecture unit to be ingested.
+     * @param lectureId - The ID of the lecture to which the unit belongs.
+     * @returns An Observable with an HttpResponse 200 if the request was successful .
+     */
+    ingestLectureUnitInPyris(lectureUnitId: number, lectureId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`, null, {
+            observe: 'response',
+        });
     }
 }

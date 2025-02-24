@@ -27,6 +27,8 @@ export const PROFILE_GITLAB = 'gitlab';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
+export const PROFILE_ATLAS = 'atlas';
+
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
@@ -34,3 +36,6 @@ export const PROFILE_LTI = 'lti';
 export const PROFILE_ATHENA = 'athena';
 
 export const PROFILE_THEIA = 'theia';
+
+// TODO TW: This "feature" is only temporary for a paper.
+export const ICER_PAPER_FLAG = 'ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc';

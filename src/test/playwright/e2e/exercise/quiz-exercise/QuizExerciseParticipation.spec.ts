@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 
-test.describe('Quiz Exercise Participation', () => {
+test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

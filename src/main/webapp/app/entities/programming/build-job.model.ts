@@ -4,11 +4,12 @@ import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
 
 export class BuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
-    public buildAgentAddress?: string;
+    public buildAgent?: BuildAgent;
     public participationId?: number;
     public courseId?: number;
     public exerciseId?: number;
@@ -34,6 +35,7 @@ export class FinishedBuildJob implements StringBaseEntity {
     public triggeredByPushTo?: TriggeredByPushTo;
     public repositoryName?: string;
     public repositoryType?: string;
+    public buildSubmissionDate?: dayjs.Dayjs;
     public buildStartDate?: dayjs.Dayjs;
     public buildCompletionDate?: dayjs.Dayjs;
     public buildDuration?: string;
@@ -46,6 +48,8 @@ export class BuildJobStatistics {
     public successfulBuilds: number = 0;
     public failedBuilds: number = 0;
     public cancelledBuilds: number = 0;
+    public timeOutBuilds: number = 0;
+    public missingBuilds: number = 0;
 }
 
 export enum SpanType {

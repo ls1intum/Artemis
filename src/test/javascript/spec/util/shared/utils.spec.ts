@@ -2,6 +2,7 @@ import {
     average,
     getAsMutableObject,
     isExamExercise,
+    removeSpecialCharacters,
     round,
     roundScorePercentSpecifiedByCourseSettings,
     roundToNextMultiple,
@@ -10,6 +11,7 @@ import {
 } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { Range } from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -90,6 +92,16 @@ describe('average', () => {
     });
 });
 
+describe('Range', () => {
+    it('should return the correct string representation', () => {
+        const range = new Range(10, 50);
+        expect(range.toString()).toBe('[10%, 50%)');
+
+        const rangeInclusive = new Range(0, 100);
+        expect(rangeInclusive.toString()).toBe('[0%, 100%]');
+    });
+});
+
 describe('getAsMutableObject', () => {
     it('should return immutable object as mutable object', () => {
         const immutableObject = Object.freeze({
@@ -140,5 +152,13 @@ describe('roundUpToNextMultiple', () => {
 
     it('should round up to multiple of 1', () => {
         expect(roundToNextMultiple(8.2, 1, true)).toBe(9);
+    });
+});
+
+describe('removeSpecialCharacters', () => {
+    it('should remove special characters', () => {
+        expect(removeSpecialCharacters('Hello, World!')).toBe('HelloWorld');
+        expect(removeSpecialCharacters('Hello, World! 123')).toBe('HelloWorld123');
+        expect(removeSpecialCharacters('Hello, World! 123$%')).toBe('HelloWorld123');
     });
 });

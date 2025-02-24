@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -7,6 +6,10 @@ import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-c
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -14,12 +17,18 @@ describe('MonacoEditorComponent', () => {
 
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
+    const textWithEmoticons = 'Hello :)';
+    const textWithEmojis = 'Hello 🙂';
 
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
+            imports: [MonacoEditorComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -262,4 +271,146 @@ describe('MonacoEditorComponent', () => {
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(comp['_editor']);
     });
+
+    it('should convert text emoticons to emojis using convertTextToEmoji', () => {
+        fixture.detectChanges();
+        const result = comp.convertTextToEmoji(textWithEmoticons);
+        expect(result).toBe(textWithEmojis);
+    });
+
+    it('should detect if text is converted to emoji using isConvertedToEmoji', () => {
+        fixture.detectChanges();
+        const isConverted = comp.isConvertedToEmoji(textWithEmoticons, textWithEmojis);
+        expect(isConverted).toBeTrue();
+
+        const notConverted = comp.isConvertedToEmoji(textWithEmojis, textWithEmojis);
+        expect(notConverted).toBeFalse();
+    });
+
+    it('should not change the editor text if no conversion is needed', () => {
+        fixture.detectChanges();
+        const originalText = 'Hello 😊';
+        comp.setText(originalText);
+        expect(comp.getText()).toBe(originalText);
+
+        comp.setText(originalText);
+        expect(comp.getText()).toBe(originalText);
+    });
+
+    it('should register a listener for model content changes', () => {
+        const listenerStub = jest.fn();
+        fixture.detectChanges();
+        const disposable = comp.onDidChangeModelContent(listenerStub);
+        comp.setText(singleLineText);
+        expect(listenerStub).toHaveBeenCalled();
+        disposable.dispose();
+    });
+
+    it('should retrieve the editor model', () => {
+        fixture.detectChanges();
+        comp.setText(singleLineText);
+        const model = comp.getModel();
+        expect(model).not.toBeNull();
+        expect(model?.getValue()).toBe(singleLineText);
+    });
+
+    it('should get the content of a specific line', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        const lineContent = comp.getLineContent(2);
+        expect(lineContent).toBe('static void main() {');
+    });
+
+    it('should handle invalid line numbers in getLineContent', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+
+        // Invalid line numbers
+        expect(() => comp.getLineContent(0)).toThrow();
+        expect(() => comp.getLineContent(-1)).toThrow();
+        expect(() => comp.getLineContent(999)).toThrow();
+
+        // Empty line
+        comp.setText('line1\n\nline3');
+        expect(comp.getLineContent(2)).toBe('');
+    });
+
+    it('should delete a combined emoji entirely on backspace press', fakeAsync(() => {
+        fixture.detectChanges();
+        const combinedEmoji = '🇩🇪';
+        comp.setText(combinedEmoji);
+
+        const lines = combinedEmoji.split('\n');
+        const lastLine = lines[lines.length - 1];
+        comp.setPosition({ lineNumber: lines.length, column: lastLine.length + 1 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        expect(comp.getText()).toEqual('');
+    }));
+
+    it('should delete combined emojis one cluster at a time on backspace press', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const emoji1 = '🇩🇪';
+        const emoji2 = '🇫🇷';
+        const combinedText = emoji1 + emoji2;
+
+        comp.setText(combinedText);
+        comp.setPosition({ lineNumber: 1, column: combinedText.length + 1 });
+
+        let commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+        fixture.detectChanges();
+
+        expect(comp.getText()).toEqual(emoji1);
+
+        comp.setPosition({ lineNumber: 1, column: emoji1.length + 1 });
+
+        commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+        fixture.detectChanges();
+
+        expect(comp.getText()).toEqual('');
+    }));
+
+    it('should delete only one emoji at a time in mixed text', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const textWithEmoji = 'Hello 🇩🇪 World!';
+        comp.setText(textWithEmoji);
+
+        comp.setPosition({ lineNumber: 1, column: textWithEmoji.length - 6 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        expect(comp.getText()).toEqual('Hello  World!');
+    }));
+
+    it('should place the cursor correctly after deleting an emoji', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const fullText = 'Hello 👋 World!';
+        comp.setText(fullText);
+        comp.setPosition({ lineNumber: 1, column: 9 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        const newPosition = comp.getPosition();
+        expect(newPosition.column).toBe(7);
+    }));
 });

@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
@@ -13,8 +12,14 @@ interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
+    protected eventManager = inject(EventManager);
+    private courseService = inject(CourseManagementService);
+    private route = inject(ActivatedRoute);
+
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
@@ -23,8 +28,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     @Output() filteredExerciseCount = new EventEmitter<number>();
     showHeading: boolean;
     courseId: number;
-    predicate: string;
-    reverse: boolean;
+    predicate: string = 'id';
+    reverse = true;
 
     selectedExercises: Exercise[] = [];
     allChecked = false;
@@ -34,16 +39,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     protected abstract get exercises(): Exercise[];
-
-    protected constructor(
-        private courseService: CourseManagementService,
-        protected translateService: TranslateService,
-        private route: ActivatedRoute,
-        protected eventManager: EventManager,
-    ) {
-        this.predicate = 'id';
-        this.reverse = true;
-    }
 
     /**
      * Fetches an exercise from the server (and if needed the course as well)

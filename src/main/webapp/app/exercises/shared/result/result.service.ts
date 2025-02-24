@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -49,17 +49,16 @@ export interface IResultService {
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
+    private http = inject(HttpClient);
+    private translateService = inject(TranslateService);
+    private csvDownloadService = inject(CsvDownloadService);
+
     private exerciseResourceUrl = 'api/exercises';
     private resultResourceUrl = 'api/results';
     private participationResourceUrl = 'api/participations';
 
-    private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255; // Size of tinyInt in SQL, that is used to store these values
-
-    constructor(
-        private http: HttpClient,
-        private translateService: TranslateService,
-        private csvDownloadService: CsvDownloadService,
-    ) {}
+    private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
+    // Size of tinyInt in SQL, that is used to store these values
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
@@ -115,6 +114,9 @@ export class ResultService implements IResultService {
         let aiFeedbackMessage: string = '';
         if (result && isAthenaAIResult(result) && result.successful === undefined) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        }
+        if (result && isAthenaAIResult(result) && result.successful === false) {
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
         }
         aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         return `${aiFeedbackMessage} (${this.translateService.instant('artemisApp.result.preliminary')})`;
@@ -258,8 +260,8 @@ export class ResultService implements IResultService {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
                 if (resultWithPoints.pointsPerCriterion) {
-                    resultWithPoints.pointsPerCriterion.forEach((value, key) => {
-                        pointsMap.set(Number(key), value);
+                    Object.entries(resultWithPoints.pointsPerCriterion).forEach(([key, value]) => {
+                        pointsMap.set(+key, value);
                     });
                 }
                 resultWithPoints.pointsPerCriterion = pointsMap;

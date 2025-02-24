@@ -16,12 +16,14 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
  * An abstract component used to import course competencies. Its concrete implementations are
  * {@link ImportCompetenciesComponent} and {@link ImportPrerequisitesComponent}
  */
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;
     // set this attribute to hide the options to import relation
-    allowRelationImport: boolean = false;
+    allowRelationImport = false;
 
     courseId: number;
     isLoading = false;
@@ -207,11 +209,15 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
 
     /**
      * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
      */
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
+    unloadNotification(event: BeforeUnloadEvent) {
         if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
+            event.preventDefault();
+            return this.canDeactivateWarning;
         }
+        return true;
     }
 }

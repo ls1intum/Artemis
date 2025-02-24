@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -22,29 +23,30 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service for calculating the progress of a student in a competency.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class CompetencyProgressService {
 
@@ -58,21 +60,21 @@ public class CompetencyProgressService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    private final UserRepository userRepository;
-
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
     private static final int MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC = 3;
 
-    private static final double DEFAULT_CONFIDENCE = 1.0;
+    private static final double DEFAULT_CONFIDENCE = 1;
+
+    private static final double MAX_CONFIDENCE = 2;
 
     private static final double MAX_CONFIDENCE_HEURISTIC = 0.25;
 
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
-    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, LearningPathService learningPathService,
+    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
             ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
@@ -80,7 +82,6 @@ public class CompetencyProgressService {
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -127,19 +128,6 @@ public class CompetencyProgressService {
     }
 
     /**
-     * Asynchronously update the progress of all users in the course for a specific competency
-     *
-     * @param competency The competency for which to update all existing student progress
-     */
-    @Async
-    public void updateProgressByCompetencyAndUsersInCourseAsync(CourseCompetency competency) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
-        Set<User> users = userRepository.getUsersInCourse(competency.getCourse());
-        log.debug("Updating competency progress for {} users.", users.size());
-        users.forEach(user -> updateCompetencyProgress(competency.getId(), user));
-    }
-
-    /**
      * Asynchronously update the existing progress for all changed competencies linked to the given learning object
      * If new competencies are added, the progress is updated for all users in the course, otherwise only the existing progresses are updated.
      *
@@ -150,8 +138,10 @@ public class CompetencyProgressService {
     public void updateProgressForUpdatedLearningObjectAsync(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
         SecurityUtils.setAuthorizationObject(); // Required for async
 
-        Set<Long> originalCompetencyIds = originalLearningObject.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
-        Set<CourseCompetency> updatedCompetencies = updatedLearningObject.map(LearningObject::getCompetencies).orElse(Set.of());
+        Set<Long> originalCompetencyIds = originalLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
+        Set<CourseCompetency> updatedCompetencies = updatedLearningObject
+                .map(learningObject -> learningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())).orElse(Set.of());
         Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
 
         Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
@@ -210,7 +200,7 @@ public class CompetencyProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateCompetencyProgress(Long competencyId, User user) {
-        Optional<CourseCompetency> optionalCompetency = courseCompetencyRepository.findByIdWithLectureUnits(competencyId);
+        Optional<CourseCompetency> optionalCompetency = courseCompetencyRepository.findById(competencyId);
 
         if (user == null || optionalCompetency.isEmpty()) {
             log.debug("User or competency no longer exist, skipping.");
@@ -218,12 +208,10 @@ public class CompetencyProgressService {
         }
 
         CourseCompetency competency = optionalCompetency.get();
-        Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
-        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
-        int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
-                .countByLectureUnitIdsAndUserId(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
+        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyIdAndUser(competencyId, user);
+        Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos = courseCompetencyRepository.findAllLectureUnitInfoByCompetencyIdAndUser(competencyId, user);
 
-        var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
+        var competencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId());
 
         if (competencyProgress.isPresent()) {
             var lastModified = competencyProgress.get().getLastModifiedDate();
@@ -235,8 +223,8 @@ public class CompetencyProgressService {
 
         var studentProgress = competencyProgress.orElse(new CompetencyProgress());
 
-        calculateProgress(lectureUnits, exerciseInfos, numberOfCompletedLectureUnits, studentProgress);
-        calculateConfidence(exerciseInfos, studentProgress);
+        calculateProgress(exerciseInfos, lectureUnitInfos, studentProgress);
+        calculateConfidence(exerciseInfos, lectureUnitInfos, studentProgress);
 
         studentProgress.setCompetency(competency);
         studentProgress.setUser(user);
@@ -261,14 +249,13 @@ public class CompetencyProgressService {
      * The progress for lecture units is the percentage of lecture units completed by the user.
      * The final progress is a weighted average of the progress in exercises and lecture units.
      *
-     * @param lectureUnits                  The lecture units linked to the competency
-     * @param exerciseInfos                 The information about the exercises linked to the competency
-     * @param numberOfCompletedLectureUnits The number of lecture units completed by the user
-     * @param competencyProgress            The progress entity to update
+     * @param exerciseInfos      The information about the exercises linked to the competency
+     * @param lectureUnitInfos   The information about the lecture units linked to the competency
+     * @param competencyProgress The progress entity to update
      */
-    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits,
+    private void calculateProgress(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos,
             CompetencyProgress competencyProgress) {
-        double numberOfLearningObjects = lectureUnits.size() + exerciseInfos.size();
+        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
@@ -278,10 +265,11 @@ public class CompetencyProgressService {
         double maxPoints = exerciseInfos.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::maxPoints).sum();
         double exerciseProgress = maxPoints > 0 ? achievedPoints / maxPoints * 100 : 0;
 
-        double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnits.size();
+        long numberOfCompletedLectureUnits = lectureUnitInfos.stream().filter(CompetencyLectureUnitMasteryCalculationDTO::completed).count();
+        double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnitInfos.size();
 
         double weightedExerciseProgress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress;
-        double weightedLectureProgress = lectureUnits.size() / numberOfLearningObjects * lectureProgress;
+        double weightedLectureProgress = lectureUnitInfos.size() / numberOfLearningObjects * lectureProgress;
 
         double progress = weightedExerciseProgress + weightedLectureProgress;
         // Bonus points can lead to a progress > 100%
@@ -293,21 +281,27 @@ public class CompetencyProgressService {
      * Calculate the confidence score for the given user in a competency based on the exercises linked to the competency.
      *
      * @param exerciseInfos      The information about the exercises linked to the competency
+     * @param lectureUnitInfos   The information about the lecture units linked to the competency
      * @param competencyProgress The progress entity to update
      */
-    private void calculateConfidence(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, CompetencyProgress competencyProgress) {
+    private void calculateConfidence(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos,
+            CompetencyProgress competencyProgress) {
         Set<CompetencyExerciseMasteryCalculationDTO> participantScoreInfos = exerciseInfos.stream()
                 .filter(info -> info.lastScore() != null && info.lastPoints() != null && info.lastModifiedDate() != null).collect(Collectors.toSet());
 
         double recencyConfidenceHeuristic = calculateRecencyConfidenceHeuristic(participantScoreInfos);
         double difficultyConfidenceHeuristic = calculateDifficultyConfidenceHeuristic(participantScoreInfos, exerciseInfos);
         double quickSolveConfidenceHeuristic = calculateQuickSolveConfidenceHeuristic(participantScoreInfos);
+        double competencyLinkWeightConfidenceHeuristic = calculateCompetencyLinkWeightConfidenceHeuristic(exerciseInfos, lectureUnitInfos, competencyProgress.getProgress());
 
         // Standard factor of 1 (no change to mastery compared to progress) plus the confidence heuristics
-        double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic;
+        double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic
+                + competencyLinkWeightConfidenceHeuristic;
+        // Prevent extreme confidence values
+        confidence = Math.clamp(confidence, 0, MAX_CONFIDENCE);
 
         competencyProgress.setConfidence(confidence);
-        setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic);
+        setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic, competencyLinkWeightConfidenceHeuristic);
     }
 
     /**
@@ -416,39 +410,93 @@ public class CompetencyProgressService {
     }
 
     /**
+     * Calculate the competency link weight confidence heuristic for the given user in a competency based on the exercises and lecture units linked to the competency.
+     * If the user has solved a high proportion of high weighted exercises and completed a high proportion of high weighted lecture units, the confidence should be higher.
+     * This calculation is similar to {@link CompetencyProgressService#calculateProgress}, but takes the competency link weight into account.
+     *
+     * @param exerciseInfos    the information about the exercises linked to the competency
+     * @param lectureUnitInfos the information about the lecture units linked to the competency
+     * @param progress         the progress of the user in the competency
+     * @return The competency link weight confidence heuristic
+     */
+    private double calculateCompetencyLinkWeightConfidenceHeuristic(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos,
+            Set<CompetencyLectureUnitMasteryCalculationDTO> lectureUnitInfos, double progress) {
+        double numberOfLearningObjects = lectureUnitInfos.size() + exerciseInfos.size();
+        if (numberOfLearningObjects == 0) {
+            return 0;
+        }
+
+        double linkWeightedAchievedPoints = exerciseInfos.stream().mapToDouble(info -> info.lastPoints() != null ? info.lastPoints() * info.competencyLinkWeight() : 0).sum();
+        double linkWeightedMaxPoints = exerciseInfos.stream().mapToDouble(info -> info.maxPoints() * info.competencyLinkWeight()).sum();
+        double linkWeightedExerciseProgress = linkWeightedMaxPoints > 0 ? linkWeightedAchievedPoints / linkWeightedMaxPoints * 100 : 0;
+
+        double linkWeightedCompletedLectureUnits = lectureUnitInfos.stream().mapToDouble(info -> info.completed() ? info.competencyLinkWeight() : 0).sum();
+        double linkWeightedLectureUnits = lectureUnitInfos.stream().mapToDouble(CompetencyLectureUnitMasteryCalculationDTO::competencyLinkWeight).sum();
+        double linkWeightedLectureProgress = linkWeightedLectureUnits > 0 ? linkWeightedCompletedLectureUnits / linkWeightedLectureUnits * 100 : 0;
+
+        double weightedExerciseProgress = exerciseInfos.size() / numberOfLearningObjects * linkWeightedExerciseProgress;
+        double weightedLectureProgress = lectureUnitInfos.size() / numberOfLearningObjects * linkWeightedLectureProgress;
+
+        double linkWeightedProgress = weightedExerciseProgress + weightedLectureProgress;
+        // Bonus points can lead to a progress > 100%
+        linkWeightedProgress = Math.clamp(Math.round(linkWeightedProgress), 0, 100);
+
+        double linkWeightConfidence = linkWeightedProgress - progress;
+
+        return Math.clamp(linkWeightConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
+    }
+
+    /**
      * Find most important heuristic that influences the confidence score and set the confidence reason accordingly.
      * If the confidence does not deviate significantly from 1, the reason is set to NO_REASON.
      *
-     * @param competencyProgress   the progress entity add the confidence reason to
-     * @param recencyConfidence    the recency confidence heuristic
-     * @param difficultyConfidence the difficulty confidence heuristic
-     * @param quickSolveConfidence the quick solve confidence heuristic
+     * @param competencyProgress                      the progress entity add the confidence reason to
+     * @param recencyConfidence                       the recency confidence heuristic
+     * @param difficultyConfidence                    the difficulty confidence heuristic
+     * @param quickSolveConfidence                    the quick solve confidence heuristic
+     * @param competencyLinkWeightConfidenceHeuristic the competency link weight confidence heuristic
      */
-    private void setConfidenceReason(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence) {
+    private void setConfidenceReason(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
         if (competencyProgress.getConfidence() < DEFAULT_CONFIDENCE - CONFIDENCE_REASON_DEADZONE) {
-            double minConfidenceHeuristic = Math.min(recencyConfidence, difficultyConfidence);
-            if (recencyConfidence == minConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
-            }
-            else {
-                // quickSolveConfidence cannot be negative therefore we don't check it here
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_EASY_POINTS);
-            }
+            setConfidenceReasonLow(competencyProgress, recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic);
         }
         else if (competencyProgress.getConfidence() > DEFAULT_CONFIDENCE + CONFIDENCE_REASON_DEADZONE) {
-            double maxConfidenceHeuristic = Math.max(recencyConfidence, Math.max(difficultyConfidence, quickSolveConfidence));
-            if (recencyConfidence == maxConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
-            }
-            else if (difficultyConfidence == maxConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HARD_POINTS);
-            }
-            else {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.QUICKLY_SOLVED_EXERCISES);
-            }
+            setConfidenceReasonHigh(competencyProgress, recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic);
         }
         else {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.NO_REASON);
+        }
+    }
+
+    private void setConfidenceReasonLow(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
+        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().getAsDouble();
+        if (recencyConfidence == minConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
+        }
+        else if (difficultyConfidence == minConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_EASY_POINTS);
+        }
+        else {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_LOW_WEIGHTED_EXERCISES);
+        }
+    }
+
+    private void setConfidenceReasonHigh(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
+        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().getAsDouble();
+        if (recencyConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
+        }
+        else if (difficultyConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HARD_POINTS);
+        }
+        else if (quickSolveConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.QUICKLY_SOLVED_EXERCISES);
+        }
+        else {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HIGH_WEIGHTED_EXERCISES);
         }
     }
 
@@ -491,8 +539,8 @@ public class CompetencyProgressService {
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
     public static boolean canBeMasteredWithoutExercises(@NotNull CourseCompetency competency) {
-        double numberOfLectureUnits = competency.getLectureUnits().size();
-        double numberOfLearningObjects = numberOfLectureUnits + competency.getExercises().size();
+        double numberOfLectureUnits = competency.getLectureUnitLinks().size();
+        double numberOfLearningObjects = numberOfLectureUnits + competency.getExerciseLinks().size();
         if (numberOfLearningObjects == 0) {
             return true;
         }
@@ -521,7 +569,8 @@ public class CompetencyProgressService {
     public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull CourseCompetency competency, @NotNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndMastered(competency.getId(), competency.getMasteryThreshold());
-        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(competency.getExercises()), course);
+        Set<Exercise> exercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).collect(Collectors.toSet());
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(exercises), course);
         return new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore);
     }
 }

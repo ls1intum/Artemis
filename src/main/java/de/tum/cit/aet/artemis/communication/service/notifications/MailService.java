@@ -5,9 +5,13 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +66,8 @@ public class MailService implements InstantNotificationService {
 
     private final MailSendingService mailSendingService;
 
+    private final List<MarkdownCustomRendererService> markdownCustomRendererServices;
+
     // notification related variables
 
     private static final String NOTIFICATION = "notification";
@@ -87,11 +93,16 @@ public class MailService implements InstantNotificationService {
 
     private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
 
-    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService) {
+    private final HashMap<Long, String> renderedPosts;
+
+    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService,
+            MarkdownCustomLinkRendererService markdownCustomLinkRendererService, MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService) {
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
         this.timeService = timeService;
         this.mailSendingService = mailSendingService;
+        markdownCustomRendererServices = List.of(markdownCustomLinkRendererService, markdownCustomReferenceRendererService);
+        renderedPosts = new HashMap<>();
     }
 
     /**
@@ -120,7 +131,7 @@ public class MailService implements InstantNotificationService {
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
         Context context = createBaseContext(admin, locale);
         context.setVariable(DATA_EXPORT, dataExport);
-        context.setVariable(REASON, reason);
+        context.setVariable(REASON, reason.getMessage());
         prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
     }
 
@@ -261,6 +272,34 @@ public class MailService implements InstantNotificationService {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
             subject = createAnnouncementText(notificationSubject, locale);
+
+            // Render markdown content of post to html
+            try {
+                String renderedPostContent;
+
+                // To avoid having to re-render the same post multiple times we store it in a hash map
+                if (renderedPosts.containsKey(post.getId())) {
+                    renderedPostContent = renderedPosts.get(post.getId());
+                }
+                else {
+                    Parser parser = Parser.builder().build();
+                    HtmlRenderer renderer = HtmlRenderer.builder()
+                            .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString()))
+                            .nodeRendererFactory(new MarkdownImageBlockRendererFactory(artemisServerUrl.toString())).build();
+                    String postContent = post.getContent();
+                    renderedPostContent = markdownCustomRendererServices.stream().reduce(renderer.render(parser.parse(postContent)), (s, service) -> service.render(s),
+                            (s1, s2) -> s2);
+                    if (post.getId() != null) {
+                        renderedPosts.put(post.getId(), renderedPostContent);
+                    }
+                }
+
+                post.setContent(renderedPostContent);
+            }
+            catch (Exception e) {
+                // In case something goes wrong, leave content of post as-is
+                log.error("Error while parsing post content", e);
+            }
         }
         else {
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));
@@ -294,6 +333,13 @@ public class MailService implements InstantNotificationService {
         if (notificationType == NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT) {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
             return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent", new Object[] {}, context.getLocale());
+        }
+        if (notificationType == NotificationType.PLAGIARISM_CASE_REPLY) {
+            notification.getTargetTransient().setMainPage("course-management");
+            Exercise exercise = plagiarismCase.getExercise();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseReply", new Object[] { exercise.getTitle(), course.getTitle() },
+                    context.getLocale());
         }
         return notification.getTitle();
     }
@@ -347,6 +393,7 @@ public class MailService implements InstantNotificationService {
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
+            case PLAGIARISM_CASE_REPLY -> templateEngine.process("mail/notification/plagiarismCaseReplyEmail", context);
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
                     TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
                 templateEngine.process("mail/notification/tutorialGroupBasicEmail", context);

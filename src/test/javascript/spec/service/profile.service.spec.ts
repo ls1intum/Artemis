@@ -55,7 +55,7 @@ describe('ProfileService', () => {
         },
         'test-server': true,
         sentry: {
-            dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2',
+            dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
         },
         'display-ribbon-on-profiles': 'dev',
         'allowed-minimum-orion-version': '1.0.0',
@@ -76,7 +76,6 @@ describe('ProfileService', () => {
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [],
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -87,7 +86,6 @@ describe('ProfileService', () => {
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -98,7 +96,6 @@ describe('ProfileService', () => {
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: ['PLAIN', 'XCODE'],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -109,7 +106,6 @@ describe('ProfileService', () => {
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -120,7 +116,6 @@ describe('ProfileService', () => {
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: ['PLAIN_MAVEN', 'MAVEN_MAVEN'],
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             },
         ],
@@ -177,7 +172,7 @@ describe('ProfileService', () => {
         inProduction: true,
         inDevelopment: false,
         openApiEnabled: true,
-        sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
+        sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
@@ -203,7 +198,6 @@ describe('ProfileService', () => {
                 projectTypes: [],
                 sequentialTestRuns: true,
                 staticCodeAnalysis: false,
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -214,7 +208,6 @@ describe('ProfileService', () => {
                 projectTypes: [],
                 sequentialTestRuns: false,
                 staticCodeAnalysis: false,
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -225,7 +218,6 @@ describe('ProfileService', () => {
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
                 sequentialTestRuns: false,
                 staticCodeAnalysis: true,
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -236,7 +228,6 @@ describe('ProfileService', () => {
                 projectTypes: [],
                 sequentialTestRuns: false,
                 staticCodeAnalysis: false,
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             },
             {
@@ -247,7 +238,6 @@ describe('ProfileService', () => {
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
                 sequentialTestRuns: true,
                 staticCodeAnalysis: true,
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             },
         ],
@@ -269,7 +259,6 @@ describe('ProfileService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

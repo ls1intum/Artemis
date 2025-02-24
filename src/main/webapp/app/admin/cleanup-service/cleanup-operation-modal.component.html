@@ -1,0 +1,48 @@
+<div class="modal-header">
+    <h4 class="modal-title" [jhiTranslate]="'cleanupService.operation.' + operation().name"></h4>
+    <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    @if (operation().name === 'deleteOrphans') {
+        <p
+            [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
+            [translateValues]="{
+                operationName: 'cleanupService.operation.' + operation().name | artemisTranslate,
+            }"
+        ></p>
+    } @else {
+        <p
+            [jhiTranslate]="'cleanupService.execute.question'"
+            [translateValues]="{
+                operationName: 'cleanupService.operation.' + operation().name | artemisTranslate,
+                deleteFrom: operation().deleteFrom | artemisDate,
+                deleteTo: operation().deleteTo | artemisDate,
+            }"
+        ></p>
+    }
+    <div>
+        <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
+        <ul>
+            @for (key of cleanupKeys; track key) {
+                <li>
+                    <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
+                    : {{ counts[key] }}
+                    @if (operationExecuted) {
+                        @if (counts[key] > 0) {
+                            <fa-icon [icon]="faTimes" class="text-danger" />
+                        } @else {
+                            <fa-icon [icon]="faCheckCircle" class="text-success" />
+                        }
+                    }
+                </li>
+            }
+        </ul>
+        @if (!hasEntriesToDelete) {
+            <p class="text-muted" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
+        }
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
+    <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+</div>

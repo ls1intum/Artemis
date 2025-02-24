@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -8,20 +8,19 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
-    public resourceUrl = 'api/lectures';
+    protected http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private lectureUnitService = inject(LectureUnitService);
+    private entityTitleService = inject(EntityTitleService);
 
-    constructor(
-        protected http: HttpClient,
-        private accountService: AccountService,
-        private lectureUnitService: LectureUnitService,
-        private entityTitleService: EntityTitleService,
-    ) {}
+    public resourceUrl = 'api/lectures';
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
@@ -111,22 +110,30 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
+
     /**
      * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
      *
      * @param courseId Course containing the lecture(s)
      * @param lectureId The lecture to be ingested in pyris
      */
-    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<boolean>> {
+    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (lectureId !== undefined) {
             params = params.set('lectureId', lectureId.toString());
         }
-
-        return this.http.post<boolean>(`api/courses/${courseId}/ingest`, null, {
+        return this.http.post<void>(`api/courses/${courseId}/ingest`, null, {
             params: params,
             observe: 'response',
         });
+    }
+
+    /**
+     * Fetch the ingestion state of all the lectures inside the course specified
+     * @param courseId
+     */
+    getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
+        return this.http.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
     }
     /**
      * Clones and imports the lecture to the course

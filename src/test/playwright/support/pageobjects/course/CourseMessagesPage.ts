@@ -18,15 +18,16 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#plusButton-generalChannels').click();
-        await this.page.locator('.modal-content #createChannel').click();
+        await this.page.click('.square-button > .ng-fa-icon');
+        await this.page.click('text=Create channel');
     }
 
     /**
      * Navigates to the channel overview section.
      */
-    browseChannelsButton(channelGroup: string) {
-        return this.page.locator(`#plusButton-${channelGroup}`);
+    async browseChannelsButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
     }
 
     /**
@@ -112,6 +113,13 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Marks a channel as course-wide in the modal dialog.
+     */
+    async setCourseWideChannel() {
+        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+    }
+
+    /**
      * Marks a channel as an announcement channel in the modal dialog.
      */
     async setAnnouncementChannel() {
@@ -169,11 +177,15 @@ export class CourseMessagesPage {
      * @param newName - The new name for the conversation.
      */
     async editName(newName: string) {
+        await this.getName().click();
         await this.page.locator('#name-section .action-button').click();
         const nameField = this.page.locator('.channels-overview #name');
         await nameField.clear();
         await nameField.fill(newName);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#name-section textarea')).toHaveValue(newName);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -181,11 +193,15 @@ export class CourseMessagesPage {
      * @param newTopic - The new topic for the conversation.
      */
     async editTopic(newTopic: string) {
+        await this.getName().click();
         await this.page.locator('#topic-section .action-button').click();
         const topicField = this.page.locator('.channels-overview #topic');
         await topicField.clear();
         await topicField.fill(newTopic);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -193,11 +209,15 @@ export class CourseMessagesPage {
      * @param newDescription - The new description for the conversation.
      */
     async editDescription(newDescription: string) {
+        await this.getName().click();
         await this.page.locator('#description-section .action-button').click();
         const descriptionField = this.page.locator('.channels-overview #description');
         await descriptionField.clear();
         await descriptionField.fill(newDescription);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#description-section textarea')).toHaveValue(newDescription);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -212,9 +232,8 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .monaco-editor');
-        await messageField.click();
-        await messageField.pressSequentially(message);
+        const messageField = this.page.locator('.markdown-editor .monaco-editor textarea');
+        await messageField.fill(message);
     }
 
     /**
@@ -242,10 +261,17 @@ export class CourseMessagesPage {
      */
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.editIcon').click();
-        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor');
-        await editorLocator.click();
-        await editorLocator.pressSequentially(message);
+        await postLocator.locator('.message-container').click({ button: 'right' });
+        await this.page.waitForSelector('.dropdown-menu.show');
+
+        const editButton = postLocator.locator('.dropdown-menu.show .editIcon');
+        if (await editButton.isVisible()) {
+            await editButton.click();
+        } else {
+            await postLocator.locator('.reaction-button.edit').click();
+        }
+        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
+        await editorLocator.fill(message);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
@@ -257,9 +283,16 @@ export class CourseMessagesPage {
      */
     async deleteMessage(messageId: number) {
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
-        const deleteIcon = this.getSinglePost(messageId).locator('.deleteIcon');
-        await deleteIcon.click();
-        await deleteIcon.click();
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.locator('.message-container').click({ button: 'right' });
+        await this.page.waitForSelector('.dropdown-menu.show');
+
+        const deleteButton = postLocator.locator('.dropdown-menu.show .deleteIcon');
+        if (await deleteButton.isVisible()) {
+            await deleteButton.click();
+        } else {
+            await postLocator.locator('.reaction-button.delete').click();
+        }
         await responsePromise;
     }
 
@@ -288,7 +321,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#plusButton-groupChats').click();
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
     }
 
     /**

@@ -1,8 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 
@@ -17,14 +16,13 @@ export interface IConflictStateService {
  */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorConflictStateService extends DomainDependentService implements IConflictStateService, OnDestroy {
+    private websocketService = inject(WebsocketService);
+
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
     private websocketConnections: Map<string, string> = new Map();
 
-    constructor(
-        domainService: DomainService,
-        private jhiWebsocketService: JhiWebsocketService,
-    ) {
-        super(domainService);
+    constructor() {
+        super();
         this.initDomainSubscription();
     }
 
@@ -32,7 +30,7 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
      * Unsubscribe fromm all subscriptions.
      */
     ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
+        Object.values(this.websocketConnections).forEach((channel) => this.websocketService.unsubscribe(channel));
     }
 
     /**
@@ -66,6 +64,9 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
 
     private getDomainKey = () => {
         const [domainType, domainValue] = this.domain;
+        if (domainType === DomainType.AUXILIARY_REPOSITORY) {
+            return `auxiliary-${domainValue.id!.toString()}`;
+        }
         return `${domainType === DomainType.PARTICIPATION ? 'participation' : 'test'}-${domainValue.id!.toString()}`;
     };
 }

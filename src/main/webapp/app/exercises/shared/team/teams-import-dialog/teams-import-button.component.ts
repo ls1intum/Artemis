@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-teams-import-button',
@@ -17,8 +18,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTeamsImportDialog($event)"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class TeamsImportButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -30,8 +34,6 @@ export class TeamsImportButtonComponent {
 
     // Icons
     faPlus = faPlus;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open up import dialog for teams

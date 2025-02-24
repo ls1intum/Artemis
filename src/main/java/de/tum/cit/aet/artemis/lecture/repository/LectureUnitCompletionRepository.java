@@ -39,14 +39,6 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
     Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
 
     @Query("""
-            SELECT COUNT(lectureUnitCompletion)
-            FROM LectureUnitCompletion lectureUnitCompletion
-            WHERE lectureUnitCompletion.lectureUnit.id IN :lectureUnitIds
-                AND lectureUnitCompletion.user.id = :userId
-            """)
-    int countByLectureUnitIdsAndUserId(@Param("lectureUnitIds") Collection<Long> lectureUnitIds, @Param("userId") Long userId);
-
-    @Query("""
             SELECT user
             FROM LectureUnitCompletion lectureUnitCompletion
                 LEFT JOIN lectureUnitCompletion.user user

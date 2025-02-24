@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
+import dayjs from 'dayjs/esm';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -30,7 +31,6 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
-    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,9 +38,10 @@ export class AccountService implements IAccountService {
     private translateService = inject(TranslateService);
     private sessionStorage = inject(SessionStorageService);
     private http = inject(HttpClient);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private featureToggleService = inject(FeatureToggleService);
 
+    // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
@@ -325,28 +326,6 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends the added SSH key to the server
-     *
-     * @param sshPublicKey
-     */
-    addSshPublicKey(sshPublicKey: string): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = sshPublicKey;
-        }
-        return this.http.put<void>('api/account/ssh-public-key', sshPublicKey);
-    }
-
-    /**
-     * Sends a request to the server to delete the user's current SSH key
-     */
-    deleteSshPublicKey(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
-        return this.http.delete<void>('api/account/ssh-public-key');
-    }
-
-    /**
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
@@ -383,5 +362,15 @@ export class AccountService implements IAccountService {
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
         return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Sets externalLLMUsageAccepted to current timestamp locally, to omit accepting external LLM usage
+     * popup appearing multiple time before user refreshes the page.
+     */
+    setUserAcceptedExternalLLMUsage(): void {
+        if (this.userIdentity) {
+            this.userIdentity.externalLLMUsageAccepted = dayjs();
+        }
     }
 }

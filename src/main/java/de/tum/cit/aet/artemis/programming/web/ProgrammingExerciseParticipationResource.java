@@ -37,7 +37,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,12 +51,14 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -89,11 +93,16 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    private final Optional<SharedQueueManagementService> sharedQueueManagementService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository) {
+            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<SharedQueueManagementService> sharedQueueManagementService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -105,7 +114,9 @@ public class ProgrammingExerciseParticipationResource {
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
         this.studentExamRepository = studentExamRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     /**
@@ -204,7 +215,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
+    public ResponseEntity<SubmissionDTO> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
             submissionOpt = submissionService.getLatestPendingSubmission(participationId, lastGraded);
@@ -212,9 +223,31 @@ public class ProgrammingExerciseParticipationResource {
         catch (IllegalArgumentException ex) {
             throw new EntityNotFoundException("participation", participationId);
         }
+        if (submissionOpt.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        ProgrammingSubmission programmingSubmission = submissionOpt.get();
+        boolean isSubmissionProcessing = false;
+        ZonedDateTime buildStartDate = null;
+        ZonedDateTime estimatedCompletionDate = null;
+        if (sharedQueueManagementService.isPresent()) {
+            try {
+                var buildTimingInfo = sharedQueueManagementService.get().isSubmissionProcessing(participationId, programmingSubmission.getCommitHash());
+                if (buildTimingInfo != null) {
+                    isSubmissionProcessing = true;
+                    buildStartDate = buildTimingInfo.buildStartDate();
+                    estimatedCompletionDate = buildTimingInfo.estimatedCompletionDate();
+                }
+            }
+            catch (Exception e) {
+                log.warn("Failed to get build timing info for submission {} of participation {}: {}", programmingSubmission.getCommitHash(), participationId, e.getMessage());
+            }
+        }
+
         // Remove participation, is not needed in the response.
-        submissionOpt.ifPresent(submission -> submission.setParticipation(null));
-        return ResponseEntity.ok(submissionOpt.orElse(null));
+        programmingSubmission.setParticipation(null);
+        var submissionDTO = SubmissionDTO.of(programmingSubmission, isSubmissionProcessing, buildStartDate, estimatedCompletionDate);
+        return ResponseEntity.ok(submissionDTO);
     }
 
     /**
@@ -226,17 +259,17 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
-        ProgrammingExercise programmingExercise;
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+    public ResponseEntity<Map<Long, Optional<Submission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             throw new AccessForbiddenException("exercise", exerciseId);
         }
-        Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
+        // TODO: use a different data structure than map here
+        Map<Long, Optional<Submission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
         // Remove unnecessary data to make response smaller (exercise, student of participation).
         pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            Optional<ProgrammingSubmission> submissionOpt = entry.getValue();
+            Optional<Submission> submissionOpt = entry.getValue();
             // Remove participation, is not needed in the response.
             submissionOpt.ifPresent(submission -> submission.setParticipation(null));
             return submissionOpt;
@@ -339,22 +372,25 @@ public class ProgrammingExerciseParticipationResource {
 
     /**
      * GET /programming-exercise/{exerciseID}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
-     * SOLUTION or TESTS.
+     * SOLUTION, TESTS or AUXILIARY.
      * Here we check is at least a teaching assistant for the exercise.
      *
      * @param exerciseID     the id of the exercise for which to retrieve the commit history
      * @param repositoryType the type of the repository for which to retrieve the commit history
+     * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
+            @RequestParam Optional<Long> repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
         boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
+        boolean isAuxiliaryRepository = repositoryType.equals(RepositoryType.AUXILIARY);
         ProgrammingExerciseParticipation participation;
 
-        if (!isTemplateRepository && !isSolutionRepository && !isTestRepository) {
+        if (!isTemplateRepository && !isSolutionRepository && !isTestRepository && !isAuxiliaryRepository) {
             throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
         }
         else if (isTemplateRepository) {
@@ -364,6 +400,15 @@ public class ProgrammingExerciseParticipationResource {
             participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseID);
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (isAuxiliaryRepository) {
+            var auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId.orElseThrow());
+            if (!auxiliaryRepo.getExercise().getId().equals(exerciseID)) {
+                throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
+            }
+            return ResponseEntity.ok(programmingExerciseParticipationService.getAuxiliaryRepositoryCommitInfos(auxiliaryRepo));
+        }
+
         if (isTestRepository) {
             return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfosTestRepo(participation));
         }

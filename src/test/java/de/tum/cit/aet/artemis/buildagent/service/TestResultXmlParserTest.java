@@ -8,13 +8,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 
 class TestResultXmlParserTest {
 
-    private final List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
-    private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     @Test
     void testParseResultXmlInnerText() throws IOException {
@@ -31,8 +32,8 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
-        assertThat(test.getName()).isEqualTo("testBubbleSort()");
-        assertThat(test.getTestMessages()).containsExactly("""
+        assertThat(test.name()).isEqualTo("testBubbleSort()");
+        assertThat(test.testMessages()).containsExactly("""
                 test `add` failed on ≥ 1 cases:
                 (0, 0)
                 Your submission raised an error Failure("TODO add")""");
@@ -52,8 +53,8 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
-        assertThat(test.getName()).isEqualTo("testBubbleSort()");
-        assertThat(test.getTestMessages()).containsExactly("test `add` failed");
+        assertThat(test.name()).isEqualTo("testBubbleSort()");
+        assertThat(test.testMessages()).containsExactly("test `add` failed");
     }
 
     @Test
@@ -69,8 +70,8 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
-        assertThat(test.getName()).isEqualTo("testMergeSort()");
-        assertThat(failedTests.getFirst().getTestMessages()).containsExactly("org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)");
+        assertThat(test.name()).isEqualTo("testMergeSort()");
+        assertThat(failedTests.getFirst().testMessages()).containsExactly("org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)");
     }
 
     @Test
@@ -88,7 +89,7 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).hasSize(4);
-        assertThat(successfulTests).map(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
+        assertThat(successfulTests).map(LocalCITestJobDTO::name).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
                 "testUseMergeSortForBigList()");
     }
 
@@ -184,8 +185,8 @@ class TestResultXmlParserTest {
         assertThat(successfulTests).isEmpty();
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
-        assertThat(test.getName()).isEqualTo("CompileLinkedList");
-        assertThat(test.getTestMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
+        assertThat(test.name()).isEqualTo("CompileLinkedList");
+        assertThat(test.testMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
     }
 
     @Test
@@ -205,7 +206,187 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
-        assertThat(test.getName()).isEqualTo("mwe-name");
-        assertThat(test.getTestMessages()).hasSize(1).contains("");
+        assertThat(test.name()).isEqualTo("mwe-name");
+        assertThat(test.testMessages()).hasSize(1).contains("");
+    }
+
+    @Test
+    void testNestedTestsuite() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                <testsuites errors="0" failures="0" tests="12" time="0.013">
+                    <testsuite name="Tests" tests="12">
+                        <testsuite name="Properties" tests="9">
+                            <testsuite name="Checked by SmallCheck" tests="6">
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in A" time="0.004"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in A" time="0.000"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in B" time="0.003"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in B" time="0.000"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in C" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in C" time="0.000"/>
+                            </testsuite>
+                            <testsuite name="Checked by QuickCheck" tests="3">
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing A against sample solution" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing B against sample solution" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing C against sample solution" time="0.001"/>
+                            </testsuite>
+                        </testsuite>
+                        <testsuite name="Unit Tests" tests="3">
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectA (0,0) []" time="0.000"/>
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectB (0,1) [(0,0)]" time="0.000"/>
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectC (0,1) [(-1,-1)]" time="0.000"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        // @formatter:off
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder(
+            "Properties.Checked by SmallCheck.Testing filtering in A",
+                "Properties.Checked by SmallCheck.Testing mapping in A",
+                "Properties.Checked by SmallCheck.Testing filtering in B",
+                "Properties.Checked by SmallCheck.Testing mapping in B",
+                "Properties.Checked by SmallCheck.Testing filtering in C",
+                "Properties.Checked by SmallCheck.Testing mapping in C",
+                "Properties.Checked by QuickCheck.Testing A against sample solution",
+                "Properties.Checked by QuickCheck.Testing B against sample solution",
+                "Properties.Checked by QuickCheck.Testing C against sample solution",
+                "Unit Tests.Testing selectAndReflectA (0,0) []",
+                "Unit Tests.Testing selectAndReflectB (0,1) [(0,0)]",
+                "Unit Tests.Testing selectAndReflectC (0,1) [(-1,-1)]");
+        // @formatter:on
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testMultipleTestsuite() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite name="SuiteA" tests="3">
+                        <testcase name="Test1"/>
+                        <testcase name="Test2"/>
+                        <testcase name="Test3"/>
+                    </testsuite>
+                    <testsuite name="SuiteB" tests="3">
+                        <testcase name="Test1"/>
+                        <testcase name="Test2"/>
+                        <testcase name="Test3"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        // @formatter:off
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder(
+            "SuiteA.Test1",
+                "SuiteA.Test2",
+                "SuiteA.Test3",
+                "SuiteB.Test1",
+                "SuiteB.Test2",
+                "SuiteB.Test3");
+        // @formatter:on
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testNestedTestsuiteMissingNames() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite>
+                        <testsuite>
+                            <testsuite>
+                                <testcase name="Test1"/>
+                                <testcase name="Test2"/>
+                                <testcase name="Test3"/>
+                            </testsuite>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test1", "Test2", "Test3");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testXmlProlog() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!-- comment describing <testsuites> -->
+                <!DOCTYPE testsuites>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="Test"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testRootTestsuiteNameIgnored() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="ignored">
+                    <testsuite name="Suite">
+                        <testcase name="Test"/>
+                    </testsuite>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Suite.Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testSingleTopLevelTestsuiteNameIgnored() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite name="ignored">
+                        <testsuite name="Suite">
+                            <testcase name="Test"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Suite.Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testMixedNestedTestsuiteTestcase() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="Test"/>
+                        <testsuite name="Suite">
+                            <testcase name="Test"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test", "Suite.Test");
+        assertThat(failedTests).isEmpty();
     }
 }

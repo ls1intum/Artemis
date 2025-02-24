@@ -7,9 +7,10 @@
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter"
+                "switchToSimpleMode": "Zum einfachen Modus wechseln",
+                "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
@@ -56,6 +57,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem",
@@ -65,6 +67,7 @@
                     "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
@@ -135,18 +138,21 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
+                "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
+                "description": "Erlaubt Studierenden die Übung mit Git herunterzuladen und diese lokal mit der bevorzugten IDE zu bearbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Online-IDE erlauben",
+                "description": "Eine auf Visual Studio Code basierende Online-Entwicklungsumgebung mit Code-Hervorhebungs- und Formatierungsfunktionen. Vorkonfiguriert für die Sprache der Übung und mit der Möglichkeit, Code online zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
@@ -210,22 +216,8 @@
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
+            "diffReportError": "Der Diff Report konnte nicht erstellt werden.",
             "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
-            "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
-            "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
-            "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
-            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Lösungs-Codeschnipsel wurden gelöscht.",
-            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Lösungs-Codeschnipsel.",
-            "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
-            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Lösungs-Codeschnipsel",
-            "generateCodeHintsTitle": "Generiere Code Hinweise",
-            "generateCodeHintsSuccess": "Code Hinweise wurden erfolgreich generiert",
-            "createStructuralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle strukturellen Tests dieser Aufgabe.",
-            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Lösungs-Codeschnipsel",
-            "createStructuralSolutionEntriesSuccess": "Strukturelle Lösungs-Codeschnipsel wurden erfolgreich erstellt",
-            "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
-            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs-Codeschnipsel",
-            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs-Codeschnipsel wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -345,8 +337,68 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
+                    "totalItems": "Insgesamt {{count}} Element(e)",
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
+                    "filter": "Filter",
+                    "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
+                    "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
+                    "channelSuccess": "Kanal {{channelName}} erfolgreich erstellt.",
+                    "groupFeedback": "Feedback gruppieren",
+                    "groupFeedbackTooltip": "Feedback gruppieren ermöglicht es, ähnliche Feedback-Einträge mit demselben Testfall und derselben Aufgabenbezeichnung zu einem einzigen Eintrag zusammenzufassen. Dies ist nützlich, um die Anzahl der Einträge in der Tabelle zu reduzieren, insbesondere wenn zufällige Werte oder ähnliche Eingaben in den Testfällen verwendet und verglichen werden.",
+                    "feedbackModal": {
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filteroptionen",
+                        "task": "Tasks",
+                        "testcase": "Testfälle",
+                        "errorCategory": "Fehlerkategorien",
+                        "occurrence": "Häufigkeit",
+                        "clear": "Filter zurücksetzen",
+                        "cancel": "Abbrechen",
+                        "apply": "Filter anwenden"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Stichprobe für Betroffene Studierende",
+                        "description": "Die folgende Liste ist eine Stichprobe der betroffenen Studierenden für den ausgewählten Feedback-Eintrag, da diese ausreichend ist, um das Feedback zu analysieren. Die Liste ist auf 5 Studierende begrenzt. Insgesamt haben {{count}} Studierende dieses Feedback erhalten.",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Erstelle einen Feedback-Diskussionskanal",
+                        "studentNumber": "Anzahl der Studierende die dem Kanal hinzugefügt werden: {{count}}",
+                        "description": "Dieser Kanal soll Diskussionen über spezifisches Feedback zur bereitgestellten Übung erleichtern. Es ermöglicht allen betroffenen Studierenden und Lehrenden, zusammenzuarbeiten und das Feedback effektiv anzugehen.",
+                        "label": "Kanalname",
+                        "channelVisibility": "Kanal Sichtbarkeit",
+                        "visibilityPublic": "Öffentlich",
+                        "visibilityPrivate": "Privat",
+                        "announcementChannel": "Ankündigungskanal",
+                        "announcementChannelYes": "Ja",
+                        "announcementChannelNo": "Nein",
+                        "createAndNavigateLabel": "Erstellen und Navigieren",
+                        "createAndNavigateDescription": "Erstellt den Kanal und navigiert automatisch zum Kanal.",
+                        "createChannelLabel": "Kanal erstellen",
+                        "createChannelDescription": "Erstellt den Kanal, ohne die Seite zu verlassen.",
+                        "placeholder": "Dieses Feld bitte nicht leer lassen",
+                        "descriptionLabel": "Kanalbeschreibung",
+                        "requiredValidationErrorName": "Der Kanalname ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorName": "Kanalname kann max {{ max }} Zeichen lang sein!",
+                        "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
+                        "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "dueDate": "Das Abgabedatum der Übung ist noch nicht erreicht. Bitte beachte, dass das Ergebnis daher noch nicht endgültig ist und sich die betroffenen Studierenden in Zukunft ändern könnten. Zudem ist das Feedback möglicherweise noch nicht für Studierende sichtbar, falls es versteckte Testfälle in der Übung gibt. Bitte überprüfe, ob du dennoch einen Feedback-Kanal erstellen möchtest!",
+                        "confirmationModal": {
+                            "header": "Kanal Erstellen bestätigen",
+                            "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
+                            "cancel": "Abbrechen",
+                            "confirm": "Erstellen"
+                        }
+                    }
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -460,7 +512,7 @@
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
-                "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
+                "allowFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
@@ -514,20 +566,23 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Die eingefügten Dateien überschreiben alle Dateien im Checkout-Verzeichnis, die den gleichen Namen haben. Dateien, die nicht überschrieben werden, bleiben erhalten.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit diesem Namen in der Aufgabe.",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarningLocalCI": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Bitte ändere die Hilfs-Repository-Konfiguration zu einer validen Konfiguration um zum Simple Mode zu wechseln."
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",
@@ -576,10 +631,10 @@
                     },
                     "submission_penalty": {
                         "title": "Punktabzug je Überschreitung",
-                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche, innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Der Punktabzug für diese Aufgabe ist -{{points}} Punkte."
                     }
                 },
-                "submissionLimitTitle": "Abgabelimit",
+                "submissionLimitTitle": "Abgaben",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
                 "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
@@ -637,20 +692,9 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
-            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
             "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
-            "testwiseCoverageReport": {
-                "button": "Testbasierte Code-Abdeckung anzeigen",
-                "tooltip": "Zeigt die testbasierte Code-Abdeckung für das Lösungs-Repository.",
-                "title": "Testbasierte Code-Abdeckung",
-                "404": "Testbasierte Code-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
-                "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
-                "filePath": "Datei-Pfad",
-                "coveredLines": "Abgedeckte Zeilen"
-            },
             "buildLogStatistics": {
                 "title": "Durchschnittliche Statistiken der Build-Logs",
                 "numberOfBuilds": "# Builds",
@@ -687,10 +731,29 @@
                 "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
                 "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
+                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
+                    "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                },
+                "envVars": {
+                    "title": "Umgebungsvariablen",
+                    "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
+                    "addEnvVar": "Umgebungsvariable hinzufügen",
+                    "removeEnvVar": "Entfernen"
+                }
+            },
+            "artemisIntelligence": {
+                "consistencyCheckAlert": {
+                    "title": "Resultat der Konsistenzprüfung"
+                }
             }
         },
         "error": {
-            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+            "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."
         }
     }
 }

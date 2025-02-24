@@ -1,6 +1,6 @@
-import { Component, Injector, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/programming/build-log.model';
@@ -16,7 +16,7 @@ import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercis
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
@@ -31,14 +31,43 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { FeedbackNodeComponent } from './node/feedback-node.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
     templateUrl: './feedback.component.html',
     styleUrls: ['./feedback.scss'],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        NgbTooltip,
+        BarChartModule,
+        NgTemplateOutlet,
+        FeedbackNodeComponent,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class FeedbackComponent implements OnInit, OnChanges {
+    private resultService = inject(ResultService);
+    private buildLogService = inject(BuildLogService);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private feedbackService = inject(FeedbackService);
+    private feedbackChartService = inject(FeedbackChartService);
+    private injector = inject(Injector);
+    activeModal? = inject(NgbActiveModal, { optional: true });
+
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -72,14 +101,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
 
-    @Input() isExamReviewPage?: boolean = false;
-    @Input() isPrinting?: boolean = false;
+    @Input() isExamReviewPage = false;
+    @Input() isPrinting = false;
 
     // Icons
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-
     private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
@@ -115,17 +143,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
      */
     private feedbackItemNodesBeforePrinting: FeedbackNode[];
 
-    constructor(
-        private resultService: ResultService,
-        private buildLogService: BuildLogService,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private feedbackService: FeedbackService,
-        private feedbackChartService: FeedbackChartService,
-        private injector: Injector,
-        @Optional()
-        public activeModal?: NgbActiveModal,
-    ) {
+    constructor() {
+        const translateService = this.translateService;
+
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.labels = [pointsLabel, deductionsLabel];

@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -7,12 +6,35 @@ import { ASC, DESC, SORT } from 'app/shared/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { SortService } from 'app/shared/service/sort.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CoursePrerequisitesButtonComponent } from './course-prerequisites-button/course-prerequisites-button.component';
+import { CourseRegistrationButtonComponent } from './course-registration-button/course-registration-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration.component.html',
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        CoursePrerequisitesButtonComponent,
+        CourseRegistrationButtonComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseRegistrationComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private sortService = inject(SortService);
+
     coursesToSelect: Course[] = [];
     loading = false;
     predicate!: string;
@@ -22,14 +44,6 @@ export class CourseRegistrationComponent implements OnInit {
     // Icons
     faCheckCircle = faCheckCircle;
     faSort = faSort;
-
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private sortService: SortService,
-    ) {}
 
     ngOnInit(): void {
         this.handleNavigation();

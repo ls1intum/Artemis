@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -6,14 +6,20 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
+import '@angular/localize/init';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AlertService } from 'app/core/util/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;
@@ -25,12 +31,11 @@ describe('SystemNotificationManagementComponent', () => {
         children: [],
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router = new MockRouter();
         router.setUrl('');
 
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPaginationMocksModule],
+        await TestBed.configureTestingModule({
             declarations: [
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),
@@ -43,13 +48,16 @@ describe('SystemNotificationManagementComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                managementComponentFixture = TestBed.createComponent(SystemNotificationManagementComponent);
-                managementComponent = managementComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        managementComponentFixture = TestBed.createComponent(SystemNotificationManagementComponent);
+        managementComponent = managementComponentFixture.componentInstance;
     });
 
     afterEach(() => {
@@ -70,7 +78,6 @@ describe('SystemNotificationManagementComponent', () => {
 
         tick();
         expect(router.navigateByUrl).toHaveBeenCalledOnce();
-        expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id]);
     }));
 
     it('navigate to the edit page of system notification if details is clicked', fakeAsync(() => {
@@ -86,7 +93,6 @@ describe('SystemNotificationManagementComponent', () => {
 
         tick();
         expect(router.navigateByUrl).toHaveBeenCalledOnce();
-        expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id, 'edit']);
     }));
 
     it('should unsubscribe on destroy', () => {

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -10,7 +9,6 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
@@ -30,7 +28,6 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
@@ -43,7 +40,6 @@ describe('CodeEditorStudentContainerComponent', () => {
                 MockProvider(GuidedTourService),
                 MockProvider(SubmissionPolicyService),
                 MockProvider(AlertService),
-                MockProvider(ExerciseHintService),
             ],
         })
             .compileComponents()

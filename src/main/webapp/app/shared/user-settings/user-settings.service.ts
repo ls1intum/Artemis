@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -9,14 +9,14 @@ import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
+    private http = inject(HttpClient);
+
     public notificationSettingsResourceUrl = 'api/notification-settings';
     public scienceSettingsResourceUrl = 'api/science-settings';
     public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
-
-    constructor(private http: HttpClient) {}
 
     // load methods
 

@@ -1,0 +1,33 @@
+<div class="saved-posts pt-2 px-2 d-flex flex-column h-100">
+    <div>
+        <h4 class="mb-0 p-1 pb-0">
+            <span jhiTranslate="artemisApp.metis.overview.savedPosts"></span> (<span [jhiTranslate]="'artemisApp.metis.overview.' + savedPostStatusMap.toString()"></span>)
+        </h4>
+    </div>
+    <hr class="my-2" />
+    @if (isShowDeleteNotice) {
+        <div class="saved-posts-delete-notice m-2 fs-x-small text-secondary">
+            <fa-icon class="me-1" [icon]="faInfoCircle" />
+            <span jhiTranslate="artemisApp.metis.overview.deleteNoticeSavedPosts"></span>
+        </div>
+    }
+    <div class="saved-posts-post-container flex-grow">
+        @if (posts && posts.length > 0) {
+            @for (post of posts; track trackPostFunction($index, post)) {
+                @if (!hiddenPosts.includes(post.id!)) {
+                    <jhi-posting-summary
+                        [post]="post"
+                        [isShowSavedPostOptions]="true"
+                        (onChangeSavedPostStatus)="changeSavedPostStatus(post, $event)"
+                        (onNavigateToPost)="onTriggerNavigateToPost(post)"
+                    />
+                }
+            }
+        } @else {
+            <div class="saved-posts-empty-notice text-secondary">
+                <fa-icon class="mb-3" size="3x" [icon]="faBookmark" />
+                <span jhiTranslate="artemisApp.metis.overview.emptySavedPosts"></span>
+            </div>
+        }
+    </div>
+</div>

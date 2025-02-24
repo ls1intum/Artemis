@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -25,15 +24,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "progexresultjenk";
-
-    @Autowired
-    private ProgrammingExerciseResultTestService programmingExerciseResultTestService;
 
     @BeforeEach
     void setup() {
@@ -123,7 +117,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         CommitDTO dummy = new CommitDTO("", "", "");
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true,
                 List.of("test1", "test2", "test4"), List.of(), new ArrayList<>(), new ArrayList<>(List.of(dummy)), null);
-        notification.getCommits().clear();
+        notification.commits().clear();
         programmingExerciseResultTestService.shouldRejectNotificationWithoutCommitHash(notification);
     }
 

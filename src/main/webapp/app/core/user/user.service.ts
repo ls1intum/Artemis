@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    public resourceUrl = 'api/users';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/users';
 
     /**
      * Search for a user on the server by login or name.
@@ -42,9 +42,9 @@ export class UserService {
     }
 
     /**
-     * Accept Iris policy.
+     * Accept external LLM usage policy.
      */
-    acceptIris(): Observable<HttpResponse<void>> {
-        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    acceptExternalLLMUsage(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm-usage`, { observe: 'response' });
     }
 }

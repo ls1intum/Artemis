@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -21,24 +20,38 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import * as monaco from 'monaco-editor';
+import { MockClipboardItem } from '../../../helpers/mocks/service/mock-clipboard-item';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture.detectChanges();
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MonacoEditorComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        Object.assign(navigator, {
+            clipboard: {
+                read: jest.fn(),
+            },
+        });
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -53,8 +66,18 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([
-        { action: new AttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: AttachmentAction.DEFAULT_INSERT_TEXT },
-        { action: new UrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: UrlAction.DEFAULT_INSERT_TEXT },
+        {
+            action: new AttachmentAction(),
+            text: 'Attachment',
+            url: 'https://test.invalid/img.png',
+            defaultText: AttachmentAction.DEFAULT_INSERT_TEXT,
+        },
+        {
+            action: new UrlAction(),
+            text: 'Link',
+            url: 'https://test.invalid/',
+            defaultText: UrlAction.DEFAULT_INSERT_TEXT,
+        },
     ])('should insert $text', ({ action, text, url, defaultText }: { action: UrlAction | AttachmentAction; text: string; url: string; defaultText: string }) => {
         const prefix = text === 'Attachment' ? '!' : '';
         comp.registerAction(action);
@@ -64,6 +87,48 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText('');
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(defaultText);
+    });
+
+    it('should not access the clipboard if no upload callback is specified', async () => {
+        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read');
+        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const action = new AttachmentAction();
+        comp.registerAction(action);
+        // The addPasteListenerSpy should have received a function that does not result in the clipboard being read when called.
+        expect(addPasteListenerSpy).toHaveBeenCalled();
+        const pasteListener = addPasteListenerSpy.mock.calls[0][0];
+        expect(pasteListener).toBeDefined();
+        await pasteListener('');
+        expect(clipboardReadSpy).not.toHaveBeenCalled();
+    });
+
+    it('should process files from the clipboard', async () => {
+        const imageBlob = new Blob([]);
+        const imageClipboardItem: MockClipboardItem = {
+            types: ['image/png'],
+            getType: jest.fn().mockResolvedValue(imageBlob),
+            presentationStyle: 'inline',
+        };
+
+        const nonImageBlob = new Blob(['Sample text content']);
+        const textClipboardItem: MockClipboardItem = {
+            types: ['text/plain'],
+            getType: jest.fn().mockResolvedValue(nonImageBlob),
+            presentationStyle: 'inline',
+        };
+
+        // Mock the clipboard read function to return the created ClipboardItems
+        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read').mockResolvedValue([imageClipboardItem, textClipboardItem]);
+        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const uploadCallback = jest.fn();
+        const action = new AttachmentAction();
+        action.setUploadCallback(uploadCallback);
+        comp.registerAction(action);
+        const pasteListener = addPasteListenerSpy.mock.calls[0][0];
+        expect(pasteListener).toBeDefined();
+        await pasteListener('');
+        expect(clipboardReadSpy).toHaveBeenCalledOnce();
+        expect(uploadCallback).toHaveBeenCalledExactlyOnceWith([new File([imageBlob], 'image.png', { type: 'image/png' })]);
     });
 
     it('should insert unordered list', () => {
@@ -79,7 +144,12 @@ describe('MonacoEditorActionIntegration', () => {
         const lines = ['One', '', 'Two', 'Three'];
         const bulletedLines = lines.map((line) => (line ? `- ${line}` : ''));
         comp.setText(lines.join('\n'));
-        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
+        comp.setSelection({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: lines.length,
+            endColumn: lines[lines.length - 1].length + 1,
+        });
         // Introduce list
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(bulletedLines.join('\n'));
@@ -93,21 +163,6 @@ describe('MonacoEditorActionIntegration', () => {
         comp.registerAction(action);
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe('1. ');
-    });
-
-    it('should toggle ordered list, skipping empty lines', () => {
-        const action = new OrderedListAction();
-        comp.registerAction(action);
-        const lines = ['One', '', 'Two', 'Three'];
-        const numberedLines = lines.map((line, index) => (line ? `${index + 1}. ${line}` : ''));
-        comp.setText(lines.join('\n'));
-        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
-        // Introduce list
-        action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(numberedLines.join('\n'));
-        // Remove list
-        action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(lines.join('\n'));
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
@@ -208,10 +263,26 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([
-        { action: new BoldAction(), textWithoutDelimiters: 'Here is some bold text.', textWithDelimiters: '**Here is some bold text.**' },
-        { action: new ItalicAction(), textWithoutDelimiters: 'Here is some italic text.', textWithDelimiters: '*Here is some italic text.*' },
-        { action: new UnderlineAction(), textWithoutDelimiters: 'Here is some underlined text.', textWithDelimiters: '<ins>Here is some underlined text.</ins>' },
-        { action: new CodeAction(), textWithoutDelimiters: 'Here is some code.', textWithDelimiters: '`Here is some code.`' },
+        {
+            action: new BoldAction(),
+            textWithoutDelimiters: 'Here is some bold text.',
+            textWithDelimiters: '**Here is some bold text.**',
+        },
+        {
+            action: new ItalicAction(),
+            textWithoutDelimiters: 'Here is some italic text.',
+            textWithDelimiters: '*Here is some italic text.*',
+        },
+        {
+            action: new UnderlineAction(),
+            textWithoutDelimiters: 'Here is some underlined text.',
+            textWithDelimiters: '<ins>Here is some underlined text.</ins>',
+        },
+        {
+            action: new CodeAction(),
+            textWithoutDelimiters: 'Here is some code.',
+            textWithDelimiters: '`Here is some code.`',
+        },
         {
             action: new ColorAction(),
             textWithoutDelimiters: 'Here is some blue.',
@@ -223,8 +294,16 @@ describe('MonacoEditorActionIntegration', () => {
             textWithoutDelimiters: 'Here is some red.',
             textWithDelimiters: '<span class="red">Here is some red.</span>', // No argument -> default color is red
         },
-        { action: new CodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```\npublic void main() { }\n```' },
-        { action: new CodeBlockAction('java'), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
+        {
+            action: new CodeBlockAction(),
+            textWithoutDelimiters: 'public void main() { }',
+            textWithDelimiters: '```\npublic void main() { }\n```',
+        },
+        {
+            action: new CodeBlockAction('java'),
+            textWithoutDelimiters: 'public void main() { }',
+            textWithDelimiters: '```java\npublic void main() { }\n```',
+        },
         {
             action: new QuoteAction(),
             initialText: '> ',
@@ -289,7 +368,12 @@ describe('MonacoEditorActionIntegration', () => {
         expect(text).toBe(textWithDelimiters);
         // Selection
         const textLines = text.split('\n');
-        const fullSelection = { startLineNumber: 1, startColumn: 1, endLineNumber: textLines.length, endColumn: textLines[textLines.length - 1].length + 1 };
+        const fullSelection = {
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: textLines.length,
+            endColumn: textLines[textLines.length - 1].length + 1,
+        };
         comp.setSelection(fullSelection);
         // Toggle off
         action.executeInCurrentEditor(actionArgs);

@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { PieChartModule } from '@swimlane/ngx-charts';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
@@ -33,14 +33,12 @@ describe('CourseCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(PieChartModule)],
-            declarations: [
-                CourseCardComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisTimeAgoPipe),
-                MockRouterLinkDirective,
-                MockComponent(SecuredImageComponent),
-                MockDirective(TranslateDirective),
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

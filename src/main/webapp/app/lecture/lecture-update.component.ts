@@ -1,35 +1,84 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, model, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { LectureTitleChannelNameComponent } from './lecture-title-channel-name.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../shared/components/documentation-button/documentation-button.component';
+import { MarkdownEditorMonacoComponent } from '../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        LectureTitleChannelNameComponent,
+        MarkdownEditorMonacoComponent,
+        LectureUpdatePeriodComponent,
+        FaIconComponent,
+        LectureAttachmentsComponent,
+        LectureUpdateUnitsComponent,
+        NgbTooltip,
+        ArtemisTranslatePipe,
+    ],
 })
-export class LectureUpdateComponent implements OnInit {
-    readonly documentationType: DocumentationType = 'Lecture';
+export class LectureUpdateComponent implements OnInit, OnDestroy {
+    protected readonly documentationType: DocumentationType = 'Lecture';
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSave = faSave;
+    protected readonly faPuzzleProcess = faPuzzlePiece;
+    protected readonly faBan = faBan;
 
-    @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
+    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
+    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    lecture: Lecture;
+    private readonly alertService = inject(AlertService);
+    private readonly lectureService = inject(LectureService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+
+    titleSection = viewChild.required(LectureTitleChannelNameComponent);
+    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
+    attachmentsSection = viewChild(LectureAttachmentsComponent);
+    unitSection = viewChild(LectureUpdateUnitsComponent);
+    formStatusBar = viewChild(FormStatusBarComponent);
+
+    courseTitle = model<string>('');
+    lecture = signal<Lecture>(new Lecture());
+    lectureOnInit: Lecture;
+    isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
-    isShowingWizardMode: boolean;
+
+    formStatusSections: FormSectionStatus[];
 
     courses: Course[];
 
@@ -38,62 +87,156 @@ export class LectureUpdateComponent implements OnInit {
     fileName: string;
     fileInputTouched = false;
 
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faSave = faSave;
-    faPuzzleProcess = faPuzzlePiece;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
+    isNewlyCreatedExercise = false;
 
-    // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    isChangeMadeToTitleOrPeriodSection = false;
+    shouldDisplayDismissWarning = true;
 
-    toggleModeFunction = () => this.toggleWizardMode();
-    saveLectureFunction = () => this.save();
+    areSectionsValid = computed(() => {
+        return (
+            this.titleSection().titleChannelNameComponent().isFormValidSignal() &&
+            this.lecturePeriodSection().isPeriodSectionValid() &&
+            (this.unitSection()?.isUnitConfigurationValid() ?? true) &&
+            (this.attachmentsSection()?.isFormValid() ?? true)
+        );
+    });
 
-    constructor(
-        protected alertService: AlertService,
-        protected lectureService: LectureService,
-        protected courseService: CourseManagementService,
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-    ) {}
+    private subscriptions = new Subscription();
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
+    constructor() {
+        effect(() => {
+            if (this.titleSection()?.titleChannelNameComponent() && this.lecturePeriodSection()) {
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .titleChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        }),
+                );
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .channelNameChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        }),
+                );
+                this.subscriptions.add(
+                    this.lecturePeriodSection()!
+                        .periodSectionDatepickers()
+                        .forEach((datepicker: FormDateTimePickerComponent) => {
+                            datepicker.valueChange.subscribe(() => {
+                                this.updateIsChangesMadeToTitleOrPeriodSection();
+                            });
+                        }),
+                );
+            }
+        });
+
+        effect(() => {
+            this.updateFormStatusBar();
+        });
+
+        effect(
+            function scrollToLastSectionAfterLectureCreation() {
+                if (this.unitSection() && this.isNewlyCreatedExercise) {
+                    this.isNewlyCreatedExercise = false;
+                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
+                }
+            }.bind(this),
+        );
+    }
+
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;
         this.isProcessing = false;
-        this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
-            this.lecture = lecture ?? new Lecture();
+            this.lecture.set(lecture ?? new Lecture());
             const course = data['course'];
             if (course) {
-                this.lecture.course = course;
+                this.lecture().course = course;
             }
         });
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldBeInWizardMode) {
-                this.isShowingWizardMode = params.shouldBeInWizardMode;
-            }
-        });
+        this.isEditMode.set(!this.router.url.endsWith('/new'));
+        this.lectureOnInit = cloneDeep(this.lecture());
+        this.courseTitle.set(this.lecture().course?.title ?? '');
+    }
+
+    ngOnDestroy() {
+        this.subscriptions.unsubscribe();
+    }
+
+    updateFormStatusBar() {
+        const updatedFormStatusSections: FormSectionStatus[] = [];
+
+        updatedFormStatusSections.push(
+            {
+                title: 'artemisApp.lecture.sections.title',
+                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+            },
+            {
+                title: 'artemisApp.lecture.sections.period',
+                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+            },
+        );
+
+        if (this.isEditMode()) {
+            updatedFormStatusSections.push(
+                {
+                    title: 'artemisApp.lecture.sections.attachments',
+                    valid: Boolean(this.attachmentsSection()?.isFormValid()),
+                },
+                {
+                    title: 'artemisApp.lecture.sections.units',
+                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                },
+            );
+        }
+
+        this.formStatusSections = updatedFormStatusSections;
+    }
+
+    isChangeMadeToTitleSection() {
+        return (
+            this.lecture().title !== this.lectureOnInit.title ||
+            this.lecture().channelName !== this.lectureOnInit.channelName ||
+            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '')
+        );
+    }
+
+    isChangeMadeToPeriodSection() {
+        const { visibleDate, startDate, endDate } = this.lecture();
+        const { visibleDate: visibleDateOnInit, startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
+
+        const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
+        const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
+
+        const emptyVisibleDateWasCleared = !visibleDateOnInit && isInvalid(visibleDate);
+        const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
+        const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
+
+        return (
+            (!isSame(visibleDate, visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
+            (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) ||
+            (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared)
+        );
+    }
+
+    protected updateIsChangesMadeToTitleOrPeriodSection() {
+        this.isChangeMadeToTitleOrPeriodSection = this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection();
     }
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing lecture
-     * Returns to the overview page if there is no previous state and we created a new lecture
+     * Returns to the detail page if there is no previous state, and we edited an existing lecture
+     * Returns to the overview page if there is no previous state, and we created a new lecture
      */
     previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());
+        this.shouldDisplayDismissWarning = false;
+        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
     }
 
     /**
@@ -101,22 +244,15 @@ export class LectureUpdateComponent implements OnInit {
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
+        this.shouldDisplayDismissWarning = false;
         this.isSaving = true;
         this.isProcessing = true;
-        if (this.lecture.id !== undefined) {
-            this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
+        if (this.lecture().id !== undefined) {
+            this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
-            this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
+            this.subscribeToSaveResponse(this.lectureService.create(this.lecture()));
         }
-    }
-
-    /**
-     * Activate or deactivate the wizard mode for easier lecture creation.
-     * This function is called by pressing "Switch to guided mode" when creating a new lecture
-     */
-    toggleWizardMode() {
-        this.isShowingWizardMode = !this.isShowingWizardMode;
     }
 
     proceedToUnitSplit() {
@@ -142,7 +278,7 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     /**
-     * @callback Callback function after saving a lecture, handles appropriate action in case of error
+     * @callback callback after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server
      */
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
@@ -156,25 +292,30 @@ export class LectureUpdateComponent implements OnInit {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        if (this.isShowingWizardMode && !this.lecture.id) {
-            this.lectureService.findWithDetails(lecture.id!).subscribe({
-                next: (response: HttpResponse<Lecture>) => {
-                    this.isSaving = false;
-                    this.lecture = response.body!;
-                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
-                    this.wizardComponent.onLectureCreationSucceeded();
-                },
-            });
-        } else if (this.processUnitMode) {
-            this.isSaving = false;
+        this.isSaving = false;
+
+        if (!lecture.course?.id) {
+            captureException('Lecture has no course id: ' + lecture);
+            return;
+        }
+
+        if (this.processUnitMode) {
             this.isProcessing = false;
-            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
+        } else if (this.isEditMode()) {
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
-            this.isSaving = false;
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+            // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
+            this.isNewlyCreatedExercise = true;
+            this.isEditMode.set(true);
+            this.lectureOnInit = cloneDeep(lecture);
+            this.lecture.set(lecture);
+            this.updateIsChangesMadeToTitleOrPeriodSection();
+            window.history.replaceState({}, '', `course-management/${lecture.course.id}/lectures/${lecture.id}/edit`);
+            this.shouldDisplayDismissWarning = true;
         }
     }
 
@@ -184,6 +325,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
+
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
@@ -192,18 +334,18 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     onDatesValuesChanged() {
-        const startDate = this.lecture.startDate;
-        const endDate = this.lecture.endDate;
-        const visibleDate = this.lecture.visibleDate;
+        const startDate = this.lecture().startDate;
+        const endDate = this.lecture().endDate;
+        const visibleDate = this.lecture().visibleDate;
 
         // Prevent endDate from being before startDate, if both dates are set
         if (endDate && startDate?.isAfter(endDate)) {
-            this.lecture.endDate = startDate.clone();
+            this.lecture().endDate = startDate.clone();
         }
 
         // Prevent visibleDate from being after startDate, if both dates are set
         if (visibleDate && startDate?.isBefore(visibleDate)) {
-            this.lecture.visibleDate = startDate.clone();
+            this.lecture().visibleDate = startDate.clone();
         }
     }
 }

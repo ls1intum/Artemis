@@ -8,8 +8,6 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
-    constructor() {}
-
     /**
      * Validate that no mapping exists that makes it impossible to solve the question.
      * We iterate through all spots and remove all possible mappings (solutions) for that spot.
@@ -373,6 +371,7 @@ export class ShortAnswerQuestionUtil {
             if (firstWord === '') {
                 continue;
             }
+
             const firstWordIndex = element.indexOf(firstWord);
             const whitespace = '&nbsp;'.repeat(this.getIndentation(originalTextParts[i][0]).length);
             formattedTextParts[i][0] = [element.substring(0, firstWordIndex), whitespace, element.substring(firstWordIndex).trim()].join('');

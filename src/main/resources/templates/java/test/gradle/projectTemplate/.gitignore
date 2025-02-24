@@ -30,6 +30,8 @@ hs_err_pid*
 replay_pid*
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

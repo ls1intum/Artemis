@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -6,27 +6,64 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MatFormField } from '@angular/material/form-field';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatOption } from '@angular/material/core';
+import { AsyncPipe } from '@angular/common';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
     styleUrls: ['./user-management-update.component.scss'],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        NgbTooltip,
+        HelpIconComponent,
+        MatFormField,
+        MatChipGrid,
+        MatChipRow,
+        MatChipRemove,
+        FaIconComponent,
+        MatAutocompleteTrigger,
+        MatChipInput,
+        MatAutocomplete,
+        MatOption,
+        AsyncPipe,
+        FindLanguageFromKeyPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UserManagementUpdateComponent implements OnInit {
+    private languageHelper = inject(JhiLanguageHelper);
+    private userService = inject(AdminUserService);
+    private courseAdminService = inject(CourseAdminService);
+    private route = inject(ActivatedRoute);
+    private organizationService = inject(OrganizationManagementService);
+    private modalService = inject(NgbModal);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private fb = inject(FormBuilder);
+
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
@@ -55,20 +92,6 @@ export class UserManagementUpdateComponent implements OnInit {
 
     private oldLogin?: string;
     private isJenkins: boolean;
-
-    constructor(
-        private languageHelper: JhiLanguageHelper,
-        private userService: AdminUserService,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private route: ActivatedRoute,
-        private organizationService: OrganizationManagementService,
-        private modalService: NgbModal,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private fb: FormBuilder,
-    ) {}
 
     /**
      * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init
@@ -232,11 +255,17 @@ export class UserManagementUpdateComponent implements OnInit {
             passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
             emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
             registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
-            activatedInput: ['', []],
+            activatedInput: [{ value: this.user.activated }],
             langKeyInput: ['', []],
             authorityInput: ['', []],
-            internalInput: [{ value: this.user.internal, disabled: true }],
+            internalInput: [{ value: this.user.internal, disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
+        // Conditionally enable or disable 'internalInput' based on user.id
+        if (this.user.id !== undefined) {
+            this.editForm.get('internalInput')?.disable(); // Artemis does not support to edit the internal flag for existing users
+        } else {
+            this.editForm.get('internalInput')?.enable(); // New users can either be internal or external
+        }
     }
 
     /**

@@ -1,5 +1,4 @@
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -11,7 +10,11 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
@@ -20,7 +23,7 @@ describe('PrivacyComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule],
+            imports: [RouterModule],
             declarations: [PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
@@ -28,6 +31,9 @@ describe('PrivacyComponent', () => {
                     provide: SessionStorageService,
                     useClass: MockSyncStorage,
                 },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PrivacyComponent);

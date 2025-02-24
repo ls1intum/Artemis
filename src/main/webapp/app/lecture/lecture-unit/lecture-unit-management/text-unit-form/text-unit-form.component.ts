@@ -1,53 +1,75 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface TextUnitFormData {
     name?: string;
     releaseDate?: dayjs.Dayjs;
     content?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 @Component({
     selector: 'jhi-text-unit-form',
     templateUrl: './text-unit-form.component.html',
-    styles: [],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        MarkdownEditorMonacoComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
-    @Input()
-    formData: TextUnitFormData;
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
 
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+    protected readonly faTimes = faTimes;
 
-    @Input()
-    hasCancelButton: boolean;
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
+    formData = input<TextUnitFormData>();
 
-    faTimes = faTimes;
+    isEditMode = input<boolean>(false);
+    formSubmitted = output<TextUnitFormData>();
 
-    form: FormGroup;
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
+
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
 
+    private readonly formBuilder = inject(FormBuilder);
+
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+    });
+
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
+
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
-
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -57,10 +79,9 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         return this.form.get('releaseDate');
     }
 
-    ngOnChanges(): void {
-        this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+    ngOnChanges() {
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 
@@ -85,18 +106,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
                 this.firstMarkdownChangeHappened = true;
             }
         });
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
-            releaseDate: [undefined as dayjs.Dayjs | undefined],
-            competencies: [undefined as Competency[] | undefined],
-        });
     }
 
     private setFormValues(formData: TextUnitFormData) {
@@ -113,10 +122,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             localStorage.removeItem(this.router.url);
         }
         this.formSubmitted.emit(textUnitFormData);
-    }
-
-    get isSubmitPossible() {
-        return !this.form.invalid;
     }
 
     onMarkdownChange(markdown: string) {

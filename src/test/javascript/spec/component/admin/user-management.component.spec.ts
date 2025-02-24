@@ -14,16 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
-import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -36,7 +27,9 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -62,19 +55,7 @@ describe('UserManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule)],
-            declarations: [
-                UserManagementComponent,
-                MockRouterLinkDirective,
-                MockComponent(ItemCountComponent),
-                MockComponent(UsersImportButtonComponent),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(SortDirective),
-            ],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: route,
@@ -99,6 +80,10 @@ describe('UserManagementComponent', () => {
                         ),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(EventManager),
             ],
         })
             .compileComponents()
@@ -168,7 +153,7 @@ describe('UserManagementComponent', () => {
 
                 // THEN
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
-                expect(userService.query).toHaveBeenCalledOnce();
+                expect(userService.query).toHaveBeenCalledTimes(2);
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
                 expect(profileSpy).toHaveBeenCalledOnce();
             }),
@@ -243,14 +228,17 @@ describe('UserManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should validate user search correctly', () => {
-        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBeNull();
-        expect(comp.validateUserSearch({ value: [0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBeNull();
-    });
-
     it('should call initFilters', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        const user = new User(123);
+        jest.spyOn(userService, 'query').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [user],
+                    headers,
+                }),
+            ),
+        );
         const spy = jest.spyOn(comp, 'initFilters');
         const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
 
@@ -258,6 +246,7 @@ describe('UserManagementComponent', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(initSpy).toHaveBeenCalledOnce();
+        expect(userService.query).toHaveBeenCalledTimes(0);
     });
 
     it.each`

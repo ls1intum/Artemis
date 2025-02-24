@@ -86,10 +86,10 @@ import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import io.jsonwebtoken.lang.Arrays;
 
@@ -298,17 +298,12 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository
-                .findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
         if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
-        }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().isTestwiseCoverageEnabled(),
-                updatedProgrammingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
-            throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
         // Check if theia Profile is enabled
         if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
@@ -329,6 +324,9 @@ public class ProgrammingExerciseResource {
 
         // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
         programmingExerciseService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        // Verify that the programming language supports the selected network access option
+        programmingExerciseService.validateDockerFlags(updatedProgrammingExercise);
 
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
@@ -506,7 +504,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
@@ -531,6 +529,21 @@ public class ProgrammingExerciseResource {
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
+        return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
+
+        log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         return ResponseEntity.ok(programmingExercise);
     }
 
@@ -774,9 +787,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
-     * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
-     * (automatic generation of code hints for programming exercises in Java).
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks for an existing ProgrammingExercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
@@ -785,12 +796,12 @@ public class ProgrammingExerciseResource {
     @DeleteMapping("programming-exercises/{exerciseId}/tasks")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
+    public ResponseEntity<Void> deleteTasks(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete tasks for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        programmingExerciseService.deleteTasksWithSolutionEntries(exercise.getId());
+        programmingExerciseService.deleteTasks(exercise.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -801,13 +812,15 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @param exerciseId   the exercise for which the solution repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -815,7 +828,7 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**
@@ -825,13 +838,15 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @param exerciseId   the exercise for which the template repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -839,31 +854,7 @@ public class ProgrammingExerciseResource {
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
-    }
-
-    /**
-     * GET programming-exercises/:exerciseId/solution-file-names
-     * <p>
-     * Returns the solution repository file names for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
-     * the solution participation id is not known for the client.
-     *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
-     * @return a redirect to the endpoint returning the files with content
-     */
-    @GetMapping("programming-exercises/{exerciseId}/file-names")
-    @EnforceAtLeastTutor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
-        log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**

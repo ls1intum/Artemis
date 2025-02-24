@@ -15,7 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -27,7 +29,12 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private FaqRepository faqRepository;
 
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
     private Course course1;
+
+    private Course course2;
 
     private Faq faq;
 
@@ -37,11 +44,13 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        this.faq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "answer", "title");
+        this.course2 = courses.getLast();
+        this.faq = FaqFactory.generateFaq(course1, FaqState.PROPOSED, "answer", "title");
         faqRepository.save(this.faq);
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        irisRequestMockProvider.enableMockingOfRequests();
 
     }
 
@@ -49,12 +58,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAll_asTutor() throws Exception {
-        this.testAllPreAuthorize();
     }
 
     @Test
@@ -88,7 +91,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_courseId_noMatch_shouldReturnBadRequest() throws Exception {
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        request.postWithResponseBody("/api/courses/" + course1.getId() + 1 + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -116,7 +119,26 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.PROPOSED);
-        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.BAD_REQUEST);
+        faq.setId(faq.getId() + 1);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + course1.getId() + "/faqs/" + (faq.getId() - 1), faq, Faq.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateFaq_Tutor_cannotAcceptFaq() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        faq.setQuestionTitle("Updated");
+        faq.setFaqState(FaqState.ACCEPTED);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFaq_Instructor_canAcceptFaq() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        faq.setQuestionTitle("Updated");
+        faq.setFaqState(FaqState.ACCEPTED);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
     }
 
     @Test
@@ -140,13 +162,16 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFaqByFaqId_shouldNotGet_IdMismatch() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
-        Faq returnedFaq = request.get("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST, Faq.class);
+        Faq returnedFaq = request.get("/api/courses/" + course2.getId() + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST, Faq.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFaq_shouldDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
         request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
         assertThat(faqOptional).isEmpty();
@@ -156,9 +181,52 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFaq_IdsDoNotMatch_shouldNotDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
-        request.delete("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/courses/" + course2.getId() + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
         assertThat(faqOptional).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaq_InstructorsShouldGetAllFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getFaq_StudentsShouldOnlyGetAcceptedFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.ACCEPTED);
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+        assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.PROPOSED);
+        assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.REJECTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaq_ShouldGetFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaq_shouldGetFaqByCourseIdAndState() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getFaqs_StudentShouldOnlyGetAcceptedFaqByCourse() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(course1.getId(), FaqState.ACCEPTED);
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+        assertThat(returnedFaqs.size()).isEqualTo(faqs.size());
     }
 
 }

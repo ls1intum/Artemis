@@ -10,6 +10,10 @@
 @import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
+// Needed for markdown-it-github-alerts and markdown callouts
+@import 'markdown-it-github-alerts/styles/github-colors-light.css';
+@import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
+@import 'markdown-it-github-alerts/styles/github-base.css';
 
 // Smooth transition between themes
 * {
@@ -306,6 +310,7 @@ Generic styles
     background-color: var(--bs-body-bg);
     padding-bottom: var(--footer-height-prod);
     @media (max-width: 768px) {
+        height: 100dvh;
         padding-bottom: var(--footer-height-prod) !important;
     }
     &.footer-height-dev {
@@ -1086,6 +1091,7 @@ body.transparent-background {
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
 }
 
@@ -1112,7 +1118,7 @@ $transition-in-between-delay: 0.05s;
 .sidebar-wrap {
     overflow: hidden;
     max-width: $sidebar-width;
-    margin-right: $spacer;
+    margin-right: 0.5rem;
 
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
@@ -1129,7 +1135,7 @@ $transition-in-between-delay: 0.05s;
 }
 
 .sidebar-width {
-    width: $sidebar-width !important;
+    width: $sidebar-width;
 }
 
 .fs-xx-small {
@@ -1142,4 +1148,8 @@ $transition-in-between-delay: 0.05s;
 
 .fs-small {
     font-size: 0.875rem;
+}
+
+.min-h-100 {
+    min-height: 100%;
 }

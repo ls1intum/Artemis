@@ -1,7 +1,7 @@
 <h4 class="exercise-title">
     {{ exercise.title }}
     <span
-        >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+        >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
         @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
             <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
         }

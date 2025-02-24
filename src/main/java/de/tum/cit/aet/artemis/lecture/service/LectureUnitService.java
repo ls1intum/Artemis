@@ -8,27 +8,33 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -45,6 +51,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Service
 public class LectureUnitService {
 
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
+
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
@@ -55,26 +63,26 @@ public class LectureUnitService {
 
     private final SlideRepository slideRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
-            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
+            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        this.exerciseRepository = exerciseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.courseCompetencyRepository = courseCompetencyRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
@@ -156,16 +164,6 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // update associated competencies
-            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencies();
-            courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
-                competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-                competency.getLectureUnits().remove(lectureUnitToDelete);
-                return competency;
-            }).toList());
-        }
-
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
             if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
@@ -185,47 +183,34 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+            competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty()));
         }
     }
 
     /**
-     * Link the competency to a set of lecture units (and exercises if it includes exercise units)
+     * Link the competency to a set of lecture units
      *
-     * @param competency           The competency to be linked
-     * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
-     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
+     * @param competency       The competency to be linked
+     * @param lectureUnitLinks New set of lecture unit links to associate with the competency
      */
-    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
-        final Predicate<LectureUnit> isExerciseUnit = lectureUnit -> lectureUnit instanceof ExerciseUnit;
-
-        // Remove the competency from the old lecture units
-        var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
-        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit.negate()).peek(lectureUnit -> lectureUnit.getCompetencies().remove(competency))
-                .collect(Collectors.toSet()));
-        exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
-                .peek(exercise -> exercise.getCompetencies().remove(competency)).collect(Collectors.toSet()));
-
-        // Add the competency to the new lecture units
-        var lectureUnitsFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToAdd.stream().map(LectureUnit::getId).toList());
-        var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(isExerciseUnit.negate()).collect(Collectors.toSet());
-        var exercises = lectureUnitsFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
-        lectureUnitsWithoutExercises.stream().map(LectureUnit::getCompetencies).forEach(competencies -> competencies.add(competency));
-        exercises.stream().map(Exercise::getCompetencies).forEach(competencies -> competencies.add(competency));
-        lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
-        exerciseRepository.saveAll(exercises);
-        competency.setLectureUnits(lectureUnitsToAdd);
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
+        if (courseCompetencyApi.isEmpty()) {
+            return;
+        }
+        lectureUnitLinks.forEach(link -> link.setCompetency(competency));
+        competency.setLectureUnitLinks(lectureUnitLinks);
+        courseCompetencyApi.get().save(competency);
     }
 
     /**
      * Removes competency from all lecture units.
      *
-     * @param lectureUnits set of lecture units
-     * @param competency   competency to remove
+     * @param lectureUnitLinks set of lecture unit links
+     * @param competency       competency to remove
      */
-    public void removeCompetency(Set<LectureUnit> lectureUnits, CourseCompetency competency) {
-        lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
-        lectureUnitRepository.saveAll(lectureUnits);
+    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
+        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
+        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
     /**
@@ -242,5 +227,71 @@ public class LectureUnitService {
         catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new BadRequestException();
         }
+    }
+
+    /**
+     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
+     * `AttachmentUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
+     * database.
+     * The method responds with different HTTP status codes based on the result:
+     * Returns {OK} if the ingestion is successful.
+     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
+     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentUnit}.
+     *
+     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentUnit.
+     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
+     */
+    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
+        if (!(lectureUnit instanceof AttachmentUnit)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        if (pyrisWebhookService.isEmpty()) {
+            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
+    }
+
+    /**
+     * Disconnects the competency exercise links from the exercise before the cycle is broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to disconnect the competency links
+     */
+    public void disconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.getCompetency().setLectureUnitLinks(null));
+    }
+
+    /**
+     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to reconnect the competency links
+     */
+    public void reconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(lectureUnit));
+    }
+
+    /**
+     * Saves the exercise and links it to the competencies.
+     *
+     * @param lectureUnit  the lecture unit to save
+     * @param saveFunction function to save the exercise
+     * @param <T>          type of the lecture unit
+     * @return saved exercise
+     */
+    public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
+        // persist lecture Unit before linking it to the competency
+        Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
+        lectureUnit.setCompetencyLinks(new HashSet<>());
+
+        T savedLectureUnit = saveFunction.apply(lectureUnit);
+
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
+            savedLectureUnit.setCompetencyLinks(links);
+            reconnectCompetencyLectureUnitLinks(savedLectureUnit);
+            competencyRelationApi.ifPresent(api -> savedLectureUnit.setCompetencyLinks(new HashSet<>(api.saveAllLectureUnitLinks(links))));
+        }
+
+        return savedLectureUnit;
     }
 }

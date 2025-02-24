@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { Result } from 'app/entities/result.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { NgForm, NgModel } from '@angular/forms';
-import { MockDirective } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
@@ -26,9 +26,12 @@ describe('External Submission Dialog', () => {
             update: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExternalSubmissionDialogComponent, MockDirective(NgForm), MockDirective(NgModel)],
-            providers: [{ provide: NgbActiveModal, useValue: activeModal }],
+            providers: [
+                { provide: NgbActiveModal, useValue: activeModal },
+                MockProvider(EventManager),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {

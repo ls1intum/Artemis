@@ -2,67 +2,85 @@ package de.tum.cit.aet.artemis.athena.service.connectors;
 
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
-import de.tum.cit.aet.artemis.athena.service.AthenaDTOConverterService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSendingService;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
-    @Autowired
-    private AthenaModuleService athenaModuleService;
+    private static final String TEST_PREFIX = "athenafeedbacksending";
 
-    @Mock
+    @Autowired
     private TextBlockRepository textBlockRepository;
 
-    @Mock
+    @Autowired
     private TextExerciseRepository textExerciseRepository;
 
-    @Mock
+    @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
-    @Mock
+    @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private TextSubmissionTestRepository textSubmissionRepository;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
     private AthenaFeedbackSendingService athenaFeedbackSendingService;
 
     private TextExercise textExercise;
@@ -79,50 +97,64 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     private Feedback programmingFeedback;
 
+    private ListAppender<ILoggingEvent> asyncExceptionLogAppender;
+
+    private Logger asyncExceptionLog;
+
     @BeforeEach
     void setUp() {
-        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, gradingCriterionRepository));
-
-        athenaRequestMockProvider.enableMockingOfRequests();
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        when(textExerciseRepository.findWithGradingCriteriaByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
+        textExercise = textExerciseRepository.save(textExercise);
 
-        textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
+        var textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+
+        textSubmission = new TextSubmission().text("Test - This is what the feedback references - Submission");
+        textSubmission.setParticipation(textParticipation);
+        textSubmission = textSubmissionRepository.save(textSubmission);
 
         textBlock = new TextBlock().startIndex(7).endIndex(46).text("This is what the feedback references").submission(textSubmission);
         textBlock.computeId();
-        when(textBlockRepository.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
+        textBlock = textBlockRepository.save(textBlock);
+
+        var textResult = participationUtilService.addResultToParticipation(textParticipation, textSubmission);
 
         textFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         textFeedback.setText("Title");
         textFeedback.setDetailText("Description");
-        textFeedback.setId(3L);
-        var result = new Result();
-        textFeedback.setResult(result);
-        var participation = new StudentParticipation();
-        participation.setExercise(textExercise);
-        result.setParticipation(participation);
+        textFeedback.setResult(textResult);
+        textFeedback = feedbackRepository.save(textFeedback);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        when(programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(programmingExercise.getId())).thenReturn(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
 
         programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.setParticipation(new StudentParticipation());
-        programmingSubmission.getParticipation().setExercise(programmingExercise);
-        programmingSubmission.setId(2L);
+        programmingSubmission.setParticipation(programmingParticipation);
+        programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+        var programmingResult = participationUtilService.addResultToParticipation(programmingParticipation, programmingSubmission);
 
         programmingFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference("test");
         programmingFeedback.setText("Title");
         programmingFeedback.setDetailText("Description");
-        programmingFeedback.setId(3L);
         programmingFeedback.setReference("file:src/Test.java_line:12");
-        var programmingResult = new Result();
         programmingFeedback.setResult(programmingResult);
-        programmingResult.setParticipation(programmingSubmission.getParticipation());
+        programmingFeedback = feedbackRepository.save(programmingFeedback);
+
+        asyncExceptionLogAppender = new ListAppender<>();
+        asyncExceptionLogAppender.start();
+        asyncExceptionLog = (Logger) LoggerFactory.getLogger(SimpleAsyncUncaughtExceptionHandler.class);
+        asyncExceptionLog.addAppender(asyncExceptionLogAppender);
+    }
+
+    @AfterEach
+    void tearDown() {
+        asyncExceptionLog.detachAppender(asyncExceptionLogAppender);
     }
 
     @Test
@@ -135,36 +167,38 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
-        athenaRequestMockProvider.verify();
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> athenaRequestMockProvider.verify());
     }
 
     private GradingCriterion createExampleGradingCriterion() {
         var gradingInstruction = new GradingInstruction();
-        gradingInstruction.setId(101L);
         gradingInstruction.setCredits(1.0);
         gradingInstruction.setGradingScale("good");
         gradingInstruction.setInstructionDescription("Give this feedback if xyz");
         gradingInstruction.setFeedback("Well done!");
         gradingInstruction.setUsageCount(1);
+
         var gradingCriterion = new GradingCriterion();
-        gradingCriterion.setId(1L);
         gradingCriterion.setTitle("Test");
         gradingCriterion.setExercise(textExercise);
+
         gradingCriterion.setStructuredGradingInstructions(Set.of(gradingInstruction));
-        return gradingCriterion;
+        return gradingCriterionRepository.save(gradingCriterion);
     }
 
     @Test
     void testFeedbackSendingTextWithGradingInstruction() {
-        textExercise.setGradingCriteria(Set.of(createExampleGradingCriterion()));
-        textExerciseRepository.save(textExercise);
+        GradingCriterion gradingCriterion = createExampleGradingCriterion();
+        textExercise.setGradingCriteria(Set.of(gradingCriterion));
+        textExercise = textExerciseRepository.save(textExercise);
 
         final GradingInstruction instruction = GradingCriterionUtil.findAnyInstructionWhere(textExercise.getGradingCriteria(),
                 gradingInstruction -> "Give this feedback if xyz".equals(gradingInstruction.getInstructionDescription())).orElseThrow();
         textFeedback.setGradingInstruction(instruction);
 
-        athenaRequestMockProvider.mockSendFeedbackAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.gradingCriteria[0].id").value(1),
-                jsonPath("$.exercise.gradingCriteria[0].title").value("Test"), jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].id").value(101),
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.gradingCriteria[0].id").value(gradingCriterion.getId()), jsonPath("$.exercise.gradingCriteria[0].title").value("Test"),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].id").value(instruction.getId()),
                 jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits").value(1.0),
                 jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale").value("good"),
                 jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription").value("Give this feedback if xyz"),
@@ -174,10 +208,10 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].title").value(textFeedback.getText()),
                 jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
                 jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
-                jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()), jsonPath("$.feedbacks[0].structuredGradingInstructionId").value(101));
+                jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()), jsonPath("$.feedbacks[0].structuredGradingInstructionId").value(instruction.getId()));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
-        athenaRequestMockProvider.verify();
+        await().untilAsserted(() -> athenaRequestMockProvider.verify());
     }
 
     @Test
@@ -190,29 +224,39 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].lineEnd").value(12));
 
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
-        athenaRequestMockProvider.verify();
-    }
-
-    @Test
-    void testFeedbackSendingModeling() {
-        athenaRequestMockProvider.mockSendFeedbackAndExpect("modeling");
-        assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(new ModelingExercise(), new ModelingSubmission(), List.of()))
-                .isInstanceOf(IllegalArgumentException.class);
+        await().untilAsserted(() -> athenaRequestMockProvider.verify());
     }
 
     @Test
     void testEmptyFeedbackNotSending() {
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of());
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of());
-        athenaRequestMockProvider.verify(); // Ensure that there was no request
+        await().during(Duration.ofSeconds(2)).untilAsserted(() -> athenaRequestMockProvider.verify()); // Ensure that there was no request
     }
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
         textExercise.setFeedbackSuggestionModule(null);
-        assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback))).isInstanceOf(IllegalArgumentException.class);
+        textExercise = textExerciseRepository.save(textExercise);
+        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
+        await().untilAsserted(
+                () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
+
+        asyncExceptionLogAppender.list.clear();
+
         programmingExercise.setFeedbackSuggestionModule(null);
-        assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback)))
-                .isInstanceOf(IllegalArgumentException.class);
+        programmingExerciseRepository.save(programmingExercise);
+        athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
+        await().untilAsserted(
+                () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
+    }
+
+    @Nullable
+    private static String getExceptionName(ILoggingEvent event) {
+        IThrowableProxy throwableProxy = event.getThrowableProxy();
+        if (throwableProxy == null) {
+            return null;
+        }
+        return throwableProxy.getClassName();
     }
 }

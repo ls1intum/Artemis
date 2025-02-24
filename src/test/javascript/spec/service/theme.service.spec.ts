@@ -10,7 +10,7 @@ describe('ThemeService', () => {
     let linkElement: HTMLElement;
     let documentGetElementMock: jest.SpyInstance;
     let headElement: HTMLElement;
-    let documentgetElementsByTagNameMock: jest.SpyInstance;
+    let documentGetElementsByTagNameMock: jest.SpyInstance;
     let newElement: HTMLLinkElement;
     let documentCreateElementMock: jest.SpyInstance;
     let storeSpy: jest.SpyInstance;
@@ -36,7 +36,7 @@ describe('ThemeService', () => {
                     getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
                     insertBefore: jest.fn(),
                 } as any as HTMLElement;
-                documentgetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
+                documentGetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
 
                 newElement = {} as HTMLLinkElement;
                 documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
@@ -57,17 +57,22 @@ describe('ThemeService', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        documentGetElementMock.mockRestore();
         windowMatchMediaSpy.mockRestore();
     });
 
     it('applies theme changes correctly', () => {
-        service.applyThemeExplicitly(Theme.DARK);
-
+        TestBed.flushEffects();
         expect(documentGetElementMock).toHaveBeenCalledOnce();
+
+        service.applyThemePreference(Theme.DARK);
+        TestBed.flushEffects();
+
+        expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
 
-        expect(documentgetElementsByTagNameMock).toHaveBeenCalledOnce();
-        expect(documentgetElementsByTagNameMock).toHaveBeenCalledWith('head');
+        expect(documentGetElementsByTagNameMock).toHaveBeenCalledOnce();
+        expect(documentGetElementsByTagNameMock).toHaveBeenCalledWith('head');
         expect(documentCreateElementMock).toHaveBeenCalledOnce();
         expect(documentCreateElementMock).toHaveBeenCalledWith('link');
 
@@ -80,30 +85,29 @@ describe('ThemeService', () => {
         expect(headElement.insertBefore).toHaveBeenCalledOnce();
         expect(headElement.insertBefore).toHaveBeenCalledWith(newElement, undefined);
 
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.DARK);
         expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'DARK');
 
-        // @ts-ignore
-        newElement.onload();
-
         expect(linkElement.remove).toHaveBeenCalledOnce();
-        expect(service.getCurrentTheme()).toBe(Theme.DARK);
+        expect(service.currentTheme()).toBe(Theme.DARK);
 
-        service.applyThemeExplicitly(Theme.LIGHT);
+        service.applyThemePreference(Theme.LIGHT);
+        TestBed.flushEffects();
 
-        expect(documentGetElementMock).toHaveBeenCalledTimes(2);
-        expect(documentGetElementMock).toHaveBeenNthCalledWith(2, THEME_OVERRIDE_ID);
+        expect(documentGetElementMock).toHaveBeenCalledTimes(3);
+        expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
         expect(linkElement.remove).toHaveBeenCalledTimes(2);
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('restores stored theme correctly', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
         service.initialize();
+        TestBed.flushEffects();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('applies dark OS preferences', () => {
@@ -120,41 +124,44 @@ describe('ThemeService', () => {
         });
 
         service.initialize();
+        TestBed.flushEffects();
         // @ts-ignore
         newElement?.onload();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
-        expect(service.getCurrentTheme()).toBe(Theme.DARK);
+        expect(service.currentTheme()).toBe(Theme.DARK);
     });
 
     it('applies light OS preferences', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
 
         service.initialize();
+        TestBed.flushEffects();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
-        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
     it('does print correctly', fakeAsync(() => {
         const initialDisplayClass = 'someDisplayClass';
 
         const winSpy = jest.spyOn(window, 'print').mockImplementation();
-        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass } };
+        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: jest.fn() };
         const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
 
         service.print();
+        TestBed.flushEffects();
 
-        expect(docSpy).toHaveBeenCalledOnce();
+        expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
         expect(returnedElement.rel).toBe('none-tmp');
         tick(250);
         expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
-        expect(docSpy).toHaveBeenCalledTimes(3); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
+        expect(docSpy).toHaveBeenCalledTimes(4); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
         expect(winSpy).toHaveBeenCalledOnce();
         tick(250);
         expect(returnedElement.rel).toBe('stylesheet');

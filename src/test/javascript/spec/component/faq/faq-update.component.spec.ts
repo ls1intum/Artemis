@@ -1,21 +1,25 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -36,9 +40,10 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
+        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
-            declarations: [FaqUpdateComponent, MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
+            imports: [MockModule(BrowserAnimationsModule)],
+            declarations: [FaqUpdateComponent, MockComponent(MarkdownEditorMonacoComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -73,8 +78,19 @@ describe('FaqUpdateComponent', () => {
                         );
                     },
                 }),
+
+                MockProvider(ProfileService, {
+                    getProfileInfo: () => of(mockProfileInfo),
+                }),
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                provideHttpClient(),
             ],
         }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
@@ -93,6 +109,7 @@ describe('FaqUpdateComponent', () => {
 
     it('should create faq', fakeAsync(() => {
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = true;
         const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
@@ -111,13 +128,38 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
 
-        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FaqState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
+        expect(faqUpdateComponent.isSaving).toBeFalse();
+    }));
+
+    it('should propose faq', fakeAsync(() => {
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = false;
+        const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        questionTitle: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponent.save();
+        tick();
+
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
     it('should edit a faq', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
-
+        faqUpdateComponent.isAtLeastInstructor = true;
         faqUpdateComponentFixture.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
@@ -139,8 +181,34 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
         faqUpdateComponentFixture.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'ACCEPTED' });
+    }));
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated' });
+    it('should propose to edit a faq', fakeAsync(() => {
+        activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
+        faqUpdateComponent.isAtLeastInstructor = false;
+        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
+
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
+            of<HttpResponse<Faq>>(
+                new HttpResponse({
+                    body: {
+                        id: 6,
+                        questionTitle: 'test1Updated',
+                        questionAnswer: 'answer',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        tick();
+        faqUpdateComponentFixture.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
     }));
 
     it('should navigate to previous state', fakeAsync(() => {
@@ -190,4 +258,10 @@ describe('FaqUpdateComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();
     }));
+
+    it('should handleMarkdownChange properly ', () => {
+        faqUpdateComponent.faq = { questionTitle: 'test1', questionAnswer: 'answer' } as Faq;
+        faqUpdateComponent.handleMarkdownChange('test');
+        expect(faqUpdateComponent.faq.questionAnswer).toEqual('test');
+    });
 });

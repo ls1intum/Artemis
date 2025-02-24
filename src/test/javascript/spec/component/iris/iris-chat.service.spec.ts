@@ -24,6 +24,7 @@ import {
     mockWebsocketStatusMessage,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import 'app/shared/util/array.extension';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -37,10 +38,10 @@ describe('IrisChatService', () => {
         handleRateLimitInfo: jest.fn(),
     };
     const userMock = {
-        acceptIris: jest.fn(),
+        acceptExternalLLMUsage: jest.fn(),
     };
     const accountMock = {
-        userIdentity: { irisAccepted: dayjs() },
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
     };
 
     beforeEach(() => {

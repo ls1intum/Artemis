@@ -9,7 +9,9 @@
         [headerActions]="undefined"
         [defaultActions]="defaultActions"
         [lectureReferenceAction]="lectureAttachmentReferenceAction"
-        [enableFileUpload]="false"
+        [enableFileUpload]="true"
+        [useCommunicationForFileUpload]="true"
+        [fallbackConversationId]="fallbackConversationId()"
         [colorAction]="undefined"
         [enableResize]="false"
         [showDefaultPreview]="false"
@@ -19,6 +21,9 @@
         [resizableMinHeight]="editorHeight"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
         (keydown)="onKeyDown($event)"
+        [isButtonLoading]="isButtonLoading()"
+        [isFormGroupValid]="isFormGroupValid()"
+        [editType]="editType()"
     >
         <ng-container id="previewMonaco">
             @if (previewMode) {

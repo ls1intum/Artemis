@@ -4,8 +4,8 @@
 
 services:
     artemis-playwright:
-        image: mcr.microsoft.com/playwright:v1.44.0-jammy
-        pull_policy: if_not_present
+        image: mcr.microsoft.com/playwright:v1.50.1
+        pull_policy: missing
         environment:
             CI: 'true'
             BASE_URL: 'https://artemis-nginx'
@@ -22,16 +22,19 @@ services:
             TEST_TIMEOUT_SECONDS: '${bamboo_test_timeout_seconds}'
             TEST_RETRIES: '${bamboo_test_retries}'
             TEST_WORKER_PROCESSES: '${bamboo_test_worker_processes}'
-        command: sh -c "cd /app/artemis/src/test/playwright && chmod 777 /root && npm ci && npm run playwright:test"
+            SLOW_TEST_TIMEOUT_SECONDS: '${bamboo_slow_test_timeout_seconds}'
+            FAST_TEST_TIMEOUT_SECONDS: '${bamboo_fast_test_timeout_seconds}'
+        command: >
+          sh -c '
+          cd /app/artemis/src/test/playwright &&
+          chmod 777 /root &&
+          npm ci &&
+          npm run playwright:setup &&
+          npm run playwright:test;
+          rm ./test-reports/results-fast.xml ./test-reports/results-slow.xml
+          '
         volumes:
             - ..:/app/artemis
-        networks:
-            - artemis
         stdin_open: true
         tty: true
         ipc: host
-
-networks:
-    artemis:
-        driver: 'bridge'
-        name: artemis

@@ -9,31 +9,24 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
-import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-@Component({
-    selector: 'jhi-conversation-add-users-form',
-    template: '',
-})
-class ConversationAddUsersFormStubComponent {
-    @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
-    @Input() courseId: number;
-    @Input() maxSelectable?: number = undefined;
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
-    @Input()
-    activeConversation: ConversationDTO;
-}
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
+
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;
@@ -42,19 +35,17 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [
-                    ConversationAddUsersDialogComponent,
-                    ConversationAddUsersFormStubComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(ChannelIconComponent),
-                    MockComponent(GroupChatIconComponent),
-                ],
+                declarations: [ConversationAddUsersDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)],
                 providers: [
                     MockProvider(AlertService),
                     MockProvider(NgbActiveModal),
                     MockProvider(ChannelService),
                     MockProvider(ConversationService),
                     MockProvider(GroupChatService),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             }).compileComponents();
         }));
@@ -82,7 +73,8 @@ examples.forEach((activeConversation) => {
                 addAllTutors: false,
                 addAllInstructors: false,
             };
-            const form: ConversationAddUsersFormStubComponent = fixture.debugElement.query(By.directive(ConversationAddUsersFormStubComponent)).componentInstance;
+            const formComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-add-users-form'));
+            const form = formComponentDebug.componentInstance;
 
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);

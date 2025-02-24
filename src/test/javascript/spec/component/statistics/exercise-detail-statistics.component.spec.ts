@@ -2,7 +2,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -39,7 +38,6 @@ describe('ExerciseDetailStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ExerciseDetailStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DoughnutChartComponent)],
             providers: [
                 { provide: Router, useClass: MockRouter },

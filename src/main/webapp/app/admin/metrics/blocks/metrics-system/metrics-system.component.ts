@@ -7,7 +7,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [NgbProgressbar, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {

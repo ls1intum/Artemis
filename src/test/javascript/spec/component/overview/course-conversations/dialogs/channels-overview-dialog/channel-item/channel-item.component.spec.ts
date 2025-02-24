@@ -1,19 +1,23 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO } from '../../../helpers/conversationExampleModels';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ChannelItemComponent', () => {
     let component: ChannelItemComponent;
     let fixture: ComponentFixture<ChannelItemComponent>;
     const canJoinChannel = jest.fn();
     const canLeaveConversation = jest.fn();
-    const channel = generateExampleChannelDTO({ id: 1 });
+    const channel = generateExampleChannelDTO({ id: 1 } as ChannelDTO);
 
     beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)] }).compileComponents();
+        TestBed.configureTestingModule({
+            declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
+        }).compileComponents();
     }));
 
     beforeEach(() => {
@@ -53,7 +57,7 @@ describe('ChannelItemComponent', () => {
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
 
         // change dto to one where not is member
-        component.channel = generateExampleChannelDTO({ id: 2, isMember: false });
+        component.channel = generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();

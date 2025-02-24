@@ -1,26 +1,58 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgForm } from '@angular/forms';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
+import { ExerciseType } from '../../../../../../main/webapp/app/entities/exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseTitleChannelNameComponent', () => {
     let component: ExerciseTitleChannelNameComponent;
     let fixture: ComponentFixture<ExerciseTitleChannelNameComponent>;
+    let exerciseService: ExerciseService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExerciseTitleChannelNameComponent],
-            imports: [TitleChannelNameModule],
-            providers: [NgForm],
+            providers: [
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ExerciseTitleChannelNameComponent);
+
+        fixture.componentRef.setInput('course', new Course());
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', true);
         component = fixture.componentInstance;
+
+        exerciseService = TestBed.inject(ExerciseService);
+    });
+
+    it('should call getExistingExerciseDetailsInCourse on init', () => {
+        const courseId = 123;
+        const exerciseType = ExerciseType.PROGRAMMING;
+        component.exercise = new TextExercise(new Course(), undefined);
+        component.exercise.type = exerciseType;
+        component.exercise.course!.id = courseId;
+
+        fixture.componentRef.setInput('courseId', courseId);
+        const exerciseServiceSpy = jest.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
+        fixture.detectChanges();
+
+        expect(exerciseServiceSpy).toHaveBeenCalledExactlyOnceWith(courseId, exerciseType);
     });
 
     it('should hide channel name input if messaging and communication disabled', () => {
@@ -30,7 +62,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         textExercise.course = course;
 
         component.exercise = textExercise;
-        component.course = textExercise.course;
+        fixture.componentRef.setInput('course', textExercise.course);
         component.isExamMode = false;
         component.isImport = true;
         component.ngOnChanges({ course: new SimpleChange(undefined, course, true) });
@@ -45,7 +77,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         textExercise.course = course;
 
         component.exercise = textExercise;
-        component.course = textExercise.course;
+        fixture.componentRef.setInput('course', textExercise.course);
         component.isExamMode = false;
         component.isImport = true;
         component.ngOnChanges({ course: new SimpleChange(undefined, course, true) });
@@ -58,21 +90,27 @@ describe('ExerciseTitleChannelNameComponent', () => {
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 
         component.exercise = new TextExercise(course, undefined);
-        component.course = course;
+        fixture.componentRef.setInput('course', course);
 
         // Simulate different scenarios
 
         // create new course exercise
         component.isExamMode = false;
         component.isImport = false;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, false, true), isImport: new SimpleChange(undefined, false, true) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, false, true),
+            isImport: new SimpleChange(undefined, false, true),
+        });
 
         expect(component.hideChannelNameInput).toBeFalse();
 
         // create new exam exercise
         component.isExamMode = true;
         component.isImport = false;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, true, false), isImport: new SimpleChange(undefined, false, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, true, false),
+            isImport: new SimpleChange(undefined, false, false),
+        });
 
         expect(component.hideChannelNameInput).toBeTrue();
 
@@ -82,28 +120,40 @@ describe('ExerciseTitleChannelNameComponent', () => {
         // import course exercise
         component.isExamMode = false;
         component.isImport = true;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, false, false), isImport: new SimpleChange(undefined, true, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, false, false),
+            isImport: new SimpleChange(undefined, true, false),
+        });
 
         expect(component.hideChannelNameInput).toBeFalse();
 
         // import exam exercise
         component.isExamMode = true;
         component.isImport = true;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, true, false), isImport: new SimpleChange(undefined, true, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, true, false),
+            isImport: new SimpleChange(undefined, true, false),
+        });
 
         expect(component.hideChannelNameInput).toBeTrue();
 
         // edit exam exercise
         component.isExamMode = true;
         component.isImport = false;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, true, false), isImport: new SimpleChange(undefined, true, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, true, false),
+            isImport: new SimpleChange(undefined, true, false),
+        });
 
         expect(component.hideChannelNameInput).toBeTrue();
 
         // edit course exercise without existing channel name
         component.isExamMode = false;
         component.isImport = false;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, false, false), isImport: new SimpleChange(undefined, false, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, false, false),
+            isImport: new SimpleChange(undefined, false, false),
+        });
 
         expect(component.hideChannelNameInput).toBeTrue();
 
@@ -111,7 +161,10 @@ describe('ExerciseTitleChannelNameComponent', () => {
         component.exercise.channelName = 'test';
         component.isExamMode = false;
         component.isImport = false;
-        component.ngOnChanges({ isExamMode: new SimpleChange(undefined, true, false), isImport: new SimpleChange(undefined, false, false) });
+        component.ngOnChanges({
+            isExamMode: new SimpleChange(undefined, true, false),
+            isImport: new SimpleChange(undefined, false, false),
+        });
 
         expect(component.hideChannelNameInput).toBeFalse();
     });

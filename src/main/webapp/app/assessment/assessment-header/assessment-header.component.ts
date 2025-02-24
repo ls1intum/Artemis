@@ -1,14 +1,19 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, inject } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -20,8 +25,13 @@ import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
+    imports: [TranslateDirective, NgbAlert, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe],
 })
 export class AssessmentHeaderComponent {
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    protected route = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;
@@ -47,9 +57,8 @@ export class AssessmentHeaderComponent {
     @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
 
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() submit = new EventEmitter<void>();
-    @Output() cancel = new EventEmitter<void>();
+    @Output() onSubmit = new EventEmitter<void>();
+    @Output() onCancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
@@ -69,12 +78,8 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-        private translateService: TranslateService,
-    ) {
-        textAssessmentAnalytics.setComponentRoute(route);
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
     }
 
     get highlightDifferences() {
@@ -142,9 +147,9 @@ export class AssessmentHeaderComponent {
     submitOnControlAndEnter(event: KeyboardEvent) {
         event.preventDefault();
         if (!this.overrideDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
         } else if (!this.submitDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
             this.sendSubmitAssessmentEventToAnalytics();
         }
     }

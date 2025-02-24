@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -7,25 +7,22 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseCompetencyProgress } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../test.module';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
-import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent],
-            declarations: [],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [EditPrerequisiteComponent, MockModule(OwlNativeDateTimeModule), MockComponent(PrerequisiteFormComponent)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(PrerequisiteService),
@@ -58,16 +55,14 @@ describe('EditPrerequisiteComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents()
-            .then(() => {
-                editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
-                editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
+        editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
     });
 
     afterEach(() => {
@@ -90,7 +85,7 @@ describe('EditPrerequisiteComponent', () => {
         competencyOfResponse.title = 'test';
         competencyOfResponse.description = 'lorem ipsum';
         competencyOfResponse.optional = true;
-        competencyOfResponse.lectureUnits = [lectureUnit];
+        competencyOfResponse.lectureUnitLinks = [new CompetencyLectureUnitLink(competencyOfResponse, lectureUnit, 1)];
 
         const competencyResponse: HttpResponse<Prerequisite> = new HttpResponse({
             body: competencyOfResponse,
@@ -126,7 +121,6 @@ describe('EditPrerequisiteComponent', () => {
         expect(editPrerequisiteComponent.formData.title).toEqual(competencyOfResponse.title);
         expect(editPrerequisiteComponent.formData.description).toEqual(competencyOfResponse.description);
         expect(editPrerequisiteComponent.formData.optional).toEqual(competencyOfResponse.optional);
-        expect(editPrerequisiteComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
         expect(editPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
         expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData);
     });
@@ -144,7 +138,7 @@ describe('EditPrerequisiteComponent', () => {
         competencyDatabase.title = 'test';
         competencyDatabase.description = 'lorem ipsum';
         competencyDatabase.optional = true;
-        competencyDatabase.lectureUnits = [textUnit];
+        competencyDatabase.lectureUnitLinks = [new CompetencyLectureUnitLink(competencyDatabase, textUnit, 1)];
 
         const findByIdResponse: HttpResponse<Prerequisite> = new HttpResponse({
             body: competencyDatabase,
@@ -189,7 +183,7 @@ describe('EditPrerequisiteComponent', () => {
             title: changedUnit.title,
             description: changedUnit.description,
             optional: changedUnit.optional,
-            connectedLectureUnits: changedUnit.lectureUnits,
+            lectureUnitLinks: changedUnit.lectureUnitLinks,
         });
 
         expect(updatedSpy).toHaveBeenCalledOnce();

@@ -68,8 +68,40 @@
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (lecture.course?.id && showCompetencies) {
-                            <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
+                        @if (this.lectureIngestionEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT) {
+                            <div class="d-flex gap-1 w-100">
+                                @if (lecture.course?.id && showCompetencies) {
+                                    <jhi-competencies-popover
+                                        class="flex-grow-1"
+                                        [courseId]="lecture.course!.id!"
+                                        [competencyLinks]="lectureUnit.competencyLinks || []"
+                                        [navigateTo]="'competencyManagement'"
+                                    />
+                                }
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm flex-grow-1"
+                                    [ngClass]="{
+                                        error: getIcon(lectureUnit) === faRepeat,
+                                        'btn-success': getIcon(lectureUnit) === faCheckCircle,
+                                    }"
+                                    (click)="onIngestButtonClicked(lectureUnit.id!)"
+                                    [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="getIcon(lectureUnit)" />
+                                </button>
+                            </div>
+                        } @else {
+                            <div class="d-flex gap-1 w-100">
+                                @if (lecture.course?.id && showCompetencies) {
+                                    <jhi-competencies-popover
+                                        class="flex-grow-1"
+                                        [courseId]="lecture.course!.id!"
+                                        [competencyLinks]="lectureUnit.competencyLinks || []"
+                                        [navigateTo]="'competencyManagement'"
+                                    />
+                                }
+                            </div>
                         }
                         @if (viewButtonAvailable[lectureUnit.id!]) {
                             <a

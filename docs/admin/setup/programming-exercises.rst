@@ -98,9 +98,6 @@ server or exercise settings:
   * - ``#isStaticCodeAnalysisEnabled``
     - Defines if static code analysis should be performed.
     - Exercise configuration
-  * - ``#isTestWiseCoverageEnabled``
-    - Defines if testwise coverage should be collected.
-    - Exercise configuration
 
 The ``pipeline.groovy`` file can be customized further by instructors after creating the exercise from within
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
@@ -339,3 +336,24 @@ Adjust ``dockerFlags`` and ``mavenFlags`` only for student submissions, like thi
           dockerFlags += ' --network none'
           mavenFlags += ' --offline'
       }
+
+
+Timeout Options
+^^^^^^^^^^^^^^^
+
+You can adjust possible :ref:`timeout options<edit_build_duration>` for the build process in :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+These values will determine what is the minimum, maximum, and default value for the build timeout in seconds that can be set in the Artemis UI.
+The max value is the upper limit for the timeout, if the value is set higher than the max value, the max value will be used.
+
+If you want to change these values, you need to change them in ``localci`` and ``buildagent`` nodes.
+The corresponding configuration files are ``application-localci.yml`` and ``application-buildagent.yml``.
+
+
+    .. code-block:: yaml
+
+        artemis:
+            continuous-integration:
+                build-timeout-seconds:
+                    min: <value>
+                    max: <value>
+                    default: <value>

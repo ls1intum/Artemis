@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -11,7 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -20,6 +20,9 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -27,8 +30,15 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, NgbDropdownButtonItem, ArtemisTranslatePipe],
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+    private notificationService = inject(NotificationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+
     private ngUnsubscribe = new Subject<void>();
 
     favorite$ = new Subject<boolean>();
@@ -54,14 +64,6 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faVolumeUp = faVolumeUp;
     faGear = faGear;
 
-    constructor(
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-        private notificationService: NotificationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
-
     getAsGroupChat = getAsGroupChatDTO;
 
     isOneToOneChat = isOneToOneChatDTO;
@@ -79,11 +81,35 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
+
+        if (!this.conversation.isHidden && this.conversation.isFavorite) {
+            this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, false).subscribe({
+                next: () => {
+                    this.conversation.isFavorite = false;
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        }
         this.hide$.next(!this.conversation.isHidden);
     }
 
     onFavoriteClicked($event: MouseEvent) {
         $event.stopPropagation();
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
+
+        if (this.conversation.isHidden && !this.conversation.isFavorite) {
+            this.conversationService.updateIsHidden(this.course.id, this.conversation.id, false).subscribe({
+                next: () => {
+                    this.conversation.isHidden = false;
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        }
         this.favorite$.next(!this.conversation.isFavorite);
     }
 

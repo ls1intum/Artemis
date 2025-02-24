@@ -8,6 +8,9 @@ import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
+import { FileService } from 'app/shared/http/file.service';
+import { cloneDeep } from 'lodash-es';
 
 interface LectureWithDetails {
     id: number;
@@ -36,6 +39,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     constructor(
         private readonly metisService: MetisService,
         private readonly lectureService: LectureService,
+        private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
@@ -43,12 +47,22 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
             if (lectures) {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
-                    .map((lecture) => ({
-                        id: lecture.id!,
-                        title: lecture.title!,
-                        attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
-                        attachments: lecture.attachments,
-                    }));
+                    .map((lecture) => {
+                        const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
+                            if (attachment.link && attachment.name) {
+                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
+                            }
+
+                            return attachment;
+                        });
+
+                        return {
+                            id: lecture.id!,
+                            title: lecture.title!,
+                            attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                            attachments: attachmentsWithFileUrls,
+                        };
+                    });
             }
         });
     }
@@ -109,23 +123,29 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
-        this.replaceTextAtCurrentSelection(editor, `[lecture]${lecture.title}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
+        );
     }
 
     insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
         const shortLink = attachment.link?.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[attachment]${attachment.name}(${shortLink})[/attachment]`);
+        this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
     insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-        this.replaceTextAtCurrentSelection(editor, `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+        );
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`);
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -7,12 +7,18 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
 import JSZip from 'jszip';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
     templateUrl: './exercise-import-from-file.component.html',
+    imports: [ButtonComponent, HelpIconComponent],
 })
 export class ExerciseImportFromFileComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     @Input() exerciseType: ExerciseType;
     @Input() exercise: Exercise;
 
@@ -20,11 +26,6 @@ export class ExerciseImportFromFileComponent implements OnInit {
     fileForImport?: File;
     //Icons
     faUpload = faUpload;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.titleKey =
@@ -50,10 +51,17 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
-                if (!(this.exercise as ProgrammingExercise).buildConfig) {
-                    (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                if (!progEx.buildConfig) {
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                 }
+                if (progEx.auxiliaryRepositories) {
+                    progEx.auxiliaryRepositories!.forEach((repo, index) => {
+                        progEx.auxiliaryRepositories![index].id = undefined;
+                    });
+                }
+                this.exercise = progEx;
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {

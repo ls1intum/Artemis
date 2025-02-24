@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -29,20 +30,48 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
     templateUrl: './course-management-tab-bar.component.html',
     styleUrls: ['./course-management-tab-bar.component.scss'],
+    imports: [
+        HeaderCourseComponent,
+        RouterLinkActive,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        FeatureToggleLinkDirective,
+        FeatureToggleHideDirective,
+        CourseExamArchiveButtonComponent,
+        DeleteButtonDirective,
+        RouterOutlet,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+    ],
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private courseAdminService = inject(CourseAdminService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
 
@@ -52,7 +81,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
 
-    localCIActive: boolean = false;
+    localCIActive = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -80,19 +109,9 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
     isCommunicationEnabled = false;
 
+    atlasEnabled = false;
     irisEnabled = false;
     ltiEnabled = false;
-
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in course.
@@ -111,6 +130,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
+                this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
                 this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
@@ -204,12 +224,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     }
 
     private getExistingSummaryEntries(): EntitySummary {
-        const numberRepositories =
-            this.course?.exercises
-                ?.filter((exercise) => exercise.type === 'programming')
-                .map((exercise) => exercise?.numberOfParticipations ?? 0)
-                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
-
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
         this.course?.exercises?.forEach((exercise) => {
             if (exercise.type === undefined) {
@@ -219,8 +233,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
             numberOfExercisesPerType.set(exercise.type, oldValue + 1);
         });
 
-        const numberExams = this.course?.numberOfExams ?? 0;
-        const numberLectures = this.course?.lectures?.length ?? 0;
         const numberStudents = this.course?.numberOfStudents ?? 0;
         const numberTutors = this.course?.numberOfTeachingAssistants ?? 0;
         const numberEditors = this.course?.numberOfEditors ?? 0;
@@ -228,14 +240,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         const isTestCourse = this.course?.testCourse;
 
         return {
-            'artemisApp.course.delete.summary.numberRepositories': numberRepositories,
-            'artemisApp.course.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING) ?? 0,
-            'artemisApp.course.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING) ?? 0,
-            'artemisApp.course.delete.summary.numberTextExercises': numberOfExercisesPerType.get(ExerciseType.TEXT) ?? 0,
-            'artemisApp.course.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD) ?? 0,
-            'artemisApp.course.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ) ?? 0,
-            'artemisApp.course.delete.summary.numberExams': numberExams,
-            'artemisApp.course.delete.summary.numberLectures': numberLectures,
             'artemisApp.course.delete.summary.numberStudents': numberStudents,
             'artemisApp.course.delete.summary.numberTutors': numberTutors,
             'artemisApp.course.delete.summary.numberEditors': numberEditors,
@@ -259,6 +263,13 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
                 return {
                     ...this.getExistingSummaryEntries(),
+                    'artemisApp.course.delete.summary.numberExams': summary.numberExams,
+                    'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
+                    'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+                    'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
+                    'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
+                    'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
+                    'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
                     'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,

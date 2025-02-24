@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgModel } from '@angular/forms';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('Exercise Update Warning Component Tests', () => {
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;
@@ -12,9 +11,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExerciseUpdateWarningComponent, MockDirective(NgModel), MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TranslateService)],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

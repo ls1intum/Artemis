@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -16,7 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -33,17 +30,13 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.exampleSubmissions
-                LEFT JOIN FETCH p.exerciseHints eh
-                LEFT JOIN FETCH eh.solutionEntries
                 LEFT JOIN FETCH p.tutorParticipations
                 LEFT JOIN FETCH p.posts
-                LEFT JOIN FETCH p.testCases tc
-                LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.testCases
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.tasks t
                 LEFT JOIN FETCH t.testCases
-                LEFT JOIN FETCH t.exerciseHints
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
@@ -90,11 +83,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
-    @NotNull
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
 
@@ -106,9 +94,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             WHERE pe.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
-    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     /**
      * Fetch the programming exercise with the build config, or throw an EntityNotFoundException if it cannot be found.

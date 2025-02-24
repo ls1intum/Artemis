@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { MockLinkPreviewService } from '../../helpers/mocks/service/mock-link-preview.service';
@@ -15,8 +14,6 @@ describe('LinkPreviewContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [LinkPreviewContainerComponent],
             providers: [
                 { provide: LinkPreviewService, useClass: MockLinkPreviewService },
                 { provide: LinkifyService, useClass: LinkifyService },
@@ -37,7 +34,7 @@ describe('LinkPreviewContainerComponent', () => {
     });
 
     it('should fetch link previews and update linkPreviews array', () => {
-        component.data = 'Check out these links: https://example.com/link1 and https://example.com/link2';
+        fixture.componentRef.setInput('data', 'Check out these links: https://example.com/link1 and https://example.com/link2');
         const links: Link[] = [
             { type: '', value: '', href: 'https://example.com/link1' },
             { type: '', value: '', href: 'https://example.com/link2' },
@@ -52,18 +49,18 @@ describe('LinkPreviewContainerComponent', () => {
 
         component.ngOnInit();
 
-        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data);
+        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data());
         expect(linkPreviewServiceSpy).toHaveBeenCalledTimes(2);
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link1');
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link2');
-        expect(component.linkPreviews).toEqual(mockLinkPreviews);
-        expect(component.hasError).toBeFalse();
-        expect(component.loaded).toBeTrue();
-        expect(component.showLoadingsProgress).toBeFalse();
+        expect(component.linkPreviews()).toEqual(mockLinkPreviews);
+        expect(component.hasError()).toBeFalse();
+        expect(component.loaded()).toBeTrue();
+        expect(component.showLoadingsProgress()).toBeFalse();
     });
 
     it('should update existing link preview if it already exists', () => {
-        component.data = 'Check out these links: https://example.com/link1';
+        fixture.componentRef.setInput('data', 'Check out these links: https://example.com/link1');
         const links: Link[] = [{ type: '', value: '', href: 'https://example.com/link1' }];
         const existingLinkPreview: LinkPreview = {
             url: 'https://example.com/link1',
@@ -77,14 +74,14 @@ describe('LinkPreviewContainerComponent', () => {
         const linkifyServiceSpy = jest.spyOn(linkifyService, 'find').mockReturnValue(links);
         const linkPreviewServiceSpy = jest.spyOn(linkPreviewService, 'fetchLink').mockReturnValueOnce(of(newLinkPreview));
 
-        component.linkPreviews.push(existingLinkPreview);
+        component.linkPreviews().push(existingLinkPreview);
 
         component.ngOnInit();
 
-        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data);
+        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data());
         expect(linkPreviewServiceSpy).toHaveBeenCalledOnce();
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link1');
-        expect(component.linkPreviews).toHaveLength(1);
-        expect(component.linkPreviews[0]).toEqual(newLinkPreview);
+        expect(component.linkPreviews()).toHaveLength(1);
+        expect(component.linkPreviews()[0]).toEqual(newLinkPreview);
     });
 });

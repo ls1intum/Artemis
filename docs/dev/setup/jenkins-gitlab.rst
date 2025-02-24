@@ -90,7 +90,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling
 
 Please read :ref:`Server Setup` for more details.
 
@@ -890,7 +890,8 @@ and the corresponding Docker image can be found on
 
    .. code:: bash
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
+        docker compose -f docker/<Jenkins setup to be launched>.yml build --no-cache
+        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
 3. Build the new Docker image:
 

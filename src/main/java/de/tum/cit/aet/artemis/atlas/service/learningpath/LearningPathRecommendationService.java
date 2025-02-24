@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.HIGH;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.MEDIUM_HIGH;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
+import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
+import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_COMPLETELY;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -14,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,26 +29,30 @@ import com.google.common.util.concurrent.AtomicDouble;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningPathRecommendationService {
 
@@ -95,6 +104,8 @@ public class LearningPathRecommendationService {
      */
     private static final double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
+
+    private static final double COMPETENCY_LINK_WEIGHT_TO_GRADE_AIM_RATIO = 2;
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
             ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
@@ -390,8 +401,8 @@ public class LearningPathRecommendationService {
      * @return earliest due date of the competency
      */
     private static Optional<ZonedDateTime> getEarliestDueDate(CourseCompetency competency) {
-        final var lectureDueDates = competency.getLectureUnits().stream().map(LectureUnit::getLecture).map(Lecture::getEndDate);
-        final var exerciseDueDates = competency.getExercises().stream().map(Exercise::getDueDate);
+        final var lectureDueDates = competency.getLectureUnitLinks().stream().map(lectureUnitLink -> lectureUnitLink.getLectureUnit().getLecture().getEndDate());
+        final var exerciseDueDates = competency.getExerciseLinks().stream().map(exerciseLink -> exerciseLink.getExercise().getDueDate());
         return Stream.concat(Stream.concat(Stream.of(competency.getSoftDueDate()), lectureDueDates), exerciseDueDates).filter(Objects::nonNull).min(Comparator.naturalOrder());
     }
 
@@ -466,6 +477,7 @@ public class LearningPathRecommendationService {
 
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
+     * The ordering is based on the competency link weights in decreasing order
      *
      * @param user                    the user that should be analyzed
      * @param competency              the competency
@@ -473,7 +485,11 @@ public class LearningPathRecommendationService {
      * @return the recommended ordering of learning objects
      */
     public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence) {
-        var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
+        var learnerProfile = user.getLearnerProfile();
+        var courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findFirst().orElse(new CourseLearnerProfile());
+
+        var pendingLectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).filter(lectureUnit -> !lectureUnit.isCompletedFor(user))
+                .toList();
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
         // early return if competency can be trivially mastered
@@ -486,17 +502,20 @@ public class LearningPathRecommendationService {
 
         final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
 
-        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, user)).collect(Collectors.toSet());
-        final var pendingExercisePoints = pendingExercises.stream().mapToDouble(Exercise::getMaxPoints).sum();
+        // First sort exercises based on title to ensure consistent ordering over multiple calls then prefer higher weighted exercises
+        final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
+                .sorted(getExerciseOrderComparator(courseLearnerProfile.getAimForGradeOrBonus())).map(CompetencyExerciseLink::getExercise).toList();
 
-        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
+        final var pendingExercisePoints = pendingExercises.stream().mapToDouble(BaseExercise::getMaxPoints).sum();
+
+        Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
         if (numberOfRequiredExercisePointsToMaster >= pendingExercisePoints) {
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
             return recommendedOrder;
         }
         final var recommendedExerciseDistribution = getRecommendedExercisePointDistribution(numberOfRequiredExercisePointsToMaster, weightedConfidence);
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap);
+        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap, courseLearnerProfile);
         return recommendedOrder;
     }
 
@@ -506,7 +525,7 @@ public class LearningPathRecommendationService {
      * @param recommendedOrder   the list storing the recommended order of learning objects
      * @param difficultyLevelMap a map from difficulty level to a set of corresponding exercises
      */
-    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap) {
+    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, List<Exercise>> difficultyLevelMap) {
         for (var difficulty : DifficultyLevel.values()) {
             recommendedOrder.addAll(difficultyLevelMap.get(difficulty));
         }
@@ -520,30 +539,30 @@ public class LearningPathRecommendationService {
      * @param difficultyMap                        a map from difficulty level to a set of corresponding exercises
      */
     private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
-            Map<DifficultyLevel, Set<Exercise>> difficultyMap) {
-        final var easyExercises = new HashSet<Exercise>();
-        final var mediumExercises = new HashSet<Exercise>();
-        final var hardExercises = new HashSet<Exercise>();
+            Map<DifficultyLevel, List<Exercise>> difficultyMap, CourseLearnerProfile courseLearnerProfile) {
+        final var easyExercises = new ArrayList<Exercise>();
+        final var mediumExercises = new ArrayList<Exercise>();
+        final var hardExercises = new ArrayList<Exercise>();
 
         // choose as many exercises from the correct difficulty level as possible
-        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises);
-        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisePointDistribution[2], hardExercises);
+        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises, courseLearnerProfile);
+        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisePointDistribution[2], hardExercises, courseLearnerProfile);
 
         // if there are not sufficiently many exercises per difficulty level, prefer medium difficulty
         // case 1: no medium exercises available/medium exercises missing: continue to fill with easy/hard exercises
         // case 2: medium exercises available: no medium exercises missing -> missing exercises must be easy/hard -> in both scenarios medium is the closest difficulty level
         double mediumExercisePoints = recommendedExercisePointDistribution[1] + missingEasy + missingHard;
-        double numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, mediumExercisePoints, mediumExercises);
+        double numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, mediumExercisePoints, mediumExercises, courseLearnerProfile);
 
         // if there are still not sufficiently many medium exercises, choose easy difficulty
         // prefer easy to hard exercises to avoid student overload
         if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.EASY).isEmpty()) {
-            numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercisePoints, easyExercises);
+            numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercisePoints, easyExercises, courseLearnerProfile);
         }
 
         // fill remaining slots with hard difficulty
         if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.HARD).isEmpty()) {
-            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercisePoints, hardExercises);
+            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercisePoints, hardExercises, courseLearnerProfile);
         }
 
         recommendedOrder.addAll(easyExercises);
@@ -562,14 +581,61 @@ public class LearningPathRecommendationService {
      * @param exercises      the set to store the selected exercises
      * @return amount of points that are missing, if negative the amount of points that are selected too much
      */
-    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
-            Set<Exercise> exercises) {
+    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, List<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
+            List<Exercise> exercises, CourseLearnerProfile courseLearnerProfile) {
         var remainingExercisePoints = new AtomicDouble(exercisePoints);
-        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0)
-                .collect(Collectors.toSet());
+
+        Predicate<Exercise> exercisePredicate = getExerciseSelectionPredicate(courseLearnerProfile.getAimForGradeOrBonus(), remainingExercisePoints);
+
+        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercisePredicate).toList();
+
         exercises.addAll(selectedExercises);
         difficultyMap.get(difficulty).removeAll(selectedExercises);
         return remainingExercisePoints.get();
+    }
+
+    private static int getIncludeInOverallScoreWeight(IncludedInOverallScore includedInOverallScore) {
+        return switch (includedInOverallScore) {
+            case INCLUDED_COMPLETELY -> 0;
+            case INCLUDED_AS_BONUS -> 1;
+            case NOT_INCLUDED -> 2;
+        };
+    }
+
+    /**
+     * Creates a comparator that orders exercises based on the aim for grade or bonus, the link weight for the current competency and as a tiebreaker the lexicographic order of
+     * the exercise title. The higher the aim for the grade bonus is, the higher this metric is weighted compared to the link weight.
+     *
+     * @param aimForGradeOrBonus the aim for grade or bonus
+     * @return the comparator that orders the exercise based on the preference
+     */
+    private static Comparator<CompetencyExerciseLink> getExerciseOrderComparator(int aimForGradeOrBonus) {
+        Comparator<CompetencyExerciseLink> exerciseComparator = Comparator.comparingDouble(exerciseLink -> (COMPETENCY_LINK_WEIGHT_TO_GRADE_AIM_RATIO * exerciseLink.getWeight())
+                + aimForGradeOrBonus * getIncludeInOverallScoreWeight(exerciseLink.getExercise().getIncludedInOverallScore()));
+        exerciseComparator = exerciseComparator.reversed();
+
+        exerciseComparator = exerciseComparator.thenComparing(exerciseLink -> exerciseLink.getExercise().getTitle());
+        return exerciseComparator;
+    }
+
+    /**
+     * Creates a predicate that selects exercises based on the aim for grade or bonus and the remaining exercise points.
+     *
+     * @param aimForGradeOrBonus      the aim for grade or bonus
+     * @param remainingExercisePoints the remaining exercise points that should be scheduled
+     * @return the predicate until when exercises should be selected based on the preference
+     */
+    private static Predicate<Exercise> getExerciseSelectionPredicate(int aimForGradeOrBonus, AtomicDouble remainingExercisePoints) {
+        Predicate<Exercise> exercisePredicate = exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0;
+        if (aimForGradeOrBonus == HIGH.getValue()) {
+            exercisePredicate = exercisePredicate
+                    .or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY || exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS);
+        }
+        else if (aimForGradeOrBonus == MEDIUM_HIGH.getValue()) {
+            exercisePredicate = exercisePredicate.or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY);
+        }
+
+        return exercisePredicate;
     }
 
     /**
@@ -605,16 +671,16 @@ public class LearningPathRecommendationService {
     private double calculateNumberOfExercisePointsRequiredToMaster(User user, CourseCompetency competency, double weightedConfidence) {
         // we assume that the student may perform slightly worse than previously and dampen the confidence for the prediction process
         weightedConfidence *= 0.9;
-        double currentPoints = participantScoreService.getStudentAndTeamParticipationPointsAsDoubleStream(user, competency.getExercises()).sum();
-        double maxPoints = competency.getExercises().stream().mapToDouble(Exercise::getMaxPoints).sum();
-        double lectureUnits = competency.getLectureUnits().size();
-        double exercises = competency.getExercises().size();
-        double learningObjects = lectureUnits + exercises;
+        Set<Exercise> exercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).collect(Collectors.toSet());
+        double currentPoints = participantScoreService.getStudentAndTeamParticipationPointsAsDoubleStream(user, exercises).sum();
+        double maxPoints = exercises.stream().mapToDouble(Exercise::getMaxPoints).sum();
+        double lectureUnits = competency.getLectureUnitLinks().size();
+        double learningObjects = lectureUnits + exercises.size();
         double masteryThreshold = competency.getMasteryThreshold();
 
         double neededProgress = masteryThreshold / weightedConfidence;
         double maxLectureUnitProgress = lectureUnits / learningObjects * 100;
-        double exerciseWeight = exercises / learningObjects;
+        double exerciseWeight = exercises.size() / learningObjects;
         double neededTotalExercisePoints = (neededProgress - maxLectureUnitProgress) / exerciseWeight * (maxPoints / 100);
 
         double neededExercisePoints = neededTotalExercisePoints - currentPoints;
@@ -628,10 +694,10 @@ public class LearningPathRecommendationService {
      * @param exercises the exercises that should be contained in the map
      * @return a map from difficulty level to a set of corresponding exercises
      */
-    private static Map<DifficultyLevel, Set<Exercise>> generateDifficultyLevelMap(Set<Exercise> exercises) {
-        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = new HashMap<>();
+    private static Map<DifficultyLevel, List<Exercise>> generateDifficultyLevelMap(List<Exercise> exercises) {
+        Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = new HashMap<>();
         for (var difficulty : DifficultyLevel.values()) {
-            difficultyLevelMap.put(difficulty, new HashSet<>());
+            difficultyLevelMap.put(difficulty, new ArrayList<>());
         }
 
         exercises.forEach(exercise -> {
@@ -702,13 +768,15 @@ public class LearningPathRecommendationService {
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(CourseCompetency competency, User user) {
         Optional<CompetencyProgress> optionalCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), user.getId());
         competency.setUserProgress(optionalCompetencyProgress.map(Set::of).orElse(Set.of()));
-        learningObjectService.setLectureUnitCompletions(competency.getLectureUnits(), user);
+        Set<LectureUnit> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).collect(Collectors.toSet());
+        learningObjectService.setLectureUnitCompletions(lectureUnits, user);
 
         Set<CompetencyProgress> priorCompetencyProgresses = competencyProgressRepository.findAllPriorByCompetencyId(competency, user);
         double combinedPriorConfidence = priorCompetencyProgresses.stream().mapToDouble(CompetencyProgress::getConfidence).average().orElse(0);
         double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, optionalCompetencyProgress);
-        Stream<LectureUnit> completedLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
-        Stream<Exercise> completedExercises = competency.getExercises().stream().filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
+        Stream<LectureUnit> completedLectureUnits = lectureUnits.stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
+        Stream<Exercise> completedExercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise)
+                .filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
         Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence).stream();
 
         return Stream.concat(completedLectureUnits, Stream.concat(completedExercises, pendingLearningObjects)).toList();

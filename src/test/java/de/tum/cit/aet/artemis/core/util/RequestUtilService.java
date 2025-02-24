@@ -32,9 +32,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -760,6 +762,15 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public void getWithFileContents(String path, HttpStatus expectedStatus, String expectedFileContents) throws Exception {
+        performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(matchFileContents(expectedFileContents)).andReturn();
+        restoreSecurityContext();
+    }
+
+    public static ResultMatcher matchFileContents(String expectedFilesAsString) {
+        return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
+    }
+
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
         return res.getResponse().getRedirectedUrl();
@@ -780,6 +791,31 @@ public class RequestUtilService {
         performMvcRequest(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
                 .andReturn();
         restoreSecurityContext();
+    }
+
+    /**
+     * Sends a multipart delete request with a mandatory json file and an optional file.
+     *
+     * @param path           the path to send the request to
+     * @param responseType   the expected response type as class
+     * @param body           the payload
+     * @param expectedStatus the expected status
+     * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
+    public <T, R> R delete(String path, MultiValueMap<String, String> params, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = performMvcRequest(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     /**

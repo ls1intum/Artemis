@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -40,6 +41,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -155,23 +158,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    /**
-     * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
-     */
-    @Nullable
-    @JsonIgnore
-    @Column(name = "ssh_public_key")
-    private final String sshPublicKey = null;
-
-    /**
-     * A hash of the public ssh key for fast comparison in the database (with an index)
-     */
-    @Nullable
-    @Size(max = 100)
-    @JsonIgnore
-    @Column(name = "ssh_public_key_hash")
-    private final String sshPublicKeyHash = null;
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
@@ -179,6 +165,9 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
@@ -221,8 +210,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "iris_accepted")
-    private ZonedDateTime irisAccepted = null;
+    @Column(name = "external_llm_usage_accepted")
+    private ZonedDateTime externalLLMUsageAccepted = null;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("user")
+    @JoinColumn(name = "learner_profile_id")
+    private LearnerProfile learnerProfile;
 
     public User() {
     }
@@ -539,31 +533,33 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getIrisAcceptedTimestamp() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
+    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    }
+
+    public boolean hasAcceptedExternalLLMUsage() {
+        return externalLLMUsageAccepted != null;
     }
 
     /**
-     * Checks if the user has accepted the Iris privacy policy.
+     * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedIrisElseThrow() {
-        if (irisAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+    public void hasAcceptedExternalLLMUsageElseThrow() {
+        if (externalLLMUsageAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }
 
-    @Nullable
-    public String getSshPublicKey() {
-        return sshPublicKey;
+    public LearnerProfile getLearnerProfile() {
+        return learnerProfile;
     }
 
-    @Nullable
-    public @Size(max = 100) String getSshPublicKeyHash() {
-        return sshPublicKeyHash;
+    public void setLearnerProfile(LearnerProfile learnerProfile) {
+        this.learnerProfile = learnerProfile;
     }
 }

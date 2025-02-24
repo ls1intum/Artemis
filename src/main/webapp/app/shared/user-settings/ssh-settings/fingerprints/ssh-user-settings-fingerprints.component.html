@@ -1,0 +1,66 @@
+<h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshFingerprints"></h1>
+
+<div class="list-group d-block">
+    <!-- Viewing existing key and creating a new key -->
+    <div class="list-group-item">
+        <div class="d-flex flex-wrap">
+            <p class="font-medium">
+                <span class="mt-4" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprintsExplanation"> </span>
+                <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.fingerprintsLearnMore'" />
+            </p>
+        </div>
+
+        @if (sshFingerprints && sshFingerprints['RSA']) {
+            <div class="row small-text">
+                <div class="column left">
+                    {{ 'RSA' }}
+                </div>
+                <div class="column right">
+                    {{ sshFingerprints['RSA'] }}
+                </div>
+            </div>
+        }
+
+        @if (sshFingerprints && sshFingerprints['EdDSA']) {
+            <div class="row small-text">
+                <div class="column left">
+                    {{ 'ED25519' }}
+                </div>
+                <div class="column right">
+                    {{ sshFingerprints['EdDSA'] }}
+                </div>
+            </div>
+        }
+
+        @if (sshFingerprints && sshFingerprints['ECDSA']) {
+            <div class="row">
+                <div class="column left">
+                    {{ 'ECDSA' }}
+                </div>
+                <div class="column right">
+                    {{ sshFingerprints['ECDSA'] }}
+                </div>
+            </div>
+        }
+
+        @if (sshFingerprints && sshFingerprints['EC']) {
+            <div class="row">
+                <div class="column left">
+                    {{ 'ECDSA' }}
+                </div>
+                <div class="column right">
+                    {{ sshFingerprints['EC'] }}
+                </div>
+            </div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div></div>
+            <div>
+                <a class="btn rounded-btn btn-primary btn-sm" [routerLink]="['..']">
+                    <span class="jhi-btn__title" style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.back"></span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

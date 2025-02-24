@@ -1,46 +1,49 @@
-import { Component, InputSignal, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule } from '@angular/common';
+
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
-    standalone: true,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule, LearningPathNavOverviewLearningObjectsComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FontAwesomeModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })
 export class LearningPathNavOverviewComponent {
-    protected readonly faCheckCircle: IconDefinition = faCheckCircle;
+    protected readonly faCheckCircle = faCheckCircle;
 
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly modalService: NgbModal = inject(NgbModal);
-    private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
+    private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
-    readonly learningPathId: InputSignal<number> = input.required();
+    readonly learningPathId = input.required<number>();
 
-    readonly competencyAccordion: Signal<NgbAccordionDirective> = viewChild.required(NgbAccordionDirective);
+    readonly competencyAccordion = viewChild.required(NgbAccordionDirective);
 
-    readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
-    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly onLearningObjectSelected = output<void>();
+    readonly isLoading = signal(false);
     readonly competencies = signal<LearningPathCompetencyDTO[]>([]);
 
     // competency id of currently selected learning object
-    readonly currentCompetencyId: Signal<number | undefined> = computed(() => this.learningPathNavigationService.currentLearningObject()?.competencyId);
+    readonly currentCompetencyId = computed(() => this.learningPathNavigationService.currentLearningObject()?.competencyId);
     // current competency of learning path (not the one of the selected learning object)
-    readonly currentCompetencyOnPath: Signal<LearningPathCompetencyDTO | undefined> = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
+    readonly currentCompetencyOnPath = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
 
     constructor() {
-        effect(async () => await this.loadCompetencies(this.learningPathId()), { allowSignalWrites: true });
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencies(learningPathId));
+        });
     }
 
     async loadCompetencies(learningPathId: number): Promise<void> {
@@ -61,11 +64,6 @@ export class LearningPathNavOverviewComponent {
     }
 
     openCompetencyGraph(): void {
-        const modalRef = this.modalService.open(CompetencyGraphModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'competency-graph-modal',
-        });
-        modalRef.componentInstance.learningPathId = this.learningPathId;
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, this.learningPathId(), undefined);
     }
 }

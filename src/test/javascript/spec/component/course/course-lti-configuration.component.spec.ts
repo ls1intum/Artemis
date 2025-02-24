@@ -1,12 +1,10 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -18,18 +16,15 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { NgModel } from '@angular/forms';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
     let fixture: ComponentFixture<CourseLtiConfigurationComponent>;
-    let courseService: CourseManagementService;
     let sortService: SortService;
 
     let findWithExercisesStub: jest.SpyInstance;
@@ -52,20 +47,10 @@ describe('Course LTI Configuration Component', () => {
     const courseWithExercises = new Course();
     courseWithExercises.exercises = [programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule)],
-            declarations: [
-                CourseLtiConfigurationComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(HelpIconComponent),
-                MockComponent(CopyIconButtonComponent),
-                MockDirective(NgModel),
-                MockRouterLinkDirective,
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [NgbNavModule, MockModule(NgbTooltipModule)],
+            declarations: [CourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(SortService),
@@ -77,16 +62,16 @@ describe('Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseLtiConfigurationComponent);
-                comp = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-                sortService = TestBed.inject(SortService);
-                findWithExercisesStub = jest.spyOn(courseService, 'findWithExercises');
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CourseLtiConfigurationComponent);
+        comp = fixture.componentInstance;
+        TestBed.inject(CourseManagementService);
+        sortService = TestBed.inject(SortService);
+
+        findWithExercisesStub = jest.spyOn(TestBed.inject(CourseManagementService), 'findWithExercises');
     });
 
     afterEach(() => {

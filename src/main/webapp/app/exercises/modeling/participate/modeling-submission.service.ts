@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,12 +12,10 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    public resourceUrl = 'api';
 
     /**
      * Create a new modeling submission
@@ -131,5 +129,18 @@ export class ModelingSubmissionService {
         return this.http
             .get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
             .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
+    }
+
+    /**
+     * Get all submissions with results for a participation
+     * @param {number} participationId - Id of the participation
+     */
+    getSubmissionsWithResultsForParticipation(participationId: number): Observable<ModelingSubmission[]> {
+        const url = `api/participations/${participationId}/submissions-with-results`;
+        return this.http.get<ModelingSubmission[]>(url).pipe(
+            map((submissions: ModelingSubmission[]) => {
+                return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission) as ModelingSubmission);
+            }),
+        );
     }
 }

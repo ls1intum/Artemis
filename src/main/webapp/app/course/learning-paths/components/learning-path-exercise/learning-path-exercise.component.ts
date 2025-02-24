@@ -1,18 +1,16 @@
-import { Component, InputSignal, ViewContainerRef, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 
 @Component({
     selector: 'jhi-learning-path-exercise',
-    standalone: true,
-    imports: [CourseExerciseDetailsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './learning-path-exercise.component.html',
 })
 export class LearningPathExerciseComponent {
-    public readonly courseId: InputSignal<number> = input.required<number>();
-    public readonly exerciseId: InputSignal<number> = input.required<number>();
+    public readonly courseId = input.required<number>();
+    public readonly exerciseId = input.required<number>();
 
-    private readonly viewContainerRef: ViewContainerRef = inject(ViewContainerRef);
+    private readonly viewContainerRef = inject(ViewContainerRef);
 
     constructor() {
         effect(() => {

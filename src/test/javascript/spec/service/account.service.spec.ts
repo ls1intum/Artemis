@@ -1,8 +1,8 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { MockService } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { User } from 'app/core/user/user.model';
@@ -17,6 +17,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -45,7 +46,7 @@ describe('AccountService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: JhiWebsocketService, useValue: MockService(JhiWebsocketService) },
+                { provide: WebsocketService, useValue: MockService(WebsocketService) },
                 { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -79,6 +80,15 @@ describe('AccountService', () => {
         expect(accountService.userIdentity).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
     }));
+
+    it('should handle user SSH public key correctly', () => {
+        const sshKey = new UserSshPublicKey();
+        sshKey.id = 123;
+        sshKey.label = 'test-label';
+
+        expect(sshKey.id).toBe(123);
+        expect(sshKey.label).toBe('test-label');
+    });
 
     it('should fetch the user on identity if the userIdentity is defined yet (force=true)', fakeAsync(() => {
         let userReceived: User;
@@ -561,6 +571,85 @@ describe('AccountService', () => {
 
             accountService.identity();
             expect(fetchStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('test vcs token related logic', () => {
+        afterEach(() => {
+            httpMock.verify();
+        });
+
+        it('should delete user VCS access token', () => {
+            accountService.deleteUserVcsAccessToken().subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
+            req.flush(null);
+        });
+
+        it('should add a new VCS access token', () => {
+            const expiryDate = '2024-10-10';
+
+            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
+                expect(response.status).toBe(200);
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            req.flush({ status: 200 });
+        });
+
+        it('should get VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.getVcsAccessToken(participationId).subscribe((response) => {
+                expect(response.body).toEqual(token);
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush({ body: token });
+        });
+
+        it('should create VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.createVcsAccessToken(participationId).subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush({ body: token });
+        });
+    });
+
+    describe('test external LLM usage acceptance', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            // Set a fixed date for consistent testing
+            jest.setSystemTime(new Date('2024-02-06'));
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should set externalLLMUsageAccepted when user identity exists', () => {
+            // Setup user identity
+            accountService.userIdentity = { id: 1, groups: ['USER'] } as User;
+
+            // Call the function
+            accountService.setUserAcceptedExternalLLMUsage();
+
+            // Check if the date was set correctly
+            const acceptedDate = accountService.userIdentity.externalLLMUsageAccepted;
+            expect(acceptedDate).toBeDefined();
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            // Ensure userIdentity is undefined
+            accountService.userIdentity = undefined;
+
+            // Verify that calling the function doesn't throw an error
+            expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();
         });
     });
 });

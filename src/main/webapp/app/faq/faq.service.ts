@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Faq, FaqState } from 'app/entities/faq.model';
@@ -12,11 +12,10 @@ type EntityArrayResponseType = HttpResponse<Faq[]>;
 export class FaqService {
     public resourceUrl = 'api/courses';
 
-    constructor(protected http: HttpClient) {}
+    private http = inject(HttpClient);
 
     create(courseId: number, faq: Faq): Observable<EntityResponseType> {
         const copy = FaqService.convertFaqFromClient(faq);
-        copy.faqState = FaqState.ACCEPTED;
         return this.http.post<Faq>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -42,6 +41,14 @@ export class FaqService {
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllByCourseIdAndState(courseId: number, faqState: FaqState): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faq-state/${faqState}`, {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
@@ -145,5 +152,22 @@ export class FaqService {
         const tokens = searchTerm.toLowerCase().split(' ');
         const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
         return tokens.every((token) => faqText.includes(token));
+    }
+
+    findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Trigger the Ingestion of all Faqs in the course.
+     */
+    ingestFaqsInPyris(courseId: number): Observable<HttpResponse<void>> {
+        const params = new HttpParams();
+        return this.http.post<void>(`api/courses/${courseId}/faqs/ingest`, null, {
+            params: params,
+            observe: 'response',
+        });
     }
 }

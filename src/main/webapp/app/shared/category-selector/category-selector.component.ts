@@ -1,13 +1,18 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormControl } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaqCategory } from 'app/entities/faq-category.model';
+import { MatFormField } from '@angular/material/form-field';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatOption } from '@angular/material/core';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -16,35 +21,45 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     templateUrl: './category-selector.component.html',
     styleUrls: ['./category-selector.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        MatFormField,
+        MatChipGrid,
+        MatChipRow,
+        NgStyle,
+        MatChipRemove,
+        FaIconComponent,
+        FormsModule,
+        MatAutocompleteTrigger,
+        MatChipInput,
+        ReactiveFormsModule,
+        MatAutocomplete,
+        MatOption,
+        ColorSelectorComponent,
+        AsyncPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CategorySelectorComponent implements OnChanges {
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
+    protected readonly faTimes = faTimes;
+    protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
+    private readonly COLOR_SELECTOR_HEIGHT = 150;
 
-    /**
-     * the selected categories, which can be manipulated by the user in the UI
-     */
+    /** the selected categories, which can be manipulated by the user in the UI */
     @Input() categories: ExerciseCategory[] | FaqCategory[];
-
-    /**
-     * the existing categories used for auto-completion, might include duplicates
-     */
+    /** the existing categories used for auto-completion, might include duplicates */
     @Input() existingCategories: ExerciseCategory[] | FaqCategory[];
 
-    @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
-
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement>;
-
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
+
+    @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
 
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
     uniqueCategoriesForAutocomplete: Observable<string[]>;
-    private readonly COLOR_SELECTOR_HEIGHT = 150;
 
-    separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl<string | undefined>(undefined);
-
-    readonly faTimes = faTimes;
 
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
@@ -61,14 +76,14 @@ export class CategorySelectorComponent implements OnChanges {
         if (!this.categories) {
             return [];
         }
-        return this.categories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
+        return this.categories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     private existingCategoriesAsStringArray(): string[] {
         if (!this.existingCategories) {
             return [];
         }
-        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
+        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     // if the user types in something, we need to filter for the matching categories

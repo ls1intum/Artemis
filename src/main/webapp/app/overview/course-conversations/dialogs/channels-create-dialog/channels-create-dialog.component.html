@@ -1,9 +1,10 @@
 @if (isInitialized) {
-    <div class="channels-overview">
+    <div class="channels-overview" ngbAutofocus>
         <div class="modal-header">
             <h4 class="modal-title">
                 <span
                     >{{ (isPublicChannel ? 'artemisApp.dialogs.createChannel.titlePublicChannel' : 'artemisApp.dialogs.createChannel.titlePrivateChannel') | artemisTranslate }}
+                    {{ isCourseWideChannel ? ('artemisApp.dialogs.createChannel.titleCourseWideChannel' | artemisTranslate) : '' }}
                     {{
                         (isAnnouncementChannel ? 'artemisApp.dialogs.createChannel.titleAnnouncementChannel' : 'artemisApp.dialogs.createChannel.titleRegularChannel')
                             | artemisTranslate
@@ -17,6 +18,7 @@
             <jhi-channel-form
                 (channelTypeChanged)="onChannelTypeChanged($event)"
                 (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"
+                (isCourseWideChannelChanged)="onIsCourseWideChannelChanged($event)"
                 (formSubmitted)="onFormSubmitted($event)"
             />
         </div>

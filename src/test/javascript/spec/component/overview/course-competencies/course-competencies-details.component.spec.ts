@@ -1,6 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +18,7 @@ import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Competency, CompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/entities/competency.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -34,6 +33,10 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -51,7 +54,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -81,6 +84,8 @@ describe('CourseCompetenciesDetails', () => {
                     useValue: route,
                 },
                 { provide: Router, useValue: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
             schemas: [],
         })
@@ -109,8 +114,8 @@ describe('CourseCompetenciesDetails', () => {
     it('should load competency to display progress and all lecture units', () => {
         const competency = {
             id: 1,
-            lectureUnits: [new TextUnit()],
-            exercises: [{ id: 5 } as TextExercise],
+            lectureUnitLinks: [new CompetencyLectureUnitLink(this, new TextUnit(), 1)],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as TextExercise, 1)],
         } as Competency;
         const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
@@ -120,7 +125,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnits).toHaveLength(2);
+        expect(component.competency.lectureUnitLinks).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -128,7 +133,7 @@ describe('CourseCompetenciesDetails', () => {
     it('should load competency to display progress and the exercise unit', () => {
         const competency = {
             id: 1,
-            exercises: [{ id: 5 } as ModelingExercise],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as ModelingExercise, 1)],
         } as Competency;
 
         const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
@@ -138,7 +143,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnits).toHaveLength(1);
+        expect(component.competency.lectureUnitLinks).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 

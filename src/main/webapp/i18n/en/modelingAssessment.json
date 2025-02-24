@@ -2,6 +2,7 @@
     "artemisApp": {
         "modelingAssessment": {
             "points": "Points",
+            "conflicts": "Conflicts",
             "assessor": "Assessor: {{firstName}} {{lastName}}",
             "noModel": "No model found to display",
             "invalidAssessments": "Your assessments are not valid!",

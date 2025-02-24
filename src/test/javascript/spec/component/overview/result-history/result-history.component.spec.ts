@@ -1,8 +1,9 @@
+import { input, runInInjectionContext } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../../../test.module';
+import { Result } from 'app/entities/result.model';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;
@@ -10,7 +11,6 @@ describe('ResultHistoryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()
@@ -25,11 +25,13 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with same rated results', () => {
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: true, id: 2 },
-            { rated: true, id: 3 },
-        ];
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: true, id: 2 },
+                { rated: true, id: 3 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },
@@ -39,14 +41,16 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = [
-            { rated: false, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ];
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: false, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+                { rated: false, id: 4 },
+                { rated: false, id: 5 },
+                { rated: false, id: 6 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: false, id: 2 },
@@ -60,11 +64,13 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with mixed rated results', () => {
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-        ];
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },
@@ -74,14 +80,16 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ];
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+                { rated: false, id: 4 },
+                { rated: false, id: 5 },
+                { rated: false, id: 6 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },

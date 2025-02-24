@@ -2,18 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="#{email.dataExportFailedAdmin.title(${user.login})}">Data export for one of the users failed</title>
-    <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
-    <th:block th:replace="mail/notification/fragments :: css"/>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
 </head>
 <body>
-<th:block th:replace="mail/notification/fragments :: header"/>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
 <!-- Message Body Start -->
 <div id="message-body">
     <span th:text="#{email.dataExportFailedAdmin.text}">A data export creation failed. </span>
     <span class="bold-text" th:text="${user.login}">Username</span>
     <span th:text="#{email.dataExportFailedAdmin.textFailed}">failed</span>
 
-    <p th:text="#{email.dataExportFailedAdmin.reason(${reason.getMessage()})}">The error message </p>
+    <p th:text="#{email.dataExportFailedAdmin.reason(${reason})}">The error message </p>
     <p
         th:text="#{email.dataExportFailedAdmin.actionItemList}">
     </p>

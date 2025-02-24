@@ -1,0 +1,139 @@
+assessment:
+  - assessment
+  - bonus
+  - complaint
+  - submission
+  - grading
+  - grade
+  - score
+  - caseSensitive: false
+
+athena:
+  - athena
+  - ai feedback
+  - request (ai )?feedback
+  - caseSensitive: false
+
+atlas:
+  - atlas
+  - competency
+  - competencies
+  - knowledge area
+  - learning path
+  - learner profile
+  - science event
+  - adaptive learning
+  - caseSensitive: false
+
+buildagent:
+  - buildagent
+  - build agent
+  - buildjob
+  - build job
+  - build result
+  - caseSensitive: false
+
+communication:
+  - communication
+  - conversation
+  - notification
+  - agreement
+  - faq
+  - post
+  - reaction
+  - chat
+  - message
+  - caseSensitive: false
+
+core:
+  - user-management
+  - authority
+  - data export
+  - migration
+  - caseSensitive: false
+
+exam:
+  - exam
+  - exercisegroup
+  - student exam
+  - suspicious behavior
+  - suspicious behaviour
+  - caseSensitive: false
+
+exercise:
+  - exercise
+  - participation
+  - participant
+  - difficulty
+  - lifecycle
+  - team
+  - assignment
+  - caseSensitive: false
+
+fileupload:
+  - fileupload
+  - upload
+  - caseSensitive: false
+
+iris:
+  - iris
+  - llm
+  - chatbot
+  - \b(?<!\S)ai(?!\S)\b
+  - caseSensitive: false
+
+lecture:
+  - lecture
+  - attachment
+  - slide
+  - video
+  - text unit
+  - caseSensitive: false
+
+lti:
+  - \b(?<!\S)lti(?!\S)\b
+  - online course
+  - caseSensitive: false
+
+modeling:
+  - modeling
+  - diagram
+  - uml
+  - caseSensitive: false
+
+plagiarism:
+  - plagiarism
+  - caseSensitive: false
+
+programming:
+  - programming
+  - build
+  - build plan
+  - code hint
+  - \b(?<!\S)git(?!\S)\b
+  - \b(?<!\S)ide(?!\S)\b
+  - submission policy
+  - aeolus
+  - penalty
+  - auxilary
+  - commit
+  - static code analysis
+  - caseSensitive: false
+
+quiz:
+  - quiz
+  - drag
+  - drop
+  - single choice
+  - multiple choice
+  - batch
+  - short answer
+  - caseSensitive: false
+
+text:
+  - block
+  - caseSensitive: false
+
+tutorialgroup:
+  - tutorialgroup
+  - caseSensitive: false

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,13 +10,19 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
     selector: 'jhi-create-attachment-unit',
     templateUrl: './create-attachment-unit.component.html',
-    styles: [],
+    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
 })
 export class CreateAttachmentUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+
     @ViewChild('attachmentUnitForm')
     attachmentUnitForm: AttachmentUnitFormComponent;
     attachmentUnitToCreate: AttachmentUnit = new AttachmentUnit();
@@ -25,13 +31,6 @@ export class CreateAttachmentUnitComponent implements OnInit {
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
@@ -47,7 +46,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate, competencies } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // === Setting attachment ===
@@ -59,7 +58,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
         // === Setting attachmentUnit ===
         this.attachmentUnitToCreate.description = description;
-        this.attachmentUnitToCreate.competencies = competencies || [];
+        this.attachmentUnitToCreate.competencyLinks = competencyLinks || [];
 
         this.isLoading = true;
 

@@ -14,8 +14,10 @@
             "showAllSavedNotifications": "Zeige alle gespeicherten Benachrichtigungen",
             "hideAllCurrentlyDisplayedNotifications": "Verstecke alle aktuell dargestellten Benachrichtigungen",
             "target": {
+                "newAnswer": "Antwort ansehen",
                 "newAnswerPost": "Antwort ansehen",
                 "newPost": "Beitrag ansehen",
+                "newQuestion": "Frage ansehen",
                 "exerciseCreated": "Übung ansehen",
                 "exerciseUpdated": "Übung ansehen",
                 "attachmentUpdated": "Vorlesung ansehen"
@@ -105,6 +107,7 @@
                 "newPlagiarismCaseStudent": "Neuer Plagiatsfall",
                 "newPlagiarismCaseStudentSignificantSimilarity": "Neue signifikante Übereinstimmung",
                 "plagiarismCaseVerdictStudent": "Urteil zu deinem Plagiatsfall",
+                "plagiarismCaseReply": "Antwort auf Plagiatsfall eines Studierenden",
                 "tutorialGroupRegistrationStudent": "Du wurdest für eine Übungsgruppe registriert",
                 "tutorialGroupDeregistrationStudent": "Du wurdest von einer Übungsgruppe abgemeldet",
                 "tutorialGroupRegistrationTutor": "Ein Student wurde für deine Übungsgruppe registriert",
@@ -132,6 +135,7 @@
                 "newPlagiarismCaseStudent": "Neuer Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\".",
                 "newPlagiarismCaseStudentSignificantSimilarity": "Neue signifikante Übereinstimmung in Bezug auf die Aufgabe {{ placeholderValues.1 }} \"{{ placeholderValues.2 }}.",
                 "plagiarismCaseVerdictStudent": "Dein Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\" hat ein Urteil.",
+                "plagiarismCaseReply": "Der Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\" hat eine Antwort bekommen.",
                 "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
                 "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} abgemeldet.",
                 "tutorialGroupRegistrationTutor": "Der Student {{ placeholderValues.1 }} wurde zu deiner Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} registriert.",

@@ -6,7 +6,6 @@ import { DecimalPipe, KeyValuePipe } from '@angular/common';
     selector: 'jhi-metrics-endpoints-requests',
     templateUrl: './metrics-endpoints-requests.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [DecimalPipe, KeyValuePipe],
 })
 export class MetricsEndpointsRequestsComponent {

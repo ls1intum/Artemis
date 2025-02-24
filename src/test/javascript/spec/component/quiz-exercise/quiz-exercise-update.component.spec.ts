@@ -1,7 +1,8 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -34,12 +35,10 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('QuizExerciseUpdateComponent', () => {
@@ -146,8 +145,6 @@ describe('QuizExerciseUpdateComponent', () => {
 
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [QuizExerciseUpdateComponent],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -158,6 +155,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(QuizExerciseUpdateComponent, '')
@@ -219,6 +219,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
                 queryParams: of({}),
             } as any as ActivatedRoute;
+
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -633,18 +634,16 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.canDeactivate()).toBeTrue();
             });
 
-            it('should set event return value to translate if not canDeactivate', () => {
+            it('should not deactivate with pending changes', () => {
                 comp.pendingChangesCache = true;
-                const ev = { returnValue: undefined };
-                comp.unloadNotification(ev);
-                expect(ev.returnValue).toBe('pendingChanges');
+                const canDeactivate = comp.canDeactivate();
+                expect(canDeactivate).toBeFalse();
             });
 
-            it('should not set event return value to translate if  canDeactivate', () => {
+            it('should deactivate with no pending changes', () => {
                 comp.pendingChangesCache = false;
-                const ev = { returnValue: undefined };
-                comp.unloadNotification(ev);
-                expect(ev.returnValue).toBeUndefined();
+                const canDeactivate = comp.canDeactivate();
+                expect(canDeactivate).toBeTrue();
             });
         });
 
@@ -1015,7 +1014,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
-                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent(new MockNgbModalService() as any as NgbModal);
+                    const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
+                    comp.quizQuestionListEditComponent = childFixture.componentInstance;
                     jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
@@ -1027,7 +1027,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                expect(console.error).toHaveBeenCalledOnce();
             };
 
             beforeEach(() => {

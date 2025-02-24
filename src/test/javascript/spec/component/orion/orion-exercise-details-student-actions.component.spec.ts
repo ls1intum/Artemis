@@ -6,7 +6,6 @@ import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participa
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ArtemisTestModule } from '../../test.module';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { ActivatedRoute } from '@angular/router';
@@ -28,7 +27,6 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 OrionExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
@@ -61,7 +59,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     it('ngOnInit should subscribe to state', () => {
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });

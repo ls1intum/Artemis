@@ -1,0 +1,25 @@
+{
+    "name": "artemis-test",
+    "private": true,
+    "scripts": {
+        "build": "tsc -b",
+        "test": "jest",
+        "test:ci": "jest --ci --reporters=default --reporters=jest-junit"
+    },
+    "workspaces": [
+        "${studentParentWorkingDirectoryName}"
+    ],
+    "devDependencies": {
+        "@tsconfig/node20": "^20.1.4",
+        "@types/jest": "^29.5.12",
+        "jest": "^29.7.0",
+        "jest-junit": "^16.0.0",
+        "ts-jest": "^29.2.5",
+        "typescript": "^5.6.2"
+    },
+    "jest-junit": {
+        "classNameTemplate": "{classname}_{title}",
+        "titleTemplate": "{classname}_{title}",
+        "ancestorSeparator": "_"
+    }
+}

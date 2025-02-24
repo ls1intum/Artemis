@@ -115,13 +115,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroupsConfiguration() throws Exception {
-        // when
-        var temp = getTutorialGroupsConfigurationPath(courseId);
-        var temp2 = buildExampleConfiguration(courseId);
-
         var configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId),
                 TutorialGroupsConfiguration.class, HttpStatus.CREATED);
-        // then
         assertThat(configurationFromRequest).isNotNull();
         this.assertConfigurationStructure(configurationFromRequest, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
     }
@@ -170,7 +165,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
      * The problem was that jackson tried to deserialize the date and time with the date and time format checkers active, which failed. These checkers
      * should only be active in a direct create / update case to ensure uuuu-MM-dd format in the database.
      *
-     * @throws Exception
+     * @throws Exception if the request fails
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

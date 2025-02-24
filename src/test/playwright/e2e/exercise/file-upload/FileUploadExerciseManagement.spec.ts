@@ -8,7 +8,7 @@ import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('File upload exercise management', () => {
+test.describe('File upload exercise management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -24,7 +24,7 @@ test.describe('File upload exercise management', () => {
 
         // Fill out file upload exercise form
         const exerciseTitle = 'file upload exercise' + generateUUID();
-        await fileUploadExerciseCreation.typeTitle(exerciseTitle);
+        await fileUploadExerciseCreation.setTitle(exerciseTitle);
         await fileUploadExerciseCreation.setReleaseDate(dayjs());
         await fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));

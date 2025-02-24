@@ -33,10 +33,11 @@
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
-                <!-- prettier-ignore -->
-                <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-                        <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-                    }]
+                <span
+                    [jhiTranslate]="exercise?.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise?.maxPoints, bonusPoints: exercise?.bonusPoints }"
+                ></span>
+                <span>
                     @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
                     }
@@ -61,11 +62,6 @@
               @if (repositoryIsLocked) {
                 <jhi-code-editor-repository-is-locked class="me-3" />
               }
-              <jhi-exercise-hint-button-overlay
-                [availableExerciseHints]="availableExerciseHints"
-                [activatedExerciseHints]="activatedExerciseHints"
-                (onHintActivated)="onHintActivated($event)"
-              />
               @if (participation) {
                 <jhi-updating-result
                   [exercise]="exercise"
@@ -74,6 +70,8 @@
                   [participation]="participation"
                   [personalParticipation]="true"
                   (onParticipationChange)="receivedNewResult()"
+                  [showProgressBar]="true"
+                  [showProgressBarBorder]="true"
                   class="me-2"
                 />
               }

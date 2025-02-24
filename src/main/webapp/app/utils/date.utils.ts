@@ -74,3 +74,8 @@ export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): nu
     }
     return (dayOfWeekZeroSunday + 6) % 7;
 }
+
+export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs, compareTime?: dayjs.Dayjs): boolean {
+    const now = compareTime ?? dayjs();
+    return date.isBetween(now.add(1, 'week'), now);
+}

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -15,27 +15,36 @@ import {
     faMessage,
     faPaperclip,
     faProjectDiagram,
+    faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
+    imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe],
 })
-export class PostingContentPartComponent {
-    @Input() postingContentPart: PostingContentPart;
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+export class PostingContentPartComponent implements OnInit, OnChanges {
+    private fileService = inject(FileService);
+    private dialog = inject(MatDialog);
+    private accountService = inject(AccountService);
+
+    postingContentPart = input<PostingContentPart>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
 
     imageNotFound = false;
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
+    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -43,14 +52,19 @@ export class PostingContentPartComponent {
     protected readonly faBan = faBan;
     protected readonly faAt = faAt;
     protected readonly faHashtag = faHashtag;
+    protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
+    processedContentBeforeReference: string;
+    processedContentAfterReference: string;
 
-    constructor(
-        private fileService: FileService,
-        private dialog: MatDialog,
-        private accountService: AccountService,
-    ) {}
+    ngOnInit() {
+        this.processContent();
+    }
+
+    ngOnChanges() {
+        this.processContent();
+    }
 
     /**
      * Opens an attachment with the given URL in a new window
@@ -65,6 +79,26 @@ export class PostingContentPartComponent {
         this.imageNotFound = true;
     }
 
+    processContent() {
+        if (this.postingContentPart()?.contentBeforeReference) {
+            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
+            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
+        }
+
+        if (this.postingContentPart()?.contentAfterReference) {
+            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
+            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
+        }
+    }
+
+    escapeNumberedList(content: string): string {
+        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
+    }
+
+    escapeUnorderedList(content: string): string {
+        return content.replace(/^(- )/gm, '\\$1');
+    }
+
     /**
      * Opens a dialog to display the image in full size
      *
@@ -73,6 +107,7 @@ export class PostingContentPartComponent {
     enlargeImage(slideToReference: string) {
         this.dialog.open(EnlargeSlideImageComponent, {
             data: { slideToReference },
+            maxWidth: '95vw',
         });
     }
 
@@ -98,6 +133,8 @@ export class PostingContentPartComponent {
                 return faFileUpload;
             case ReferenceType.SLIDE:
                 return faFile;
+            case ReferenceType.FAQ:
+                return faQuestion;
             default:
                 return faPaperclip;
         }

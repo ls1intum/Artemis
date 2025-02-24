@@ -33,19 +33,59 @@ public interface BuildLogStatisticsEntryRepository extends ArtemisJpaRepository<
                 AVG(b.dependenciesDownloadedCount)
             )
             FROM BuildLogStatisticsEntry b
+            WHERE b.programmingSubmission.participation.exercise = :exercise
+            """)
+    BuildLogStatisticsDTO findAverageStudentBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO(
+                COUNT(b.id),
+                AVG(b.agentSetupDuration),
+                AVG(b.testDuration),
+                AVG(b.scaDuration),
+                AVG(b.totalJobDuration),
+                AVG(b.dependenciesDownloadedCount)
+            )
+            FROM BuildLogStatisticsEntry b
                 LEFT JOIN b.programmingSubmission s
                 LEFT JOIN s.participation p
-            WHERE p.exercise = :exercise
-                OR p.id = :templateParticipationId
+            WHERE p.id = :templateParticipationId
                 OR p.id = :solutionParticipationId
             """)
-    BuildLogStatisticsDTO findAverageBuildLogStatistics(@Param("exercise") ProgrammingExercise exercise, @Param("templateParticipationId") Long templateParticipationId,
+    BuildLogStatisticsDTO findAverageExerciseBuildLogStatistics(@Param("templateParticipationId") Long templateParticipationId,
             @Param("solutionParticipationId") Long solutionParticipationId);
 
+    /**
+     * Find the average build log statistics for the given exercise. If the exercise has a template or solution participation, the statistics are also calculated for these
+     * NOTE: we cannot calculate this within one query, this would be way too slow, therefore, we split it into multiple queries and combine the result
+     *
+     * @param exercise the exercise for which the statistics should be calculated
+     * @return the average build log statistics
+     */
     default BuildLogStatisticsDTO findAverageBuildLogStatistics(ProgrammingExercise exercise) {
-        return findAverageBuildLogStatistics(exercise, exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getId() : null,
+        var studentStatistics = findAverageStudentBuildLogStatistics(exercise);
+        var exerciseStatistics = findAverageExerciseBuildLogStatistics(exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getId() : null,
                 exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getId() : null);
+        // build the average of two values based on the count
+        var studentCount = studentStatistics.buildCount();
+        var exerciseCount = exerciseStatistics.buildCount();
+        var count = studentCount + exerciseCount;
+        return new BuildLogStatisticsDTO(count,
+                count == 0 ? 0.0 : (studentStatistics.agentSetupDuration() * studentCount + exerciseStatistics.agentSetupDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.testDuration() * studentCount + exerciseStatistics.testDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.scaDuration() * studentCount + exerciseStatistics.scaDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.totalJobDuration() * studentCount + exerciseStatistics.totalJobDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.dependenciesDownloadedCount() * studentCount + exerciseStatistics.dependenciesDownloadedCount() * exerciseCount) / count);
+
     }
+
+    @Transactional // required due to delete
+    @Modifying
+    @Query("""
+            DELETE FROM BuildLogStatisticsEntry e
+            WHERE e.programmingSubmission.participation.id = :participationId
+            """)
+    void deleteByParticipationId(@Param("participationId") Long participationId);
 
     @Transactional // ok because of delete
     @Modifying

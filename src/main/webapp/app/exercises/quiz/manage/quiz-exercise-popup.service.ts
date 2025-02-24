@@ -1,18 +1,16 @@
-import { Component, Injectable } from '@angular/core';
+import { Component, Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExercisePopupService {
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+
     private ngbModalRef: NgbModalRef | null;
 
-    constructor(
-        private modalService: NgbModal,
-        private router: Router,
-        private quizExerciseService: QuizExerciseService,
-    ) {
+    constructor() {
         this.ngbModalRef = null;
     }
 
@@ -20,6 +18,7 @@ export class QuizExercisePopupService {
      * Open the modal with the given content for the given exercise.
      * @param component the content that should be shown
      * @param quizExercise the quiz exercise for which the modal should be shown
+     * @param files required for the form data upload
      */
     open(component: Component, quizExercise: QuizExercise, files: Map<string, File>): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
@@ -34,6 +33,7 @@ export class QuizExercisePopupService {
      * Open the modal with the given content for the given exercise.
      * @param component the content that should be shown
      * @param quizExercise the quiz exercise for which the modal should be shown
+     * @param files required for the form data upload
      */
     quizExerciseModalRef(component: Component, quizExercise: QuizExercise, files: Map<string, File>): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });

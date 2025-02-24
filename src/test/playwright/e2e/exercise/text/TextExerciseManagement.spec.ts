@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 
-test.describe('Text exercise management', () => {
+test.describe('Text exercise management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -32,7 +32,7 @@ test.describe('Text exercise management', () => {
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
-        await textExerciseCreation.typeTitle(exerciseTitle);
+        await textExerciseCreation.setTitle(exerciseTitle);
         await textExerciseCreation.setReleaseDate(dayjs());
         await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));

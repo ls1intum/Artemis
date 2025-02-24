@@ -21,6 +21,10 @@ export class StudentExamManagementPage {
         return await responsePromise;
     }
 
+    async clickPrepareExerciseStart() {
+        await this.page.click('#startExercisesButton');
+    }
+
     getGenerateMissingStudentExamsButton() {
         return this.page.locator('#generateMissingStudentExamsButton');
     }

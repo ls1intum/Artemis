@@ -81,7 +81,6 @@ void postBuildTasks() {
     mkdir results
     if [ -e assignment/tests.xml ]
     then
-        sed -i 's/<testsuites>/<testsuite>/g ; s/<\\/testsuites>/<\\/testsuite>/g' assignment/tests.xml
         cp assignment/tests.xml $WORKSPACE/results/ || true
         sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     fi

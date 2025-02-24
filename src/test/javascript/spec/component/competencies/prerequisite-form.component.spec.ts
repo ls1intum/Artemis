@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -6,9 +6,8 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -19,30 +18,41 @@ import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/for
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('PrerequisiteFormComponent', () => {
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 
     let translateService: TranslateService;
+    const prerequisiteServiceMock = { getAllForCourse: jest.fn() } as unknown as PrerequisiteService;
+    const courseCompetencyServiceMock = { getCourseCompetencyTitles: jest.fn() } as unknown as CourseCompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
-            providers: [MockProvider(PrerequisiteService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents()
-            .then(() => {
-                prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
-                prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
-            });
+            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            providers: [
+                { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseCompetencyService, useValue: courseCompetencyServiceMock },
+                MockProvider(LectureUnitService),
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
+        prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
@@ -56,8 +66,9 @@ describe('PrerequisiteFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         // stubbing prerequisite service for asynchronous validator
-        const prerequisiteService = TestBed.inject(PrerequisiteService);
-        const getAllTitlesSpy = jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+        const getCourseCompetencyTitlesSpy = jest
+            .spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles')
+            .mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         const competencyOfResponse: Prerequisite = { id: 1, title: 'test' };
 
@@ -66,11 +77,9 @@ describe('PrerequisiteFormComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(prerequisiteService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(prerequisiteServiceMock, 'getAllForCourse').mockReturnValue(of(response));
 
         prerequisiteFormComponentFixture.detectChanges();
-
-        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
 
         const exampleTitle = 'uniqueName';
         prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
@@ -83,15 +92,10 @@ describe('PrerequisiteFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        commonCourseCompetencyFormComponent.selectLectureInDropdown(exampleLecture);
-        prerequisiteFormComponentFixture.detectChanges();
-        // selecting the lecture unit in the table
-        const lectureUnitRow = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
-        lectureUnitRow.click();
         prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
-        expect(getAllTitlesSpy).toHaveBeenCalledOnce();
+        expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
@@ -114,20 +118,17 @@ describe('PrerequisiteFormComponent', () => {
             title: 'test',
             description: 'lorem ipsum',
             softDueDate: dayjs(),
-            connectedLectureUnits: [textUnit],
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
         prerequisiteFormComponentFixture.detectChanges();
         prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent['onLectureUnitSelectionChange']([textUnit]);
         prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(prerequisiteFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(prerequisiteFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(prerequisiteFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
     it('should suggest taxonomy when title changes', () => {
@@ -167,9 +168,15 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
-        const prerequisiteService = TestBed.inject(PrerequisiteService);
         const existingTitles = ['nameExisting'];
-        jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        jest.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: existingTitles,
+                    status: 200,
+                }),
+            ),
+        );
         prerequisiteFormComponent.isEditMode = true;
         prerequisiteFormComponent.formData.title = 'initialName';
 
@@ -190,7 +197,7 @@ describe('PrerequisiteFormComponent', () => {
         titleControl.setValue('nameExisting');
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeDefined();
-        flush();
+        tick();
         discardPeriodicTasks();
     }));
 

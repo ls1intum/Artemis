@@ -1,4 +1,8 @@
-$profile-picture-height: 2.15rem;
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
+$delete-delay-duration: 6s;
 
 .post-result-information {
     font-size: small;
@@ -27,56 +31,12 @@ $profile-picture-height: 2.15rem;
     line-height: 1.1;
 }
 
-.post-content-margin {
-    margin-left: 2.65rem;
-}
-
-.post-profile-picture {
-    width: $profile-picture-height;
-    height: $profile-picture-height;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--gray-400);
-    color: var(--white);
-}
-
-.post-profile-picture-wrap {
-    width: $profile-picture-height;
-    height: $profile-picture-height;
-    position: relative;
-}
-
-.post-edit-profile-picture-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(#000, 0.6);
-    opacity: 0;
-    color: var(--white);
-}
-
-.post-edit-profile-picture-overlay:hover {
-    opacity: 1;
+.post-content-padding {
+    padding-left: 3.42rem;
 }
 
 .post-authority-icon-student {
     display: none;
-}
-
-.post-profile-picture-student {
-    background-color: var(--cyan);
-}
-
-.post-profile-picture-tutor {
-    background-color: var(--orange);
-}
-
-.post-profile-picture-instructor {
-    background-color: var(--graph-red);
 }
 
 .reference {
@@ -118,5 +78,54 @@ $profile-picture-height: 2.15rem;
 }
 
 .card {
-    border-radius: 1em;
+    border-radius: 0.25em;
+}
+
+@include media-breakpoint-down(sm) {
+    .post-header-author-date {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+
+    .post-content-padding {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date span {
+        color: $secondary;
+        font-size: 0.75rem !important;
+    }
+}
+
+.post-delete-button-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    background-color: rgba($primary, 0.3);
+    animation: increaseWidth $delete-delay-duration forwards linear;
+
+    @media (prefers-reduced-motion) {
+        animation: none;
+    }
+}
+
+.post-delete-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes increaseWidth {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
 }

@@ -35,6 +35,7 @@
                 "quizExercise": "Quiz Aufgabe",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
+                "ltiOutcomeUrl": "LTI-Outcome-URL",
                 "submittedAnswer": "Eingereichte Antwort",
                 "quizQuestion": "Frage",
                 "multipleChoiceQuestion": "Multiple-Choice Frage",
@@ -115,7 +116,8 @@
                 "iris": "Iris Einstellungen",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Konfiguration",
-                "standardizedCompetencies": "Standardisierte Kompetenzen"
+                "standardizedCompetencies": "Standardisierte Kompetenzen",
+                "cleanupService": "Aufräumdienst"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
@@ -207,6 +209,7 @@
             "confirm": "Bestätigen",
             "download": "Herunterladen",
             "dashboard": "Dashboard",
+            "exportRepos": "Repositories herunterladen",
             "units": "Einheiten",
             "edit": "Bearbeiten",
             "connect": "Verknüpfen",
@@ -220,7 +223,7 @@
             "open": "Öffnen",
             "save": "Speichern",
             "saving": "Speichern...",
-            "view": "Details",
+            "view": "Ansehen",
             "reset": "Zurücksetzen",
             "preview": "Vorschau",
             "visual": "Visuell",
@@ -229,6 +232,9 @@
             "purge": "Löschen",
             "archive": "Archivieren",
             "submit": "Absenden",
+            "continueSubmission": "Weitermachen",
+            "viewTimeline": "Verlauf Anzeigen",
+            "hideTimeline": "Verlauf Ausblenden",
             "submitTooltip": "Du kannst mehrmals bis zur Einreichungsfrist abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
             "submitNoDueDateTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
             "submitDueDateMissedTooltip": "Die Einreichungsfrist ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
@@ -350,6 +356,7 @@
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
         "communication": "Kommunikation",
+        "archive": "Kursarchiv",
         "faq": "FAQ"
     },
     "connectionStatus": {

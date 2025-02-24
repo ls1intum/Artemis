@@ -1,17 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import dayjs from 'dayjs/esm';
 import { SafeHtml } from '@angular/platform-browser';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-exam-start-information',
-    standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, ArtemisExamSharedModule],
+    imports: [InformationBoxComponent, StudentExamWorkingTimeComponent, ArtemisDatePipe],
     templateUrl: './exam-start-information.component.html',
 })
 export class ExamStartInformationComponent implements OnInit {
@@ -45,45 +44,78 @@ export class ExamStartInformationComponent implements OnInit {
         this.prepareInformationBoxData();
     }
 
-    buildInformationBox(boxTitle: string, boxContent: string | number, boxContentComponent?: string): InformationBox {
+    buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent = false): InformationBox {
         const examInformationBoxData: InformationBox = {
             title: boxTitle ?? '',
-            content: boxContent ?? '',
-            contentComponent: boxContentComponent,
+            content: boxContent,
+            isContentComponent: isContentComponent,
         };
         return examInformationBoxData;
     }
 
     prepareInformationBoxData(): void {
         if (this.moduleNumber) {
-            const informationBoxModuleNumber = this.buildInformationBox('artemisApp.exam.moduleNumber', this.moduleNumber!);
+            const boxContentModuleNumber: InformationBoxContent = {
+                type: 'string',
+                value: this.moduleNumber,
+            };
+            const informationBoxModuleNumber = this.buildInformationBox('artemisApp.exam.moduleNumber', boxContentModuleNumber);
             this.examInformationBoxData.push(informationBoxModuleNumber);
         }
         if (this.courseName) {
-            const informationBoxCourseName = this.buildInformationBox('artemisApp.exam.course', this.courseName!);
+            const boxContentCourseName: InformationBoxContent = {
+                type: 'string',
+                value: this.courseName,
+            };
+            const informationBoxCourseName = this.buildInformationBox('artemisApp.exam.course', boxContentCourseName);
             this.examInformationBoxData.push(informationBoxCourseName);
         }
         if (this.examiner) {
-            const informationBoxExaminer = this.buildInformationBox('artemisApp.examManagement.examiner', this.examiner!);
+            const boxContentExaminer: InformationBoxContent = {
+                type: 'string',
+                value: this.examiner,
+            };
+            const informationBoxExaminer = this.buildInformationBox('artemisApp.examManagement.examiner', boxContentExaminer);
             this.examInformationBoxData.push(informationBoxExaminer);
         }
         if (this.examinedStudent) {
-            const informationBoxExaminedStudent = this.buildInformationBox('artemisApp.exam.examinedStudent', this.examinedStudent!);
+            const boxContentExaminedStudent: InformationBoxContent = {
+                type: 'string',
+                value: this.examinedStudent,
+            };
+            const informationBoxExaminedStudent = this.buildInformationBox('artemisApp.exam.examinedStudent', boxContentExaminedStudent);
             this.examInformationBoxData.push(informationBoxExaminedStudent);
         }
         if (this.startDate) {
-            const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
+            const boxContentStartDate: InformationBoxContent = {
+                type: 'dateTime',
+                value: this.startDate,
+            };
+            const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', boxContentStartDate, true);
             this.examInformationBoxData.push(informationBoxStartDate);
         }
 
-        const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', this.exam.workingTime!, 'workingTime');
-        this.examInformationBoxData.push(informationBoxTotalWorkingTime);
+        const boxContentExamWorkingTime: InformationBoxContent = {
+            type: 'workingTime',
+            value: this.studentExam,
+        };
 
-        const informationBoxTotalPoints = this.buildInformationBox('artemisApp.exam.points', this.totalPoints!.toString());
+        const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', boxContentExamWorkingTime, true);
+        this.examInformationBoxData.push(informationBoxTotalWorkingTime);
+        const boxContentTotalPoints: InformationBoxContent = {
+            type: 'string',
+            value: this.totalPoints?.toString() ?? '',
+        };
+
+        const informationBoxTotalPoints = this.buildInformationBox('artemisApp.exam.points', boxContentTotalPoints);
         this.examInformationBoxData.push(informationBoxTotalPoints);
 
         if (this.numberOfExercisesInExam) {
-            const informationBoxNumberOfExercises = this.buildInformationBox('artemisApp.exam.exercises', this.numberOfExercisesInExam!.toString());
+            const boxContent: InformationBoxContent = {
+                type: 'string',
+                value: this.numberOfExercisesInExam?.toString(),
+            };
+            const informationBoxNumberOfExercises = this.buildInformationBox('artemisApp.exam.exercises', boxContent);
             this.examInformationBoxData.push(informationBoxNumberOfExercises);
         }
     }

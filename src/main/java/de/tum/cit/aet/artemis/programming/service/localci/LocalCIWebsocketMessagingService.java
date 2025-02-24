@@ -95,12 +95,11 @@ public class LocalCIWebsocketMessagingService {
     public void sendBuildAgentSummary(List<BuildAgentInformation> buildAgentInfo) {
         String channel = "/topic/admin/build-agents";
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
-        // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
 
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
-        String channel = "/topic/admin/build-agent/" + buildAgentDetails.name();
+        String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
         websocketMessagingService.sendMessage(channel, buildAgentDetails);
     }

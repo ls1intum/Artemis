@@ -5,7 +5,7 @@
                 @if (getAsChannel(activeConversation); as channel) {
                     <span>
                         {{ 'artemisApp.dialogs.addUsers.addUsersToChannel' | artemisTranslate }}
-                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
+                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
                         {{ conversationService.getConversationName(channel) }}
                     </span>
                 }
@@ -17,6 +17,7 @@
         </div>
         <div class="modal-body">
             <jhi-conversation-add-users-form
+                [isLoading]="isLoading"
                 [maxSelectable]="maxSelectable"
                 [courseId]="course.id!"
                 (formSubmitted)="onFormSubmitted($event)"

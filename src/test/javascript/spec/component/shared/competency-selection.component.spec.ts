@@ -1,19 +1,20 @@
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { NgModel, ReactiveFormsModule } from '@angular/forms';
-import { Competency } from 'app/entities/competency.model';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { Competency, CompetencyLearningObjectLink } from 'app/entities/competency.model';
 import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -23,8 +24,6 @@ describe('CompetencySelection', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
-            declarations: [CompetencySelectionComponent, MockComponent(FaIconComponent), MockDirective(NgModel)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -34,10 +33,11 @@ describe('CompetencySelection', () => {
                         },
                     } as any as ActivatedRoute,
                 },
-                {
-                    provide: Router,
-                    useClass: MockRouter,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(CourseStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -62,11 +62,11 @@ describe('CompetencySelection', () => {
         fixture.detectChanges();
 
         const selector = fixture.debugElement.nativeElement.querySelector('#competency-selector');
-        expect(component.selectedCompetencies).toBeUndefined();
+        expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
-        expect(component.competencies).toBeArrayOfSize(2);
+        expect(component.competencyLinks).toBeArrayOfSize(2);
         expect(selector).not.toBeNull();
     });
 
@@ -81,9 +81,9 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.competencies).toBeArrayOfSize(2);
-        expect(component.competencies?.first()?.course).toBeUndefined();
-        expect(component.competencies?.first()?.userProgress).toBeUndefined();
+        expect(component.competencyLinks).toBeArrayOfSize(2);
+        expect(component.competencyLinks?.first()?.competency?.course).toBeUndefined();
+        expect(component.competencyLinks?.first()?.competency?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -108,7 +108,7 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.competencies).toBeEmpty();
+        expect(component.competencyLinks).toBeEmpty();
         expect(select).toBeNull();
     });
 
@@ -117,9 +117,25 @@ describe('CompetencySelection', () => {
 
         fixture.detectChanges();
 
-        component.writeValue([{ id: 1, title: 'other' } as Competency]);
-        expect(component.selectedCompetencies).toBeArrayOfSize(1);
-        expect(component.selectedCompetencies?.first()?.title).toBe('test');
+        component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
+        expect(component.selectedCompetencyLinks).toBeArrayOfSize(1);
+        expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
+    });
+
+    it('should update link weight when value is written', () => {
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            competencies: [{ id: 1, title: 'test' } as Competency, { id: 2, title: 'testAgain' } as Prerequisite, { id: 3, title: 'testMore' } as Competency],
+        });
+
+        fixture.detectChanges();
+
+        component.writeValue([
+            new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 0.5),
+            new CompetencyLearningObjectLink({ id: 3, title: 'otherMore' } as Competency, 1),
+        ]);
+        expect(component.selectedCompetencyLinks).toBeArrayOfSize(2);
+        expect(component.selectedCompetencyLinks?.first()?.weight).toBe(0.5);
+        expect(component.selectedCompetencyLinks?.last()?.weight).toBe(1);
     });
 
     it('should trigger change detection after loading competencies', () => {
@@ -139,31 +155,31 @@ describe('CompetencySelection', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
         fixture.detectChanges();
-        expect(component.selectedCompetencies).toBeUndefined();
+        expect(component.selectedCompetencyLinks).toBeUndefined();
 
-        component.toggleCompetency(competency1);
-        component.toggleCompetency(competency2);
-        component.toggleCompetency(competency3);
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency1, 1));
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency2, 1));
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency3, 1));
 
-        expect(component.selectedCompetencies).toHaveLength(3);
-        expect(component.selectedCompetencies).toContain(competency3);
+        expect(component.selectedCompetencyLinks).toHaveLength(3);
+        expect(component.selectedCompetencyLinks).toContainEqual(new CompetencyLearningObjectLink(competency3, 1));
 
-        component.toggleCompetency(competency2);
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency2, 1));
 
-        expect(component.selectedCompetencies).toHaveLength(2);
-        expect(component.selectedCompetencies).not.toContain(competency2);
+        expect(component.selectedCompetencyLinks).toHaveLength(2);
+        expect(component.selectedCompetencyLinks).not.toContainEqual(new CompetencyLearningObjectLink(competency2, 1));
 
-        component.toggleCompetency(competency1);
-        component.toggleCompetency(competency3);
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency1, 1));
+        component.toggleCompetency(new CompetencyLearningObjectLink(competency3, 1));
 
-        expect(component.selectedCompetencies).toBeUndefined();
+        expect(component.selectedCompetencyLinks).toBeUndefined();
     });
 
     it('should register onchange', () => {
         component.checkboxStates = {};
         const registerSpy = jest.fn();
         component.registerOnChange(registerSpy);
-        component.toggleCompetency({ id: 1 });
+        component.toggleCompetency(new CompetencyLearningObjectLink({ id: 1 }, 1));
         expect(registerSpy).toHaveBeenCalled();
     });
 

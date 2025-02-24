@@ -19,8 +19,9 @@ import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,19 +32,14 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
-import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -51,60 +47,19 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingassessment";
 
     private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
     private final Double offsetByTenThousandth = 0.0001;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private ComplaintRepository complaintRepo;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private ComplaintUtilService complaintUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -573,7 +528,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateManualProgrammingExerciseResult_addFeedbackAfterManualLongFeedback() throws Exception {
-
         List<Feedback> feedbacks = new ArrayList<>();
         var manualLongFeedback = new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED);
         manualLongFeedback.setDetailText("abc".repeat(5000));
@@ -592,16 +546,60 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         assertThat(savedAutomaticLongFeedback).isNotNull();
 
-        // Retrieve long feedback text with id.
-        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
-                String.class);
-
         assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
             assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
         });
-        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+        assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(manualLongFeedback.getDetailText());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldKeepExistingLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
+        var manualLongFeedback = new Feedback().credits(0.0);
+        var longText = "abc".repeat(5000);
+        manualLongFeedback.setDetailText(longText);
+        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        result = resultRepository.save(result);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", String.valueOf(submit));
+        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK, params);
+
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        assertThat(longFeedbackText).isPresent();
+        assertThat(longFeedbackText.get().getText()).isEqualTo(longText);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldUpdateUnreferencedLongFeedbackWhenSavingAnAssessment(boolean submit) throws Exception {
+        var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
+        var longText = "abc".repeat(5000);
+        manualLongFeedback.setDetailText(longText);
+        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        result = resultRepository.save(result);
+
+        var newLongText = "def".repeat(5000);
+        manualLongFeedback = result.getFeedbacks().getFirst();
+
+        // The actual complete longtext is still stored in the detailText field when the result is sent from the client
+        var detailText = Feedback.class.getDeclaredField("detailText");
+        detailText.setAccessible(true);
+        detailText.set(manualLongFeedback, newLongText);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", String.valueOf(submit));
+        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK, params);
+
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        assertThat(longFeedbackText).isPresent();
+        assertThat(longFeedbackText.get().getText()).isEqualTo(newLongText);
     }
 
     @Test
@@ -629,16 +627,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         assertThat(savedAutomaticLongFeedback).isNotNull();
 
-        // Retrieve long feedback text with id.
-        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
-                String.class);
-
         assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
             assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
         });
-        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+        assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(automaticLongFeedback.getDetailText());
     }
 
     private Result setUpManualResultForUpdate(List<Feedback> feedbacks) {
@@ -1011,7 +1005,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     void unlockFeedbackRequestAfterAssessment() throws Exception {
         programmingExercise.setAllowFeedbackRequests(true);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
-        exerciseRepository.save(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
 
         var participation = programmingExerciseStudentParticipation;
         participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));

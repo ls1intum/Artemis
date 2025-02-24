@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -29,12 +31,13 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -44,7 +47,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -63,7 +65,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningPathService {
 
@@ -83,16 +85,19 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final LearningPathNgxService learningPathNgxService;
-
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, LearningPathNgxService learningPathNgxService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository) {
+            CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -100,9 +105,10 @@ public class LearningPathService {
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
-        this.learningPathNgxService = learningPathNgxService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
@@ -112,7 +118,9 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
-        generateLearningPaths(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        generateLearningPaths(course, students);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
     }
@@ -123,7 +131,18 @@ public class LearningPathService {
      * @param course course the learning paths are created for
      */
     public void generateLearningPaths(@NotNull Course course) {
-        var students = userRepository.getStudents(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        generateLearningPaths(course, students);
+    }
+
+    /**
+     * Generate learning paths for all students enrolled in the course
+     *
+     * @param course   course the learning paths are created for
+     * @param students students for which the learning paths are generated with eager loaded learner profiles
+     */
+    public void generateLearningPaths(@NotNull Course course, Set<User> students) {
         students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
@@ -298,19 +317,10 @@ public class LearningPathService {
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
     public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
-        }
-
         Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
         Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
         checkNoCompetencies(course, status);
         checkNoRelations(course, status);
-
-        // if no issues where found, add OK status
-        if (status.isEmpty()) {
-            status.add(LearningPathHealthDTO.HealthStatus.OK);
-        }
 
         return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
     }
@@ -367,25 +377,22 @@ public class LearningPathService {
     }
 
     /**
-     * Generates Ngx graph representation of the learning path graph.
+     * Generates the graph of competencies with the student's progress for the given learning path.
      *
-     * @param learningPath the learning path for which the Ngx representation should be created
-     * @return Ngx graph representation of the learning path
-     * @see NgxLearningPathDTO
+     * @param courseId the id of the course for which the graph should be generated
+     * @return dto containing the competencies and relations of the learning path
      */
-    public NgxLearningPathDTO generateNgxGraphRepresentation(@NotNull LearningPath learningPath) {
-        return this.learningPathNgxService.generateNgxGraphRepresentation(learningPath);
-    }
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyInstructorGraph(long courseId) {
+        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+            double averageMasteryProgress = competencyProgressRepository.findAverageOfAllNonZeroStudentProgressByCompetencyId(competency.getId());
+            return CompetencyGraphNodeDTO.of(competency, averageMasteryProgress, CompetencyGraphNodeDTO.CompetencyNodeValueType.AVERAGE_MASTERY_PROGRESS);
+        }).collect(Collectors.toSet());
 
-    /**
-     * Generates Ngx path representation of the learning path.
-     *
-     * @param learningPath the learning path for which the Ngx representation should be created
-     * @return Ngx path representation of the learning path
-     * @see NgxLearningPathDTO
-     */
-    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
-        return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+        Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
+
+        return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 
     /**
@@ -395,7 +402,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -411,21 +418,32 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
-        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
+        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        LearningPath learningPath;
+        if (optionalLearningPath.isEmpty()) {
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+        }
+        else {
+            learningPath = optionalLearningPath.get();
+        }
 
         // Remove exercises that are not visible to students
-        learningPath.getCompetencies()
-                .forEach(competency -> competency.setExercises(competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet())));
+        learningPath.getCompetencies().forEach(competency -> competency
+                .setExerciseLinks(competency.getExerciseLinks().stream().filter(exerciseLink -> exerciseLink.getExercise().isVisibleToStudents()).collect(Collectors.toSet())));
         // Remove unreleased lecture units as well as exercise units, since they are already retrieved as exercises
-        learningPath.getCompetencies().forEach(competency -> competency.setLectureUnits(competency.getLectureUnits().stream()
-                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit) && lectureUnit.isVisibleToStudents()).collect(Collectors.toSet())));
+        learningPath.getCompetencies()
+                .forEach(competency -> competency.setLectureUnitLinks(competency.getLectureUnitLinks().stream()
+                        .filter(lectureUnitLink -> !(lectureUnitLink.getLectureUnit() instanceof ExerciseUnit) && lectureUnitLink.getLectureUnit().isVisibleToStudents())
+                        .collect(Collectors.toSet())));
 
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());
-                competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.setCompletedUsers(Collections.emptySet()));
-                competency.getExercises().forEach(exercise -> exercise.setStudentParticipations(Collections.emptySet()));
+                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Collections.emptySet()));
+                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Collections.emptySet()));
             });
             return learningPath;
         }
@@ -433,10 +451,12 @@ public class LearningPathService {
         Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
-        Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream().flatMap(competency -> competency.getLectureUnits().stream()).collect(Collectors.toSet());
+        Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream()
+                .flatMap(competency -> competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)).collect(Collectors.toSet());
         Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
-        Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
+                .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
         Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
                 .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
         learningPath.getCompetencies().forEach(competency -> {
@@ -446,7 +466,7 @@ public class LearningPathService {
             else {
                 competency.setUserProgress(Collections.emptySet());
             }
-            competency.getLectureUnits().forEach(lectureUnit -> {
+            competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).forEach(lectureUnit -> {
                 if (completions.containsKey(lectureUnit.getId())) {
                     lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
                 }
@@ -454,7 +474,7 @@ public class LearningPathService {
                     lectureUnit.setCompletedUsers(Collections.emptySet());
                 }
             });
-            competency.getExercises().forEach(exercise -> {
+            competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
                 if (studentParticipations.containsKey(exercise.getId())) {
                     exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
                 }

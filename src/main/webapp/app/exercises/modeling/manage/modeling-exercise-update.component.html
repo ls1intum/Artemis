@@ -46,8 +46,8 @@
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [(ngModel)]="modelingExercise.competencies"
-                    name="competencies"
+                    [(ngModel)]="modelingExercise.competencyLinks"
+                    name="competencyLinks"
                 />
             </div>
         }
@@ -275,7 +275,7 @@
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving"
         [isDisabled]="!!(editForm.form.invalid || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError || modelingExercise.exampleSolutionPublicationDateError)"
-        (cancel)="previousState()"
+        (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"
     />

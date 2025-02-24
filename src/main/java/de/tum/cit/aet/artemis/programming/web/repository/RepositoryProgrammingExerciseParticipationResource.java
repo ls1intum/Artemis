@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -282,33 +280,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * Gets the files of the repository with content
      *
      * @param participationId participation of the student/template/solution
+     * @param omitBinaries    do not send binaries to reduce payload size
      * @return the ResponseEntity with status 200 (OK) and a map of files with their content
      */
     @GetMapping(value = "repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
+    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository);
+            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
-        });
-    }
-
-    /**
-     * GET /repository/{participationId}/file-names: Gets the file names of the repository
-     *
-     * @param participationId participation of the student/template/solution
-     * @return the ResponseEntity with status 200 (OK) and a set of file names
-     */
-    @GetMapping(value = "repository/{participationId}/file-names", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
-    public ResponseEntity<Set<String>> getFileNames(@PathVariable Long participationId) {
-        return super.executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var nonFolderFileNames = super.repositoryService.getFiles(repository).entrySet().stream().filter(mapEntry -> mapEntry.getValue().equals(FileType.FILE))
-                    .map(Map.Entry::getKey).collect(Collectors.toSet());
-
-            return new ResponseEntity<>(nonFolderFileNames, HttpStatus.OK);
         });
     }
 

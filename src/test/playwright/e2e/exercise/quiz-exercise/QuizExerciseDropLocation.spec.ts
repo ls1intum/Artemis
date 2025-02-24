@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
 
 let course: Course;
 
-test.describe('Quiz Exercise Drop Location Spec', () => {
+test.describe('Quiz Exercise Drop Location Spec', { tag: '@fast' }, () => {
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();

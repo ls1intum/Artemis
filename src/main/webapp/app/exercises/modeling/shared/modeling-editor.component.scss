@@ -9,6 +9,7 @@ $draggable-width: 15px;
     height: 100%;
     display: flex;
     flex-flow: column nowrap;
+    background-color: var(--module-bg);
 
     .help-and-status {
         display: flex;
@@ -49,7 +50,24 @@ $draggable-width: 15px;
 
 .readonly-diagram {
     height: 100%;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.scroll-container {
+    scrollbar-width: thin; /* Firefox */
+    &::-webkit-scrollbar {
+        width: 6px; /* WebKit */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+}
+
+.full-screen-margin {
+    margin-top: 30px;
 }
 
 @keyframes spin {

@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
@@ -14,7 +14,6 @@ import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
@@ -27,15 +26,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { Submission } from 'app/entities/submission.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -78,7 +77,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
@@ -95,6 +94,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockProvider(HttpClient),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .compileComponents()
@@ -154,7 +155,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const courseId = 123; // Example course ID
         const exerciseId = 456; // Example exercise ID
         const repositoryUrl = `/courses/${courseId}/exercises`;
-        const expectedRepositoryLink = `/courses/${courseId}/exercises/${exerciseId}`;
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
@@ -163,9 +163,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         // Call the ngOnInit method to initialize the component
         comp.ngOnInit();
-
-        // Assert that the repositoryLink property is set correctly
-        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
     });
 
     it('should create the correct repository URL for exam exercises', () => {
@@ -174,7 +171,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const exerciseId = 456; // Example exercise ID
         const examId = 789; // Example exam ID
         const repositoryUrl = `/courses/${courseId}/exams/${examId}`;
-        const expectedRepositoryLink = `/courses/${courseId}/exams/${examId}/exercises/${exerciseId}`;
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
@@ -185,7 +181,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.ngOnInit();
 
         // Assert that the repositoryLink property is set correctly
-        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
     });
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
@@ -503,144 +498,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    individualDueDate: dayjs().subtract(5, 'days'),
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().subtract(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        const submission: Submission = { id: 42 };
-        comp.exercise = {
-            type: ExerciseType.TEXT,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-                            score: 100,
-                            submission: submission,
-                        },
-                    ],
-                    submissions: [submission],
-                },
-            ] as StudentParticipation[],
-        } as TextExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(result).toBeTrue();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        const numResults = 20;
-        const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
-
-        for (let i = 0; i < numResults; i++) {
-            results.push({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
-        }
-
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    individualDueDate: undefined,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                        ...results,
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(result).toBeFalse();
-    });
 
     it.each([
         [

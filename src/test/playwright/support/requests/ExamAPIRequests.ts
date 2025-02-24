@@ -113,10 +113,16 @@ export class ExamAPIRequests {
 
     /**
      * Register the student for the exam
-     * @param exam the exam object
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+    }
+
+    /**
+     * Register all course students for the exam
+     */
+    async registerAllCourseStudentsForExam(exam: Exam) {
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/register-course-students`);
     }
 
     /**
@@ -207,5 +213,18 @@ export class ExamAPIRequests {
     async getGradeSummary(exam: Exam, studentExam: StudentExam) {
         const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`);
         return await response.json();
+    }
+
+    /**
+     * Determines the time left until the exam ends and finishes the exam by subtracting it from the working time.
+     */
+    async finishExam(exam: Exam) {
+        const examEndDate = dayjs(exam.endDate! as dayjs.Dayjs);
+        // Determine the time left until the exam ends and add extra minute
+        // to make sure the exam is finished after subtracting it from the working time
+        const examTimeLeftInSeconds = examEndDate.diff(dayjs(), 'seconds') + 60;
+        if (examTimeLeftInSeconds > 0) {
+            await this.page.request.patch(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/working-time`, { data: -examTimeLeftInSeconds });
+        }
     }
 }

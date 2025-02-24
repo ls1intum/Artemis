@@ -2,6 +2,8 @@ import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
+    IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -11,9 +13,13 @@ export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
     mockChatSettings.id = 1;
     mockChatSettings.enabled = true;
+    mockChatSettings.disabledProactiveEvents = [];
     const mockTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
     mockTextExerciseChatSettings.id = 13;
     mockTextExerciseChatSettings.enabled = true;
+    const mockCourseChatSettings = new IrisCourseChatSubSettings();
+    mockCourseChatSettings.id = 3;
+    mockCourseChatSettings.enabled = true;
     const mockLectureIngestionSettings = new IrisLectureIngestionSubSettings();
     mockLectureIngestionSettings.id = 7;
     mockLectureIngestionSettings.enabled = true;
@@ -21,12 +27,19 @@ export function mockSettings() {
     const mockCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
     mockCompetencyGenerationSettings.id = 5;
     mockCompetencyGenerationSettings.enabled = false;
+
+    const mockIrisLectureSettings = new IrisLectureChatSubSettings();
+    mockIrisLectureSettings.id = 42;
+    mockIrisLectureSettings.enabled = true;
+
     const irisSettings = new IrisGlobalSettings();
     irisSettings.id = 1;
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisTextExerciseChatSettings = mockTextExerciseChatSettings;
+    irisSettings.irisCourseChatSettings = mockCourseChatSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
+    irisSettings.irisLectureChatSettings = mockIrisLectureSettings;
     return irisSettings;
 }
 

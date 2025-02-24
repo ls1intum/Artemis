@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,24 +8,24 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.component';
 
 @Component({
     selector: 'jhi-edit-online-unit',
     templateUrl: './edit-online-unit.component.html',
-    styles: [],
+    imports: [LectureUnitLayoutComponent, OnlineUnitFormComponent],
 })
 export class EditOnlineUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private onlineUnitService = inject(OnlineUnitService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
     onlineUnit: OnlineUnit;
     formData: OnlineUnitFormData;
     lectureId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private onlineUnitService: OnlineUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -51,7 +51,7 @@ export class EditOnlineUnitComponent implements OnInit {
                         description: this.onlineUnit.description,
                         releaseDate: this.onlineUnit.releaseDate,
                         source: this.onlineUnit.source,
-                        competencies: this.onlineUnit.competencies,
+                        competencyLinks: this.onlineUnit.competencyLinks,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -59,12 +59,12 @@ export class EditOnlineUnitComponent implements OnInit {
     }
 
     updateOnlineUnit(formData: OnlineUnitFormData) {
-        const { name, description, releaseDate, source, competencies } = formData;
+        const { name, description, releaseDate, source, competencyLinks } = formData;
         this.onlineUnit.name = name;
         this.onlineUnit.description = description;
         this.onlineUnit.releaseDate = releaseDate;
         this.onlineUnit.source = source;
-        this.onlineUnit.competencies = competencies;
+        this.onlineUnit.competencyLinks = competencyLinks;
         this.isLoading = true;
         this.onlineUnitService
             .update(this.onlineUnit, this.lectureId)

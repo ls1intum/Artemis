@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
@@ -6,15 +6,27 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
-import { NgForm } from '@angular/forms';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, PlagiarismCasesOverviewComponent, ButtonComponent, HelpIconComponent, DocumentationButtonComponent],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
-    @ViewChild('analysis', { static: false }) analysisForm: NgForm;
+    private suspiciousSessionsService = inject(SuspiciousSessionsService);
+    private activatedRoute = inject(ActivatedRoute);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private examService = inject(ExamManagementService);
+    private plagiarismResultsService = inject(PlagiarismResultsService);
+    private router = inject(Router);
 
     exercises: Exercise[] = [];
     plagiarismCasesPerExercise: Map<Exercise, number> = new Map<Exercise, number>();
@@ -39,15 +51,6 @@ export class SuspiciousBehaviorComponent implements OnInit {
     );
 
     readonly documentationType: DocumentationType = 'SuspiciousBehavior';
-
-    constructor(
-        private suspiciousSessionsService: SuspiciousSessionsService,
-        private activatedRoute: ActivatedRoute,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private examService: ExamManagementService,
-        private plagiarismResultsService: PlagiarismResultsService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.examId = Number(this.activatedRoute.snapshot.paramMap.get('examId'));

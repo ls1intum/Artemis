@@ -33,6 +33,9 @@
             "detail": {
                 "title": "Participation"
             },
+            "errors": {
+                "preconditionsNotMet": "The pre conditions to request AI Feedback are not met."
+            },
             "repository": "Repository",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",

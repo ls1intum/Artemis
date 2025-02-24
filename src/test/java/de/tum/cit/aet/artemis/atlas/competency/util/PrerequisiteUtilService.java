@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.PrerequisiteTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 public class PrerequisiteUtilService {
 
     @Autowired
-    private PrerequisiteRepository prerequisiteRepository;
+    private PrerequisiteTestRepository prerequisiteRepository;
 
     /**
      * Creates and saves a Prerequisite competency for the given Course.

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -21,7 +22,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
@@ -46,6 +48,9 @@ public class PyrisJobService {
 
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
+
+    @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
+    private int ingestionJobTimeout; // in seconds
 
     public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -78,39 +83,72 @@ public class PyrisJobService {
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
+        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }
 
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId);
+        var job = new CourseChatJob(token, courseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }
 
     /**
-     * Adds a new ingestion webhook job to the job map with a timeout.
+     * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addIngestionWebhookJob() {
+    public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token);
-        long timeoutWebhookJob = 60;
-        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
-        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        return token;
+    }
+
+    /**
+     * Adds a new faq ingestion webhook job to the job map with a timeout.
+     *
+     * @param courseId the ID of the course associated with the webhook job
+     * @param faqId    the ID of the faq associated with the webhook job
+     * @return a unique token identifying the created webhook job
+     */
+    public String addFaqIngestionWebhookJob(long courseId, long faqId) {
+        var token = generateJobIdToken();
+        var job = new FaqIngestionWebhookJob(token, courseId, faqId);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
     /**
      * Remove a job from the job map.
      *
-     * @param token the token
+     * @param job the job to remove
      */
-    public void removeJob(String token) {
-        jobMap.remove(token);
+    public void removeJob(PyrisJob job) {
+        jobMap.remove(job.jobId());
+    }
+
+    /**
+     * Store a job in the job map.
+     *
+     * @param job the job to store
+     */
+    public void updateJob(PyrisJob job) {
+        jobMap.put(job.jobId(), job);
+    }
+
+    /**
+     * Get all current jobs.
+     *
+     * @return the all current jobs
+     */
+    public Collection<PyrisJob> currentJobs() {
+        return jobMap.values();
     }
 
     /**

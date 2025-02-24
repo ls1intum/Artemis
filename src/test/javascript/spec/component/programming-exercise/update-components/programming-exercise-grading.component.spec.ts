@@ -1,79 +1,76 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
-import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
-import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
-import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
     let comp: ProgrammingExerciseGradingComponent;
 
+    const route = {
+        queryParams: of({}),
+        url: {
+            pipe: () => ({
+                subscribe: () => {},
+            }),
+        },
+    } as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbAlertsMocksModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
-            declarations: [
-                ProgrammingExerciseGradingComponent,
-                NgModel,
-                CheckboxControlValueAccessor,
-                DefaultValueAccessor,
-                SelectControlValueAccessor,
-                NumberValueAccessor,
-                MockDirective(CustomMinDirective),
-                MockDirective(CustomMaxDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(HelpIconComponent),
-                MockComponent(ProgrammingExerciseLifecycleComponent),
-                MockComponent(IncludedInOverallScorePickerComponent),
-                MockComponent(SubmissionPolicyUpdateComponent),
-                MockComponent(PresentationScoreComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                {
-                    provide: ActivatedRoute,
-                    useValue: { queryParams: of({}) },
-                },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseGradingComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        fixture = TestBed.createComponent(ProgrammingExerciseGradingComponent);
+        comp = fixture.componentInstance;
 
-                const exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.maxPoints = 10;
-                exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-                exercise.assessmentType = AssessmentType.AUTOMATIC;
-                exercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
-                exercise.staticCodeAnalysisEnabled = true;
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            includeExerciseInCourseScoreCalculation: true,
+            points: true,
+            bonusPoints: true,
+            submissionPolicy: true,
+            timeline: true,
+            assessmentInstructions: true,
+            presentationScore: true,
+        });
 
-                comp.programmingExercise = exercise;
-            });
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.maxPoints = 10;
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        exercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
+        exercise.staticCodeAnalysisEnabled = true;
+
+        comp.programmingExercise = exercise;
     });
 
     afterEach(() => {
@@ -110,7 +107,11 @@ describe('ProgrammingExerciseGradingComponent', () => {
     it('should create a grading summary with exceeding penalty', fakeAsync(() => {
         fixture.detectChanges();
 
-        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, exceedingPenalty: 10, submissionLimit: 5 };
+        comp.programmingExercise.submissionPolicy = {
+            type: SubmissionPolicyType.SUBMISSION_PENALTY,
+            exceedingPenalty: 10,
+            submissionLimit: 5,
+        };
         comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
 
         fixture.whenStable().then(() => {
@@ -172,11 +173,91 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
         comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseLifecycleComponent;
 
-        comp.ngAfterViewInit();
+        comp.ngAfterContentInit();
 
         (comp.submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
         comp.lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
+
+    const generateFieldVisibilityTests = (
+        testCases: {
+            name: string;
+            selector: string;
+            field: ProgrammingExerciseInputField;
+            extraCondition?: () => void;
+        }[],
+    ) => {
+        const checkFieldVisibility = (selector: string, isVisible: boolean) => {
+            fixture.detectChanges();
+            const field = fixture.debugElement.nativeElement.querySelector(selector);
+            if (isVisible) {
+                expect(field).not.toBeNull();
+            } else {
+                expect(field).toBeNull();
+            }
+        };
+
+        testCases.forEach(({ name, selector, field, extraCondition }) => {
+            describe('should handle input field ' + name + ' properly', () => {
+                it('should be displayed', () => {
+                    fixture.detectChanges();
+                    extraCondition?.();
+                    checkFieldVisibility(selector, true);
+                });
+
+                it('should NOT be displayed', () => {
+                    fixture.detectChanges();
+                    extraCondition?.();
+                    comp.isEditFieldDisplayedRecord()[field] = false;
+                    checkFieldVisibility(selector, false);
+                });
+            });
+        });
+    };
+
+    describe('should handle field visibility', () => {
+        const testCases: {
+            name: string;
+            selector: string;
+            field: ProgrammingExerciseInputField;
+            extraCondition?: () => void;
+        }[] = [
+            {
+                name: 'jhi-included-in-overall-score-picker',
+                selector: 'jhi-included-in-overall-score-picker',
+                field: ProgrammingExerciseInputField.INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION,
+            },
+            { name: 'points field', selector: '#field_points', field: ProgrammingExerciseInputField.POINTS },
+            {
+                name: 'bonusPoints field',
+                selector: '#field_bonusPoints',
+                field: ProgrammingExerciseInputField.BONUS_POINTS,
+            },
+            {
+                name: 'submission policy field',
+                selector: 'jhi-submission-policy-update',
+                field: ProgrammingExerciseInputField.SUBMISSION_POLICY,
+            },
+            {
+                name: 'timeline',
+                selector: 'jhi-programming-exercise-lifecycle',
+                field: ProgrammingExerciseInputField.TIMELINE,
+            },
+            {
+                name: 'assessment instructions',
+                selector: 'jhi-grading-instructions-details',
+                field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
+                extraCondition: () => (comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC),
+            },
+            {
+                name: 'presentation score',
+                selector: 'jhi-presentation-score-checkbox',
+                field: ProgrammingExerciseInputField.PRESENTATION_SCORE,
+            },
+        ];
+
+        generateFieldVisibilityTests(testCases);
     });
 });

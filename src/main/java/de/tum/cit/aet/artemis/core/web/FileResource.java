@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
+import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.net.FileNameMap;
@@ -39,7 +41,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -52,6 +56,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -59,9 +64,11 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -121,10 +128,13 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final FileUploadService fileUploadService;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
+            FileUploadService fileUploadService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -140,6 +150,7 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
+        this.fileUploadService = fileUploadService;
     }
 
     /**
@@ -164,6 +175,61 @@ public class FileResource {
     }
 
     /**
+     * POST /files/courses/{courseId}/conversations/{conversationId} : Upload a new file for use in a conversation.
+     *
+     * @param file           The file to save. The size must not exceed Constants.MAX_FILE_SIZE_COMMUNICATION.
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @return The path of the file.
+     * @throws URISyntaxException If the response path can't be converted into a URI.
+     */
+    @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
+            throws URISyntaxException {
+        log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
+        if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
+        }
+        var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
+        String responsePath = filePathInformation.publicPath().toString();
+
+        fileUploadService.createFileUpload(responsePath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+                FileUploadEntityType.CONVERSATION);
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+    }
+
+    /**
+     * GET /files/courses/{courseId}/conversations/{conversationId}/{filename} : Get the markdown file with the given filename for the given conversation.
+     *
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @param filename       The filename of the file to get.
+     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     */
+    @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
+        // TODO: Improve the access check
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
+        sanitizeFilenameElseThrow(filename);
+
+        var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+
+        var fileUpload = fileUploadService.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+
+        if (fileUpload.isPresent()) {
+            return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+        }
+
+        return buildFileResponse(path, filename, true);
+    }
+
+    /**
      * GET /files/markdown/:filename : Get the markdown file with the given filename
      *
      * @param filename The filename of the file to get
@@ -174,7 +240,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename, false);
     }
 
     /**
@@ -364,19 +430,18 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * @param lectureId ID of the lecture, the attachment belongs to
-     * @param filename  the filename of the file
+     * @param lectureId      ID of the lecture, the attachment belongs to
+     * @param attachmentName the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/lecture/{lectureId}/{filename}")
+    @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) {
+        log.debug("REST request to get lecture attachment : {}", attachmentName);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
-        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
-                .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(getBaseName(attachmentName))).findAny()
+                .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
         // get the course for a lecture attachment
         Lecture lecture = attachment.getLecture();
@@ -385,25 +450,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
-    }
-
-    /**
-     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
-     * given attachment ID as a downloadable resource
-     *
-     * @param courseId     The ID of the course that the Attachment belongs to
-     * @param attachmentId the ID of the attachment to retrieve
-     * @return ResponseEntity containing the file as a resource
-     */
-    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
-        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        checkAttachmentExistsInCourseOrThrow(course, attachment);
-
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachmentName));
     }
 
     /**
@@ -442,6 +489,7 @@ public class FileResource {
 
     /**
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
+     * Accesses to this endpoint are created by the server itself in the FilePathService
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -449,7 +497,7 @@ public class FileResource {
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -458,12 +506,11 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachment.getName() + "." + getExtension(attachment.getLink())));
     }
 
     /**
-     * GET files/courses/{courseId}/attachment-units/{attachmenUnitId} : Returns the file associated with the
+     * GET files/courses/{courseId}/attachment-units/{attachmentUnitId} : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
      * @param courseId         The ID of the course that the Attachment belongs to
@@ -473,7 +520,7 @@ public class FileResource {
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentUnitId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for editors", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Attachment attachment = attachmentUnit.getAttachment();
@@ -483,7 +530,26 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
+     * given attachment ID as a downloadable resource
+     *
+     * @param courseId     The ID of the course that the Attachment belongs to
+     * @param attachmentId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
+        log.debug("REST request to get attachment file : {}", attachmentId);
+        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkAttachmentExistsInCourseOrThrow(course, attachment);
+
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    /**
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @param slideNumber      the slideNumber of the file
@@ -519,17 +585,6 @@ public class FileResource {
     }
 
     /**
-     * Builds the response with headers, body and content type for specified path and file name
-     *
-     * @param path     to the file
-     * @param filename the name of the file
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename) {
-        return buildFileResponse(path, filename, false);
-    }
-
-    /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
      * @param path  to the file including the file name
@@ -537,18 +592,42 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, boolean cache) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), cache);
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), Optional.empty(), cache);
     }
 
     /**
-     * Builds the response with headers, body and content type for specified path and file name
+     * Builds the response with headers, body and content type for specified path containing the file name
      *
-     * @param path     to the file
+     * @param path     to the file including the file name
      * @param filename the name of the file
      * @param cache    true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
+        return buildFileResponse(path, filename, Optional.empty(), cache);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path            to the file
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename) {
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path            to the file
+     * @param filename        the name of the file
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cache           true if the response should contain a header that allows caching; false otherwise
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean cache) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -563,7 +642,8 @@ public class FileResource {
             String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
                     ? "attachment"
                     : "inline";
-            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
+            String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
+            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {

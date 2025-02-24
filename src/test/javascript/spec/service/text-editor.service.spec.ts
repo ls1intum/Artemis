@@ -1,21 +1,18 @@
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 
-import { HttpClient, HttpEvent, HttpHandler } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 import { Language } from 'app/entities/course.model';
-
-class MockHttpHandler implements HttpHandler {
-    handle(): Observable<HttpEvent<any>> {
-        return new Observable<HttpEvent<any>>();
-    }
-}
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
 describe('TextEditorService', () => {
     let textEditorService: TextEditorService;
-    let httpClient: HttpClient;
+
     beforeEach(() => {
-        httpClient = new HttpClient(new MockHttpHandler());
-        textEditorService = new TextEditorService(httpClient);
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting()],
+        });
+        textEditorService = TestBed.inject(TextEditorService);
     });
     it('Can detect a short German string', () => {
         const testString = 'Das ist ein kurzer, deutscher Satz';

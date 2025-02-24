@@ -18,8 +18,8 @@
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     [correctionRound]="correctionRound"
     (save)="save()"
-    (submit)="submit()"
-    (cancel)="cancel()"
+    (onSubmit)="submit()"
+    (onCancel)="cancel()"
     (nextSubmission)="nextSubmission()"
     [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
@@ -50,13 +50,16 @@
             </jhi-resizeable-container>
         </div>
         <div class="row mt-3">
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                [highlightDifferences]="highlightDifferences"
-                (feedbacksChange)="validateFeedback()"
-                [readOnly]="readOnly"
-                [useDefaultFeedbackSuggestionBadgeText]="true"
-            />
+            @if (result && result.id) {
+                <jhi-unreferenced-feedback
+                    [(feedbacks)]="unreferencedFeedback"
+                    [highlightDifferences]="highlightDifferences"
+                    (feedbacksChange)="validateFeedback()"
+                    [readOnly]="readOnly"
+                    [useDefaultFeedbackSuggestionBadgeText]="true"
+                    [resultId]="result.id"
+                />
+            }
         </div>
     } @else {
         @if (!loadingInitialSubmission) {
@@ -101,12 +104,15 @@
         </jhi-resizeable-container>
     </div>
     <div class="row mt-3">
-        <jhi-unreferenced-feedback
-            [(feedbacks)]="unreferencedFeedback"
-            [highlightDifferences]="highlightDifferences"
-            (feedbacksChange)="validateFeedback()"
-            [readOnly]="readOnly"
-            [useDefaultFeedbackSuggestionBadgeText]="true"
-        />
+        @if (result && result.id) {
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                [highlightDifferences]="highlightDifferences"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly"
+                [useDefaultFeedbackSuggestionBadgeText]="true"
+                [resultId]="result.id"
+            />
+        }
     </div>
 </ng-template>

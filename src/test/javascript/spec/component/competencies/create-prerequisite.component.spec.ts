@@ -6,15 +6,13 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
@@ -27,7 +25,7 @@ describe('CreatePrerequisite', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreatePrerequisiteComponent, ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
+            imports: [CreatePrerequisiteComponent, PrerequisiteFormComponent],
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DocumentationButtonComponent),
@@ -111,13 +109,11 @@ describe('CreatePrerequisite', () => {
         const router: Router = TestBed.inject(Router);
         const prerequisiteService = TestBed.inject(PrerequisiteService);
 
-        const textUnit: TextUnit = new TextUnit();
-        textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
-            connectedLectureUnits: [textUnit],
+            masteryThreshold: 100,
         };
 
         const response: HttpResponse<Prerequisite> = new HttpResponse({
@@ -138,7 +134,6 @@ describe('CreatePrerequisite', () => {
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
-            competency.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();

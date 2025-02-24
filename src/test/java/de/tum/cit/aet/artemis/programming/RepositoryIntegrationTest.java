@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -43,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -54,25 +54,17 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -81,20 +73,14 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
@@ -102,50 +88,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     private final String filesContentBaseUrl = "/api/repository-files-content/";
 
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private PostTestRepository postRepository;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
 
     private final String currentLocalFileContent = "testContent";
+
+    private final byte[] currentLocalBinaryFileContent = { (byte) 0b10101010, (byte) 0b11001100, (byte) 0b11110000 };
 
     private final String currentLocalFolderName = "currentFolderName";
 
@@ -197,6 +146,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         // write content to the created file
         FileUtils.write(studentFile, currentLocalFileContent, Charset.defaultCharset());
 
+        // add binary file to the repo folder
+        var studentFilePathBinary = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        var studentFileBinary = Files.createFile(studentFilePathBinary).toFile();
+        FileUtils.writeByteArrayToFile(studentFileBinary, currentLocalBinaryFileContent);
+
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
@@ -209,12 +163,16 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
-        // add file to the template repo folder
+        // add files to the template repo folder
         var templateFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName);
         var templateFile = Files.createFile(templateFilePath).toFile();
 
-        // write content to the created file
+        var templateBinaryFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        var templateBinaryFile = Files.createFile(templateBinaryFilePath).toFile();
+
+        // write content to the created files
         FileUtils.write(templateFile, currentLocalFileContent, Charset.defaultCharset());
+        FileUtils.writeByteArrayToFile(templateBinaryFile, currentLocalBinaryFileContent);
 
         // add folder to the template repo folder
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
@@ -321,6 +279,22 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithOmitBinaries() throws Exception {
+        var queryParams = "?omitBinaries=true";
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+
+        assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
+
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
@@ -398,7 +372,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.cit.aet.artemis.programming.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.cit.aet.artemis.programming.domain.File.class), FileType.FILE);
-        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class), anyBoolean());
 
         MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
         mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
@@ -432,14 +406,16 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+
+            if (studentFile.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
-        FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
         Path newPath = Path.of(studentRepository.localRepoFile + "/newFile");
         var file2 = Files.createFile(newPath).toFile();
@@ -452,7 +428,10 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+            if (file2.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
+
         }
     }
 
@@ -1081,7 +1060,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
+        participationRepository.updateLockedById(participation.getId(), true);
 
         // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -1104,7 +1083,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
+        participationRepository.updateLockedById(participation.getId(), true);
 
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
@@ -1253,13 +1232,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         List<ILoggingEvent> logsList = listAppender.list;
         assertThat(logsList.getFirst().getMessage()).startsWith("Cannot lock student repository for participation ");
         assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetSolutionFileNames() throws Exception {
-        var fileNames = request.get(studentRepoBaseUrl + participation.getId() + "/file-names", HttpStatus.OK, String[].class);
-        assertThat(fileNames).containsExactly("currentFileName");
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

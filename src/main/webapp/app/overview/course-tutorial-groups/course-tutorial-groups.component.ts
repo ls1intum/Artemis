@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { map, takeUntil } from 'rxjs/operators';
@@ -12,9 +12,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, TutorialGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
+import { NgClass } from '@angular/common';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },
@@ -28,12 +31,28 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     further: true,
 };
 
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+    registered: false,
+    all: false,
+    further: false,
+};
+
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private courseStorageService = inject(CourseStorageService);
+    private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+    private courseOverviewService = inject(CourseOverviewService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroups: TutorialGroup[] = [];
@@ -42,25 +61,15 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     configuration?: TutorialGroupsConfiguration;
     isLoading = false;
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
 
-    tutorialGroupSelected: boolean = true;
+    tutorialGroupSelected = true;
     sidebarData: SidebarData;
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
     sidebarTutorialGroups: SidebarCardElement[] = [];
-
-    constructor(
-        private router: Router,
-        private courseStorageService: CourseStorageService,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private cdr: ChangeDetectorRef,
-        private courseOverviewService: CourseOverviewService,
-    ) {}
 
     get registeredTutorialGroups() {
         if (this.course?.isAtLeastTutor) {

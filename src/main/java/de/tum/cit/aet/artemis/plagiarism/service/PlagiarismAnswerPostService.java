@@ -15,8 +15,10 @@ import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -38,12 +40,17 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
+            SingleUserNotificationService singleUserNotificationService) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
+                savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -164,7 +171,7 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerPostId);
-
+        preparePostForBroadcast(post);
         broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
@@ -219,5 +226,14 @@ public class PlagiarismAnswerPostService extends PostingService {
         if (!user.getId().equals(answerPost.getAuthor().getId())) {
             throw new AccessForbiddenException("You are not allowed to edit this post");
         }
+    }
+
+    /**
+     * Sends out a request to the SingleUserNotificationService to inform the instructor about a reply to a post related to a plagiarism case.
+     *
+     * @param post the post that has received a reply
+     */
+    public void informInstructorAboutPostReply(Post post) {
+        singleUserNotificationService.notifyInstructionAboutPlagiarismCaseReply(post.getPlagiarismCase(), post.getAuthor());
     }
 }

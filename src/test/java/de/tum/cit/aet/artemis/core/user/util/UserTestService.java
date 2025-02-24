@@ -18,9 +18,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,6 +27,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -46,11 +45,16 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
@@ -92,6 +96,9 @@ public class UserTestService {
     private UserUtilService userUtilService;
 
     @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -102,6 +109,21 @@ public class UserTestService {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private ParticipationTestRepository participationRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private LearnerProfileRepository learnerProfileRepository;
+
+    @Autowired
+    private ExerciseTestRepository exerciseTestRepository;
 
     private String TEST_PREFIX;
 
@@ -119,19 +141,9 @@ public class UserTestService {
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
 
-    @Autowired
-    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
-
-    @Autowired
-    private ParticipationTestRepository participationRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
-
         List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
@@ -214,8 +226,11 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
-                userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
+            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            user.getGroups().clear();
+            return userTestRepository.save(user);
+        }).collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
         request.delete("/api/admin/users", HttpStatus.OK, logins);
@@ -398,6 +413,8 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+
+        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
 
         return userInDB;
     }
@@ -866,25 +883,6 @@ public class UserTestService {
     }
 
     // Test
-    public void addAndDeleteSshPublicKey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-
-        // adding invalid key should fail
-        String invalidSshKey = "invalid key";
-        request.putWithResponseBody("/api/account/ssh-public-key", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
-
-        // adding valid key should work correctly
-        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
-
-        // deleting the key shoul work correctly
-        request.delete("/api/account/ssh-public-key", HttpStatus.OK);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(null);
-    }
-
-    // Test
     public void getAndCreateParticipationVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -913,6 +911,36 @@ public class UserTestService {
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());
+    }
+
+    // Test
+    public void getAndCreateParticipationVcsAccessTokenForTeamExercise() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        exercise.setMode(ExerciseMode.TEAM);
+        exerciseTestRepository.save(exercise);
+        courseRepository.save(course);
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Team team = teamUtilService.createTeam(Set.of(user), tutor1, exercise, "team1");
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(exercise, submission, team);
+
+        // request existing token
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+
+        var token = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+                HttpStatus.OK);
+        assertThat(token).isNotNull();
+
+        var token2 = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(token2).isEqualTo(token);
+
+        submissionRepository.delete(submission);
+        participationVCSAccessTokenRepository.deleteAll();
+        participationRepository.deleteById(submission.getParticipation().getId());
+        teamUtilService.deleteTeam(team);
     }
 
     // Test
@@ -973,7 +1001,6 @@ public class UserTestService {
      *
      * @param userNumbers the user creation matrix
      * @return String of the user authority with the most users
-     * @throws Exception
      */
     private String getMainUserAuthority(Integer[] userNumbers) throws Exception {
         List<Integer> userNumbersList = Arrays.asList(userNumbers);
@@ -1124,6 +1151,14 @@ public class UserTestService {
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user2).doesNotContain(user1);
         }
+    }
+
+    public static UserSshPublicKey createNewValidSSHKey(User user, String keyString) {
+        UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
+        userSshPublicKey.setPublicKey(keyString);
+        userSshPublicKey.setLabel("Key 1");
+        userSshPublicKey.setUserId(user.getId());
+        return userSshPublicKey;
     }
 
     // Test

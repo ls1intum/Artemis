@@ -57,7 +57,6 @@ All these exercises are supposed to be run either live in the lecture with insta
    Guided Tour <dev/guided-tour>
    dev/testservers
    dev/docker
-   dev/cypress
    dev/playwright
    dev/open-source
    dev/local-moodle-setup-for-lti
@@ -79,6 +78,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    admin/knownIssues
    admin/benchmarking-tool
    admin/telemetry
+   admin/cleanup-service
 
 
 .. toctree::

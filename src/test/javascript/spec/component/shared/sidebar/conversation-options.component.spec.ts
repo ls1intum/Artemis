@@ -8,7 +8,6 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../overview/course-conversations/helpers/conversationExampleModels';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { NgbDropdownMocksModule } from '../../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
@@ -19,7 +18,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
@@ -27,14 +25,16 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
     () => generateExampleGroupChatDTO({}),
-    () => generateExampleChannelDTO({}),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+    () => generateExampleChannelDTO({} as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 } as ChannelDTO),
 ];
 
 examples.forEach((conversation) => {
@@ -51,8 +51,7 @@ examples.forEach((conversation) => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisSharedModule, NgbDropdownMocksModule],
-                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                imports: [MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
@@ -63,9 +62,9 @@ examples.forEach((conversation) => {
                     MockProvider(MetisConversationService),
                     MockProvider(AlertService),
                     MockProvider(NgbModal),
-                    MockPipe(ArtemisTranslatePipe),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: NotificationService, useClass: MockNotificationService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();
 
@@ -84,6 +83,43 @@ examples.forEach((conversation) => {
         it('should create', () => {
             expect(component).toBeTruthy();
         });
+
+        it('should remove conversation from favorites when hidden', fakeAsync(() => {
+            component.conversation.isFavorite = true;
+            component.conversation.isHidden = false;
+
+            const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
+            hideButton.click();
+            tick(501);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isFavorite).toBeFalse();
+            expect(component.conversation.isHidden).toBeTrue();
+        }));
+
+        it('should remove conversation from hidden when favorited', fakeAsync(() => {
+            component.conversation.isFavorite = false;
+            component.conversation.isHidden = true;
+            fixture.detectChanges();
+
+            const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
+            favoriteButton.click();
+            tick(501);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isHidden).toBeFalse();
+            expect(component.conversation.isFavorite).toBeTrue();
+        }));
 
         it('should call updateIsFavorite when button is clicked', fakeAsync(() => {
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');

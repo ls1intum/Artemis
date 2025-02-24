@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -11,32 +11,36 @@ import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
     styleUrls: ['./create-exercise-unit.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, ArtemisTranslatePipe],
 })
 export class CreateExerciseUnitComponent implements OnInit {
-    @Input()
-    hasCancelButton: boolean;
-    @Input()
-    hasCreateExerciseButton: boolean;
-    @Input()
-    shouldNavigateOnSubmit = true;
-    @Input()
-    lectureId: number | undefined;
-    @Input()
-    courseId: number | undefined;
-    @Input()
-    currentWizardStep: number;
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private exerciseUnitService = inject(ExerciseUnitService);
 
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
+    protected readonly faTimes = faTimes;
+    protected readonly faSort = faSort;
 
-    faTimes = faTimes;
+    @Input() lectureId: number | undefined;
+    @Input() courseId: number | undefined;
+    hasCancelButton = input<boolean>();
+    shouldNavigateOnSubmit = input<boolean>(true);
+
+    onCancel = output<void>();
+    onExerciseUnitCreated = output<void>();
 
     predicate = 'type';
     reverse = false;
@@ -44,18 +48,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    // Icons
-    faSort = faSort;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private exerciseUnitService: ExerciseUnitService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -98,7 +90,7 @@ export class CreateExerciseUnitComponent implements OnInit {
             .pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)),
                 finalize(() => {
-                    if (this.shouldNavigateOnSubmit) {
+                    if (this.shouldNavigateOnSubmit()) {
                         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {
                         this.onExerciseUnitCreated.emit();
@@ -132,12 +124,5 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     cancelForm() {
         this.onCancel.emit();
-    }
-
-    createNewExercise() {
-        this.router.navigate(['/course-management', this.courseId, 'exercises'], {
-            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep },
-            queryParamsHandling: '',
-        });
     }
 }

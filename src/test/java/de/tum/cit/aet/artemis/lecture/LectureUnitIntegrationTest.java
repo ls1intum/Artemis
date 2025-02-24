@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -116,11 +117,11 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().getFirst();
         var competency = competencyUtilService.createCompetency(lecture1.getCourse());
-        lectureUnit.setCompetencies(Set.of(competency));
+        lectureUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)));
         lectureRepository.save(lecture1);
 
         var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().getFirst().getCompetencies()).isNotEmpty();
+        assertThat(lecture.getLectureUnits().getFirst().getCompetencyLinks()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());

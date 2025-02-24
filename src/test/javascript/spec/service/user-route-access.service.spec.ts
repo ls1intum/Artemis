@@ -1,14 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
-import { ArtemisTestModule } from '../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../helpers/mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
@@ -17,6 +15,7 @@ import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('UserRouteAccessService', () => {
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
@@ -38,7 +37,6 @@ describe('UserRouteAccessService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 RouterModule.forRoot([
                     {
                         path: route,
@@ -46,16 +44,15 @@ describe('UserRouteAccessService', () => {
                     },
                 ]),
             ],
-            declarations: [CourseExerciseDetailsComponent],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 mockedActivatedRouteSnapshot(route),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(StateStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(CourseExerciseDetailsComponent, '')
@@ -111,12 +108,10 @@ describe('UserRouteAccessService', () => {
     it('should return false if it does not have authority', async () => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
         const storeSpy = jest.spyOn(storageService, 'storeUrl');
-        const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
 
         const result = await service.checkLogin([Authority.EDITOR], url);
 
         expect(result).toBeFalse();
-        expect(consoleErrorMock).toHaveBeenCalledWith('User has not any of required authorities: ', [Authority.EDITOR]);
         expect(storeSpy).not.toHaveBeenCalled();
     });
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -27,6 +27,7 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { CourseForArchiveDTO } from './course-for-archive-dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -35,6 +36,15 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
+    private http = inject(HttpClient);
+    private courseStorageService = inject(CourseStorageService);
+    private lectureService = inject(LectureService);
+    private accountService = inject(AccountService);
+    private entityTitleService = inject(EntityTitleService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private scoresStorageService = inject(ScoresStorageService);
+
     private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
@@ -43,17 +53,6 @@ export class CourseManagementService {
 
     private courseOverviewSubject = new BehaviorSubject<boolean>(false);
     isCourseOverview$ = this.courseOverviewSubject.asObservable();
-
-    constructor(
-        private http: HttpClient,
-        private courseStorageService: CourseStorageService,
-        private lectureService: LectureService,
-        private accountService: AccountService,
-        private entityTitleService: EntityTitleService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private tutorialGroupsService: TutorialGroupsService,
-        private scoresStorageService: ScoresStorageService,
-    ) {}
 
     /**
      * updates a course using a PUT request
@@ -341,6 +340,13 @@ export class CourseManagementService {
                 }
             }),
         );
+    }
+
+    /**
+     * Find all courses for the archive using a GET request
+     */
+    getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
+        return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
     }
 
     /**
@@ -702,5 +708,14 @@ export class CourseManagementService {
 
     disableCourseOverviewBackground() {
         this.courseOverviewSubject.next(false);
+    }
+
+    getSemesterCollapseStateFromStorage(storageId: string): boolean {
+        const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
+        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+    }
+
+    setSemesterCollapseState(storageId: string, isCollapsed: boolean) {
+        localStorage.setItem('semester.collapseState.' + storageId, JSON.stringify(isCollapsed));
     }
 }

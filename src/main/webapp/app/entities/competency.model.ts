@@ -46,6 +46,12 @@ export enum CourseCompetencyType {
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;
 
+export const HIGH_COMPETENCY_LINK_WEIGHT = 1;
+export const MEDIUM_COMPETENCY_LINK_WEIGHT = 0.5;
+export const LOW_COMPETENCY_LINK_WEIGHT = 0.25;
+export const LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
+export const MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
+
 export abstract class BaseCompetency implements BaseEntity {
     id?: number;
     title?: string;
@@ -53,13 +59,17 @@ export abstract class BaseCompetency implements BaseEntity {
     taxonomy?: CompetencyTaxonomy;
 }
 
+export interface UpdateCourseCompetencyRelationDTO {
+    newRelationType: CompetencyRelationType;
+}
+
 export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;
     optional?: boolean;
     linkedStandardizedCompetency?: StandardizedCompetency;
-    exercises?: Exercise[];
-    lectureUnits?: LectureUnit[];
+    exerciseLinks?: CompetencyExerciseLink[];
+    lectureUnitLinks?: CompetencyLectureUnitLink[];
     userProgress?: CompetencyProgress[];
     courseProgress?: CourseCompetencyProgress;
     course?: Course;
@@ -70,12 +80,41 @@ export abstract class CourseCompetency extends BaseCompetency {
     protected constructor(type: CourseCompetencyType) {
         super();
         this.type = type;
+        this.masteryThreshold = DEFAULT_MASTERY_THRESHOLD;
     }
 }
 
 export class Competency extends CourseCompetency {
     constructor() {
         super(CourseCompetencyType.COMPETENCY);
+    }
+}
+
+export class CompetencyLearningObjectLink {
+    competency?: CourseCompetency;
+    weight: number;
+
+    constructor(competency: CourseCompetency | undefined, weight: number) {
+        this.competency = competency;
+        this.weight = weight;
+    }
+}
+
+export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
+    exercise?: Exercise;
+
+    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number) {
+        super(competency, weight);
+        this.exercise = exercise;
+    }
+}
+
+export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
+    lectureUnit?: LectureUnit;
+
+    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number) {
+        super(competency, weight);
+        this.lectureUnit = lectureUnit;
     }
 }
 
@@ -141,14 +180,14 @@ export enum ConfidenceReason {
     MORE_EASY_POINTS = 'MORE_EASY_POINTS',
     MORE_HARD_POINTS = 'MORE_HARD_POINTS',
     QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+    MORE_LOW_WEIGHTED_EXERCISES = 'MORE_LOW_WEIGHTED_EXERCISES',
+    MORE_HIGH_WEIGHTED_EXERCISES = 'MORE_HIGH_WEIGHTED_EXERCISES',
 }
 
 export class CompetencyProgress {
     public progress?: number;
     public confidence?: number;
     public confidenceReason?: ConfidenceReason;
-
-    constructor() {}
 }
 
 export class CourseCompetencyProgress {
@@ -156,8 +195,6 @@ export class CourseCompetencyProgress {
     numberOfStudents?: number;
     numberOfMasteredStudents?: number;
     averageStudentScore?: number;
-
-    constructor() {}
 }
 
 export class CompetencyRelation implements BaseEntity {
@@ -201,8 +238,6 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
 export class CompetencyWithTailRelationDTO {
     competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
-
-    constructor() {}
 }
 
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
@@ -245,4 +280,25 @@ export function getConfidence(competencyProgress: CompetencyProgress | undefined
 export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
     // clamp the value between 0 and 100
     return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
+}
+
+/**
+ * Simple comparator for sorting competencies by their soft due date
+ * @param a The first competency
+ * @param b The second competency
+ */
+export function compareSoftDueDate(a: CourseCompetency, b: CourseCompetency): number {
+    if (a.softDueDate) {
+        if (b.softDueDate) {
+            if (a.softDueDate.isSame(b.softDueDate)) {
+                return 0;
+            }
+            return a.softDueDate.isBefore(b.softDueDate) ? -1 : 1;
+        }
+        return -1;
+    }
+    if (b.softDueDate) {
+        return 1;
+    }
+    return 0;
 }

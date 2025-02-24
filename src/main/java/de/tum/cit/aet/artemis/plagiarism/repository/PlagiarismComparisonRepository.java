@@ -74,7 +74,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
 
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional // ok because of delete
     void deletePlagiarismComparisonsByPlagiarismResultIdAndStatus(Long plagiarismResultId, PlagiarismStatus plagiarismStatus);
 
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
@@ -90,4 +90,5 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     void updatePlagiarismComparisonStatus(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
 
     Set<PlagiarismComparison<?>> findAllByPlagiarismResultExerciseId(long exerciseId);
+
 }

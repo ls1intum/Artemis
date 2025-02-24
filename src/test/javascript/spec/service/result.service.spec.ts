@@ -129,7 +129,6 @@ describe('ResultService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -155,7 +154,7 @@ describe('ResultService', () => {
         const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints2.result = result2;
         resultWithPoints2.totalPoints = 50;
-        resultWithPoints2.pointsPerCriterion = new Map(Object.entries({ '1': 20, '2': 30 }).map(([key, value]) => [Number(key), value]));
+        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
 
         const results = [resultWithPoints1, resultWithPoints2];
 

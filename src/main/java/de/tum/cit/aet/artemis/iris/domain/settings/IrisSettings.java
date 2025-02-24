@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisGlobalSettings.class, name = "global"),
     @JsonSubTypes.Type(value = IrisCourseSettings.class, name = "course"),
-    @JsonSubTypes.Type(value = IrisExerciseSettings.class, name = "exercise")
+    @JsonSubTypes.Type(value = IrisExerciseSettings.class, name = "exercise"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -49,11 +49,24 @@ public abstract class IrisSettings extends DomainObject {
 
     public abstract void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings);
 
+    public abstract IrisCourseChatSubSettings getIrisCourseChatSettings();
+
+    public abstract void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings);
+
     public abstract IrisLectureIngestionSubSettings getIrisLectureIngestionSettings();
 
     public abstract void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings);
 
+    public abstract IrisLectureChatSubSettings getIrisLectureChatSettings();
+
+    public abstract void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings);
+
     public abstract IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings();
 
     public abstract void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings);
+
+    public abstract IrisFaqIngestionSubSettings getIrisFaqIngestionSettings();
+
+    public abstract void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings);
+
 }

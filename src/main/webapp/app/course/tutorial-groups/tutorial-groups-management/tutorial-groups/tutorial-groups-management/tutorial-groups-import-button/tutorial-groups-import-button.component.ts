@@ -1,15 +1,19 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective],
 })
 export class TutorialGroupsImportButtonComponent implements OnDestroy {
+    private modalService = inject(NgbModal);
+
     ngUnsubscribe = new Subject<void>();
 
     @ViewChild('warning')
@@ -18,8 +22,6 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
     @Input() courseId: number;
 
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
-
-    constructor(private modalService: NgbModal) {}
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();

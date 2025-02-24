@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { Course } from 'app/entities/course.model';
@@ -7,35 +7,23 @@ import { EMPTY, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
-
-@Component({
-    selector: 'jhi-channel-item',
-    template: '',
-})
-class ChannelItemStubComponent {
-    @Output()
-    channelAction = new EventEmitter<ChannelAction>();
-    @Input()
-    channel: ChannelDTO;
-}
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 const examples: ChannelDTO[] = [
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXAM }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM } as ChannelDTO),
 ];
 
 examples.forEach((exampleChannel) => {
@@ -46,7 +34,7 @@ examples.forEach((exampleChannel) => {
         const allowChannelCreation = exampleChannel.subType === ChannelSubType.GENERAL;
         const createChannelFn = allowChannelCreation ? jest.fn() : undefined;
         const canCreateChannel = jest.fn();
-        let channelItems: ChannelItemStubComponent[];
+        let channelItems: ChannelItemComponent[];
 
         let channelOne: ChannelDTO;
         let channelTwo: ChannelDTO;
@@ -59,15 +47,15 @@ examples.forEach((exampleChannel) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbCollapseMocksModule],
-                declarations: [
-                    ChannelsOverviewDialogComponent,
-                    LoadingIndicatorContainerStubComponent,
-                    ChannelItemStubComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
+                declarations: [ChannelsOverviewDialogComponent, LoadingIndicatorContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                providers: [
+                    MockProvider(ChannelService),
+                    MockProvider(ConversationService),
+                    MockProvider(AlertService),
+                    MockProvider(NgbModal),
+                    MockProvider(NgbActiveModal),
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
-                providers: [MockProvider(ChannelService), MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), MockProvider(NgbActiveModal)],
             }).compileComponents();
         }));
 
@@ -78,8 +66,8 @@ examples.forEach((exampleChannel) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ChannelsOverviewDialogComponent);
             component = fixture.componentInstance;
-            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType });
-            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType });
+            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType } as ChannelDTO);
+            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType } as ChannelDTO);
             channelService = TestBed.inject(ChannelService);
             getChannelsOfCourseSpy = jest.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
                 of(
@@ -100,15 +88,14 @@ examples.forEach((exampleChannel) => {
             component.canCreateChannel = canCreateChannel;
             initializeDialog(component, fixture, { course, createChannelFn, channelSubType: exampleChannel.subType });
 
-            channelItems = fixture.debugElement.queryAll(By.directive(ChannelItemStubComponent)).map((debugElement) => debugElement.componentInstance);
+            channelItems = fixture.debugElement.queryAll(By.css('jhi-channel-item')).map((debugElement) => debugElement.componentInstance);
         });
 
         it('should create', () => {
             expect(component).toBeTruthy();
             expect(getChannelsOfCourseSpy).toHaveBeenCalledWith(course.id);
             expect(getChannelsOfCourseSpy).toHaveBeenCalledOnce();
-            expect(component.noOfChannels).toBe(3);
-            expect(component.otherChannels).toHaveLength(3);
+            expect(component.noOfChannels).toBe(6);
             expect(fixture.nativeElement.querySelectorAll('jhi-channel-item')).toHaveLength(6);
             expect(channelItems).toHaveLength(6);
             expect(channelItems[0].channel).toEqual(channelOne);
@@ -156,46 +143,5 @@ examples.forEach((exampleChannel) => {
                 expect(component.channelModificationPerformed).toBeTrue();
             }));
         }
-
-        it('should not show create channel button if user is missing the permission', fakeAsync(() => {
-            canCreateChannel.mockReturnValue(false);
-            fixture.detectChanges();
-            expect(fixture.debugElement.nativeElement.querySelector('#createChannel')).toBeFalsy();
-        }));
-
-        if (allowChannelCreation) {
-            it('should open create channel dialog when button is pressed', fakeAsync(() => {
-                const modalService = TestBed.inject(NgbModal);
-                const mockModalRef = {
-                    componentInstance: { course: undefined, initialize: () => {} },
-                    result: Promise.resolve(new ChannelDTO()),
-                };
-                const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-                fixture.detectChanges();
-
-                const createChannelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
-                createChannelButton.click();
-                tick(501);
-                fixture.whenStable().then(() => {
-                    expect(openDialogSpy).toHaveBeenCalledOnce();
-                    expect(openDialogSpy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-                    expect(mockModalRef.componentInstance.course).toEqual(course);
-                });
-            }));
-        } else {
-            it('should hide create channel button if creation is not allowed', () => {
-                const createChannelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
-                expect(createChannelButton).toBeNull();
-            });
-        }
-
-        it('should toggle other channels on click', () => {
-            expect(component.otherChannelsAreCollapsed).toBeTrue();
-
-            const otherChannels = fixture.debugElement.nativeElement.querySelector('.other-channels');
-            otherChannels.click();
-
-            expect(component.otherChannelsAreCollapsed).toBeFalse();
-        });
     });
 });

@@ -63,6 +63,6 @@ public class GitLabCIUserManagementService implements CIUserManagementService {
     }
 
     private void logUnsupportedAction() {
-        log.error("Please refer to the repository for user management.");
+        log.debug("Please refer to the repository for user management.");
     }
 }

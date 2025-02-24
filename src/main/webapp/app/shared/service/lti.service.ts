@@ -5,11 +5,10 @@ import { BehaviorSubject } from 'rxjs';
     providedIn: 'root',
 })
 export class LtiService {
-    constructor() {}
-    private ltiSubject = new BehaviorSubject<boolean>(false);
-    isLti$ = this.ltiSubject.asObservable();
+    private shownViaLtiSubject = new BehaviorSubject<boolean>(false);
+    isShownViaLti$ = this.shownViaLtiSubject.asObservable();
 
-    setLti(isLti: boolean) {
-        this.ltiSubject.next(isLti);
+    setShownViaLti(shownViaLti: boolean) {
+        this.shownViaLtiSubject.next(shownViaLti);
     }
 }

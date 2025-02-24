@@ -13,11 +13,11 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment-resolve.service';
 
 describe('TextAssessment Service', () => {
     let service: TextAssessmentService;
@@ -65,7 +65,6 @@ describe('TextAssessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TextAssessmentService);

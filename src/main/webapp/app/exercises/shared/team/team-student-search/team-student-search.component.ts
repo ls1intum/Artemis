@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Observable, combineLatest, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
@@ -8,12 +8,17 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team } from 'app/entities/team.model';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-student-search',
     templateUrl: './team-student-search.component.html',
+    imports: [NgbTypeahead, ArtemisTranslatePipe],
 })
 export class TeamStudentSearchComponent {
+    private teamService = inject(TeamService);
+
     @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
 
     @Input() course: Course;
@@ -28,8 +33,6 @@ export class TeamStudentSearchComponent {
     @Output() searchNoResults = new EventEmitter<string | undefined>();
 
     inputDisplayValue: string;
-
-    constructor(private teamService: TeamService) {}
 
     onAutocompleteSelect = (student: User) => {
         this.inputDisplayValue = '';

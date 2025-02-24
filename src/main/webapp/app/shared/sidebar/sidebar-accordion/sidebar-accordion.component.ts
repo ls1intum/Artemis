@@ -1,12 +1,19 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelGroupCategory, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass, TitleCasePipe } from '@angular/common';
+import { SidebarCardDirective } from '../sidebar-card.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
@@ -20,14 +27,14 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
     @Input() showLeadingIcon = false;
-    @Input() showAddOptions = false;
-    @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
+    sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() collapseState: CollapseState;
-    @Input() isFilterActive: boolean = false;
+    @Input() isFilterActive = false;
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
+    totalUnreadMessagesPerGroup: { [key: string]: number } = {};
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();
@@ -40,10 +47,11 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         } else {
             this.setStoredCollapseState();
         }
+        this.calculateUnreadMessagesOfGroup();
     }
 
     setStoredCollapseState() {
-        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
+        const storedCollapseState: string | null = localStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
         if (storedCollapseState) this.collapseState = JSON.parse(storedCollapseState);
     }
 
@@ -68,15 +76,21 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
     }
 
-    toggleGroupCategoryCollapse(groupCategoryKey: string) {
-        this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
-        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+    calculateUnreadMessagesOfGroup(): void {
+        if (!this.groupedData) {
+            this.totalUnreadMessagesPerGroup = {};
+            return;
+        }
+
+        Object.keys(this.groupedData).forEach((groupKey) => {
+            this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData
+                .filter((item: SidebarCardElement) => item.conversation?.unreadMessagesCount)
+                .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
+        });
     }
 
-    getGroupKey(groupKey: string): boolean {
-        if (!this.showAddOption) {
-            return false;
-        }
-        return this.showAddOption[groupKey as ChannelGroupCategory];
+    toggleGroupCategoryCollapse(groupCategoryKey: string) {
+        this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
+        localStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
 }

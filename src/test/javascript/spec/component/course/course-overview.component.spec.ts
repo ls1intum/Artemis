@@ -1,10 +1,9 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../test.module';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -13,7 +12,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CourseCardComponent } from 'app/overview/course-card.component';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -21,13 +19,13 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
-import { AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -55,7 +53,12 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -118,6 +121,8 @@ const courses: Course[] = [course2];
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
 class ControlsTestingComponent implements BarControlConfigurationProvider, AfterViewInit {
+    controlsRendered = new EventEmitter<void>();
+
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
@@ -137,7 +142,7 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let jhiWebsocketService: JhiWebsocketService;
+    let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
@@ -147,6 +152,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
     let itemsDrop: NgbDropdown;
+    let courseSidebarService: CourseSidebarService;
 
     let metisConversationService: MetisConversationService;
 
@@ -163,14 +169,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [
-                RouterModule.forRoot([]),
-                ArtemisTestModule,
-                MockModule(MatSidenavModule),
-                MockModule(NgbTooltipModule),
-                MockModule(BrowserAnimationsModule),
-                NgbDropdownMocksModule,
-            ],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -184,7 +183,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
-                MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
             ],
             providers: [
@@ -192,7 +190,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(CompetencyService),
                 MockProvider(TeamService),
-                MockProvider(JhiWebsocketService),
+                MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
@@ -207,22 +205,26 @@ describe('CourseOverviewComponent', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: NgbDropdown, useClass: NgbDropdownMocksModule },
+                { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
-
                 component = fixture.componentInstance;
-                component.isLti = false;
+                component.isShownViaLti = false;
+                courseSidebarService = TestBed.inject(CourseSidebarService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                jhiWebsocketService = TestBed.inject(JhiWebsocketService);
+                jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 itemsDrop = component.itemsDrop;
@@ -445,7 +447,6 @@ describe('CourseOverviewComponent', () => {
             },
         );
 
-        // wait for the observable to complete
         tick();
     }));
 
@@ -648,16 +649,16 @@ describe('CourseOverviewComponent', () => {
 
     it('should display content of dropdown when dropdownOpen changes', () => {
         if (component.itemsDrop) {
-            itemsDrop.open();
             fixture.detectChanges();
-            expect(component.itemsDrop.isOpen).toBeTrue();
+            itemsDrop.open();
+            expect(component.itemsDrop.isOpen()).toBeTrue();
         }
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
         if (component.itemsDrop) {
             itemsDrop.close();
             fixture.detectChanges();
-            expect(component.itemsDrop.isOpen).toBeFalse();
+            expect(component.itemsDrop.isOpen()).toBeFalse();
         }
     });
 
@@ -673,11 +674,11 @@ describe('CourseOverviewComponent', () => {
 
     it('should change dropdownOpen when clicking on More', () => {
         if (component.itemsDrop) {
+            fixture.detectChanges();
             itemsDrop.close();
             const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
             clickOnMoreItem.click();
-
-            expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+            expect(fixture.nativeElement.querySelector('.dropdown-content')).toBeNull();
         }
     });
 
@@ -747,5 +748,17 @@ describe('CourseOverviewComponent', () => {
 
         expect(courseService.findAllForDropdown).toHaveBeenCalled();
         expect(component.dashboardSubscription.closed).toBeTrue();
+    });
+
+    it('should toggle isCollapsed when service emits corresponding event', () => {
+        fixture.detectChanges();
+        courseSidebarService.openSidebar();
+        expect(component.isSidebarCollapsed).toBeTrue();
+
+        courseSidebarService.closeSidebar();
+        expect(component.isSidebarCollapsed).toBeFalse();
+
+        courseSidebarService.toggleSidebar();
+        expect(component.isSidebarCollapsed).toBeTrue();
     });
 });

@@ -12,8 +12,8 @@
 services:
     saml-test:
         container_name: artemis-saml-test
-        image: docker.io/jamedjo/test-saml-idp
-        pull_policy: if_not_present
+        image: docker.io/jamedjo/test-saml-idp:1.18
+        pull_policy: missing
         ports:
             - "9980:8080"
         # expose the port to make it reachable docker internally even if the external port mapping changes

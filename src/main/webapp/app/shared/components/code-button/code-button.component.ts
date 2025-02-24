@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -16,52 +16,100 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Router, RouterLink } from '@angular/router';
+import { HelpIconComponent } from '../help-icon.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
+
+export enum RepositoryAuthenticationMethod {
+    Password = 'password',
+    Token = 'token',
+    SSH = 'ssh',
+}
 
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        NgbPopover,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        CdkCopyToClipboard,
+        FaIconComponent,
+        RouterLink,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        SafeUrlPipe,
+    ],
 })
-export class CodeButtonComponent implements OnInit, OnChanges {
-    readonly FeatureToggle = FeatureToggle;
-    readonly ProgrammingLanguage = ProgrammingLanguage;
+export class CodeButtonComponent implements OnInit {
+    private translateService = inject(TranslateService);
+    private externalCloningService = inject(ExternalCloningService);
+    private sshUserSettingsService = inject(SshUserSettingsService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private localStorage = inject(LocalStorageService);
+    private participationService = inject(ParticipationService);
+    private ideSettingsService = inject(IdeSettingsService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
 
-    @Input()
-    loading = false;
-    @Input()
-    useParticipationVcsAccessToken = false;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    repositoryUri?: string;
-    @Input()
-    routerLinkForRepositoryView?: string | (string | number)[];
-    @Input()
-    participations?: ProgrammingExerciseStudentParticipation[];
-    @Input()
-    exercise?: ProgrammingExercise;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
-    useSsh = false;
-    useToken = false;
-    tokenExpired = false;
-    tokenMissing = false;
+    loading = input<boolean>(false);
+
+    // either use the participation token (true) OR the user token (false)
+    smallButtons = input.required<boolean>();
+    repositoryUri = input.required<string>();
+    routerLinkForRepositoryView = input.required<(string | number)[]>();
+    participations = input<ProgrammingExerciseStudentParticipation[]>([]);
+    exercise = input<ProgrammingExercise>();
+    hideLabelMobile = input<boolean>(false);
+
+    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
+    authenticationMechanism = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+    selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
+
+    userTokenStillValid = false;
+    userTokenPresent = false;
+
     sshEnabled = false;
     sshTemplateUrl?: string;
-    sshSettingsUrl?: string;
-    vcsTokenSettingsUrl?: string;
-    repositoryPassword?: string;
     versionControlUrl: string;
-    accessTokensEnabled?: boolean;
-    localVCEnabled = false;
-    gitlabVCEnabled = false;
-    showCloneUrlWithoutToken = true;
-    copyEnabled? = true;
 
+    localVCEnabled = signal<boolean>(false);
+    gitlabVCEnabled = false;
+
+    copyEnabled = false;
+    doesUserHaveSSHkeys = false;
+    areAnySshKeysExpired = false;
+    isInCourseManagement = false;
+
+    sshSettingsUrl: string;
+    vcsTokenSettingsUrl: string;
     sshKeyMissingTip: string;
+    sshKeysExpiredTip: string;
     tokenMissingTip: string;
     tokenExpiredTip: string;
-
     user: User;
+    sshKeys?: UserSshPublicKey[];
     cloneHeadline: string;
     wasCopied = false;
     isTeamParticipation: boolean;
@@ -76,204 +124,130 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly faExternalLink = faExternalLink;
     ideName: string;
 
-    constructor(
-        private translateService: TranslateService,
-        private externalCloningService: ExternalCloningService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private localStorage: LocalStorageService,
-        private participationService: ParticipationService,
-        private ideSettingsService: IdeSettingsService,
-    ) {}
+    constructor() {
+        this.isInCourseManagement = this.router.url.includes('course-management');
 
-    ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user) => {
-                this.user = user!;
-                this.refreshTokenState();
+        effect(async () => {
+            if (this.participations().length) {
+                const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
+                this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations(), shouldPreferPractice) ?? this.participations()[0];
+                this.isPracticeMode = isPracticeMode(this.activeParticipation);
+                this.isTeamParticipation = !!this.activeParticipation?.team;
+            }
 
-                this.copyEnabled = true;
-                this.useSsh = this.localStorage.retrieve('useSsh') || false;
-                this.useToken = this.localStorage.retrieve('useToken') || false;
-                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+            this.cloneHeadline = this.getCloneHeadline();
+        });
 
-                if (this.useSsh) {
-                    this.useSshUrl();
-                }
-                if (this.useToken) {
-                    this.useHttpsUrlWithToken();
-                }
-            })
-            .then(() => this.loadParticipationVcsAccessTokens());
+        effect(() => {
+            if (!this.isInCourseManagement && this.localVCEnabled()) {
+                this.loadVcsAccessTokensForAllParticipations();
+            }
+        });
+    }
+
+    async ngOnInit() {
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
+
+        await this.checkForSshKeys();
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.sshSettingsUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
-            this.sshEnabled = !!this.sshTemplateUrl;
+            if (profileInfo.repositoryAuthenticationMechanisms?.length) {
+                this.authenticationMechanism = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+                    Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
+                );
+            }
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.accessTokensEnabled = profileInfo.useVersionControlAccessToken ?? false;
-            this.showCloneUrlWithoutToken = profileInfo.showCloneUrlWithoutToken ?? true;
-            this.useToken = !this.showCloneUrlWithoutToken;
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+
+            this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
-            if (this.localVCEnabled) {
-                this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
-                this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
-                this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
-                this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
-            } else {
-                this.sshSettingsUrl = profileInfo.sshKeysURL;
-            }
-            this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+
+            this.configureTooltips(profileInfo);
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
-
             this.ideName = this.getIde().name;
         });
     }
 
-    ngOnChanges() {
-        if (this.participations?.length) {
-            const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
-            this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
-            this.isPracticeMode = isPracticeMode(this.activeParticipation);
-            this.cloneHeadline =
-                this.isPracticeMode && !this.exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
-            this.isTeamParticipation = !!this.activeParticipation?.team;
-        } else if (this.repositoryUri) {
-            this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
-        }
-        this.loadParticipationVcsAccessTokens();
-    }
-
     public useSshUrl() {
-        this.useSsh = true;
-        this.useToken = false;
-        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
+
+        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
-    public useHttpsUrlWithToken() {
-        this.useSsh = false;
-        this.useToken = true;
-        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
-        this.refreshTokenState();
+    public useHttpsToken() {
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
+
+        if (this.isInCourseManagement) {
+            this.userTokenStillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
+            this.userTokenPresent = !!this.user.vcsAccessToken?.startsWith('vcpat');
+            this.copyEnabled = this.userTokenPresent && this.userTokenStillValid;
+        } else {
+            this.copyEnabled = !!this.activeParticipation?.vcsAccessToken;
+        }
         this.storeToLocalStorage();
     }
 
-    public useHttpsUrlWithoutToken() {
-        this.useSsh = false;
-        this.useToken = false;
+    public useHttpsPassword() {
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
+
         this.copyEnabled = true;
         this.storeToLocalStorage();
     }
 
-    public storeToLocalStorage() {
-        this.localStorage.store('useSsh', this.useSsh);
-        this.localStorage.store('useToken', this.useToken);
-    }
-
-    public refreshTokenState() {
-        this.tokenMissing = !this.user.vcsAccessToken;
-        this.tokenExpired = this.isTokenExpired();
+    private storeToLocalStorage() {
+        this.localStorage.store('code-button-state', this.selectedAuthenticationMechanism);
     }
 
     public formatTip(translationKey: string, url: string): string {
         return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
     }
 
-    public isTokenExpired(): boolean {
-        return dayjs().isAfter(dayjs(this.user.vcsAccessTokenExpiryDate));
-    }
-
     private getRepositoryUri() {
-        return this.activeParticipation?.repositoryUri ?? this.repositoryUri!;
+        return this.activeParticipation?.repositoryUri ?? this.repositoryUri();
     }
 
-    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
-        if (this.useSsh && this.sshEnabled && this.sshTemplateUrl) {
-            return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
-        }
-        if (this.isTeamParticipation) {
-            return this.addCredentialsToHttpUrl(this.repositoryUriForTeam(this.getRepositoryUri()), insertPlaceholder);
-        }
-        return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
-    }
+    onClick() {
+        this.selectedAuthenticationMechanism = this.localStorage.retrieve('code-button-state') || RepositoryAuthenticationMethod.Password;
 
-    loadParticipationVcsAccessTokens() {
-        if (this.accessTokensEnabled && this.localVCEnabled && this.useParticipationVcsAccessToken) {
-            this.participations?.forEach((participation) => {
-                if (participation?.id && !participation.vcsAccessToken) {
-                    this.loadVcsAccessToken(participation);
-                }
-            });
-            if (this.activeParticipation?.vcsAccessToken) {
-                this.user.vcsAccessToken = this.activeParticipation?.vcsAccessToken;
-            }
+        if (this.useSsh) {
+            this.useSshUrl();
+        }
+        if (this.useToken) {
+            this.useHttpsToken();
+        }
+        if (this.usePassword) {
+            this.useHttpsPassword();
         }
     }
-
     /**
-     * Loads the vcsAccessToken for a participation from the server. If none exists, sens a request to create one
-     */
-    loadVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body) {
-                    participation.vcsAccessToken = res.body;
-                    if (this.activeParticipation?.id == participation.id) {
-                        this.user.vcsAccessToken = res.body;
-                    }
-                }
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.status == 404) {
-                    this.createNewVcsAccessToken(participation);
-                }
-            },
-        });
-    }
-
-    /**
-     * Sends the request to create a new
-     */
-    createNewVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
-            next: (res: HttpResponse<string>) => {
-                if (res.body) {
-                    participation.vcsAccessToken = res.body;
-                    if (this.activeParticipation?.id == participation.id) {
-                        this.user.vcsAccessToken = res.body;
-                    }
-                }
-            },
-            error: () => {},
-        });
-    }
-
-    /**
-     * Add the credentials to the http url, if possible.
-     * The token will be added if
-     * - the token is required (based on the profile information), and
-     * - the token is present (based on the user model).
+     * Add the credentials to the http url, if a token should be used.
      *
-     * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
-    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && this.useToken;
-        const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
-        const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
+    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
+        if (this.useSsh && this.sshTemplateUrl) {
+            return this.getSshCloneUrl(this.getRepositoryUri());
+        }
+        const url = this.getRepositoryUri();
+        const token = insertPlaceholder ? '**********' : this.getUsedToken();
+
+        const credentials = `://${this.user.login}${this.useToken ? `:${token}` : ''}@`;
+
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
             return url.replace('://', credentials);
@@ -281,6 +255,67 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             // the url has the format https://username@vcs-server.com -> replace ://username@
             return url.replace(/:\/\/.*@/, credentials);
         }
+    }
+
+    loadVcsAccessTokensForAllParticipations() {
+        this.participations().forEach((participation) => {
+            if (participation.id && !participation.vcsAccessToken) {
+                this.loadParticipationVcsAccessToken(participation);
+            }
+        });
+    }
+
+    /**
+     * Loads the vcsAccessToken for a participation from the server. If none exists, sends a request to create one
+     * (Usually the token exists, as it is created when the server creates the participation)
+     */
+    loadParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    participation.vcsAccessToken = res.body;
+                    this.copyEnabled = this.useToken;
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 404) {
+                    this.createNewParticipationVcsAccessToken(participation);
+                }
+                if (error.status == 403) {
+                    this.alertService.warning('403 Forbidden');
+                }
+            },
+        });
+    }
+
+    /**
+     * Sends the request to create a new participation VCS access token
+     */
+    createNewParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
+        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    participation.vcsAccessToken = res.body;
+                    this.copyEnabled = this.useToken;
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 403) {
+                    this.alertService.warning('403 Forbidden');
+                }
+            },
+        });
+    }
+
+    private getUsedToken(): string | undefined {
+        if (this.useToken) {
+            if (this.isInCourseManagement) {
+                return this.user.vcsAccessToken;
+            } else {
+                return this.activeParticipation?.vcsAccessToken;
+            }
+        }
+        return '';
     }
 
     /**
@@ -303,8 +338,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     /**
      * Transforms the repository uri to an ssh clone url
      */
-    private getSshCloneUrl(url?: string) {
-        return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
+    private getSshCloneUrl(url: string) {
+        return url.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
     }
 
     /**
@@ -333,7 +368,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
     getIde(): Ide {
         return (
-            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(this.exercise()?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
             this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
             this.vscodeFallback
         );
@@ -341,10 +376,61 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
     switchPracticeMode() {
         this.isPracticeMode = !this.isPracticeMode;
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations(), this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         if (this.activeParticipation.vcsAccessToken) {
             this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
+        }
+    }
+
+    get useToken() {
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token;
+    }
+
+    get useSsh() {
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH;
+    }
+
+    get usePassword() {
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Password;
+    }
+    /**
+     * Checks whether the user owns any SSH keys, and checks if any of them is expired
+     */
+    private async checkForSshKeys() {
+        this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
+        if (this.sshKeys) {
+            const now = dayjs();
+            this.doesUserHaveSSHkeys = this.sshKeys.length > 0;
+            this.areAnySshKeysExpired = this.sshKeys.some((key) => {
+                if (key.expiryDate) {
+                    return dayjs(key.expiryDate).isBefore(now);
+                }
+            });
+        }
+    }
+
+    private configureTooltips(profileInfo: ProfileInfo) {
+        if (this.localVCEnabled()) {
+            this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+            this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
+        } else {
+            this.sshSettingsUrl = profileInfo.sshKeysURL;
+        }
+        this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
+        this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
+        this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+        this.sshKeysExpiredTip = this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl);
+    }
+
+    private getCloneHeadline() {
+        if (this.participations().length) {
+            this.isPracticeMode = isPracticeMode(this.activeParticipation);
+            return this.isPracticeMode && !this.exercise()?.exerciseGroup
+                ? 'artemisApp.exerciseActions.clonePracticeRepository'
+                : 'artemisApp.exerciseActions.cloneRatedRepository';
+        } else {
+            return 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
     }
 }

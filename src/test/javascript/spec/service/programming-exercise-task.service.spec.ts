@@ -1,6 +1,5 @@
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -10,7 +9,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entitie
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingExerciseGradingService } from '../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { ProgrammingExerciseServerSideTask } from '../../../../main/webapp/app/entities/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { firstValueFrom, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -128,7 +127,6 @@ describe('ProgrammingExerciseTask Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

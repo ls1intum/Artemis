@@ -1,20 +1,30 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
+    private repoExportService = inject(ProgrammingAssessmentRepoExportService);
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     @Input() programmingExercises: ProgrammingExercise[];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
     // Priority: participationId >> participantIdentifier.
@@ -30,13 +40,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     // Icons
     faCircleNotch = faCircleNotch;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private repoExportService: ProgrammingAssessmentRepoExportService,
-        public activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

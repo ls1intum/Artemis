@@ -1,21 +1,16 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
-import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { By } from '@angular/platform-browser';
+import { MockProvider } from 'ng-mocks';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
@@ -31,24 +26,13 @@ describe('ComplaintsFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [
-                ComplaintsFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgModel),
-                MockDirective(TranslateDirective),
-                MockComponent(TextareaCounterComponent),
-            ],
             providers: [
-                MockProvider(AlertService),
                 {
                     provide: ComplaintService,
                     useClass: MockComplaintService,
                 },
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -84,7 +68,7 @@ describe('ComplaintsFormComponent', () => {
 
     it('should submit after complaint creation', () => {
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         component.createComplaint();
         expect(createMock).toHaveBeenCalledOnce();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -93,7 +77,7 @@ describe('ComplaintsFormComponent', () => {
 
     it('should throw unknown error after complaint creation', () => {
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
         expect(createMock).toHaveBeenCalledOnce();
@@ -104,7 +88,7 @@ describe('ComplaintsFormComponent', () => {
     it('should throw known error after complaint creation', () => {
         const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
@@ -120,7 +104,7 @@ describe('ComplaintsFormComponent', () => {
         component.exercise = courseExercise;
         component.ngOnInit();
 
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         // 26 characters
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';

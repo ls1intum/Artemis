@@ -1,49 +1,43 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgModel } from '@angular/forms';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
+    let feedbackService: FeedbackService;
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                UnreferencedFeedbackDetailComponent,
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockComponent(FaIconComponent),
-                MockComponent(FaLayersComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(QuotePipe),
-                MockPipe(FeedbackContentPipe),
-                MockDirective(NgModel),
-                MockDirective(DeleteButtonDirective),
-                MockComponent(AssessmentCorrectionRoundBadgeComponent),
-            ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                feedbackService = TestBed.inject(FeedbackService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService); // Add this line to inject sgiService
             });
+    });
+
+    it('should call getLongFeedbackText on init if feedback has long text', async () => {
+        const feedbackId = 42;
+        const resultId = 1;
+        const exampleText = 'This is a long feedback text';
+
+        comp.feedback = { id: feedbackId, hasLongFeedbackText: true } as Feedback;
+        fixture.componentRef.setInput('resultId', resultId);
+        const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
+        comp.ngOnInit();
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -53,12 +47,12 @@ describe('Unreferenced Feedback Detail Component', () => {
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
-        // Fake call as a DragEvent
+
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
             comp.feedback.gradingInstruction = instruction;
             comp.feedback.credits = instruction.credits;
         });
-        // Call spy function with empty event
+
         comp.updateFeedbackOnDrop(new Event(''));
 
         expect(comp.feedback.gradingInstruction).toBe(instruction);

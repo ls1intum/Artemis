@@ -90,6 +90,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -2486,7 +2488,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
@@ -3382,5 +3384,68 @@ public class CourseTestService {
             Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
         }
+    }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
+        List<Course> expectedOldCourses = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+        }
+
+        expectedOldCourses.get(0).setSemester("SS20");
+        expectedOldCourses.get(0).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(1).setSemester("SS21");
+        expectedOldCourses.get(1).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(2).setSemester("WS21/22");
+        expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(3).setSemester(null); // will be filtered out
+
+        courseRepo.saveAll(expectedOldCourses);
+
+        final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
+        assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
+                expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
+        assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
+                expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
+        Optional<CourseForArchiveDTO> notFound = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
+        assertThat(notFound).as("Course archive did not fetch the last course").isNotPresent();
+    }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
+        Course course1 = courseUtilService.createCourse((long) 1);
+        course1.setSemester("SS20");
+        course1.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course1);
+
+        Course course2 = courseUtilService.createCourse((long) 2);
+        course2.setSemester("SS21");
+        course2.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course2);
+
+        Course course3 = courseUtilService.createCourse((long) 3);
+        course3.setSemester("WS21/22");
+        course3.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course3);
+
+        // remove student from all courses
+        removeAllGroupsFromStudent1();
+
+        final Set<CourseForArchiveDTO> actualCoursesForStudent = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
+    }
+
+    // Test
+    public void testGetExistingExerciseDetails_asTutor() throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
+        request.getList("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN, CourseExistingExerciseDetailsDTO.class);
+    }
+
+    // Test
+    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
+        request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
     }
 }

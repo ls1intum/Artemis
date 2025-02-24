@@ -213,6 +213,7 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixNoBonus": " + {Notenname}",
             "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagramm hervor: {{ median }}%",
@@ -313,12 +314,13 @@
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
-            "points": "Punkte",
-            "bonus": "Bonuspunkte",
+            "points": "({{ points }} Punkte)",
+            "bonus": "({{ points }} Punkte, {{ bonusPoints }} Bonuspunkte)",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
+            "submittedSubmissionLimitReached": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst keine Lösungen mehr einreichen, weil du das Limit erreicht hast.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
@@ -336,7 +338,10 @@
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
-            }
+            },
+            "saveExercise": "Aufgabe speichern",
+            "exerciseSaved": "Aufgabe gespeichert",
+            "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -772,7 +777,8 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur ({{ examTitle }})",
+            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
@@ -796,7 +802,7 @@
             "endOfIndividualWorkingTime": "Ende der individuellen Bearbeitungszeit:",
             "disabledChangeSubmissionStateButtonExplanation": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
-            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
+            "toggleFailed": "Der Abgabestatus konnte nicht geändert werden!",
             "hasComplaint": "Beschwerde existiert",
             "noSessions": "Keine Sitzungen"
         },

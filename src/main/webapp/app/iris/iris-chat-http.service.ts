@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
@@ -13,9 +13,9 @@ export type Response<T> = Observable<HttpResponse<T>>;
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatHttpService {
-    protected apiPrefix: string = 'api/iris';
+    protected httpClient = inject(HttpClient);
 
-    constructor(protected httpClient: HttpClient) {}
+    protected apiPrefix: string = 'api/iris';
 
     protected randomInt(): number {
         const maxIntJava = 2147483647;
@@ -95,7 +95,7 @@ export class IrisChatHttpService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
-        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
+        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
     getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {

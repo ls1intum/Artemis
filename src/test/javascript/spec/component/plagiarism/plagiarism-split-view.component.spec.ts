@@ -17,9 +17,9 @@ import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiari
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -56,9 +56,8 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(ModelingSubmissionViewerComponent), MockComponent(TextSubmissionViewerComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismSplitViewComponent);
@@ -170,7 +169,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should parse text matches', () => {
-        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
+        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map<string, FromToElement[]>());
 
         const matches: PlagiarismMatch[] = [
             { startA: 0, startB: 0, length: 5 },

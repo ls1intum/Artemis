@@ -98,7 +98,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
         closeable = MockitoAnnotations.openMocks(this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
 

@@ -26,16 +26,18 @@
             }
         </div>
     </div>
-    <hr class="" />
-    @if (faqs.length === 0) {
+    <hr />
+    @if (faqs?.length === 0) {
         <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noExisting"></h2>
     }
     <div>
         @for (faq of this.filteredFaqs; track faq) {
-            <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+            <div #faqElement id="faq-{{ faq.id }}">
+                <jhi-course-faq-accordion [faq]="faq" />
+            </div>
         }
     </div>
-    @if (filteredFaqs.length === 0 && faqs.length > 0) {
+    @if (filteredFaqs?.length === 0 && faqs.length > 0) {
         <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noMatching"></h2>
     }
 </div>

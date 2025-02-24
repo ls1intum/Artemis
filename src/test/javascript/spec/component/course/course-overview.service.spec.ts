@@ -4,7 +4,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +14,8 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;
@@ -37,7 +38,6 @@ describe('CourseOverviewService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -429,7 +429,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
@@ -445,7 +445,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
@@ -460,21 +460,95 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
         jest.spyOn(service, 'getConversationGroup');
         jest.spyOn(service, 'getCorrespondingChannelSubType');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
-        expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(3);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
-        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
-        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
-        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[2].conversation)?.name).toBe('General 2');
         expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
         expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
         expect(getAsChannelDTO(groupedConversations['favoriteChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
         expect(getAsChannelDTO(groupedConversations['hiddenChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
+    });
+
+    it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {
+        const conversations = [generalChannel, examChannel, exerciseChannel, favoriteChannel];
+
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        jest.spyOn(service, 'mapConversationToSidebarCardElement');
+        jest.spyOn(service, 'getConversationGroup');
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+
+        expect(groupedConversations['favoriteChannels'].entityData).toContainEqual(expect.objectContaining({ id: favoriteChannel.id }));
+
+        expect(groupedConversations['generalChannels'].entityData[0].id).toBe(favoriteChannel.id);
+
+        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(4);
+        expect(service.getConversationGroup).toHaveBeenCalledTimes(4);
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
+    });
+
+    it('should correctly set isCurrent based on the date range in mapConversationToSidebarCardElement', () => {
+        const now = dayjs();
+        const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
+
+        const conversationWithinRange = {
+            id: 5,
+            subType: ChannelSubType.EXERCISE,
+            subTypeReferenceId: 101,
+            type: ConversationType.CHANNEL,
+        } as ConversationDTO;
+
+        const conversationOutsideRange = {
+            subType: ChannelSubType.LECTURE,
+            subTypeReferenceId: 102,
+            type: ConversationType.CHANNEL,
+        } as ConversationDTO;
+
+        const exerciseWithinRange = { id: 101, dueDate: oneAndHalfWeekBefore.add(3, 'day') } as unknown as Exercise;
+        const lectureOutsideRange = { id: 102, startDate: oneAndHalfWeekBefore.subtract(1, 'day') } as unknown as Lecture;
+
+        course.exercises = [exerciseWithinRange];
+        course.lectures = [lectureOutsideRange];
+
+        const sidebarCardWithinRange = service.mapConversationToSidebarCardElement(course, conversationWithinRange);
+        const sidebarCardOutsideRange = service.mapConversationToSidebarCardElement(course, conversationOutsideRange);
+
+        expect(sidebarCardWithinRange.isCurrent).toBeTrue();
+        expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
+    });
+
+    it('should return faBullhorn for announcement channels', () => {
+        const announcementChannel = new ChannelDTO();
+        announcementChannel.isAnnouncementChannel = true;
+
+        const icon = service.getChannelIcon(announcementChannel);
+        expect(icon).toBe(service.faBullhorn);
+    });
+
+    it('should return faHashtag for public channels', () => {
+        const publicChannel = new ChannelDTO();
+        publicChannel.isAnnouncementChannel = false;
+        publicChannel.isPublic = true;
+
+        const icon = service.getChannelIcon(publicChannel);
+        expect(icon).toBe(service.faHashtag);
+    });
+
+    it('should return faLock for private channels', () => {
+        const privateChannel = new ChannelDTO();
+        privateChannel.isAnnouncementChannel = false;
+        privateChannel.isPublic = false;
+
+        const icon = service.getChannelIcon(privateChannel);
+        expect(icon).toBe(service.faLock);
     });
 });

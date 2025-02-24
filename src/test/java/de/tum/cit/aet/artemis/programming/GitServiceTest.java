@@ -31,7 +31,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
@@ -39,12 +38,8 @@ import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private GitUtilService gitUtilService;
+class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "gitservice";
 
@@ -91,6 +86,8 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
         try (var repo = gitService.getOrCheckoutRepository(repoUri, true)) {
+            assertThat(repo).isNotNull();
+            assertThat(repo.getRemoteRepositoryUri()).isEqualTo(repoUri);
             assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
         }
     }
@@ -130,6 +127,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         if (withUri) {
             var uri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL);
             try (var repo = gitService.checkoutRepositoryAtCommit(uri, commitHash, true)) {
+                assertThat(repo).isNotNull();
             }
         }
         else {
@@ -295,10 +293,24 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var map = gitService.listFilesAndFolders(localRepo);
 
+        assertThat(map).hasSize(5).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo), FileType.FILE)
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+    }
+
+    @Test
+    void testListFilesAndFoldersAndOmitBinary() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var map = gitService.listFilesAndFolders(localRepo, true);
+
         assertThat(map).hasSize(4).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
-                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER)
+                .doesNotContainKey(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo));
     }
 
     @Test
@@ -307,7 +319,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var fileList = gitService.listFiles(localRepo);
 
-        assertThat(fileList).hasSize(3).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
+        assertThat(fileList).hasSize(4).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
                 .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo))
                 .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo))
                 .doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));

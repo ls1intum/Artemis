@@ -1,11 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
@@ -16,7 +15,6 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -26,6 +24,16 @@ import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from '../../assess/text-assessment-area/text-assessment-area.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -33,8 +41,29 @@ type ExampleSubmissionResponseType = EntityResponseType;
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        ConfirmAutofocusButtonComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TextAssessmentAreaComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private guidedTourService = inject(GuidedTourService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private exerciseService = inject(ExerciseService);
+
     isNewSubmission: boolean;
     areNewAssessments = true;
 
@@ -62,20 +91,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     faEdit = faEdit;
     farListAlt = faListAlt;
 
-    constructor(
-        private exampleSubmissionService: ExampleSubmissionService,
-        private tutorParticipationService: TutorParticipationService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private guidedTourService: GuidedTourService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private exerciseService: ExerciseService,
-        alertService: AlertService,
-        accountService: AccountService,
-        assessmentsService: TextAssessmentService,
-        structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {
-        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
+    constructor() {
+        super();
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();

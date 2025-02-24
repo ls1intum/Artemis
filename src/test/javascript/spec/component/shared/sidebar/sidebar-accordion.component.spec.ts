@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -8,24 +7,22 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { RouterModule } from '@angular/router';
-import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
     let fixture: ComponentFixture<SidebarAccordionComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule)],
+            imports: [MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule)],
             declarations: [
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
-                MockComponent(AccordionAddOptionsComponent),
                 SidebarCardItemComponent,
                 SidebarCardDirective,
                 SearchFilterPipe,
@@ -33,31 +30,33 @@ describe('SidebarAccordionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
             ],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         }).compileComponents();
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarAccordionComponent);
         component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M' }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 1 } }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M' }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 0 } }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 1 } }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M' }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 0 } }],
             },
         };
         component.routeParams = { exerciseId: 3 };
         component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
+        fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: false, dueSoon: false, past: false, future: false, noDate: false });
         fixture.detectChanges();
+        component.calculateUnreadMessagesOfGroup();
     });
 
     afterEach(() => {
@@ -73,11 +72,19 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should toggle collapse state when group header is clicked', () => {
-        const groupHeader = debugElement.query(By.css('#test-accordion-item-header-current'));
-        groupHeader.triggerEventHandler('click', null);
+        const groupKey = 'current';
+        const initialCollapseState = component.collapseState[groupKey];
+
+        component.searchValue = '';
         fixture.detectChanges();
 
-        expect(component.collapseState['current']).toBeTrue();
+        const headerElement: DebugElement = fixture.debugElement.query(By.css('#test-accordion-item-header-' + groupKey));
+        expect(headerElement).toBeTruthy();
+
+        headerElement.triggerEventHandler('click', null);
+        fixture.detectChanges();
+
+        expect(component.collapseState[groupKey]).toBe(!initialCollapseState);
     });
 
     it('should call expandAll when searchValue changes to a non-empty string', () => {
@@ -122,22 +129,28 @@ describe('SidebarAccordionComponent', () => {
         component.ngOnChanges();
         fixture.detectChanges();
 
-        const expectedDisplayedDiv = 2;
-        const expectedHiddenDiv = 0;
-        const elementIdDisplayedDiv = `#test-accordion-item-container-${expectedDisplayedDiv}`;
-        const elementIdHiddenDiv = `#test-accordion-item-container-${expectedHiddenDiv}`;
+        const displayedDivIndex = 2;
+        const elementIdDisplayedDiv = `#test-accordion-item-container-${displayedDivIndex}`;
         const itemDisplayedDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdDisplayedDiv);
-        const itemHiddeniv: HTMLElement = fixture.nativeElement.querySelector(elementIdHiddenDiv);
 
-        // Check if the div exists and has the 'd-none' class
-        expect(itemDisplayedDiv).toBeTruthy(); // Ensure the element is found
+        expect(itemDisplayedDiv).toBeTruthy();
         expect(itemDisplayedDiv.classList.contains('d-none')).toBeFalse();
-        expect(itemHiddeniv).toBeTruthy(); // Ensure the element is found
-        expect(itemHiddeniv.classList.contains('d-none')).toBeTrue();
+
+        const elementIdHiddenDiv = `#test-accordion-item-container-0`;
+        const itemHiddenDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdHiddenDiv);
+
+        expect(itemHiddenDiv).toBeNull();
     });
 
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
         expect(component.collapseState['future']).toBeFalse();
+    });
+
+    it('should calculate unread messages of each group correctly', () => {
+        expect(component.totalUnreadMessagesPerGroup['current']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
+        expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
     });
 });

@@ -1,10 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -16,7 +15,6 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import {
     getLatestSubmissionResult,
@@ -38,13 +36,41 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
+    imports: [
+        AssessmentLayoutComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TextAssessmentAreaComponent,
+        FaIconComponent,
+        TranslateDirective,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+    ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private location = inject(Location);
+    private route = inject(ActivatedRoute);
+    private complaintService = inject(ComplaintService);
+    private submissionService = inject(SubmissionService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private athenaService = inject(AthenaService);
+    private translateService = inject(TranslateService);
+
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
@@ -66,7 +92,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
-    correctionRound: number;
+    correctionRound: number = 0;
     resultId: number;
     loadingInitialSubmission = true;
     highlightDifferences = false;
@@ -99,24 +125,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private location: Location,
-        private route: ActivatedRoute,
-        private complaintService: ComplaintService,
-        private submissionService: SubmissionService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private athenaService: AthenaService,
-        alertService: AlertService,
-        accountService: AccountService,
-        assessmentsService: TextAssessmentService,
-        structuredGradingCriterionService: StructuredGradingCriterionService,
-        translateService: TranslateService,
-    ) {
-        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
-        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-        this.correctionRound = 0;
+    constructor() {
+        super();
+        this.translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
     }
 
@@ -158,7 +169,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
-            this.resultId = Number(paramMap.get('resultId')) ?? 0;
+            this.resultId = Number(paramMap.get('resultId')) || 0;
             this.courseId = Number(paramMap.get('courseId'));
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
@@ -299,6 +310,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     // ->         |------|---|
                     // ("squish" the existing text block)
                     existingBlockRef.block!.startIndex = end;
+                    newTextBlockRefs.push(existingBlockRef);
+                } else if (exEnd == end) {
+                    // existing:       |-----|
+                    // to add:    |----------|
+                    // ->         |-add--|ex-|
+                    // ("squish" the new text block)
+                    refToAdd.block!.endIndex = exStart;
                     newTextBlockRefs.push(existingBlockRef);
                 }
             }

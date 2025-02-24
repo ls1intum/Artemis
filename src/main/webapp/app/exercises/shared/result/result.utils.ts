@@ -30,6 +30,11 @@ export enum ResultTemplateStatus {
      */
     IS_BUILDING = 'IS_BUILDING',
     /**
+     * Submission is currently queued and will be processed soon.
+     * This is currently only relevant for programming exercises.
+     */
+    IS_QUEUED = 'IS_QUEUED',
+    /**
      * An automatic feedback suggestion is currently being generated and should be available soon.
      * This is currently only relevant for programming exercises.
      */
@@ -111,12 +116,25 @@ export const addParticipationToResult = (result: Result | undefined, participati
 };
 
 /**
+ * searches for all manual unreferenced feedback in an array of feedbacks of a result
+ * @param feedbacks the feedback of a result
+ * @returns an array with the unreferenced feedback of the result
+ */
+export const getManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
+    return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
+};
+
+/**
  * searches for all unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
  */
 export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
-    return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
+    return feedbacks
+        ? feedbacks.filter(
+              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED || feedbackElement.type === FeedbackType.AUTOMATIC),
+          )
+        : undefined;
 };
 
 export function isAIResultAndFailed(result: Result | undefined): boolean {
@@ -150,6 +168,7 @@ export const evaluateTemplateStatus = (
     result: Result | undefined,
     isBuilding: boolean,
     missingResultInfo = MissingResultInformation.NONE,
+    isQueued = false,
 ): ResultTemplateStatus => {
     // Fallback if participation is not set
     if (!participation || !exercise) {
@@ -179,6 +198,8 @@ export const evaluateTemplateStatus = (
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
                 if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
                     return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+                } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
+                    return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
                 }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -210,7 +231,9 @@ export const evaluateTemplateStatus = (
 
     // Evaluate status for programming and quiz exercises
     if (isProgrammingOrQuiz(participation)) {
-        if (isBuilding) {
+        if (isQueued) {
+            return ResultTemplateStatus.IS_QUEUED;
+        } else if (isBuilding) {
             return ResultTemplateStatus.IS_BUILDING;
         } else if (isAIResultAndIsBeingProcessed(result)) {
             return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
@@ -306,8 +329,17 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (isAIResultAndProcessed(result)) {
-        return faCheckCircle;
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        // result loading
+        if (result.successful === undefined) {
+            return faCircleNotch;
+        }
+        // result done successfuly
+        if (result.successful) {
+            return faCheckCircle;
+        }
+        // generating failed
+        return faTimesCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {

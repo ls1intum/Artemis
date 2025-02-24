@@ -1,26 +1,51 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseCategoriesComponent,
+        QuizExerciseManageButtonsComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+    ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
+    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected quizExerciseService = inject(QuizExerciseService); // needed in html code
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+
     readonly ActionType = ActionType;
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
@@ -34,22 +59,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     protected get exercises() {
         return this.quizExercises;
-    }
-
-    constructor(
-        public quizExerciseService: QuizExerciseService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private router: Router,
-        private sortService: SortService,
-        public exerciseService: ExerciseService,
-        courseService: CourseManagementService,
-        translateService: TranslateService,
-        eventManager: EventManager,
-        route: ActivatedRoute,
-    ) {
-        super(courseService, translateService, route, eventManager);
     }
 
     protected loadExercises(): void {
@@ -81,10 +90,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Get the id of the quiz exercise
-     * @param index the index of the quiz (not used at the moment)
+     * @param _index the index of the quiz (not used at the moment)
      * @param item the quiz exercise of which the id should be returned
      */
-    trackId(index: number, item: QuizExercise) {
+    trackId(_index: number, item: QuizExercise) {
         return item.id!;
     }
 
@@ -98,8 +107,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Convert seconds to full minutes
-     * @param seconds {number} the number of seconds
-     * @returns {number} the number of full minutes
+     * @param seconds the number of seconds
+     * @returns the number of full minutes
      */
     fullMinutesForSeconds(seconds: number) {
         return Math.floor(seconds / 60);

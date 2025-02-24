@@ -1,22 +1,37 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { ActivatedRoute } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
+    imports: [NgxDatatableModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private readonly websocketService = inject(WebsocketService);
+    private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
-    buildAgent: BuildAgent;
+    buildAgent: BuildAgentInformation;
     agentName: string;
     websocketSubscription: Subscription;
     restSubscription: Subscription;
@@ -28,13 +43,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private route: ActivatedRoute,
-        private buildQueueService: BuildQueueService,
-    ) {}
+    readonly faPause = faPause;
+    readonly faPlay = faPlay;
 
     ngOnInit() {
         this.paramSub = this.route.queryParams.subscribe((params) => {
@@ -73,7 +83,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private updateBuildAgent(buildAgent: BuildAgent) {
+    private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent = buildAgent;
         this.setRecentBuildJobsDuration();
     }
@@ -96,13 +106,61 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     cancelAllBuildJobs() {
-        if (this.buildAgent.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.name).subscribe();
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.buildAgent?.name).subscribe();
         }
     }
 
     viewBuildLogs(resultId: number): void {
         const url = `/api/build-log/${resultId}`;
         window.open(url, '_blank');
+    }
+
+    pauseBuildAgent(): void {
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.pauseBuildAgent(this.buildAgent.buildAgent.name).subscribe({
+                next: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentPaused',
+                    });
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentPauseFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
+    }
+
+    resumeBuildAgent(): void {
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.resumeBuildAgent(this.buildAgent.buildAgent.name).subscribe({
+                next: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentResumed',
+                    });
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
     }
 }

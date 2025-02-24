@@ -38,7 +38,7 @@ describe('GradingKeyOverviewComponent', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 GradingKeyOverviewComponent,
                 MockComponent(GradingKeyTableComponent),
                 MockComponent(FaIconComponent),

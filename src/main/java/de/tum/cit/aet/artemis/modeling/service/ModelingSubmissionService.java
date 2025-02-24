@@ -90,18 +90,17 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the locked modeling submission
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository
-                .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+        var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
 
-        if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
+        if (submission.getLatestResult() == null || submission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
-                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
+                submission = assignResultWithFeedbackSuggestionsToSubmission(submission, modelingExercise);
             }
         }
 
-        lockSubmission(modelingSubmission, correctionRound);
-        return modelingSubmission;
+        lockSubmission(submission, correctionRound);
+        return submission;
     }
 
     /**
@@ -196,27 +195,18 @@ public class ModelingSubmissionService extends SubmissionService {
             return Optional.empty();
         }
 
-        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
+        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+        var submissionId = submissionWithoutResult.get().getId();
+        var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
-                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
-                setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
+                submission = assignResultWithFeedbackSuggestionsToSubmission(submission, modelingExercise);
+                setNumberOfAffectedSubmissionsPerElement(submission);
             }
-            lockSubmission(modelingSubmission, correctionRound);
+            lockSubmission(submission, correctionRound);
         }
 
-        return Optional.of(modelingSubmission);
-    }
-
-    /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it. We remove the model from the models waiting for assessment in Compass to prevent other
-     * tutors from retrieving it in the first place. Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
-     * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
-     *
-     * @param modelingSubmission the submission to lock
-     */
-    private void lockSubmission(ModelingSubmission modelingSubmission, int correctionRound) {
-        super.lockSubmission(modelingSubmission, correctionRound);
+        return Optional.of(submission);
     }
 
     /**

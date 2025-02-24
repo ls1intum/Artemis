@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,7 +38,16 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     QuizSubmission findWithEagerSubmittedAnswersById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
-    Optional<QuizSubmission> findWithEagerSubmittedAnswersByParticipationId(long participationId);
+    List<QuizSubmission> findWithEagerSubmittedAnswersByParticipationId(long participationId);
+
+    @Query("""
+            SELECT submission
+            FROM QuizSubmission submission
+                LEFT JOIN FETCH submission.submittedAnswers
+                JOIN submission.results r
+            WHERE r.id = :resultId
+            """)
+    Optional<QuizSubmission> findWithEagerSubmittedAnswersByResultId(@Param("resultId") long resultId);
 
     /**
      * Retrieve QuizSubmission for given quiz batch and studentLogin

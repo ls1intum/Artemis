@@ -11,9 +11,10 @@ import {
     SimpleChanges,
     ViewChild,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
@@ -31,26 +32,52 @@ import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.acti
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
 import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
 import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { MatchPercentageInfoModalComponent } from '../match-percentage-info-modal/match-percentage-info-modal.component';
+import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        FaIconComponent,
+        FormsModule,
+        TranslateDirective,
+        NgbTooltip,
+        NgbCollapse,
+        QuizScoringInfoModalComponent,
+        MatchPercentageInfoModalComponent,
+        MarkdownEditorMonacoComponent,
+        CdkDropListGroup,
+        CdkDropList,
+        NgClass,
+        CdkDrag,
+        CdkDragPlaceholder,
+        CdkDragPreview,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
-    @ViewChild('questionEditor', { static: false })
-    private questionEditor: MarkdownEditorMonacoComponent;
-    @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
-    @ViewChild('question', { static: false })
-    questionElement: ElementRef;
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private modalService = inject(NgbModal);
+    private changeDetector = inject(ChangeDetectorRef);
+
+    @ViewChild('questionEditor', { static: false }) private questionEditor: MarkdownEditorMonacoComponent;
+    @ViewChild('question', { static: false }) questionElement: ElementRef;
 
     markdownActions: TextEditorAction[];
     insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
@@ -111,20 +138,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
-    constructor(
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
-
     ngOnInit(): void {
         this.markdownActions = [
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new StrikethroughAction(),
             new CodeAction(),
             new UrlAction(),
-            new UnorderedListAction(),
+            new BulletedListAction(),
             new OrderedListAction(),
             this.insertShortAnswerSpotAction,
             this.insertShortAnswerOptionAction,
@@ -135,7 +157,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         /** We create now the structure on how to display the text of the question
          * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see {@link #regex}).
+         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see regex).
          */
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 

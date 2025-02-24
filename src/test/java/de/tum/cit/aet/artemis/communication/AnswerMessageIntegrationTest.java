@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -134,7 +133,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInGeneralCourseWideChannel() throws Exception {
-        testCreateChannelAnswer((Channel) existingConversationPostsWithAnswers.get(3).getConversation(), NotificationType.NEW_REPLY_FOR_COURSE_POST, 1);
+        testCreateChannelAnswer((Channel) existingConversationPostsWithAnswers.get(3).getConversation(), 1);
     }
 
     @Test
@@ -143,39 +142,61 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course course = courseRepository.findByIdElseThrow(courseId);
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         Channel channel = lectureUtilService.addLectureChannel(lecture);
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_LECTURE_POST, 1);
+        testCreateChannelAnswer(channel, 1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInExerciseChannel() throws Exception {
         Course course = courseRepository.findWithEagerExercisesById(courseId);
-        Exercise exercise = course.getExercises().stream().findFirst().orElseThrow();
+        Exercise exercise = course.getExercises().iterator().next();
         Channel channel = exerciseUtilService.addChannelToExercise(exercise);
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, 1);
+        testCreateChannelAnswer(channel, 1);
     }
 
     @Test
-    @Disabled // ToDo: Find out why "JsonException No _valueDeserializer assigned" is thrown when running the whole test suite
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInExamChannel() throws Exception {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examUtilService.addExam(course);
         Channel channel = examUtilService.addExamChannel(exam, "exam channel");
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXAM_POST, 1);
+        testCreateChannelAnswer(channel, 1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInPublicChannel() throws Exception {
+        var channel = createChannelWithTwoStudents();
+        testCreateChannelAnswer(channel, 2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testSendNotificationWhenDifferentUserAnswersPost() throws Exception {
+        var channel = createChannelWithTwoStudents();
+        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
+        verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
+                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDoNotSendNotificationWhenSameUserAnswersPost() throws Exception {
+        var channel = createChannelWithTwoStudents();
+        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
+        verify(singleUserNotificationService, timeout(2000).times(0)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
+                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
+    }
+
+    private Channel createChannelWithTwoStudents() {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Channel channel = conversationUtilService.createPublicChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
-        testCreateChannelAnswer(channel, NotificationType.CONVERSATION_NEW_REPLY_MESSAGE, 2);
+        return channel;
     }
 
-    private void testCreateChannelAnswer(Channel channel, NotificationType notificationType, int wantedNumberOfWSMessages) throws Exception {
+    private AnswerPost testCreateChannelAnswer(Channel channel, int wantedNumberOfWSMessages) throws Exception {
         Post message = existingConversationPostsWithAnswers.getFirst();
         message.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(message);
@@ -184,6 +205,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         var countBefore = answerPostRepository.count();
 
+        // avoid sending too much information to the server (otherwise deserialization might not work for a nested object due to a strange test error)
+        var conversation = savedMessage.getConversation();
+        if (conversation instanceof Channel theChannel) {
+            theChannel.setExam(null);
+        }
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
@@ -195,7 +221,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(savedMessage)));
 
-        verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(), eq(notificationType));
+        return createdAnswerPost;
     }
 
     @ParameterizedTest

@@ -1,16 +1,12 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import { Location } from '@angular/common';
+import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -20,22 +16,40 @@ import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { UpperCasePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
     templateUrl: './file-upload-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
-    // change deactivation must be triggered manually
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ResizeableContainerComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private fileService = inject(FileService);
+
     exerciseType = ExerciseType.FILE_UPLOAD;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
 
-    @Input()
-    studentSubmission: FileUploadSubmission;
-    @Input()
-    exercise: FileUploadExercise;
+    studentSubmission = model.required<FileUploadSubmission>();
+    exercise = input.required<FileUploadExercise>();
     problemStatementHtml: string;
 
     submittedFileName: string;
@@ -52,26 +66,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploaderService: FileUploaderService,
-        private resultService: ResultService,
-        private alertService: AlertService,
-        private location: Location,
-        private translateService: TranslateService,
-        private fileService: FileService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
-
     /**
      * Initializes data for file upload editor
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -93,14 +93,14 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             const submissionFile = fileList[0];
-            const allowedFileExtensions = this.exercise.filePattern!.split(',');
+            const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
-                this.studentSubmission.isSynced = false;
+                this.studentSubmission().isSynced = false;
             }
         }
     }
@@ -113,22 +113,22 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
+        return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
     getExerciseId(): number | undefined {
-        return this.exercise.id;
+        return this.exercise().id;
     }
     getExercise(): Exercise {
-        return this.exercise;
+        return this.exercise();
     }
 
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     getSubmission(): Submission {
-        return this.studentSubmission;
+        return this.studentSubmission();
     }
 
     updateSubmissionFromView(): void {
@@ -139,10 +139,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.examTimeline && this.studentSubmission.filePath)) {
+        if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission!.filePath!.split('/');
+            const filePath = this.studentSubmission()!.filePath!.split('/');
             this.submittedFileName = filePath.last()!;
             const fileName = this.submittedFileName.split('.');
             this.submittedFileExtension = fileName.last()!;
@@ -157,12 +157,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
-                this.studentSubmission.filePath = submissionFromServer.filePath;
-                this.studentSubmission.isSynced = true;
-                this.studentSubmission.submitted = true;
+                this.studentSubmission().filePath = submissionFromServer.filePath;
+                this.studentSubmission().isSynced = true;
+                this.studentSubmission().submitted = true;
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),

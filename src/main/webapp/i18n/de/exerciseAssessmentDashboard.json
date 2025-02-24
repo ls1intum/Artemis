@@ -40,6 +40,7 @@
             "toRead": "zum Lesen",
             "toReview": "zur Überprüfung",
             "totalExamples": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen und {{toAssess}} zur Bewertung.",
+            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen and {{toAssess}} zur Bewertung.",
             "readSubmissions": "Überprüfung von Beispielabgaben",
             "start": "",
             "continue": "",

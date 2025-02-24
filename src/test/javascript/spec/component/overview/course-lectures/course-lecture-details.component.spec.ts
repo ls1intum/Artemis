@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
@@ -47,6 +47,7 @@ import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/on
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { ElementRef, signal } from '@angular/core';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -61,6 +62,11 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureService: LectureService;
 
     let getProfileInfoMock: jest.SpyInstance;
+
+    MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+    MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+    // @ts-ignore
+    MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(async () => {
         const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
@@ -279,13 +285,13 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
 
-        courseLecturesDetailsComponent.downloadAttachment(attachment.link);
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
 
         expect(downloadFileSpy).toHaveBeenCalledOnce();
-        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
         expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
     }));
 

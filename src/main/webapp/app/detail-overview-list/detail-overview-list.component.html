@@ -1,10 +1,10 @@
 @if (headlines?.length && headlines.length > 1) {
     <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines" />
 }
-@for (section of sections; track section) {
+@for (section of sections(); track section) {
     <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl class="section-detail-list">
-        @for (detail of section.details; track detail) {
+        @for (detail of section.details; track $index) {
             @if (!!detail) {
                 @if (detail.title) {
                     <dt id="detail-title-{{ detail.title }}">
@@ -120,7 +120,7 @@
                                 [programmingExercise]="detail.data.exercise"
                                 [programmingLanguage]="detail.data.programmingLanguage"
                                 [isLocal]="detail.data.isLocal"
-                                [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository"
+                                [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository || false"
                             />
                         </dd>
                     }

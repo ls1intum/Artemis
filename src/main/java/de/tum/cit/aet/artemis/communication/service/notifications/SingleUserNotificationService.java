@@ -12,6 +12,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -127,7 +128,7 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY ->
                 createNotification((PlagiarismCase) notificationSubject, notificationType, typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
@@ -266,6 +267,10 @@ public class SingleUserNotificationService {
         notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
     }
 
+    public void notifyInstructionAboutPlagiarismCaseReply(PlagiarismCase plagiarismCase, User instructor) {
+        notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_REPLY, instructor, userRepository.getUser());
+    }
+
     /**
      * Notify student about possible plagiarism case opened by the continuous plagiarism control.
      * The notification is created without explicit notification author.
@@ -391,6 +396,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
      * @param notificationType the type of notification to be sent
      */
+    // TODO: this should be Async
     public void notifyClientAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
         notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
     }
@@ -417,7 +423,7 @@ public class SingleUserNotificationService {
      * @param answerMessage the answerMessage of the user involved
      * @param author        the author of the message reply
      * @param conversation  conversation the message of the reply belongs to
-     * @return notification
+     * @return the created single user notification about the new message reply
      */
     public SingleUserNotification createNotificationAboutNewMessageReply(AnswerPost answerMessage, User author, Conversation conversation) {
         User authorWithHiddenData = new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null);
@@ -443,21 +449,33 @@ public class SingleUserNotificationService {
             usersInvolved.add(post.getAuthor());
         }
 
-        mentionedUsers.stream().filter(user -> {
-            boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
-            boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
-            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents
-                    || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getConversation().getCourse(), user);
+        filterAllowedRecipientsInMentionedUsers(mentionedUsers, post.getConversation())
+                .forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
+
+        Conversation conv = conversationService.getConversationById(post.getConversation().getId());
+        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved) && !userInvolved.getId().equals(author.getId())).forEach(userInvolved -> {
+            notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv));
+        });
+    }
+
+    /**
+     * Filters which of the mentioned users are permitted to receive a notification
+     *
+     * @param mentionedUsers users mentioned in the answer message
+     * @param conversation   the conversation of the created post/notification, used for filtering
+     * @return the stream of mentioned users which are permitted to receive the notification for the given conversation
+     */
+    public Stream<User> filterAllowedRecipientsInMentionedUsers(Set<User> mentionedUsers, Conversation conversation) {
+        return mentionedUsers.stream().filter(user -> {
+            boolean isChannelAndCourseWide = conversation instanceof Channel channel && channel.getIsCourseWide();
+            boolean isChannelVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), user);
 
             // Only send a notification to the mentioned user if...
             // (for course-wide channels) ...the course-wide channel is visible
             // (for all other cases) ...the user is a member of the conversation
-            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
-        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
-
-        Conversation conv = conversationService.getConversationById(post.getConversation().getId());
-        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
+            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(conversation.getId(), user.getId());
+        });
     }
 
     /**

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -76,13 +78,16 @@ public class ExerciseDeletionService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<IrisSettingsService> irisSettingsService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService) {
+            ChannelRepository channelRepository, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -97,7 +102,8 @@ public class ExerciseDeletionService {
         this.textExerciseService = textExerciseService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -115,21 +121,22 @@ public class ExerciseDeletionService {
         }
 
         // Cleanup in parallel to speedup the process
-        var threadPool = Executors.newFixedThreadPool(10);
-        var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
-            try {
-                participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-                if (!deleteRepositories) {
-                    return; // in this case, we are done with the participation
+        try (var threadPool = Executors.newFixedThreadPool(10)) {
+            var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
+                try {
+                    participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
+                    if (!deleteRepositories) {
+                        return; // in this case, we are done with the participation
+                    }
+                    participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
-                participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
-            }
-            catch (Exception exception) {
-                log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
-            }
-        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-        // wait until all operations finish before returning
-        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+                catch (Exception exception) {
+                    log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
+                }
+            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+            // wait until all operations finish before returning
+            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+        }
     }
 
     /**
@@ -143,7 +150,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        Set<CourseCompetency> competencies = exercise.getCompetencies();
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
@@ -167,6 +174,10 @@ public class ExerciseDeletionService {
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
+        }
+
+        if (irisSettingsService.isPresent()) {
+            irisSettingsService.get().deleteSettingsFor(exercise);
         }
 
         // delete all plagiarism results belonging to this exercise
@@ -204,7 +215,10 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
+        if (competencyProgressApi.isPresent()) {
+            var api = competencyProgressApi.get();
+            competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync);
+        }
     }
 
     /**

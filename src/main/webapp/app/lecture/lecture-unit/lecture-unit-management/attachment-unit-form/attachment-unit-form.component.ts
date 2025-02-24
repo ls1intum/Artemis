@@ -1,11 +1,17 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { Competency } from 'app/entities/competency.model';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -19,7 +25,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -31,67 +37,53 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentUnitFormComponent implements OnInit, OnChanges {
-    @Input()
-    formData: AttachmentUnitFormData;
-    @Input()
-    isEditMode = false;
+export class AttachmentUnitFormComponent implements OnChanges {
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faTimes = faTimes;
 
-    // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
+    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    faQuestionCircle = faQuestionCircle;
+    formData = input<AttachmentUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Output()
-    formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-    form: FormGroup;
+    formSubmitted = output<AttachmentUnitFormData>();
 
-    @Input()
-    hasCancelButton: boolean;
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
-    faTimes = faTimes;
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
-    fileName?: string;
     fileInputTouched = false;
-    isFileTooBig: boolean;
 
-    constructor(
-        private translateService: TranslateService,
-        private fb: FormBuilder,
-    ) {}
+    fileName = signal<string | undefined>(undefined);
+    isFileTooBig = signal<boolean>(false);
 
-    ngOnChanges(): void {
-        this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+    private readonly formBuilder = inject(FormBuilder);
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        version: [{ value: 1, disabled: true }],
+        updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+    });
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+
+    isFormValid = computed(() => {
+        return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig() && this.datePickerComponent()?.isValid();
+    });
+
+    ngOnChanges() {
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
-    }
-
-    ngOnInit(): void {
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined as dayjs.Dayjs | undefined],
-            version: [{ value: 1, disabled: true }],
-            updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            competencies: [undefined as Competency[] | undefined],
-        });
     }
 
     onFileChange(event: Event): void {
@@ -100,7 +92,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.file = input.files[0];
-        this.fileName = this.file.name;
+        this.fileName.set(this.file.name);
         // automatically set the name in case it is not yet specified
         if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
@@ -108,7 +100,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
             });
         }
-        this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
+        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
 
     get nameControl() {
@@ -131,16 +123,12 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         return this.form.get('version');
     }
 
-    get isSubmitPossible() {
-        return !(this.form.invalid || !this.fileName) && !this.isFileTooBig;
-    }
-
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
         const fileProperties: FileProperties = {
             file: this.file,
-            fileName: this.fileName,
+            fileName: this.fileName(),
         };
 
         this.formSubmitted.emit({
@@ -157,7 +145,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             this.file = formData?.fileProperties?.file;
         }
         if (formData?.fileProperties?.fileName) {
-            this.fileName = formData?.fileProperties?.fileName;
+            this.fileName.set(formData?.fileProperties?.fileName);
         }
     }
 

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -13,6 +14,13 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupSessionRowButtonsComponent } from './tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-session-management',
@@ -20,8 +28,23 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        LoadingIndicatorContainerComponent,
+        TranslateDirective,
+        FaIconComponent,
+        TutorialGroupSessionsTableComponent,
+        TutorialGroupSessionRowButtonsComponent,
+        ArtemisTranslatePipe,
+        RemoveSecondsPipe,
+    ],
 })
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private activeModal = inject(NgbActiveModal);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
@@ -39,17 +62,9 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private activeModal: NgbActiveModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
-
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
             this.loadAll();

@@ -1,5 +1,5 @@
-import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -11,26 +11,59 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faDesktop, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faDesktop, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ButtonType } from 'app/shared/components/button.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-exercise-details-student-actions',
-    templateUrl: './exercise-details-student-actions.component.html',
-    styleUrls: ['../course-overview.scss'],
+    imports: [
+        NgTemplateOutlet,
+        ExerciseActionButtonComponent,
+        RouterLink,
+        NgbTooltip,
+        FeatureToggleDirective,
+        StartPracticeModeButtonComponent,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+        OpenCodeEditorButtonComponent,
+        CodeButtonComponent,
+        FaIconComponent,
+        TranslateDirective,
+        RequestFeedbackButtonComponent,
+        ArtemisTranslatePipe,
+    ],
     providers: [ExternalCloningService],
+    selector: 'jhi-exercise-details-student-actions',
+    styleUrls: ['../course-overview.scss'],
+    templateUrl: './exercise-details-student-actions.component.html',
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -44,7 +77,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
 
     uninitializedQuiz: boolean;
     quizNotStarted: boolean;
@@ -60,7 +94,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     routerLink: string;
     repositoryLink: string;
 
-    theiaEnabled: boolean = false;
+    theiaEnabled = false;
     theiaPortalURL: string;
 
     // Icons
@@ -69,38 +103,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faEye = faEye;
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
-    readonly faCodeBranch = faCodeBranch;
     readonly faDesktop = faDesktop;
-    readonly faPenSquare = faPenSquare;
-
-    private feedbackSent = false;
-
-    constructor(
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private router: Router,
-        private translateService: TranslateService,
-        private participationService: ParticipationService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
-        this.repositoryLink = this.router.url;
-        if (this.repositoryLink.endsWith('exercises')) {
-            this.repositoryLink += `/${this.exercise.id}`;
-        }
-        if (this.repositoryLink.includes('exams')) {
-            this.repositoryLink += `/exercises/${this.exercise.id}`;
-        }
-        if (this.repositoryLink.includes('dashboard')) {
-            const parts = this.repositoryLink.split('/');
-            this.repositoryLink = [...parts.slice(0, parts.indexOf('dashboard')), 'exercises', this.exercise.id].join('/');
-        }
-        if (this.repositoryLink.includes('lectures')) {
-            const parts = this.repositoryLink.split('/');
-            this.repositoryLink = [...parts.slice(0, parts.indexOf('lectures')), 'exercises', this.exercise.id].join('/');
-        }
-
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
@@ -258,30 +263,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    // TODO remove this method once support of the button component is implemented for text and modeling exercises
-    requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-            if (!window.confirm(confirmLockRepository)) {
-                return;
-            }
-        }
-
-        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.generatingFeedback.emit();
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
-        });
-    }
-
     get isBeforeStartDateAndStudent(): boolean {
         return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
@@ -329,74 +310,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    /**
-     * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
-     * The student can request automatic non-graded feedback under the following conditions:
-     * 1. They have a graded submission.
-     * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no already pending feedback request.
-     * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
-     */
-    // TODO remove this method once support of the button component is implemented for text and modeling exercises
-    assureConditionsSatisfied(): boolean {
-        this.updateParticipations();
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-            const someHiddenTestsPassed = latestResult?.score !== undefined;
-            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-            if (!someHiddenTestsPassed) {
-                window.alert(testsNotPassedWarning);
-                return false;
-            }
-        }
-
-        const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
-        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-        if (afterDueDate) {
-            this.alertService.warning(dueDateWarning);
-            return false;
-        }
-
-        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
-        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-        if (requestAlreadySent) {
-            this.alertService.warning(requestAlreadySentWarning);
-            return false;
-        }
-
-        if (this.gradedParticipation?.results) {
-            const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.length;
-
-            if (countOfSuccessfulRequests >= 10) {
-                const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                this.alertService.warning(rateLimitExceededWarning);
-                return false;
-            }
-        }
-
-        if (this.hasAthenaResultForLatestSubmission()) {
-            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-            this.alertService.warning(submitFirstWarning);
-            return false;
-        }
-        return true;
-    }
-
-    hasAthenaResultForLatestSubmission(): boolean {
-        if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            // submissions.results is always undefined so this is necessary
-            return (
-                this.gradedParticipation.submissions.last()?.id ===
-                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
-            );
-        }
-        return false;
     }
 }

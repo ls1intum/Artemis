@@ -35,16 +35,16 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
             """)
     List<FileUploadExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
     @Query("""
             SELECT f
             FROM FileUploadExercise f
-                LEFT JOIN FETCH f.competencies
+                LEFT JOIN FETCH f.competencyLinks
             WHERE f.title = :title
                 AND f.course.id = :courseId
             """)

@@ -4,6 +4,7 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @param agsClaim             An optional {@link Lti13AgsClaim} representing the Assignment and Grade Services claim, if present.
  * @param clientRegistrationId The client registration ID, identifying the tool registration with the platform.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record Lti13LaunchRequest(String iss, String sub, String deploymentId, String resourceLinkId, String targetLinkUri, Lti13AgsClaim agsClaim, String clientRegistrationId) {
 
     /**

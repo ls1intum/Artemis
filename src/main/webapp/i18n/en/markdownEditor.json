@@ -9,9 +9,22 @@
             "guide": "Styling with Markdown is possible",
             "color": "Color",
             "preview": {
-                "slideNotFound": "Referenced slide was not found"
+                "slideNotFound": "Referenced slide was not found",
+                "imageNotFound": "Referenced image was not found"
             },
-            "slideWithNumber": "Slide {{ number }}"
+            "slideWithNumber": "Slide {{ number }}",
+            "artemisIntelligence": {
+                "tooltip": "Artemis Intelligence",
+                "commands": {
+                    "rewrite": "Rewrite",
+                    "consistencyCheck": "Check consistency"
+                },
+                "alerts": {
+                    "rewrite": {
+                        "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
+                    }
+                }
+            }
         }
     }
 }

@@ -5,8 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('SuspiciousSessionsComponent', () => {
     let component: SuspiciousSessionsComponent;
@@ -38,12 +36,11 @@ describe('SuspiciousSessionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe)],
         });
         fixture = TestBed.createComponent(SuspiciousSessionsComponent);
         component = fixture.componentInstance;
-        component.suspiciousSessions = suspiciousSessions1;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions1);
     });
 
     it('should contain correct link to student exam in table cell', () => {
@@ -51,16 +48,16 @@ describe('SuspiciousSessionsComponent', () => {
     });
 
     it('should correctly determine suspicious reasons', () => {
-        component.suspiciousSessions = suspiciousSessions1;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions1);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeTrue();
         expect(component.suspiciousIpAddress).toBeTrue();
 
-        component.suspiciousSessions = suspiciousSessions2;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions2);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeFalse();
-        component.suspiciousSessions = suspiciousSessions3;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions3);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeTrue();

@@ -70,7 +70,6 @@ export class ExerciseAPIRequests {
      *   - exerciseGroup: The exercise group the exercise will be added to
      *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
      *                    If sca should be disabled, pass null or omit this property
-     *   - recordTestwiseCoverage: Enable testwise coverage analysis for this exercise
      *   - releaseDate: When the programming exercise should be available
      *   - dueDate: When the programming exercise should be due
      *   - title: The title of the programming exercise
@@ -85,7 +84,6 @@ export class ExerciseAPIRequests {
         course?: Course;
         exerciseGroup?: ExerciseGroup;
         scaMaxPenalty?: number | undefined;
-        recordTestwiseCoverage?: boolean;
         releaseDate?: dayjs.Dayjs;
         dueDate?: dayjs.Dayjs;
         title?: string;
@@ -101,7 +99,6 @@ export class ExerciseAPIRequests {
             course,
             exerciseGroup,
             scaMaxPenalty = undefined,
-            recordTestwiseCoverage = false,
             releaseDate = dayjs(),
             dueDate = dayjs().add(1, 'day'),
             title = 'Programming ' + generateUUID(),
@@ -147,7 +144,6 @@ export class ExerciseAPIRequests {
         }
 
         exercise.programmingLanguage = programmingLanguage;
-        exercise.buildConfig!.testwiseCoverageEnabled = recordTestwiseCoverage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
@@ -217,12 +213,47 @@ export class ExerciseAPIRequests {
      *
      * @param body - An object containing either the course or exercise group the exercise will be added to.
      * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The template for the text exercise
+     * (optional, default: textExerciseTemplate - default template).
      */
-    async createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()): Promise<TextExercise> {
+    async createTextExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Text ' + generateUUID(),
+        exerciseTemplate: any = textExerciseTemplate,
+    ): Promise<TextExercise> {
+        const template = {
+            ...exerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+        const textExercise = Object.assign({}, template, body);
+        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        return response.json();
+    }
+
+    /**
+     * Adds a text exercise to an exercise group in an exam or to a course.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param releaseDate
+     * @param dueDate
+     * @param assessmentDueDate
+     */
+    async createTextExerciseWithDates(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        releaseDate: dayjs.Dayjs,
+        dueDate: dayjs.Dayjs,
+        assessmentDueDate: dayjs.Dayjs,
+        title = 'Text ' + generateUUID(),
+    ): Promise<TextExercise> {
         const template = {
             ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            releaseDate: releaseDate,
+            dueDate: dueDate,
+            assessmentDueDate: assessmentDueDate,
         };
         const textExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
@@ -243,6 +274,7 @@ export class ExerciseAPIRequests {
      *
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
+     * @param createNewSubmission - Whether to create a new submission or update an existing one (optional, default: true).
      */
     async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
         const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;

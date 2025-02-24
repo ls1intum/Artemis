@@ -291,7 +291,7 @@
                 <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
             </a>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (atlasEnabled && course.isAtLeastInstructor) {
             <a
                 [routerLink]="['/course-management', course.id, 'competency-management']"
                 class="btn btn-primary me-1 mb-1 hidden-if-mobile"
@@ -302,7 +302,7 @@
                 <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
             </a>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (atlasEnabled && course.isAtLeastInstructor) {
             <a
                 [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
                 [routerLink]="['/course-management', course.id, 'learning-path-management']"
@@ -339,7 +339,7 @@
             </a>
         }
 
-        @if (course.isAtLeastInstructor && course.faqEnabled) {
+        @if (course.isAtLeastTutor && course.faqEnabled) {
             <a
                 [routerLink]="['/course-management', course.id, 'faqs']"
                 class="btn btn-info me-1 mb-1"

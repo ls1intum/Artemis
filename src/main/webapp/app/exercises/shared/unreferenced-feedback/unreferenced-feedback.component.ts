@@ -1,22 +1,27 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: [],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent],
 })
 export class UnreferencedFeedbackComponent {
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     FeedbackType = FeedbackType;
 
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
-    feedbackDetailChanges: boolean = false;
 
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText: boolean = false;
+    @Input() useDefaultFeedbackSuggestionBadgeText = false;
+    @Input() resultId: number;
 
     /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
@@ -33,14 +38,13 @@ export class UnreferencedFeedbackComponent {
     @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
 
-    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
-
     public deleteFeedback(feedbackToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);
         this.unreferencedFeedback.splice(indexToDelete, 1);
         this.feedbacksChange.emit(this.unreferencedFeedback);
         this.validateFeedback();
     }
+
     /**
      * Validates the feedback:
      *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
@@ -65,7 +69,6 @@ export class UnreferencedFeedbackComponent {
      * @param feedback The feedback to update
      */
     updateFeedback(feedback: Feedback) {
-        this.feedbackDetailChanges = true;
         const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
             this.unreferencedFeedback.push(feedback);
@@ -131,16 +134,11 @@ export class UnreferencedFeedbackComponent {
     }
 
     createAssessmentOnDrop(event: Event) {
-        if (this.feedbackDetailChanges) {
-            this.feedbackDetailChanges = false;
-            return;
-        }
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
         if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
             this.updateFeedback(newFeedback);
-            this.feedbackDetailChanges = false;
         }
     }
 }

@@ -106,9 +106,6 @@ Generate programming exercise
     - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
       This feature allows students to better concentrate on the immediate challenge at hand.
       Not supported together with static code analysis. Cannot be changed after the exercise creation.
-    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
-      This is necessary when working with Hestia to generate code-based hints.
-      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
     - **Customize Build Plan** Activate this option if you want to customize the build plan of your exercise.
       This feature is available for all programming languages, and works with LocalCI and Jenkins, Artemis provides templates for the build plan configuration.
       The build plan can also be customized after the exercise creation.
@@ -351,6 +348,8 @@ Update exercise code in repositories
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
+.. _adapt_build_script:
+
 Adapt the build script
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -360,8 +359,7 @@ You can activate the option `Customize Build Script` in the programming exercise
 All changes in the configuration will be considered for all builds (template, solution, student submissions).
 
 There are predefined build scripts in bash for all programming languages, project types and configurations (e.g. with or without static code analysis).
-Notice that the checkout paths for the test and the assignment (template, solution or student) repo cannot be customized at the moment and are determined
-by the chosen programming language. Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
+Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
 This means that build files in the test repo (e.g. Gradle, Maven) typically refer to the `assignment` folder.
 
 You can also use a custom docker image for the build. Make sure to publish the docker image in a publicly available repository (e.g. DockerHub). Ideally build it
@@ -371,6 +369,69 @@ The default Java Docker image can be found on https://github.com/ls1intum/artemi
 
 Hint: Try out the build of a custom programming exercise locally before you publish a custom docker image and before you upload the code to Artemis, because the
 development and debugging experience is much better.
+
+Edit Repositories Checkout Paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+
+This section is optional. In most cases, the preconfigured checkout paths do not need to be changed.
+The checkout paths depend on the chosen programming language and project type. The paths are shown in the preview:
+
+.. figure:: programming/checkout-paths-preview.png
+          :align: center
+
+By checkout paths, we mean the paths where the repositories are cloned during the build process. For example, in Java exercises, the assignment repository is cloned into the `assignment` folder, the test repository is cloned into the root folder. All paths are relative to the working directory of the build plan.
+If you want to change the checkout paths, you can do so by clicking on the `edit repositories checkout path` button. The following dialog will open:
+
+.. figure:: programming/checkout-paths-edit.png
+          :align: center
+
+You must then change the paths in the build script if necessary. Please refer to the :ref:`adapt_build_script` section on how to do this.
+
+.. warning::
+  - Changing the checkout paths can only be done in the exercise creation process. After the exercise has been created, the checkout paths cannot be changed.
+  - Depending on the programming language and project type, the checkout paths are predefined and cannot be changed. For example, for Java exercises, only the assignment repository path can be changed. For Ocaml exercises, the assignment, test, and solution repository paths can be changed.
+  - Changing the checkout paths can lead to build errors if the build script is not adapted accordingly.
+  - For C programming exercises, if used with the default docker image, changing the checkout paths will lead to build errors. The default docker image is configured to work with the default checkout paths.
+
+.. _edit_build_duration:
+
+Edit Maximum Build Duration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+
+This section is optional. In most cases, the default maximum build duration does not need to be changed.
+
+The maximum build duration is the time limit for the build plan to execute. If the build plan exceeds this time limit, it will be terminated. The default value is 120 seconds.
+You can change the maximum build duration by using the slider.
+
+.. figure:: programming/timeout-slider.png
+          :align: center
+
+Edit Container Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+
+This section is optional. In most cases, the default container configuration does not need to be changed.
+
+Currently, instructors can only change whether the container has internet access and add additional environment variables.
+Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
+If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
+The dependencies must then be included/cached in the docker image.
+
+Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
+
+.. figure:: programming/docker-flags-edit.png
+          :align: center
+
+We plan to add more options to the container configuration in the future.
+
+.. warning::
+  - Disabling internet access is not currently supported for Swift and Haskell exercises.
+
 
 .. _configure_static_code_analysis_tools:
 
@@ -660,3 +721,83 @@ Verify the exercise configuration
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
     :width: 160
+
+.. _feedback_analysis:
+
+Feedback Analysis
+^^^^^^^^^^^^^^^^^
+
+After verifying the exercise configuration, Artemis provides an advanced **Feedback Analysis** feature to help instructors and tutors **identify common mistakes** among students and improve grading efficiency.
+
+**Accessing Feedback Analysis**
+
+- Navigate to the **Exercise Management** page.
+- Open a programming exercise and navigate to the grading section. Click on the **Feedback Analysis** tab.
+
+- A structured table provides an **overview of feedback occurrences**, categorized by **test cases, tasks, and error types**.
+
+    .. figure:: programming/feedback-analysis-overview.png
+          :align: center
+          :scale: 50%
+
+          *Feedback Analysis Overview*
+
+**Key Features**
+
+1. **Filtering and Sorting**
+    - **Filter feedback** by:
+        - **Tasks**
+        - **Test Cases**
+        - **Error Categories** (e.g., Student Errors, System Errors)
+        - **Occurrence Frequency**
+
+    - **Sort feedback** based on occurrence count or relevance.
+
+    .. figure:: programming/feedback-analysis-filters.png
+          :align: center
+          :scale: 50%
+
+          *Filtering Options for Feedback Analysis*
+
+2. **Affected Students Overview**
+    - View a **list of students** affected by specific feedback messages.
+    - Open **individual repositories** for further review and correction of low-quality feedback.
+
+    .. figure:: programming/feedback-analysis-affected-students.png
+          :align: center
+          :scale: 50%
+
+          *Affected Students View*
+
+3. **Aggregated Feedback Overview**
+    - To avoid many single entries in case of testcases using random values and generating similar feedback **Groups similar feedback** messages together all feedback to highlight frequently occurring errors.
+    - Displays grouped **occurrence counts** and **relative frequencies** to help instructors prioritize common issues.
+
+4. **Detailed Feedback Inspection**
+    - Click on any feedback entry to view **detailed feedback inspection**.
+    - Open a **modal window** to inspect for example feedback detailtexts which were too long and therefore had to be cut off in the table entry.
+
+    .. figure:: programming/feedback-analysis-detail.png
+          :align: center
+          :scale: 50%
+
+          *Detailed Feedback View*
+
+5. **Communication & Collaboration**
+    - Create **discussion channels** directly from the feedback analysis view.
+    - Enable **collaborative discussions** among tutors to streamline grading.
+
+    .. figure:: programming/feedback-analysis-channel.png
+          :align: center
+          :scale: 50%
+
+          *Creating a Feedback Discussion Channel*
+
+- To get a better understanding of the feature, you can watch the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
+

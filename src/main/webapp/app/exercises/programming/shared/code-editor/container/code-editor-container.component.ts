@@ -1,8 +1,7 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import {
     CommitState,
@@ -25,6 +24,8 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -36,8 +37,21 @@ export enum CollapsableCodeEditorElement {
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
+    imports: [
+        CodeEditorGridComponent,
+        CodeEditorActionsComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorMonacoComponent,
+        CodeEditorInstructionsComponent,
+        CodeEditorBuildOutputComponent,
+        KeysPipe,
+    ],
 })
 export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private fileService = inject(CodeEditorFileService);
+
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
@@ -108,11 +122,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
-    constructor(
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private fileService: CodeEditorFileService,
-    ) {
+    constructor() {
         this.initializeProperties();
     }
 
@@ -262,13 +272,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.alertService.error(`artemisApp.editor.errors.${errorTranslationKey}`, translationParams);
     }
 
-    /**
-     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
-     */
-    canDeactivate() {
-        return _isEmpty(this.unsavedFiles);
-    }
-
     getText(): string {
         return this.monacoEditor.getText() ?? '';
     }
@@ -286,14 +289,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.monacoEditor.highlightLines(startLine, endLine);
     }
 
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid.toggleCollapse(event, collapsableElement);
     }
@@ -305,5 +300,26 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onAnnotations(annotations: Array<Annotation>) {
         this.annotations = annotations;
         this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
+    }
+
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
+    canDeactivate() {
+        return _isEmpty(this.unsavedFiles);
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
     }
 }

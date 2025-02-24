@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -90,14 +92,17 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, pointsOfExercise, bonusPointsOfExercise, scoreAwarded, rated, TextSubmission::new, 1);
     }
 
-    private ProgrammingExercise createProgrammingExercise(int i, Set<CourseCompetency> competencies) {
+    private ProgrammingExercise createProgrammingExercise(int i, CourseCompetency competency) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
 
         programmingExercise.setMaxPoints(i * 10.0);
-        programmingExercise.setCompetencies(competencies);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        return programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, programmingExercise, 1);
+        programmingExercise = (ProgrammingExercise) competencyExerciseLinkRepository.save(link).getExercise();
+        return programmingExercise;
     }
 
     private Result createProgrammingExerciseParticipationSubmissionAndResult(ProgrammingExercise exercise, Participant participant, long scoreAwarded, boolean rated,
@@ -147,6 +152,17 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         super.shouldReturnCompetenciesForCourse(new Competency());
     }
 
+    @Override
+    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
+        return request.getList("/api/courses/" + courseId + "/course-competencies?filter=true", expectedStatus, CourseCompetency.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnCompetenciesForStudentOfCourseFiltered() throws Exception {
+        super.shouldReturnCompetenciesForCourseFiltered(new Competency());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
@@ -187,6 +203,12 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(competencyUtilService::createCompetency);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
+        shouldImportAllCompetenciesWithSomeExisting(Competency::new, 5);
     }
 
     @Test
@@ -274,7 +296,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @BeforeEach
         void setupTestScenario() {
-            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, Set.of(courseCompetency))).toArray(ProgrammingExercise[]::new);
+            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, courseCompetency)).toArray(ProgrammingExercise[]::new);
         }
 
         @Test
@@ -466,6 +488,31 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             relation.setType(RelationType.ASSUMES);
 
             request.post("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldUpdateForInstructor() throws Exception {
+            var headCompetency = competencyUtilService.createCompetency(course);
+            var relationToCreate = new CompetencyRelation();
+            relationToCreate.setTailCompetency(courseCompetency);
+            relationToCreate.setHeadCompetency(headCompetency);
+            relationToCreate.setType(RelationType.EXTENDS);
+
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
+                    HttpStatus.OK);
+
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            var relation = relations.stream().findFirst().get();
+            assertThat(relation.getType()).isEqualTo(RelationType.EXTENDS);
+
+            request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/" + relation.getId(), new UpdateCourseCompetencyRelationDTO(RelationType.MATCHES),
+                    HttpStatus.NO_CONTENT);
+
+            relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            assertThat(relations.stream().findFirst().get().getType()).isEqualTo(RelationType.MATCHES);
         }
     }
 
