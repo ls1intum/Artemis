@@ -156,7 +156,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         }
         this.connecting = true;
         // NOTE: we add 'websocket' twice to use STOMP without SockJS
-        const url = `ws://${window.location.host}/websocket/websocket`;
+        const url = `//${window.location.host}/websocket/websocket`;
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
