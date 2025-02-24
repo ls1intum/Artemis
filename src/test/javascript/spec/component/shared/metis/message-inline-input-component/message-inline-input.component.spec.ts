@@ -295,4 +295,25 @@ describe('MessageInlineInputComponent', () => {
         expect(component.irisEnabled).toBeFalse();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should not be displayed for general chats if the Student Course Analytics Dashboard is disabled', fakeAsync(() => {
+        const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+
+        component.posting = directMessageUser1;
+        componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: false } as Course);
+
+        const mockChannelDTO = {
+            type: ConversationType.CHANNEL,
+            subType: ChannelSubType.GENERAL,
+            subTypeReferenceId: 42,
+        } as ConversationDTO;
+
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.irisEnabled).toBeFalse();
+        expect(getExerciseSettingsSpy).toHaveBeenCalledTimes(0);
+    }));
 });

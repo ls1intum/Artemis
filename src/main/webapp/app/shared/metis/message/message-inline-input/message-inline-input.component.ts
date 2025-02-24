@@ -41,7 +41,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     ngOnInit(): void {
         super.ngOnInit();
         this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
-            this.checkIrisSettings(getAsChannelDTO(conversation), this.course()?.id);
+            this.checkIrisSettings(getAsChannelDTO(conversation));
         });
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
@@ -102,24 +102,28 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     /**
      * Helper method to check if iris is activated in the settings
      * @param channelDTO channel to be checked for
-     * @param courseId
      * @private
      */
-    private checkIrisSettings(channelDTO?: ChannelDTO, courseId?: number): void {
+    private checkIrisSettings(channelDTO?: ChannelDTO): void {
         switch (channelDTO?.subType) {
             case ChannelSubType.GENERAL:
-                if (courseId) {
-                    this.irisSettingsService
-                        .getCombinedCourseSettings(courseId)
-                        .pipe(
-                            catchError(() => {
-                                this.setIrisStatus(false, '');
-                                return of(undefined);
-                            }),
-                        )
-                        .subscribe((irisSettings) => {
-                            this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
-                        });
+                const course = this.course();
+                if (course?.studentCourseAnalyticsDashboardEnabled) {
+                    if (course.id) {
+                        this.irisSettingsService
+                            .getCombinedCourseSettings(course.id)
+                            .pipe(
+                                catchError(() => {
+                                    this.setIrisStatus(false, '');
+                                    return of(undefined);
+                                }),
+                            )
+                            .subscribe((irisSettings) => {
+                                this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                            });
+                    }
+                } else {
+                    this.setIrisStatus(false, '');
                 }
                 break;
             case ChannelSubType.LECTURE:
