@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { EntityResponseType } from 'app/complaints/complaint.service';
@@ -12,8 +12,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../../../test.module';
 import '@angular/localize/init';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
@@ -37,12 +39,14 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: mockRouter },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         }).compileComponents();
 

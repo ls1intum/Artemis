@@ -14,7 +14,6 @@ describe('ApollonDiagramService', () => {
     let httpTestingController: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
         })
             .compileComponents()

@@ -38,7 +38,7 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
@@ -49,8 +49,11 @@ import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/ser
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -188,7 +191,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(NgbTooltipModule)],
+            imports: [NgxDatatableModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
@@ -218,7 +221,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 

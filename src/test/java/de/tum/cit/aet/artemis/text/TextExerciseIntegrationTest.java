@@ -524,7 +524,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
-        verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any(), any());
+        verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
     }
 
@@ -1071,8 +1071,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(textExercise.getId());
+        var plagiarismResult = (TextPlagiarismResult) result.plagiarismResult();
 
-        PlagiarismComparison<TextSubmissionElement> comparison = (PlagiarismComparison<TextSubmissionElement>) result.plagiarismResult().getComparisons().iterator().next();
+        PlagiarismComparison<TextSubmissionElement> comparison = plagiarismResult.getComparisons().iterator().next();
         // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
         // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
         // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
@@ -1186,7 +1187,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testReEvaluateAndUpdateTextExerciseWithExampleSubmission() throws Exception {
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
-        gradingCriteria.remove(1);
         textExercise.setGradingCriteria(gradingCriteria);
 
         // Create example submission
@@ -1237,7 +1237,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExerciseToBeConflicted.setId(123456789L);
         textExerciseRepository.save(textExerciseToBeConflicted);
 

@@ -1,6 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -34,6 +33,10 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -51,7 +54,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -81,6 +84,8 @@ describe('CourseCompetenciesDetails', () => {
                     useValue: route,
                 },
                 { provide: Router, useValue: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
             schemas: [],
         })
