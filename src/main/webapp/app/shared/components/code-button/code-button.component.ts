@@ -444,19 +444,18 @@ export class CodeButtonComponent implements OnInit {
 
     private initTheia(profileInfo: ProfileInfo) {
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
+            let exercise: ProgrammingExercise = this.exercise()!;
             // Theia requires the Build Config of the programming exercise to be set
-            // @ts-expect-error (The exercise is not undefined here)
-            this.programmingExerciseSerice.getTheiaConfig(this.exercise().id!).subscribe((theiaConfig) => {
+            this.programmingExerciseSerice.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                // @ts-expect-error (The exercise is not undefined here)
-                this.exercise().buildConfig = { ...this.exercise()?.buildConfig, ...theiaConfig };
+                this.exercise()!.buildConfig = { ...exercise.buildConfig, ...theiaConfig };
+                exercise = this.exercise()!;
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
 
                 // Verify that all conditions are met
-                // @ts-expect-error (The exercise is not undefined here)
-                if (this.theiaPortalURL !== '' && this.exercise().allowOnlineIde && this.exercise().buildConfig?.theiaImage) {
+                if (this.theiaPortalURL !== '' && exercise.allowOnlineIde && exercise.buildConfig?.theiaImage) {
                     this.theiaEnabled = true;
                 }
             });
