@@ -36,7 +36,7 @@
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
-                "show": "Dearchivieren",
+                "show": "Wiederherstellen",
                 "hide": "Archivieren",
                 "notFound": "Keine Konversation gefunden",
                 "favoriteChannels": "Favoriten",
