@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.withPrecision;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -19,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,10 +57,10 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -106,7 +109,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     private QuizSubmissionService quizSubmissionService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -175,8 +178,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     private User instructor;
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         course1 = courseUtilService.addEmptyCourse();
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

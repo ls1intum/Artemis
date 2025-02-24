@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -146,7 +146,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
@@ -191,6 +191,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
