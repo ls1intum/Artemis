@@ -15,7 +15,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ButtonType } from 'app/shared/components/button.component';
-import { Subscription, catchError, of } from 'rxjs';
+import { Observable, Subscription, catchError, of } from 'rxjs';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
@@ -107,66 +107,59 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * @private
      */
     private checkIrisSettings(channelDTO?: ChannelDTO): void {
+        const handleIrisSettings = (
+            settings: IrisSettings | undefined,
+            getSettings: () => Observable<IrisSettings | undefined>,
+            getEnabled: (settings: IrisSettings | undefined) => boolean | undefined,
+        ) => {
+            if (settings) {
+                this.setIrisStatus(getEnabled(settings), channelDTO);
+            } else {
+                getSettings()
+                    .pipe(
+                        catchError(() => {
+                            this.setIrisStatus();
+                            return of(undefined);
+                        }),
+                    )
+                    .subscribe((newSettings) => {
+                        this.irisSettings = newSettings;
+                        this.setIrisStatus(getEnabled(newSettings), channelDTO);
+                    });
+            }
+        };
         switch (channelDTO?.subType) {
             case ChannelSubType.GENERAL: {
                 const course = this.course();
-                if (course?.studentCourseAnalyticsDashboardEnabled) {
-                    if (this.irisSettings) {
-                        this.setIrisStatus(this.irisSettings.irisCourseChatSettings?.enabled, channelDTO);
-                    } else if (course.id) {
-                        this.irisSettingsService
-                            .getCombinedCourseSettings(course.id)
-                            .pipe(
-                                catchError(() => {
-                                    this.setIrisStatus();
-                                    return of(undefined);
-                                }),
-                            )
-                            .subscribe((irisSettings) => {
-                                this.irisSettings = irisSettings;
-                                this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled, channelDTO);
-                            });
-                    }
+                if (course?.studentCourseAnalyticsDashboardEnabled && course.id) {
+                    handleIrisSettings(
+                        this.irisSettings,
+                        () => this.irisSettingsService.getCombinedCourseSettings(course.id!),
+                        (settings) => settings?.irisCourseChatSettings?.enabled,
+                    );
                 } else {
                     this.setIrisStatus();
                 }
                 break;
             }
             case ChannelSubType.LECTURE:
-                if (this.irisSettings) {
-                    this.setIrisStatus(this.irisSettings.irisLectureChatSettings?.enabled, channelDTO);
-                } else if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService
-                        .getCombinedCourseSettings(channelDTO.subTypeReferenceId)
-                        .pipe(
-                            catchError(() => {
-                                this.setIrisStatus();
-                                return of(undefined);
-                            }),
-                        )
-                        .subscribe((irisSettings) => {
-                            this.irisSettings = irisSettings;
-                            this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled, channelDTO);
-                        });
+                if (channelDTO.subTypeReferenceId) {
+                    handleIrisSettings(
+                        this.irisSettings,
+                        () => this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId!),
+                        (settings) => settings?.irisLectureChatSettings?.enabled,
+                    );
                 } else {
                     this.setIrisStatus();
                 }
                 break;
             case ChannelSubType.EXERCISE:
-                if (this.irisSettings) {
-                    this.setIrisStatus(this.irisSettings.irisChatSettings?.enabled ?? false, channelDTO);
-                } else if (channelDTO.subTypeReferenceId) {
-                    this.irisSettingsService
-                        .getCombinedExerciseSettings(channelDTO.subTypeReferenceId)
-                        .pipe(
-                            catchError(() => {
-                                this.setIrisStatus();
-                                return of(undefined);
-                            }),
-                        )
-                        .subscribe((irisSettings) => {
-                            this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, channelDTO);
-                        });
+                if (channelDTO.subTypeReferenceId) {
+                    handleIrisSettings(
+                        this.irisSettings,
+                        () => this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId!),
+                        (settings) => settings?.irisChatSettings?.enabled,
+                    );
                 } else {
                     this.setIrisStatus();
                 }
