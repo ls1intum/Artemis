@@ -67,7 +67,7 @@ export class CodeButtonComponent implements OnInit {
     private localStorage = inject(LocalStorageService);
     private participationService = inject(ParticipationService);
     private ideSettingsService = inject(IdeSettingsService);
-    private programmingExerciseSerice = inject(ProgrammingExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private router = inject(Router);
 
@@ -446,7 +446,7 @@ export class CodeButtonComponent implements OnInit {
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
             let exercise: ProgrammingExercise = this.exercise()!;
             // Theia requires the Build Config of the programming exercise to be set
-            this.programmingExerciseSerice.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
+            this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
                 this.exercise()!.buildConfig = { ...exercise.buildConfig, ...theiaConfig };
                 exercise = this.exercise()!;
