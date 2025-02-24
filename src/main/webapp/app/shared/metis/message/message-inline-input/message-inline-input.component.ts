@@ -16,6 +16,7 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Subscription, catchError, of } from 'rxjs';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -29,6 +30,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     protected metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
     irisSettingsService = inject(IrisSettingsService);
+    private irisSettings: IrisSettings | undefined;
 
     course = input<Course>();
 
@@ -109,56 +111,68 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             case ChannelSubType.GENERAL: {
                 const course = this.course();
                 if (course?.studentCourseAnalyticsDashboardEnabled) {
-                    if (course.id) {
+                    if (this.irisSettings) {
+                        this.setIrisStatus(this.irisSettings.irisCourseChatSettings?.enabled, channelDTO);
+                    } else if (course.id) {
                         this.irisSettingsService
                             .getCombinedCourseSettings(course.id)
                             .pipe(
                                 catchError(() => {
-                                    this.setIrisStatus(false, '');
+                                    this.setIrisStatus();
                                     return of(undefined);
                                 }),
                             )
                             .subscribe((irisSettings) => {
-                                this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                                this.irisSettings = irisSettings;
+                                this.setIrisStatus(irisSettings?.irisCourseChatSettings?.enabled, channelDTO);
                             });
                     }
                 } else {
-                    this.setIrisStatus(false, '');
+                    this.setIrisStatus();
                 }
                 break;
             }
             case ChannelSubType.LECTURE:
-                if (channelDTO.subTypeReferenceId) {
+                if (this.irisSettings) {
+                    this.setIrisStatus(this.irisSettings.irisLectureChatSettings?.enabled, channelDTO);
+                } else if (channelDTO.subTypeReferenceId) {
                     this.irisSettingsService
                         .getCombinedCourseSettings(channelDTO.subTypeReferenceId)
                         .pipe(
                             catchError(() => {
-                                this.setIrisStatus(false, '');
+                                this.setIrisStatus();
                                 return of(undefined);
                             }),
                         )
                         .subscribe((irisSettings) => {
-                            this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                            this.irisSettings = irisSettings;
+                            this.setIrisStatus(irisSettings?.irisLectureChatSettings?.enabled, channelDTO);
                         });
+                } else {
+                    this.setIrisStatus();
                 }
                 break;
             case ChannelSubType.EXERCISE:
-                if (channelDTO.subTypeReferenceId) {
+                if (this.irisSettings) {
+                    this.setIrisStatus(this.irisSettings.irisChatSettings?.enabled ?? false, channelDTO);
+                } else if (channelDTO.subTypeReferenceId) {
                     this.irisSettingsService
                         .getCombinedExerciseSettings(channelDTO.subTypeReferenceId)
                         .pipe(
                             catchError(() => {
-                                this.setIrisStatus(false, '');
+                                this.setIrisStatus();
                                 return of(undefined);
                             }),
                         )
                         .subscribe((irisSettings) => {
-                            this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, this.metisService.getLinkForChannelSubType(channelDTO));
+                            this.setIrisStatus(irisSettings?.irisChatSettings?.enabled ?? false, channelDTO);
                         });
+                } else {
+                    this.setIrisStatus();
                 }
                 break;
             default:
-                this.setIrisStatus(false, '');
+                this.setIrisStatus();
                 break;
         }
     }
@@ -166,13 +180,13 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     /**
      * Helper method to set the Iris status
      * @param enabled isIrisButton enabled
-     * @param link link to the correct iris instance for the question
+     * @param channelDTO channelDTO of channel the link is needed
      * @private
      */
-    private setIrisStatus(enabled: boolean, link?: string): void {
-        this.irisEnabled = enabled;
+    private setIrisStatus(enabled?: boolean, channelDTO?: ChannelDTO): void {
+        this.irisEnabled = enabled ?? false;
         if (enabled) {
-            this.channelSubTypeReferenceRouterLink = link ?? '';
+            this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(channelDTO) ?? '';
         } else {
             this.channelSubTypeReferenceRouterLink = '';
         }
