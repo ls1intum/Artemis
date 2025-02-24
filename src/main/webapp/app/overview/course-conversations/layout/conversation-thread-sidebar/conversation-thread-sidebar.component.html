@@ -1,9 +1,11 @@
 <!-- expanded post to display post and answerPosts as thread -->
 <div class="h-100">
-    <div class="postings-container expanded-thread">
-        <div class="draggable-left">
-            <fa-icon [icon]="faGripLinesVertical" />
-        </div>
+    <div class="postings-container expanded-thread" #threadContainer [ngClass]="{ expanded: isExpanded }">
+        @if (!isExpanded) {
+            <div class="draggable-left">
+                <fa-icon [icon]="faGripLinesVertical" />
+            </div>
+        }
         <div class="card">
             <!-- header -->
             <div class="card-header cursor-default d-flex">
@@ -11,7 +13,18 @@
                     <div class="col">
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label"></h5>
                     </div>
-                    <div class="col-auto">
+                    <div class="col-auto d-flex align-items-center flex-row gap-2">
+                        <fa-icon
+                            class="pointer me-2"
+                            #expandTooltip="ngbTooltip"
+                            [icon]="isExpanded ? faCompress : faExpand"
+                            (click)="toggleExpand()"
+                            [ngbTooltip]="
+                                isExpanded
+                                    ? ('artemisApp.conversationsLayout.threadSideBar.collapse' | artemisTranslate)
+                                    : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
+                            "
+                        />
                         <fa-icon
                             class="pointer"
                             [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
@@ -36,7 +49,7 @@
                                 [hasChannelModerationRights]="hasChannelModerationRights"
                             />
                         </div>
-                        <div class="message-input mx-3 px-3 pt-2">
+                        <div class="message-input mx-3 pt-2">
                             @if (!readOnlyMode) {
                                 <jhi-message-reply-inline-input
                                     [activeConversation]="conversation"

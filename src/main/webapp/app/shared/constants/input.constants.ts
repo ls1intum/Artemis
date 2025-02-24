@@ -51,3 +51,8 @@ export const APP_NAME_PATTERN_FOR_SWIFT =
 // They allow letters, digits and underscore. They cannot start with a digit. The package name cannot be a keyword or "_".
 export const PACKAGE_NAME_PATTERN_FOR_GO =
     '^(?!(?:break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var|_)$)[A-Za-z_][A-Za-z0-9_]*$';
+// Dart package name Regex derived from the pubspec file reference (https://dart.dev/tools/pub/pubspec#name).
+// The reserved words not usable as identifiers are derived from the Dart Programming Language Specification (https://spec.dart.dev/DartLangSpecDraft.pdf).
+// Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
+export const PACKAGE_NAME_PATTERN_FOR_DART =
+    '^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)[a-z_][a-z0-9_]*$';

@@ -458,12 +458,22 @@ public class SharedQueueProcessingService {
             BuildJobQueueItem job;
             BuildStatus status;
 
-            if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                status = BuildStatus.FAILED;
-                log.error("Error while processing build job: {}", buildJob, ex);
+            String cancelledMsg = "Build job with id " + buildJob.id() + " was cancelled.";
+            String timeoutMsg = "Build job with id " + buildJob.id() + " was timed out";
+            Throwable cause = ex.getCause();
+            String errorMessage = ex.getMessage();
+
+            if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
+                status = BuildStatus.TIMEOUT;
+                log.info("Build job with id {} was timed out", buildJob.id());
+            }
+            else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
+                status = BuildStatus.CANCELLED;
+                log.info("Build job with id {} was cancelled", buildJob.id());
             }
             else {
-                status = BuildStatus.CANCELLED;
+                status = BuildStatus.FAILED;
+                log.error("Error while processing build job: {}", buildJob, ex);
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);

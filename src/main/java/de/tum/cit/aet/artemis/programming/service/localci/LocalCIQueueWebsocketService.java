@@ -1,20 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.annotation.PostConstruct;
-
-import org.redisson.api.RMap;
-import org.redisson.api.RPriorityQueue;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.listener.ListAddListener;
-import org.redisson.api.listener.ListRemoveListener;
-import org.redisson.api.listener.MapPutListener;
-import org.redisson.api.listener.MapRemoveListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +10,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -35,90 +21,53 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
-
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
-
     private final SharedQueueManagementService sharedQueueManagementService;
-
-    private final RedissonClient redissonClient;
 
     /**
      * Instantiates a new Local ci queue websocket service.
      *
-     * @param redissonClient                   the redissonClient
      * @param localCIWebsocketMessagingService the local ci build queue websocket service
      * @param sharedQueueManagementService     the local ci shared build job queue service
      */
-    public LocalCIQueueWebsocketService(RedissonClient redissonClient, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
-            SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService) {
-        this.redissonClient = redissonClient;
+    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, SharedQueueManagementService sharedQueueManagementService) {
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
-     * Add listeners for build job queue changes.
+     * Sends queued jobs over websocket. This method is called when a new job is added to the queue or a job is removed from the queue.
+     *
+     * @param courseId the course id of the programming exercise related to the job
      */
-    @PostConstruct
-    public void init() {
-        RPriorityQueue<BuildJobQueueItem> queue = redissonClient.getPriorityQueue("buildJobQueue");
-        RMap<Long, BuildJobQueueItem> processingJobs = redissonClient.getMap("processingJobs");
-        RMap<String, BuildAgentInformation> buildAgentInformation = redissonClient.getMap("buildAgentInformation");
-
-        queue.addListener((ListAddListener) item -> {
-            log.info("Build job added to queue: {}", item);
-            // TODO: how to get the courseId here?
-            // TODO: https://redisson.org/docs/data-and-services/collections/#listeners
-            long courseId = 1L;
-            sendQueuedJobsOverWebsocket(courseId);
-        });
-        queue.addListener((ListRemoveListener) item -> {
-            log.info("Build job removed from queue: {}", item);
-            // TODO: how to get the courseId here?
-            long courseId = 1L;
-            sendQueuedJobsOverWebsocket(courseId);
-        });
-        processingJobs.addListener((MapPutListener) item -> {
-            log.info("Build job added to processing: {}", item);
-            // TODO: how to get the courseId here?
-            long courseId = 1L;
-            sendProcessingJobsOverWebsocket(courseId);
-        });
-        processingJobs.addListener((MapRemoveListener) item -> {
-            log.info("Build job removed to processing: {}", item);
-            // TODO: how to get the courseId here?
-            long courseId = 1L;
-            sendProcessingJobsOverWebsocket(courseId);
-        });
-        buildAgentInformation.addListener((MapPutListener) item -> {
-            log.info("Build Agent added: {}", item);
-            // TODO: get build agent name from item
-            sendBuildAgentInformationOverWebsocket(item);
-        });
-        buildAgentInformation.addListener((MapRemoveListener) item -> {
-            log.info("Build Agent removed: {}", item);
-            // TODO: get build agent name from item
-            sendBuildAgentInformationOverWebsocket(item);
-        });
-        // TODO: remove listener when the application is shut down
-    }
-
-    private void sendQueuedJobsOverWebsocket(long courseId) {
+    void sendQueuedJobsOverWebsocket(long courseId) {
         var queuedJobs = removeUnnecessaryInformation(sharedQueueManagementService.getQueuedJobs());
         var queuedJobsForCourse = queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
         localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
         localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobsForCourse);
     }
 
-    private void sendProcessingJobsOverWebsocket(long courseId) {
+    /**
+     * Sends processing jobs over websocket. This method is called when a new job is added to the processing jobs or a job is removed from the processing jobs.
+     *
+     * @param courseId the course id of the programming exercise related to the job
+     */
+    void sendProcessingJobsOverWebsocket(long courseId) {
         var processingJobs = removeUnnecessaryInformation(sharedQueueManagementService.getProcessingJobs());
         var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
         localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
         localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
+    }
+
+    /**
+     * Sends build agent information over websocket. This method is called when a new build agent is added or removed.
+     *
+     * @param agentName the name of the build agent
+     */
+    void sendBuildAgentInformationOverWebsocket(String agentName) {
+        sendBuildAgentSummaryOverWebsocket();
+        sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
@@ -129,11 +78,6 @@ public class LocalCIQueueWebsocketService {
     private void sendBuildAgentDetailsOverWebsocket(String agentName) {
         sharedQueueManagementService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
                 .ifPresent(localCIWebsocketMessagingService::sendBuildAgentDetails);
-    }
-
-    private void sendBuildAgentInformationOverWebsocket(String agentName) {
-        sendBuildAgentSummaryOverWebsocket();
-        sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
     /**
@@ -189,9 +133,4 @@ public class LocalCIQueueWebsocketService {
         return filteredBuildAgentSummary;
     }
 
-    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
-            ZonedDateTime estimatedCompletionDate) {
-        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
-        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
-    }
 }

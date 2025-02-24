@@ -4,11 +4,11 @@ import { of } from 'rxjs';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementUpdateComponent', () => {
     let component: OrganizationManagementUpdateComponent;
@@ -23,9 +23,8 @@ describe('OrganizationManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [OrganizationManagementUpdateComponent, MockDirective(TranslateDirective)],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: route }, provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(OrganizationManagementUpdateComponent, '')
             .compileComponents();

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -25,6 +26,7 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Info;
 
@@ -148,7 +150,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
 
         buildAgentDockerService.cleanUpContainers();
 
-        // Verify that removeContainerCmd() was called
+        // Verify that stopContainerCmd() was called
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be younger than 5 minutes
@@ -156,7 +158,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
 
         buildAgentDockerService.cleanUpContainers();
 
-        // Verify that removeContainerCmd() was not called a second time
+        // Verify that stopContainerCmd() was not called a second time
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be older than 5 minutes
@@ -165,11 +167,19 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         // Mock exception when stopping container
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doReturn(stopContainerCmd).when(stopContainerCmd).withTimeout(anyInt());
         doThrow(new RuntimeException("Container stopping failed")).when(stopContainerCmd).exec();
 
         buildAgentDockerService.cleanUpContainers();
 
         // Verify that killContainerCmd() was called
         verify(dockerClient, times(1)).killContainerCmd(anyString());
+
+        // Mock NotModified exception when stopping container
+        doThrow(new NotModifiedException("Container not running")).when(stopContainerCmd).exec();
+        buildAgentDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was called
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
     }
 }

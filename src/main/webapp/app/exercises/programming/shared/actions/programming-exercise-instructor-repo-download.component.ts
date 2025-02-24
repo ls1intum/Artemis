@@ -1,13 +1,14 @@
 import { Component, Input, inject } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
@@ -23,7 +24,7 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     readonly FeatureToggle = FeatureToggle;
 
     @Input() exerciseId: number;
-    @Input() repositoryType: ProgrammingExerciseInstructorRepositoryType;
+    @Input() repositoryType: RepositoryType;
     @Input() auxiliaryRepositoryId: number;
     @Input() buttonSize = ButtonSize.SMALL;
     @Input() title = 'artemisApp.programmingExercise.export.downloadRepo';
