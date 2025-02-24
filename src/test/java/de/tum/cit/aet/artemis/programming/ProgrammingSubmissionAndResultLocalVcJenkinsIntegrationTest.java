@@ -270,25 +270,6 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
         assertNoNewSubmissions(participation.getId(), submission);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
-        // Precondition: Database has participation without result and a programming
-        String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
-
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-
-        // Call programming-exercises/new-result which does include build log entries
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
-        postResult(notification, HttpStatus.OK);
-
-        assertBuildError(participation.getId(), userLogin);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateGradleFeedback() throws Exception {
@@ -299,6 +280,7 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
         exercise = programmingExerciseRepository.save(exercise);
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of(), List.of("test1"), logs, null, new ArrayList<>());
 
