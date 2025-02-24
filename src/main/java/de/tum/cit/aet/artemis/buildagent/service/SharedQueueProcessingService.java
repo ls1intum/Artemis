@@ -384,7 +384,7 @@ public class SharedQueueProcessingService {
     private void removeOfflineNodes() {
         Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
 
-        log.debug("Redis client list based on names: {}", uniqueClients);
+        log.info("Redis client list based on names: {}", uniqueClients);
 
         // Compare the client names with the build agent information
         for (String key : new HashSet<>(buildAgentInformation.keySet())) {
