@@ -625,4 +625,15 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(component.newMessageTextContent).toBe(mockQueryParams.irisQuestion);
     });
+
+    it('should leave irisQuestion empty onInit when no question provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe('');
+    });
 });

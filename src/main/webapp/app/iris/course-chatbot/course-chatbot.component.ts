@@ -12,6 +12,7 @@ export class CourseChatbotComponent implements OnChanges {
     chatService = inject(IrisChatService);
 
     @Input() courseId?: number;
+
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.courseId) {
             this.chatService.switchTo(ChatServiceMode.COURSE, this.courseId);

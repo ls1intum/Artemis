@@ -191,4 +191,15 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         expect(component.chatOpen).toBe(true);
     });
+
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBe(false);
+    });
 });
