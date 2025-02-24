@@ -761,7 +761,7 @@ public class ExerciseService {
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
                 && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             User instructor = userRepository.getUser();
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
     }
 
