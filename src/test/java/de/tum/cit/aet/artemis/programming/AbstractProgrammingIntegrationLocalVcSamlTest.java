@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -41,7 +41,7 @@ public abstract class AbstractProgrammingIntegrationLocalVcSamlTest extends Abst
 
     // External Repositories
     @Autowired
-    protected ExamRepository examRepository;
+    protected ExamTestRepository examRepository;
 
     @Autowired
     protected StudentExamTestRepository studentExamRepository;

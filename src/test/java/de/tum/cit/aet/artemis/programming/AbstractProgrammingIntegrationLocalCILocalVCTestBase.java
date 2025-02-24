@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -73,7 +73,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     // External Repositories
     @Autowired
-    protected ExamRepository examRepository;
+    protected ExamTestRepository examRepository;
 
     @Autowired
     protected StudentExamTestRepository studentExamRepository;
