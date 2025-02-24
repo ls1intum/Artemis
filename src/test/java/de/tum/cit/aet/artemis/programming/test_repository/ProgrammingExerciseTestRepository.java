@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -14,6 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -106,5 +109,17 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             return getValueElseThrow(findWithBuildConfigById(programmingExercise.getId()), programmingExercise.getId());
         }
         return programmingExercise;
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded build config.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 }

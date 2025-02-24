@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.test_repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -82,4 +84,19 @@ public interface UserTestRepository extends UserRepository {
             WHERE user.login LIKE CONCAT(:userPrefix, '%')
             """)
     Set<User> findAllByUserPrefix(String userPrefix);
+
+    /**
+     * Finds all users which a non-null VCS access token that expires before some given date.
+     *
+     * @param expirationDate the maximal expiration date of the retrieved users
+     * @return all users with expiring VCS access tokens before the given date
+     */
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.vcsAccessToken IS NOT NULL
+                AND user.vcsAccessTokenExpiryDate IS NOT NULL
+                AND user.vcsAccessTokenExpiryDate <= :date
+            """)
+    Set<User> getUsersWithAccessTokenExpirationDateBefore(@Param("date") ZonedDateTime expirationDate);
 }

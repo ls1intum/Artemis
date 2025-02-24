@@ -742,18 +742,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded build config.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
-    /**
      * Saves the given programming exercise to the database.
      * <p>
      * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.

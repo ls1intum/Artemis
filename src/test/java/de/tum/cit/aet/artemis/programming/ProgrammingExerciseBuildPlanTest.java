@@ -9,7 +9,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationLocalVcSamlTest {
+class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String BUILD_PLAN = """
             image: ubuntu:20.04
