@@ -1,7 +1,6 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -30,10 +29,6 @@ export class Result implements BaseEntity {
     public submission?: Submission;
     public assessor?: User;
     public feedbacks?: Feedback[];
-    /**
-     * @deprecated This property will be removed in Artemis 8.0. Use `submission.participation` instead.
-     */
-    public participation?: Participation;
 
     // helper attributes
     public durationInMinutes?: number;

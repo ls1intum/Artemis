@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.domain.participation;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -94,22 +93,6 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonIgnoreProperties("studentParticipations")
     @JsonView(QuizView.Before.class)
     protected Exercise exercise;
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     *
-     *              Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each
-     *              participation
-     *              has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to Submission.result for
-     *              cascading
-     *              settings.
-     */
-    @OneToMany(mappedBy = "participation")
-    @JsonIgnoreProperties(value = "participation", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    @Deprecated(since = "7.7", forRemoval = true)
-    private Set<Result> results = new HashSet<>();
 
     /**
      * Because a submission has a reference to the participation and the participation has a collection of submissions, setting the cascade type to PERSIST would result in
@@ -206,56 +189,6 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = practiceMode;
     }
 
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     * @return the results
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Set<Result> getResults() {
-        return results;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     * @param results the results
-     * @return the results
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Participation results(Set<Result> results) {
-        this.results = results;
-        return this;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     * @param result the result
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    @Override
-    public void addResult(Result result) {
-        this.results.add(result);
-        result.setParticipation(this);
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     * @param result the result
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public void removeResult(Result result) {
-        this.results.remove(result);
-        result.setParticipation(null);
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submissions.results instead
-     * @param results the results
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public void setResults(Set<Result> results) {
-        this.results = results;
-    }
-
     @Override
     public Set<Submission> getSubmissions() {
         return submissions;
@@ -303,24 +236,8 @@ public abstract class Participation extends DomainObject implements Participatio
      */
     @Nullable
     private Result findLatestResult(boolean filterIllegalResults) {
-        Set<Result> results = this.results;
-        if (results == null || results.isEmpty()) {
-            return null;
-        }
-
-        if (filterIllegalResults) {
-            // Filter out results that belong to an illegal submission (if the submission exists).
-            results = results.stream().filter(result -> result.getSubmission() == null || !SubmissionType.ILLEGAL.equals(result.getSubmission().getType()))
-                    .collect(Collectors.toSet());
-        }
-
-        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
-                .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
-
-        if (sortedResultsWithCompletionDate.isEmpty()) {
-            return null;
-        }
-        return sortedResultsWithCompletionDate.getFirst();
+        var latestSubmission = this.findLatestSubmission(!filterIllegalResults);
+        return latestSubmission.map(Submission::getLatestResult).orElse(null);
     }
 
     /**
@@ -379,8 +296,8 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results="
-                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCountTransient + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", submissions="
+                + submissions + ", submissionCount=" + submissionCountTransient + "}";
     }
 
     public abstract void filterSensitiveInformation();
