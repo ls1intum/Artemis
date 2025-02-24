@@ -93,9 +93,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
@@ -183,7 +183,7 @@ public class ProgrammingExerciseTestService {
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examTestRepository;
 
     @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
@@ -727,7 +727,7 @@ public class ProgrammingExerciseTestService {
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
-        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
+        final Exam loadedExam = examTestRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
         assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
     }
 
@@ -1944,7 +1944,7 @@ public class ProgrammingExerciseTestService {
 
         // register users
         Set<ExamUser> registeredExamUsers = new HashSet<>();
-        exam = examRepository.save(exam);
+        exam = examTestRepository.save(exam);
         for (var user : registeredStudents) {
             var registeredExamUser = new ExamUser();
             registeredExamUser.setUser(user);
@@ -1957,7 +1957,7 @@ public class ProgrammingExerciseTestService {
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(2);
-        exam = examRepository.save(exam);
+        exam = examTestRepository.save(exam);
 
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
@@ -2343,7 +2343,7 @@ public class ProgrammingExerciseTestService {
         examExercise = programmingExerciseRepository.save(examExercise);
         examExercise.getExerciseGroup().getExam().setStartDate(startDate);
         examExercise.getExerciseGroup().getExam().setEndDate(endDate);
-        examRepository.save(examExercise.getExerciseGroup().getExam());
+        examTestRepository.save(examExercise.getExerciseGroup().getExam());
 
         var createdExercise = programmingExerciseRepository.findById(exercise.getId());
         assertThat(createdExercise).isPresent();
@@ -2561,13 +2561,13 @@ public class ProgrammingExerciseTestService {
 
         // Test example solution publication date not set.
         exam.setExampleSolutionPublicationDate(null);
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
 
         // Test example solution publication date in the past.
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
         assertThat(zip).isNotNull();
@@ -2585,7 +2585,7 @@ public class ProgrammingExerciseTestService {
 
         // Test example solution publication date in the future.
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
     }

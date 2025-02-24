@@ -52,8 +52,8 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -113,7 +113,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examTestRepository;
 
     @Autowired
     private TextAssessmentService textAssessmentService;
@@ -464,7 +464,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepository.save(textExercise);
 
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -487,7 +487,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepository.save(textExercise);
 
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         examUtilService.addStudentExamWithUser(exam, student);
 
@@ -519,7 +519,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepository.save(textExercise);
 
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -1046,9 +1046,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exam.setVisibleDate(now().minusHours(3));
         exam.setStartDate(now().minusHours(2));
         exam.setEndDate(now().minusHours(1));
-        exam = examRepository.save(exam);
+        exam = examTestRepository.save(exam);
 
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+        Exam examWithExerciseGroups = examTestRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         exercise.setAssessmentType(assessmentType);

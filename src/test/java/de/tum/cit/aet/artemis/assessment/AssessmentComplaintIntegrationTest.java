@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -69,7 +69,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private ComplaintResponseTestRepository complaintResponseTestRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examTestRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -335,7 +335,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         Exam exam = examExercise.getExam();
         exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
         exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -805,7 +805,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void submitComplaintForCourseExerciseUsingTheExamExerciseCall_badRequest() throws Exception {
         // "Mock Exam" which id is used to call the wrong REST-Call
         final Exam exam = ExamFactory.generateExam(course);
-        examRepository.save(exam);
+        examTestRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
         var complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.of(exam.getId()));
 
@@ -950,7 +950,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private Submission createComplaintForExamExercise(TextExercise examExercise, String complaintText, HttpStatus expectedStatus) throws Exception {
         examExercise.getExam().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
         examExercise.getExam().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
-        examRepository.save(examExercise.getExam());
+        examTestRepository.save(examExercise.getExam());
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examId = examExercise.getExam().getId();
