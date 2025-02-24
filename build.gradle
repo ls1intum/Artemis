@@ -318,7 +318,7 @@ dependencies {
     implementation "org.springframework.retry:spring-retry:2.0.11"
 
     // passkey functionality to simplify login
-    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.10.0.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
