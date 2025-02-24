@@ -181,17 +181,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         flush();
     }));
 
-    it('should set irisQuestion onInit when provided in the queryParams', () => {
-        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
-
-        component.ngOnInit();
-
-        expect(component.irisQuestion).toBe(mockQueryParams.irisQuestion);
-    });
-
     it('should open chatbot if irisQuestion is provided in the queryParams', () => {
         const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
         const activatedRoute = TestBed.inject(ActivatedRoute);

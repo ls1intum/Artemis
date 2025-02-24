@@ -60,7 +60,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     isOverflowing = false;
     hasNewMessages = false;
     newIrisMessage: string | undefined;
-    irisQuestion: string | undefined;
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -89,7 +88,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
         this.queryParamsSubscription = this.route.queryParams?.subscribe((params: any) => {
             if (params.irisQuestion) {
-                this.irisQuestion = params.irisQuestion;
                 this.openChat();
             }
         });
@@ -126,9 +124,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.numNewMessagesSubscription?.unsubscribe();
         this.paramsSubscription.unsubscribe();
         this.latestIrisMessageSubscription.unsubscribe();
-        if (this.queryParamsSubscription) {
-            this.queryParamsSubscription.unsubscribe();
-        }
+        this.queryParamsSubscription?.unsubscribe();
         this.newIrisMessage = undefined;
         this.isOverflowing = false;
     }
@@ -169,10 +165,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
-            data: {
-                isChatGptWrapper: this.isChatGptWrapper,
-                irisQuestion: this.irisQuestion,
-            },
+            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }

@@ -1,11 +1,12 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -18,7 +19,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private router = inject(Router);
     private dialog = inject(MatDialog);
 
-    dialogData = inject<{ isChatGptWrapper: boolean; irisQuestion: string }>(MAT_DIALOG_DATA);
+    dialogData = inject<{ isChatGptWrapper: boolean }>(MAT_DIALOG_DATA);
 
     // User preferences
     initialWidth = 400;

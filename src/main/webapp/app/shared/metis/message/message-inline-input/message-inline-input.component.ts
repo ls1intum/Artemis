@@ -47,9 +47,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     }
 
     ngOnDestroy(): void {
-        if (this.conversationServiceSubscription) {
-            this.conversationServiceSubscription.unsubscribe();
-        }
+        this.conversationServiceSubscription?.unsubscribe();
     }
 
     /**

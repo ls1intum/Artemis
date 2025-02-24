@@ -1,5 +1,5 @@
-<div [hidden]="buttonLoading">
+<div [hidden]="buttonLoading()">
     <jhi-iris-logo [size]="TEXT" id="redirect-to-iris-img" />
 </div>
 
-<fa-icon #loadingIcon [hidden]="!buttonLoading" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />
+<fa-icon #loadingIcon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />

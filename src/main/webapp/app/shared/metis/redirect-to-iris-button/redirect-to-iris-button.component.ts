@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, HostBinding, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,13 +11,13 @@ import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
     imports: [FaIconComponent, IrisLogoComponent],
 })
 export class RedirectToIrisButtonComponent {
-    @Input() buttonIcon: IconProp;
-    @Input() buttonLabel: string;
-    @Input() buttonLoading = false;
-    @Input() hideLabelMobile = true;
+    buttonIcon = input<IconProp>();
+    buttonLabel = input<string>();
+    buttonLoading = input<boolean>(false);
+    hideLabelMobile = input<boolean>(true);
 
-    @HostBinding('class.btn-outline-primary') @Input() outlined = false;
-    @HostBinding('class.btn-sm') @Input() smallButton = false;
+    @HostBinding('class.btn-outline-primary') outlined = input<boolean>(false);
+    @HostBinding('class.btn-sm') smallButton = input<boolean>(false);
     @HostBinding('class.btn') isButton = true;
 
     // Icons

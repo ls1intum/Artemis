@@ -4,10 +4,9 @@
         <jhi-iris-base-chatbot
             [fullSize]="fullSize"
             [showCloseButton]="true"
-            [insertedQuestion]="dialogData?.irisQuestion"
-            [isChatGptWrapper]="dialogData?.isChatGptWrapper || false"
             (fullSizeToggle)="toggleFullSize()"
             (closeClicked)="closeChat()"
+            [isChatGptWrapper]="dialogData?.isChatGptWrapper || false"
         />
         <div class="chat-widget-top-resize-area"></div>
     </div>
