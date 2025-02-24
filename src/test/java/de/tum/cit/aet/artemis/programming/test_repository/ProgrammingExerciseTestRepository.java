@@ -122,4 +122,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 }

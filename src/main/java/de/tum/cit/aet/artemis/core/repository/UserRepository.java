@@ -1147,18 +1147,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
 
-    /**
-     * Finds all users with VCS access tokens set to null.
-     *
-     * @return all users without VCS access tokens
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE user.vcsAccessToken IS NULL
-            """)
-    Set<User> getUsersWithAccessTokenNull();
-
     @Query("""
             SELECT user.login
             FROM User user
