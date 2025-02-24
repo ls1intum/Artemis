@@ -8,6 +8,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisWebhookTranscriptionIngestionExecutionDTO(List<PyrisTranscriptionIngestionWebhookDTO> transcriptions, Long lectureUnitId,
-        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
+public record PyrisWebhookTranscriptionIngestionExecutionDTO(PyrisTranscriptionIngestionWebhookDTO transcription, Long lectureUnitId, PyrisPipelineExecutionSettingsDTO settings,
+        List<PyrisStageDTO> initialStages) {
 }

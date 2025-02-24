@@ -6,7 +6,6 @@ import subprocess
 import whisper
 
 VIDEO_PATH = "./videos/video-software-lifecycle.mp4"
-LECTURE_ID = 1
 LECTURE_UNIT_ID = 1
 
 SLIDE_MAPPING = [
@@ -94,7 +93,6 @@ def get_transcription(video_path):
             json.dump(result, file, ensure_ascii=False, indent=2)
 
     output = {
-        "lectureId": LECTURE_ID,
         "lectureUnitId": LECTURE_UNIT_ID,
         "language": "en",
         "segments": list(map(lambda item: {

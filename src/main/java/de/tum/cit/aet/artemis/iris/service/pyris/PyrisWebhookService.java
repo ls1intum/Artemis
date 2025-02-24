@@ -81,14 +81,14 @@ public class PyrisWebhookService {
     /**
      * adds the transcription to the vector database in Pyris
      *
-     * @param transcriptions The transcription that got Updated
-     * @param course         The course of the transcriptions
-     * @param lecture        The lecture of the transcriptions
-     * @param lectureUnit    The lecture unit of the transcriptions
+     * @param transcription The transcription that got Updated
+     * @param course        The course of the transcriptions
+     * @param lecture       The lecture of the transcriptions
+     * @param lectureUnit   The lecture unit of the transcriptions
      * @return jobToken if the job was created else null
      */
-    public String addTranscriptionsToPyrisDB(Set<LectureTranscription> transcriptions, Course course, Lecture lecture, LectureUnit lectureUnit) {
-        if (transcriptions == null || transcriptions.isEmpty()) {
+    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, LectureUnit lectureUnit) {
+        if (transcription == null) {
             throw new IllegalArgumentException("Transcriptions cannot be empty");
         }
 
@@ -96,34 +96,29 @@ public class PyrisWebhookService {
             return null;
         }
 
-        transcriptions.forEach(transcription -> {
-            if (transcription.getLecture() == null) {
-                throw new IllegalArgumentException("Transcription must be associated with a lecture");
-            }
-            else if (!transcription.getLecture().equals(lecture)) {
-                throw new IllegalArgumentException("All transcriptions must be associated with the same lecture");
-            }
-        });
+        if (transcription.getLectureUnit().getLecture() == null) {
+            throw new IllegalArgumentException("Transcription must be associated with a lecture");
+        }
+        else if (!transcription.getLectureUnit().getLecture().equals(lecture)) {
+            throw new IllegalArgumentException("All transcriptions must be associated with the same lecture");
+        }
 
-        List<PyrisTranscriptionIngestionWebhookDTO> pyrisTranscriptionIngestionWebhookDTOs = transcriptions.stream()
-                .map(transcription -> new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(), course.getId(), course.getTitle(),
-                        course.getDescription()))
-                .toList();
+        PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(),
+                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId());
 
-        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTOs, course, lecture, lectureUnit);
+        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
     }
 
     /**
      * adds the lecture transcription into the vector database of Pyris
      *
-     * @param toUpdateTranscriptions The transcription that are going to be Updated
+     * @param toUpdateTranscription The transcription that is going to be Updated
      * @return jobToken if the job was created
      */
-    private String executeTranscriptionAdditionWebhook(List<PyrisTranscriptionIngestionWebhookDTO> toUpdateTranscriptions, Course course, Lecture lecture,
-            LectureUnit lectureUnit) {
+    private String executeTranscriptionAdditionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateTranscription, Course course, Lecture lecture, LectureUnit lectureUnit) {
         String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId(), lectureUnit.getId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscriptions, lectureUnit.getId(), settingsDTO,
+        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscription, lectureUnit.getId(), settingsDTO,
                 List.of());
         pyrisConnectorService.executeTranscriptionAdditionWebhook("fullIngestion", executionDTO);
         return jobToken;
@@ -136,10 +131,10 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
-        Lecture lecture = lectureTranscription.getLecture();
+        Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
         Course course = lecture.getCourse();
-        return executeLectureTranscriptionDeletionWebhook(
-                new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(), course.getTitle(), course.getDescription()));
+        return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
+                course.getTitle(), course.getDescription(), lectureTranscription.getLectureUnit().getId()));
     }
 
     /**

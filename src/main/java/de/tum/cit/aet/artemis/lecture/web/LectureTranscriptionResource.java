@@ -19,17 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -42,18 +39,15 @@ public class LectureTranscriptionResource {
 
     private final LectureTranscriptionRepository lectureTranscriptionRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final LectureUnitRepository lectureUnitRepository;
 
     private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
             AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.lectureTranscriptionRepository = transcriptionRepository;
-        this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -73,13 +67,11 @@ public class LectureTranscriptionResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
-        Lecture lecture = lectureRepository.findById(transcriptionDTO.lectureId()).orElseThrow(() -> new EntityNotFoundException("no lecture found for this id"));
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
-        List<LectureTranscriptionSegment> segments = transcriptionDTO.segments().stream().map(segment -> {
-            return new LectureTranscriptionSegment(segment.startTime(), segment.endTime(), segment.text(), segment.slideNumber());
-        }).toList();
+        List<LectureTranscriptionSegment> segments = transcriptionDTO.segments().stream()
+                .map(segment -> new LectureTranscriptionSegment(segment.startTime(), segment.endTime(), segment.text(), segment.slideNumber())).toList();
 
-        LectureTranscription lectureTranscription = new LectureTranscription(lecture, transcriptionDTO.language(), segments, lectureUnit);
+        LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), segments, lectureUnit);
         lectureTranscription.setId(null);
 
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);
@@ -99,7 +91,7 @@ public class LectureTranscriptionResource {
     public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
         log.debug("REST request to get transcription {}", transcriptionId);
         LectureTranscription transcription = lectureTranscriptionRepository.findById(transcriptionId).orElseThrow();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(transcription.getLecture(), userRepository.getUserWithGroupsAndAuthorities());
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(transcription.getLectureUnit().getLecture(), userRepository.getUserWithGroupsAndAuthorities());
 
         return ResponseEntity.ok(transcription);
     }

@@ -12,50 +12,17 @@
                              primaryKey="true"
                              primaryKeyName="pk_lecture_transcription"/>
             </column>
-            <column name="lecture_id"
-                    type="BIGINT"/>
             <column name="language"
                     type="VARCHAR(2)"/>
             <column name="lecture_unit_id"
                     type="BIGINT"/>
+            <column name="segments"
+                    type="json"/>
         </createTable>
-        <createTable tableName="lecture_transcription_segments">
-            <column autoIncrement="true"
-                    name="id"
-                    type="BIGINT">
-                <constraints nullable="false"
-                             primaryKey="true"
-                             primaryKeyName="pk_lecture_transcription_segments"/>
-            </column>
-            <column name="start_time"
-                    type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="end_time"
-                    type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="text"
-                    type="TEXT"/>
-            <column name="slide_number"
-                    type="INT"/>
-            <column name="transcription_id"
-                    type="BIGINT"/>
-        </createTable>
-        <addForeignKeyConstraint baseColumnNames="lecture_id"
-                                 baseTableName="lecture_transcription"
-                                 constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE"
-                                 referencedColumnNames="id"
-                                 referencedTableName="lecture"/>
         <addForeignKeyConstraint baseColumnNames="lecture_unit_id"
                                  baseTableName="lecture_transcription"
                                  constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT"
                                  referencedColumnNames="id"
                                  referencedTableName="lecture_unit"/>
-        <addForeignKeyConstraint baseColumnNames="transcription_id"
-                                 baseTableName="lecture_transcription_segments"
-                                 constraintName="FK_LECTURE_TRANSCRIPTION_SEGMENTS_ON_TRANSCRIPTION"
-                                 referencedColumnNames="id"
-                                 referencedTableName="lecture_transcription"/>
     </changeSet>
 </databaseChangeLog>

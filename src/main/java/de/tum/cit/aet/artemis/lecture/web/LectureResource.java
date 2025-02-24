@@ -306,7 +306,7 @@ public class LectureResource {
     }
 
     /**
-     * POST /lecture/{lectureId}/ingest-transcription
+     * POST courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param courseId      The id of the course of the lecture
@@ -329,13 +329,13 @@ public class LectureResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
-        Set<LectureTranscription> transcriptions = lectureTranscriptionRepository.findAllWithTranscriptionSegmentsByLectureId(lectureId);
-        if (transcriptions.isEmpty()) {
+        Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findWithTranscriptionSegmentsByLectureUnitId(lectureUnitId);
+        if (transcription.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
                     .body(null);
         }
-        Set<LectureTranscription> transcriptionsToIngest = new HashSet<>(transcriptions);
-        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest, course, lecture, lectureUnit);
+        LectureTranscription transcriptionToIngest = transcription.get();
+        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, lectureUnit);
         return ResponseEntity.ok().build();
     }
 
