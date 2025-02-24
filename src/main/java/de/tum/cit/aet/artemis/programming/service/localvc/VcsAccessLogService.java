@@ -9,16 +9,24 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation_;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog_;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
@@ -121,4 +129,15 @@ public class VcsAccessLogService {
         return Optional.empty();
     }
 
+    public SearchResultPageDTO<VcsAccessLogDTO> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, long participationId) {
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.VCS_ACCESS_LOG);
+        Specification<VcsAccessLog> specification = createVcsAccessLogSpecification(participationId);
+        var vcsAccessLogPage = vcsAccessLogRepository.findAll(specification, pageable);
+        return new SearchResultPageDTO<>(vcsAccessLogPage.getContent().stream().map(VcsAccessLogDTO::of).toList(), vcsAccessLogPage.getTotalPages());
+    }
+
+    private Specification<VcsAccessLog> createVcsAccessLogSpecification(long participationId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.and(criteriaBuilder.equal(root.get(VcsAccessLog_.PARTICIPATION).get(Participation_.ID), participationId));
+    }
 }

@@ -1,34 +1,70 @@
+<ng-template #headerTemplate let-column="column" let-label="label" let-doNotTranslate="doNotTranslate" let-colSize="colSize" let-sortEnabled="sortEnabled">
+    <th scope="col" [class]="colSize" [class.clickable]="column !== 'errorCategory'" (click)="column !== 'errorCategory' && setSortedColumn(column)">
+        <div class="d-flex align-items-center">
+            @if (doNotTranslate) {
+                <span>{{ label }}</span>
+            } @else {
+                <span [jhiTranslate]="label"></span>
+            }
+            @if (sortEnabled) {
+                <jhi-sort-icon [direction]="getSortDirection(column)" />
+            }
+        </div>
+    </th>
+</ng-template>
 <ng-container>
     <div class="d-flex justify-content-between">
         <h3 jhiTranslate="artemisApp.repository.vcsAccessLog.title"></h3>
     </div>
 
     <div style="overflow-x: auto">
-        <table class="table table-responsive">
+        <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">#</th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.userId"></th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.author"></th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.actionType"></th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.authMechanism"></th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.commitHash"></th>
-                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.timeStamp"></th>
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'id', label: 'ID', colSize: 'col-0', doNotTranslate: true }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'userId', label: TRANSLATION_BASE + '.userId', colSize: 'col-0', sortEnabled: true }" />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'author', label: TRANSLATION_BASE + '.author', colSize: 'col-3', sortEnabled: true }" />
+                    <ng-container
+                        *ngTemplateOutlet="
+                            headerTemplate;
+                            context: { column: 'repositoryActionType', label: TRANSLATION_BASE + '.actionType', colSize: 'col-1', sortEnabled: true }
+                        "
+                    />
+                    <ng-container
+                        *ngTemplateOutlet="
+                            headerTemplate;
+                            context: { column: 'authentication_mechanism', label: TRANSLATION_BASE + '.authMechanism', colSize: 'col-1', sortEnabled: true }
+                        "
+                    />
+                    <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'commitHash', label: TRANSLATION_BASE + '.commitHash', colSize: 'col-3' }" />
+                    <ng-container
+                        *ngTemplateOutlet="headerTemplate; context: { column: 'timestamp', label: TRANSLATION_BASE + '.timeStamp', colSize: 'col-2', sortEnabled: true }"
+                    />
                 </tr>
             </thead>
             <tbody>
-                @for (entry of vcsAccessLogEntries(); track entry; let i = $index) {
+                @for (item of content().resultsOnPage; track item; let i = $index) {
                     <tr class="w-25">
-                        <td class="p-2">{{ i }}</td>
-                        <td class="p-2">{{ entry.userId }}</td>
-                        <td class="p-2">{{ entry.name + ', ' + entry.email }}</td>
-                        <td class="p-2">{{ entry.repositoryActionType }}</td>
-                        <td class="p-2">{{ entry.authenticationMechanism }}</td>
-                        <td class="p-2">{{ entry.commitHash }}</td>
-                        <td class="p-2">{{ entry.timestamp }}</td>
+                        <td class="p-2">{{ item.id }}</td>
+                        <td class="p-2">{{ item.userId }}</td>
+                        <td class="p-2">{{ item.name + ', ' + item.email }}</td>
+                        <td class="p-2">{{ item.repositoryActionType }}</td>
+                        <td class="p-2">{{ item.authenticationMechanism }}</td>
+                        <td class="p-2">{{ item.commitHash }}</td>
+                        <td class="p-2">{{ item.timestamp }}</td>
                     </tr>
                 }
             </tbody>
         </table>
+    </div>
+    <div class="d-flex flex-column align-items-end mt-2">
+        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5" />
+        <div class="text-muted text-end">
+            @if (content().numberOfPages === 1) {
+                <span [jhiTranslate]="'artemisApp.repository.vcsAccessLog.onePage'"></span>
+            } @else {
+                <span [jhiTranslate]="'artemisApp.repository.vcsAccessLog.numberOfPages'" [translateValues]="{ count: content().numberOfPages }"></span>
+            }
+        </div>
     </div>
 </ng-container>

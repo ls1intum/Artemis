@@ -340,7 +340,7 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/feedback-details-max-count : Retrieves the maximum number of feedback occurrences for a given exercise.
+     * GET /exercises/{exerciseId}/feedbackdetails-max-count : Retrieves the maximum number of feedback occurrences for a given exercise.
      * This method is useful for determining the highest count of feedback occurrences across all feedback items for the exercise,
      * which can then be used to filter or adjust feedback analysis results.
      *
