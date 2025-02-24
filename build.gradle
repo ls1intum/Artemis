@@ -363,6 +363,10 @@ dependencies {
     // Enables the use of PassKey authentication in the web app and mobile apps
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.10.0.RELEASE"
 
+    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
+    // Required for Hibernate multi node caching
+    runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
 
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"

@@ -211,11 +211,11 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.region.factory_class: de.tum.cit.aet.artemis.core.config.ArtemisRedissonRegionFactory
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory # de.tum.cit.aet.artemis.core.config.ArtemisRedissonRegionFactory
             hibernate.cache.use_minimal_puts: true
             # TODO: why do we need those hazelcast values?
-#            hibernate.cache.hazelcast.instance_name: Artemis
-#            hibernate.cache.hazelcast.use_lite_member: true
+            hibernate.cache.hazelcast.instance_name: Artemis
+            hibernate.cache.hazelcast.use_lite_member: true
             hibernate.cache.redisson:
                 # TODO: double check those values and adjust them if necessary, also set values for max_entries
                 entity.expiration.time_to_live: 3600
@@ -272,9 +272,23 @@ spring:
             password: guest
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
     hazelcast:
-        enabled: false
+      interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
+      port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
+      localInstances: false # Whether the other instances are expected locally (in dev mode) or external
+      phone:
+        home:
+          enabled: false
+      slow:
+        operation:
+          detector:
+            enabled: true
     beaninfo:
         ignore: true
+
+hazelcast:
+  phone:
+    home:
+      enabled: false
 
 springdoc:
     api-docs:
@@ -336,6 +350,10 @@ jhipster:
     http:
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
+    cache: # Cache configuration
+      hazelcast: # Hazelcast distributed cache
+        time-to-live-seconds: 3600
+        backup-count: 1
 
 # Eureka configuration
 eureka:
