@@ -106,7 +106,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      */
     private checkIrisSettings(channelDTO?: ChannelDTO): void {
         switch (channelDTO?.subType) {
-            case ChannelSubType.GENERAL:
+            case ChannelSubType.GENERAL: {
                 const course = this.course();
                 if (course?.studentCourseAnalyticsDashboardEnabled) {
                     if (course.id) {
@@ -126,6 +126,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                     this.setIrisStatus(false, '');
                 }
                 break;
+            }
             case ChannelSubType.LECTURE:
                 if (channelDTO.subTypeReferenceId) {
                     this.irisSettingsService

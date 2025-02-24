@@ -191,7 +191,7 @@ describe('MessageInlineInputComponent', () => {
             const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
 
             component.posting = directMessageUser1;
-            componentRef.setInput('course', { id: 42 } as Course);
+            componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: true } as Course);
 
             const mockChannelDTO = {
                 type: ConversationType.CHANNEL,
@@ -237,7 +237,7 @@ describe('MessageInlineInputComponent', () => {
         const getLectureSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(disabledIrisSettings));
 
         component.posting = directMessageUser1;
-        componentRef.setInput('course', { id: 42 } as Course);
+        componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: true } as Course);
 
         const mockChannelDTO = {
             type: ConversationType.CHANNEL,
