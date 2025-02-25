@@ -19,6 +19,8 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -38,6 +40,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private changeDetector = inject(ChangeDetectorRef);
+    private profileService = inject(ProfileService);
 
     @Input() labelName: string;
     @Input() labelTooltip: string;
@@ -66,6 +69,15 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // halfway between medium and high
 
     ngOnInit(): void {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            if (atlasEnabled === false) {
+                this.initialize();
+            }
+        });
+    }
+
+    initialize(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencyLinks && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
