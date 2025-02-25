@@ -14,11 +14,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    standalone: true,
     imports: [EditableSliderComponent, TranslateDirective],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private learnerProfileAPIService = inject(LearnerProfileApiService);
+    protected translateService = inject(TranslateService);
 
     courses: Course[];
     courseLearnerProfiles: Record<number, CourseLearnerProfileDTO>;
@@ -33,31 +35,27 @@ export class CourseLearnerProfileComponent implements OnInit {
     timeInvestmentState = signal<EditStateTransition>(EditStateTransition.Abort);
     repetitionIntensityState = signal<EditStateTransition>(EditStateTransition.Abort);
 
-    constructor(
-        private alertService: AlertService,
-        private learnerProfileAPIService: LearnerProfileApiService,
-        protected translateService: TranslateService,
-    ) {}
-
     async ngOnInit() {
         await this.loadProfiles();
         this.loadCourses();
     }
 
     courseChanged(event: Event) {
-        const val: string = (<HTMLSelectElement>event.target).value;
+        const courseId: string = (<HTMLSelectElement>event.target).value;
         this.aimForGradeOrBonusState.set(EditStateTransition.Abort);
         this.timeInvestmentState.set(EditStateTransition.Abort);
         this.repetitionIntensity.set(EditStateTransition.Abort);
 
-        if (val != '-1') {
-            this.activeCourse = Number(val);
+        // courseId of -1 represents no course selected
+        if (courseId !== '-1') {
+            this.activeCourse = Number(courseId);
             this.disabled = false;
-            const clp = this.courseLearnerProfiles[this.activeCourse];
-            this.aimForGradeOrBonus.set(clp.aimForGradeOrBonus);
-            this.timeInvestment.set(clp.timeInvestment);
-            this.timeInvestment.set(clp.timeInvestment);
-            this.repetitionIntensity.set(clp.repetitionIntensity);
+            const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+
+            // Update displayed values to new course
+            this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
+            this.timeInvestment.set(courseLearnerProfile.timeInvestment);
+            this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
         } else {
             this.disabled = true;
         }
@@ -76,47 +74,62 @@ export class CourseLearnerProfileComponent implements OnInit {
         }
     }
 
-    updateAimForGradeOrBonus(value: number) {
+    updateAimForGradeOrBonus(aimForGradeOrBonus: number) {
+        //return if value is changed without user trying to save
         if (!this.courseLearnerProfiles || this.aimForGradeOrBonusState() != EditStateTransition.TrySave) {
             return;
         }
-        const clp = this.courseLearnerProfiles[this.activeCourse];
-        clp.aimForGradeOrBonus = value;
-        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(
+        const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+        courseLearnerProfile.aimForGradeOrBonus = aimForGradeOrBonus;
+
+        // Try to update profile
+        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(
             (courseLearnerProfile) => {
+                // update profile with response from server
                 this.courseLearnerProfiles[this.activeCourse] = courseLearnerProfile;
                 this.aimForGradeOrBonusState.set(EditStateTransition.Saved);
             },
+            // Notify user of failure to update
             (res: HttpErrorResponse) => this.onCourseLearnerProfileUpdateError(res, this.aimForGradeOrBonusState),
         );
     }
 
-    updateTimeInvestment(value: number) {
+    updateTimeInvestment(timeInvestment: number) {
+        //return if value is changed without user trying to save
         if (!this.courseLearnerProfiles || this.timeInvestmentState() != EditStateTransition.TrySave) {
             return;
         }
-        const clp = this.courseLearnerProfiles[this.activeCourse];
-        clp.timeInvestment = value;
-        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(
+
+        // Try to update profile
+        const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+        courseLearnerProfile.timeInvestment = timeInvestment;
+        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(
             (courseLearnerProfile) => {
+                // update profile with response from server
                 this.courseLearnerProfiles[this.activeCourse] = courseLearnerProfile;
                 this.timeInvestmentState.set(EditStateTransition.Saved);
             },
+            // Notify user of failure to update
             (res: HttpErrorResponse) => this.onCourseLearnerProfileUpdateError(res, this.timeInvestmentState),
         );
     }
 
-    updateRepetitionIntensity(value: number) {
+    updateRepetitionIntensity(repetitionIntensity: number) {
+        //return if value is changed without user trying to save
         if (!this.courseLearnerProfiles || this.repetitionIntensityState() != EditStateTransition.TrySave) {
             return;
         }
-        const clp = this.courseLearnerProfiles[this.activeCourse];
-        clp.repetitionIntensity = value;
-        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(
+
+        // Try to update profile
+        const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+        courseLearnerProfile.repetitionIntensity = repetitionIntensity;
+        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(
             (courseLearnerProfile) => {
+                // update profile with response from server
                 this.courseLearnerProfiles[this.activeCourse] = courseLearnerProfile;
                 this.repetitionIntensityState.set(EditStateTransition.Saved);
             },
+            // Notify user of failure to update
             (res: HttpErrorResponse) => this.onCourseLearnerProfileUpdateError(res, this.repetitionIntensityState),
         );
     }
@@ -126,18 +139,19 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     loadCourses() {
-        this.courseManagementService.findAllForDropdown().subscribe({
-            next: (res: HttpResponse<Course[]>) => {
-                if (!res.body || res.body.length === 0) {
-                    return;
-                }
-                this.courses = res.body.filter((course) => {
-                    if (course.id) {
-                        return Object.keys(this.courseLearnerProfiles).includes(course.id.toString());
+        const courses = [];
+
+        //iterat eover each course ID in courseLearnerProfiles map to retrieve course title
+        Object.keys(this.courseLearnerProfiles).forEach((course) => {
+            // course is guaranteed to be int, as this.courseLearnerProfiles has type Record<number, ... >
+            this.courseManagementService.find(parseInt(course)).subscribe({
+                next: (res: HttpResponse<Course>) => {
+                    if (!res.body) {
+                        return;
                     }
-                    return false;
-                });
-            },
+                    courses.push(res.body);
+                },
+            });
         });
     }
 }
