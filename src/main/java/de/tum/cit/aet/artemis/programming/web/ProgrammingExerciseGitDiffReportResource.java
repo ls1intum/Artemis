@@ -169,7 +169,7 @@ public class ProgrammingExerciseGitDiffReportResource {
             throws GitAPIException, IOException {
         log.debug("REST request to get a diff report for two commits for commit {} and commit {} of participation {}", commitHash1, commitHash2, participationId);
 
-        VcsRepositoryUri repositoryUri = null;
+        VcsRepositoryUri repositoryUri;
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
