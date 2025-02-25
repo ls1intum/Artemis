@@ -4,6 +4,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
+import { getContrastingTextColor } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',
@@ -16,11 +17,13 @@ export class LtiCourseCardComponent {
     course = input.required<Course>();
     CachingStrategy = CachingStrategy;
     courseColor: string;
+    contentColor: string;
 
     constructor() {
         effect(() => {
             const courseValue = this.course();
             this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
+            this.contentColor = getContrastingTextColor(this.courseColor);
         });
     }
 }
