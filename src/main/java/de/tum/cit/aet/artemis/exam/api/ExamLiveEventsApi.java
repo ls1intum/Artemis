@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -19,7 +19,7 @@ public class ExamLiveEventsApi extends AbstractExamApi {
         this.examLiveEventsService = examLiveEventsService;
     }
 
-    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message, User instructor) {
-        examLiveEventsService.createAndSendProblemStatementUpdateEvent(exercise, message, instructor);
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message) {
+        examLiveEventsService.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message);
     }
 }

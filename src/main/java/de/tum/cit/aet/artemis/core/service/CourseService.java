@@ -1056,9 +1056,6 @@ public class CourseService {
             user.setActivationKey(null);
             user.setLangKey(null);
             user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
         removeUserVariables(usersInGroup);
@@ -1213,9 +1210,6 @@ public class CourseService {
             user.setActivationKey(null);
             user.setLangKey(null);
             user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
     }
