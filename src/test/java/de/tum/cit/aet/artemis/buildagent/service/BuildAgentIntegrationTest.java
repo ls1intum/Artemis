@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-public class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
+class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private IQueue<BuildJobQueueItem> buildJobQueue;
 
