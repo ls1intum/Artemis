@@ -262,7 +262,7 @@ public class LocalVCServletService {
         }
         catch (LocalVCForbiddenException e) {
             log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
-            saveFailedAccessVcsAccessLog(Optional.of(request), Optional.empty(), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
+            saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
             throw e;
         }
 
@@ -295,21 +295,20 @@ public class LocalVCServletService {
     /**
      * Logs a failed attempt to access a repository.
      *
-     * @param request                  An optional {@link HttpServletRequest} containing request details if access was attempted via HTTPS.
-     * @param session                  An optional {@link ServerSession} containing session details if access was attempted via SSH.
+     * @param context                  the Authentication context
      * @param repositoryTypeOrUserName A string representing either the repository type or the username associated with the repository.
      * @param exercise                 The {@link Exercise} associated with the repository.
      * @param localVCRepositoryUri     The {@link LocalVCRepositoryUri} representing the repository location.
      * @param user                     The {@link User} attempting the access.
      * @param repositoryAction         The {@link RepositoryActionType} action that was attempted.
      */
-    public void saveFailedAccessVcsAccessLog(Optional<HttpServletRequest> request, Optional<ServerSession> session, String repositoryTypeOrUserName, Exercise exercise,
-            LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction) {
+    public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, Exercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
+            User user, RepositoryActionType repositoryAction) {
         var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
         var commitHash = getCommitHash(localVCRepositoryUri);
-        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(request, session, user);
+        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
         var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
-        var ipAddress = request.isPresent() ? request.get().getRemoteAddr() : (session.isPresent() ? session.get().getClientAddress().toString() : "");
+        var ipAddress = context.getIpAddress();
         vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
     }
 
@@ -327,25 +326,23 @@ public class LocalVCServletService {
      * If neither a session nor a request is available, the authentication mechanism defaults to OTHER.
      * </p>
      *
-     * @param request an {@link Optional} containing the HTTP request, if available
-     * @param session an {@link Optional} containing the server session, if available
+     * @param context the Authentication context
      * @param user    the user for whom authentication is being determined
      * @return the resolved {@link AuthenticationMechanism}
      */
-    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(Optional<HttpServletRequest> request, Optional<ServerSession> session, User user) {
-        if (session.isPresent()) {
-            return AuthenticationMechanism.SSH;
-        }
-        else if (request.isPresent()) {
-            try {
-                return resolveHTTPSAuthenticationMechanism(request.get().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(AuthenticationContext context, User user) {
+        switch (context) {
+            case AuthenticationContext.Session ignored -> {
+                return AuthenticationMechanism.SSH;
             }
-            catch (LocalVCAuthException ignored) {
-                return AuthenticationMechanism.HTTPS;
+            case AuthenticationContext.Request request -> {
+                try {
+                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+                }
+                catch (LocalVCAuthException ignored) {
+                    return AuthenticationMechanism.NONE;
+                }
             }
-        }
-        else {
-            return AuthenticationMechanism.OTHER;
         }
     }
 

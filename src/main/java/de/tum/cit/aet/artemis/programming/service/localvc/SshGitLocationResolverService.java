@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -84,7 +83,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
-                localVCServletService.saveFailedAccessVcsAccessLog(Optional.empty(), Optional.of(session), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user,
+                localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user,
                         repositoryAction);
                 throw new AccessDeniedException("User does not have access to this repository", e);
             }

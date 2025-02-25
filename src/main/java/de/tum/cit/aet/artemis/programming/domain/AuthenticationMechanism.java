@@ -26,11 +26,7 @@ public enum AuthenticationMechanism {
      */
     VCS_ACCESS_TOKEN,
     /**
-     * The user used HTTPS
+     * The authentication header was missing
      */
-    HTTPS,
-    /**
-     * It is unclear what the user used
-     */
-    OTHER
+    NONE
 }
