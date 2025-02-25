@@ -14,9 +14,7 @@
             data-qa="confirm-plagiarism-button"
             jhiTranslate="artemisApp.plagiarism.confirm"
         ></button>
-        @if (exercise.teamMode) {
-            <jhi-help-icon class="m-0" text="artemisApp.plagiarism.teamModeDisabled" />
-        }
+
         <button
             [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
             class="btn btn-danger btn-sm"
@@ -24,6 +22,9 @@
             data-qa="deny-plagiarism-button"
             jhiTranslate="artemisApp.plagiarism.deny"
         ></button>
+        @if (exercise.teamMode) {
+            <jhi-help-icon class="m-0" text="artemisApp.plagiarism.teamModeDisabled" />
+        }
 
         <div class="vertical-divider"></div>
 
