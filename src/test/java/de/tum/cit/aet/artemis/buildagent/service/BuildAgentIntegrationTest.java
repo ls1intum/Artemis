@@ -47,7 +47,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    public void testBuildAgent() {
+    void testBuildAgent() {
         var queueItem = createBaseBuildJobQueueItemForTrigger();
 
         // Add the build job to the queue
