@@ -247,6 +247,7 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param courseId the course id
      * @return a list of the queued jobs for a specific course
      */
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
@@ -254,6 +255,7 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param courseId the course id
      * @return a list of the processing jobs for a specific course
      */
     public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
@@ -261,6 +263,7 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param participationId the participation id
      * @return a list of the queued jobs for a specific participation
      */
     public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
@@ -268,6 +271,7 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param participationId the participation id
      * @return a list of the processing jobs for a specific participation
      */
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
