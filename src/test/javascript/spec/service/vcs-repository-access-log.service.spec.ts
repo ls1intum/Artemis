@@ -3,7 +3,7 @@ import { VcsRepositoryAccessLogService } from '../../../../main/webapp/app/local
 import { VcsAccessLogDTO } from '../../../../main/webapp/app/entities/vcs-access-log-entry.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from '../../../../main/webapp/app/shared/table/pageable-table';
 import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
