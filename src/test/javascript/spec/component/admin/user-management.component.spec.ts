@@ -11,13 +11,12 @@ import {
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -28,6 +27,9 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -53,7 +55,6 @@ describe('UserManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -79,6 +80,10 @@ describe('UserManagementComponent', () => {
                         ),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(EventManager),
             ],
         })
             .compileComponents()

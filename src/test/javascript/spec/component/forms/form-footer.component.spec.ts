@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { InputSignal, WritableSignal, signal } from '@angular/core';
+import { InputSignal, signal, WritableSignal } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -13,9 +15,8 @@ describe('FormFooterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MockComponent(ExerciseUpdateNotificationComponent), MockComponent(ButtonComponent)],
-            providers: [],
+            imports: [MockComponent(ExerciseUpdateNotificationComponent), MockComponent(ButtonComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

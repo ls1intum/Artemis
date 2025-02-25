@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Lti13DynamicRegistrationComponentTest', () => {
     let fixture: ComponentFixture<Lti13DynamicRegistrationComponent>;
@@ -20,8 +21,13 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

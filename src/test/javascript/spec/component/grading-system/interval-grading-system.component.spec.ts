@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
-import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -12,6 +11,9 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
@@ -70,11 +72,12 @@ describe('Interval Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         })
             .compileComponents()

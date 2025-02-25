@@ -65,7 +65,6 @@ describe('TextAssessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TextAssessmentService);

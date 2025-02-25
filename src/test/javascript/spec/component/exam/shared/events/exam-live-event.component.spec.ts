@@ -10,7 +10,6 @@ import {
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -18,7 +17,6 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

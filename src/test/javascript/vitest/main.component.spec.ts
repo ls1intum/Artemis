@@ -11,9 +11,9 @@ import { ProfileService } from '../../../main/webapp/app/shared/layouts/profiles
 import { ArtemisTranslatePipe } from '../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../spec/helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../spec/test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 
 // Mock the initialize method
 class MockThemeService {
@@ -46,7 +46,6 @@ describe('JhiMainComponent', () => {
 
     beforeEach(async () => {
         const { fixture, container: renderedContainer } = await render(AppComponent, {
-            imports: [ArtemisTestModule],
             declarations: [AlertOverlayComponent, PageRibbonComponent, NotificationPopupComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -55,6 +54,7 @@ describe('JhiMainComponent', () => {
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: ProfileService, useValue: mockProfileService }, // Provide the mock ProfileService
                 ArtemisTranslatePipe,
+                provideHttpClient(),
             ],
         });
 

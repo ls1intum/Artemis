@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -38,10 +37,13 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -73,7 +75,7 @@ describe('ModelingSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]])],
             declarations: [
                 ModelingSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
@@ -99,6 +101,12 @@ describe('ModelingSubmissionComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 ResultService,
+                provideHttpClientTesting(),
+                provideHttpClient(),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
             ],
         });
         console.error = jest.fn();

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -13,9 +12,12 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
@@ -40,9 +42,20 @@ describe('Example Submission Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
+            imports: [MockModule(RouterModule)],
             declarations: [ExampleSubmissionsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal)],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                MockProvider(NgbModal),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

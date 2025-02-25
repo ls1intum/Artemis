@@ -1447,7 +1447,7 @@ public class ExamService {
 
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true);
             }
         }
         studentExamRepository.saveAll(studentExams);
