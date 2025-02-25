@@ -104,6 +104,7 @@ public class NotificationSetting extends DomainObject {
 
     @Override
     public String toString() {
-        return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", push=" + push + ", user=" + user + '}';
+        return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", push=" + push + ", user="
+                + (user == null ? null : user.getId()) + '}';
     }
 }
