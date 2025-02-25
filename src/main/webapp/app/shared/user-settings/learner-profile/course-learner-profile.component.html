@@ -16,7 +16,7 @@
     <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState">artemisApp.learnerProfile.courseLearnerProfile</span>
 </div>
 <div>
-    <div class="row row-cols-2 gx-5">
+    <div class="row row-cols-2 gx-5 align-items-end">
         <div class="col">
             <jhi-editable-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus')"
@@ -41,7 +41,7 @@
                 [disabled]="disabled"
             />
         </div>
-        <div class="col">
+        <div class="col align-items-end">
             <jhi-editable-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity')"
                 [min]="1"
