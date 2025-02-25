@@ -14,9 +14,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -190,7 +193,7 @@ public class RepositoryService {
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
-    public Map<String, String> getFilesContentFromBareRepository(Repository repository, String commitHash) throws IOException {
+    public Map<String, String> getFilesContentFromBareRepository(Repository repository, @NotNull String commitHash) throws IOException {
         ObjectId commitId = repository.resolve(commitHash);
         if (commitId == null) {
             log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getRemoteRepositoryUri());
@@ -231,7 +234,7 @@ public class RepositoryService {
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
-    private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, ObjectId commitId) throws IOException {
+    private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, @NotNull ObjectId commitId) throws IOException {
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(commitId);
         RevTree tree = commit.getTree();
@@ -239,27 +242,33 @@ public class RepositoryService {
         // Initialize your map to store file paths and their contents
         Map<String, String> filesWithContent = new HashMap<>();
 
-        TreeWalk treeWalk = new TreeWalk(repository);
-        treeWalk.addTree(tree);
-        treeWalk.setRecursive(true);
+        try (TreeWalk treeWalk = new TreeWalk(repository)) {
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
 
-        while (treeWalk.next()) {
-            String path = treeWalk.getPathString();
+            while (treeWalk.next()) {
+                String path = treeWalk.getPathString();
 
-            // Check if the file has a binary extension
-            if (isBinaryFile(path)) {
-                continue; // Skip binary files
-            }
+                // Skip binary files
+                if (isBinaryFile(path)) {
+                    continue;
+                }
 
-            ObjectId objectId = treeWalk.getObjectId(0);
+                // Skip symbolic links (CHECK FILE MODE)
+                if (treeWalk.getFileMode(0) == FileMode.SYMLINK) {
+                    continue;
+                }
 
-            // Open the object stream to read the file content
-            try (InputStream inputStream = repository.open(objectId).openStream()) {
-                byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
-                String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+                ObjectId objectId = treeWalk.getObjectId(0);
 
-                // Put the path and corresponding file content into the map
-                filesWithContent.put(path, content);
+                // Open the object stream to read the file content
+                try (InputStream inputStream = repository.open(objectId).openStream()) {
+                    byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
+                    String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+
+                    // Put the path and corresponding file content into the map
+                    filesWithContent.put(path, content);
+                }
             }
         }
         revWalk.close();
@@ -267,7 +276,10 @@ public class RepositoryService {
     }
 
     /**
-     * Checks if a file path ends with a binary file extension.
+     * Checks if a file is a binary file based on its file extension.
+     *
+     * @param filePath the path of the file to check
+     * @return true if the file is a binary file, false otherwise
      */
     private boolean isBinaryFile(String filePath) {
         return BinaryFileExtensionConfiguration.getBinaryFileExtensions().stream().anyMatch(filePath::endsWith);
