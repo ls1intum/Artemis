@@ -85,13 +85,12 @@ public class PageUtil {
         )),
         VCS_ACCESS_LOG(Map.of(
             "id", "id",
-            "user_id", "user.id",
-            "participation_id", "participation.id",
-            "authentication_mechanism", "authenticationMechanism",
-            "timestamp", "timestamp",
+            "userId", "user.id",
+            "author", "name",
+            "participationId", "participation.id",
+            "authenticationMechanism", "authenticationMechanism",
             "repositoryActionType", "repositoryActionType",
-            "name", "name",
-            "email", "email"
+            "timestamp", "timestamp"
         ));
         // @formatter:on
 

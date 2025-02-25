@@ -129,14 +129,28 @@ public class VcsAccessLogService {
         return Optional.empty();
     }
 
+    /**
+     * Retrieves a paginated list of {@link VcsAccessLogDTO} entries for a given participation ID.
+     *
+     * @param search          the search criteria including page number and size
+     * @param participationId the ID of the participation for which access logs are retrieved
+     * @return a {@link SearchResultPageDTO} containing the list of {@link VcsAccessLogDTO} objects
+     *         and the total number of pages
+     */
     public SearchResultPageDTO<VcsAccessLogDTO> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, long participationId) {
-        String searchTerm = search.getSearchTerm();
         PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.VCS_ACCESS_LOG);
         Specification<VcsAccessLog> specification = createVcsAccessLogSpecification(participationId);
         var vcsAccessLogPage = vcsAccessLogRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(vcsAccessLogPage.getContent().stream().map(VcsAccessLogDTO::of).toList(), vcsAccessLogPage.getTotalPages());
     }
 
+    /**
+     * Creates a JPA {@link Specification} for filtering {@link VcsAccessLog} entries
+     * by a specific participation ID.
+     *
+     * @param participationId the ID of the participation
+     * @return a {@link Specification} to be used for querying {@link VcsAccessLog} entities
+     */
     private Specification<VcsAccessLog> createVcsAccessLogSpecification(long participationId) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.and(criteriaBuilder.equal(root.get(VcsAccessLog_.PARTICIPATION).get(Participation_.ID), participationId));
     }

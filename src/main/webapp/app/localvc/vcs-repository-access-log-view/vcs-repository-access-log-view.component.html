@@ -1,5 +1,5 @@
 <ng-template #headerTemplate let-column="column" let-label="label" let-doNotTranslate="doNotTranslate" let-colSize="colSize" let-sortEnabled="sortEnabled">
-    <th scope="col" [class]="colSize" [class.clickable]="column !== 'errorCategory'" (click)="column !== 'errorCategory' && setSortedColumn(column)">
+    <th scope="col" [class]="colSize" [class.clickable]="sortEnabled" (click)="sortEnabled && setSortedColumn(column)">
         <div class="d-flex align-items-center">
             @if (doNotTranslate) {
                 <span>{{ label }}</span>
@@ -33,7 +33,7 @@
                     <ng-container
                         *ngTemplateOutlet="
                             headerTemplate;
-                            context: { column: 'authentication_mechanism', label: TRANSLATION_BASE + '.authMechanism', colSize: 'col-1', sortEnabled: true }
+                            context: { column: 'authenticationMechanism', label: TRANSLATION_BASE + '.authMechanism', colSize: 'col-1', sortEnabled: true }
                         "
                     />
                     <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'commitHash', label: TRANSLATION_BASE + '.commitHash', colSize: 'col-3' }" />
