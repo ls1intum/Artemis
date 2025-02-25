@@ -71,7 +71,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
-            if (atlasEnabled === false) {
+            if (atlasEnabled === true) {
                 this.initialize();
             }
         });
