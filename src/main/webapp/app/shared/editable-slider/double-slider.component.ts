@@ -5,7 +5,6 @@ import { EditStateTransition } from 'app/shared/editable-slider/edit-process.com
     selector: 'jhi-double-slider',
     templateUrl: './double-slider.component.html',
     styleUrls: ['./double-slider.component.scss'],
-    standalone: true,
 })
 export class DoubleSliderComponent implements OnChanges {
     editStateTransition = input.required<EditStateTransition>();
