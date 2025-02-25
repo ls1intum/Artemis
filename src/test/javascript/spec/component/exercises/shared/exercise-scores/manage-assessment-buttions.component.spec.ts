@@ -24,7 +24,6 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [ManageAssessmentButtonsComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

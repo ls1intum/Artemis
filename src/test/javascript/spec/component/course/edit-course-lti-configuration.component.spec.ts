@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
@@ -13,11 +13,15 @@ import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-a
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import 'jest-extended';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -40,7 +44,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(ReactiveFormsModule)],
+            imports: [NgbNavModule, MockModule(ReactiveFormsModule)],
             declarations: [EditCourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
             providers: [
                 MockProvider(CourseManagementService),
@@ -53,6 +57,10 @@ describe('Edit Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 

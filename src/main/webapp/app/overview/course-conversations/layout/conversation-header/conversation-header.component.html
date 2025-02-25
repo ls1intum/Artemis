@@ -33,7 +33,7 @@
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
                     <div class="p-2">
                         <a
-                            class="btn btn-info"
+                            class="btn btn-info btn-sm"
                             [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
                             role="button"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"

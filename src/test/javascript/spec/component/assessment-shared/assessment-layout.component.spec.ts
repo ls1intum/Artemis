@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
@@ -15,6 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentNoteComponent } from 'app/assessment/assessment-note/assessment-note.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -22,7 +23,7 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
+            imports: [MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
@@ -33,7 +34,11 @@ describe('AssessmentLayoutComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
-            providers: [MockProvider(TextAssessmentAnalytics), { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [
+                MockProvider(TextAssessmentAnalytics),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

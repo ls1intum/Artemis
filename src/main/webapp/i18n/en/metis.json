@@ -143,6 +143,7 @@
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
+                "forwardMessage": "Forward message",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
                 "bookmarkPost": "Save post for later",
@@ -168,6 +169,15 @@
                 "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
                 "student": "Student: Takes courses, participates in exercises, and asks questions.",
                 "deleted": "Deleted: This user was deleted."
+            },
+            "forward": {
+                "forwardMessage": "Forward this message",
+                "addMessage": "Add a message",
+                "searchBar": "Search by name or channel",
+                "viewConversation": "View conversation",
+                "forwardedFrom": "Forwarded from",
+                "showLess": "Show less",
+                "showMore": "Show more"
             }
         }
     }

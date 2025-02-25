@@ -12,8 +12,9 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -21,7 +22,7 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 OnlineUnitFormComponent,
                 FormDateTimePickerComponent,
@@ -29,7 +30,7 @@ describe('OnlineUnitFormComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [MockProvider(OnlineUnitService)],
+            providers: [MockProvider(OnlineUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

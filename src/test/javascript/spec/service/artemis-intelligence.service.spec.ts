@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { ArtemisTestModule } from '../test.module';
 
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject } from 'rxjs';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
@@ -20,8 +21,12 @@ describe('ArtemisIntelligenceService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: mockWebsocketService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: WebsocketService, useValue: mockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
 
         httpMock = TestBed.inject(HttpTestingController);

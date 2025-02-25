@@ -8,7 +8,6 @@ describe('Plagiarism Results Service', () => {
     let httpMock: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(PlagiarismResultsService);

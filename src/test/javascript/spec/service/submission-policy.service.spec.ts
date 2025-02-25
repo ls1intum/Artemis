@@ -16,7 +16,6 @@ describe('Submission Policy Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: SubmissionPolicyService, useClass: SubmissionPolicyService }],
         });
         httpMock = TestBed.inject(HttpTestingController);

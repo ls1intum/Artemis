@@ -3,7 +3,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/core/user/user.model';
-import { ArtemisTestModule } from '../../test.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +11,7 @@ import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-a
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
@@ -31,12 +31,13 @@ describe('VcsAccessTokensSettingsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(VcsAccessTokensSettingsComponent);
