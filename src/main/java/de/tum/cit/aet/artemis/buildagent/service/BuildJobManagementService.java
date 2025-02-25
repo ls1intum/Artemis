@@ -23,12 +23,10 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -36,6 +34,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
@@ -53,7 +52,7 @@ public class BuildJobManagementService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildLogsMap buildLogsMap;
 
@@ -83,12 +82,12 @@ public class BuildJobManagementService {
      */
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
+    public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
             BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -98,7 +97,7 @@ public class BuildJobManagementService {
      */
     @PostConstruct
     public void init() {
-        ITopic<String> canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
+        ITopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         canceledBuildJobsTopic.addMessageListener(message -> {
             String buildJobId = message.getMessageObject();
             lock.lock();

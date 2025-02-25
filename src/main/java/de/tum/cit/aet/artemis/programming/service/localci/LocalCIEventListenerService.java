@@ -6,18 +6,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
@@ -47,22 +43,19 @@ public class LocalCIEventListenerService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIEventListenerService.class);
 
-    private final HazelcastInstance hazelcastInstance;
-
     private final LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
     private final BuildJobRepository buildJobRepository;
 
-    private final SharedQueueManagementService sharedQueueManagementService;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public LocalCIEventListenerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService) {
+        this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
-        this.sharedQueueManagementService = sharedQueueManagementService;
         this.programmingMessagingService = programmingMessagingService;
     }
 
@@ -71,12 +64,9 @@ public class LocalCIEventListenerService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
-        IMap<Long, BuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
-        IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
-        queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
-        buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
+        distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+        distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
+        distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
     }
 
     /**
@@ -103,8 +93,8 @@ public class LocalCIEventListenerService {
         ZonedDateTime now = ZonedDateTime.now();
         final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
 
-        var queuedJobs = sharedQueueManagementService.getQueuedJobs();
-        var processingJobs = sharedQueueManagementService.getProcessingJobIds();
+        var queuedJobs = distributedDataAccessService.getQueuedJobs();
+        var processingJobs = distributedDataAccessService.getProcessingJobIds();
 
         for (BuildJob buildJob : pendingBuildJobs) {
             if (buildJob.getBuildSubmissionDate().isAfter(now.minusMinutes(buildJobExpirationInMinutes))) {

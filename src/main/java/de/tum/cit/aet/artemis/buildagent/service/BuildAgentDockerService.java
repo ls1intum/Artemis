@@ -36,13 +36,12 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * Service for Docker related operations in local CI
@@ -57,7 +56,7 @@ public class BuildAgentDockerService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildJobContainerService buildJobContainerService;
 
@@ -90,10 +89,10 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
     }
@@ -318,7 +317,7 @@ public class BuildAgentDockerService {
         Set<String> imageNames = getUnusedDockerImages();
 
         // Get map of docker images and their last build dates
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        Map<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDockerImageCleanupInfoMap();
 
         // Delete images that have not been used for more than imageExpiryDays days
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
@@ -364,7 +363,7 @@ public class BuildAgentDockerService {
             }
 
             // Get map of docker images and their last build dates
-            IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+            Map<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDockerImageCleanupInfoMap();
 
             // Get unused images
             Set<String> unusedImages = getUnusedDockerImages();

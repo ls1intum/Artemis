@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -47,6 +48,8 @@ public class BuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
 
+    private final DistributedDataAccessService distributedDataAccessService;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseRepository courseRepository;
@@ -54,11 +57,12 @@ public class BuildJobQueueResource {
     private final BuildJobRepository buildJobRepository;
 
     public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
-            BuildJobRepository buildJobRepository) {
+            BuildJobRepository buildJobRepository, DistributedDataAccessService distributedDataAccessService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.buildJobRepository = buildJobRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -75,7 +79,7 @@ public class BuildJobQueueResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access queued build jobs of this course!");
         }
-        List<BuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobsForCourse(courseId);
+        List<BuildJobQueueItem> buildJobQueue = distributedDataAccessService.getQueuedJobsForCourse(courseId);
         return ResponseEntity.ok(buildJobQueue);
     }
 
@@ -93,7 +97,7 @@ public class BuildJobQueueResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access running build jobs of this course!");
         }
-        List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobsForCourse(courseId);
+        List<BuildJobQueueItem> runningBuildJobs = distributedDataAccessService.getProcessingJobsForCourse(courseId);
         return ResponseEntity.ok(runningBuildJobs);
     }
 
