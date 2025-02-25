@@ -6,6 +6,5 @@ import { CourseLearnerProfileComponent } from 'app/shared/user-settings/learner-
     templateUrl: './learner-profile.component.html',
     styleUrls: ['../user-settings.scss'],
     imports: [CourseLearnerProfileComponent],
-    standalone: true,
 })
 export class LearnerProfileComponent {}
