@@ -47,7 +47,8 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET /learner-profiles/course-learner-profiles : get all CourseLearnerProfile for a user
+     * GET /learner-profiles/course-learner-profiles : get a Map of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
+     * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
      * @return The ResponseEntity with status 200 (OK) and with body containing a map of DTOs, wich contain per course profile data.
      */
@@ -62,7 +63,7 @@ public class LearnerProfileResource {
     }
 
     /**
-     * Validate bounds fields in CourseLearnerProfile
+     * Validates that fields are within {@link #MIN_PROFILE_VALUE} and {@link #MAX_PROFILE_VALUE}.
      *
      * @param value     Value of the field
      * @param fieldName Field name
@@ -74,10 +75,10 @@ public class LearnerProfileResource {
     }
 
     /**
-     * PUT /learner-profiles/course-learner-profiles/{courseLearnerProfileId} : update a CourseLearnerProfile for the currently logged-in user.
+     * PUT /learner-profiles/course-learner-profiles/{courseLearnerProfileId} : update fields in a {@link de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile}.
      *
      * @param courseLearnerProfileId  ID of the CourseLearnerProfile
-     * @param courseLearnerProfileDTO CourseLearnerProfile object from request body.
+     * @param courseLearnerProfileDTO {@link de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO} object from the request body.
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
      */
     @PutMapping(value = "course-learner-profiles/{courseLearnerProfileId}")
