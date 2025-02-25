@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -264,7 +263,7 @@ public class LocalVCServletService {
         catch (LocalVCForbiddenException e) {
             log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
             saveFailedAccessVcsAccessLog(Optional.of(request), Optional.empty(), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
-            throw new AccessDeniedException("User does not have access to this repository", e);
+            throw e;
         }
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
