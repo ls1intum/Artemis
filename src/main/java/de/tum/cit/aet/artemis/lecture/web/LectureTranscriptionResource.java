@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -66,6 +67,12 @@ public class LectureTranscriptionResource {
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
+            throw new BadRequestAlertException("Lecture unit does not belong to the specified lecture", "lectureTranscription", "lectureUnitDoesNotMatchLecture");
+        }
+        if (!lectureUnit.getLecture().getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Lecture does not belong to the specified course", "lectureTranscription", "lectureDoesNotMatchCourse");
+        }
 
         if (lectureUnit.getLectureTranscription() != null) {
             lectureTranscriptionRepository.deleteById(lectureUnit.getLectureTranscription().getId());

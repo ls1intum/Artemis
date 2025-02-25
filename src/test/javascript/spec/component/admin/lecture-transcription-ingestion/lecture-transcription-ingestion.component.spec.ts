@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { LectureTranscriptionIngestionComponent } from 'app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component';
 import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/lecture-transcription.service';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('LectureTranscriptionIngestionComponent', () => {
     let comp: LectureTranscriptionIngestionComponent;
