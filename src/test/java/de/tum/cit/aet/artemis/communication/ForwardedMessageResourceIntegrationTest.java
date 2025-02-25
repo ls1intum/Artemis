@@ -62,8 +62,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
         testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        ConversationFactory factory = new ConversationFactory();
-        Conversation conversation = factory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
+        Conversation conversation = ConversationFactory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
         conversationRepository.save(conversation);
 
         testPost = ConversationFactory.createBasicPost(1, testUser);

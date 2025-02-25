@@ -633,7 +633,7 @@ public class ResultService {
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                 StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
-        ;
+
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long totalCount = 0;
