@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "8.0.0",
+    "version": "7.10.4",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
