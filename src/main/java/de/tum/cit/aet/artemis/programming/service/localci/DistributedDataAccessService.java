@@ -267,7 +267,7 @@ public class DistributedDataAccessService {
      * @return a list of the queued jobs for a specific participation
      */
     public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
-        return getProcessingJobs().stream().filter(job -> job.participationId() == participationId).toList();
+        return getQueuedJobs().stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     /**
