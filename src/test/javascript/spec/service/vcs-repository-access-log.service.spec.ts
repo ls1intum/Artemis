@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { VcsRepositoryAccessLogService } from '../../../../main/webapp/app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
 import { VcsAccessLogDTO } from '../../../../main/webapp/app/entities/vcs-access-log-entry.model';
-import { SearchResult, SearchTermPageableSearch } from '../../../../main/webapp/app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from '../../../../main/webapp/app/shared/table/pageable-table';
 import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import dayjs from 'dayjs';
 
 describe('VcsRepositoryAccessLogService', () => {
     let service: VcsRepositoryAccessLogService;
@@ -18,7 +19,7 @@ describe('VcsRepositoryAccessLogService', () => {
             commitHash: 'abcde',
             authenticationMechanism: 'SSH',
             repositoryActionType: 'WRITE',
-            timestamp: '2021-01-02T00:00:00Z',
+            timestamp: dayjs('2021-01-02T00:00:00Z'),
         },
         {
             id: 2,
@@ -28,15 +29,16 @@ describe('VcsRepositoryAccessLogService', () => {
             commitHash: 'fffee',
             authenticationMechanism: 'SSH',
             repositoryActionType: 'READ',
-            timestamp: '2021-01-03T00:00:00Z',
+            timestamp: dayjs('2021-01-03T00:00:00Z'),
         },
     ];
 
     const pageable: SearchTermPageableSearch = {
         page: 1,
         pageSize: 10,
-        sortingOrder: 'ASCENDING',
+        sortingOrder: SortingOrder.ASCENDING,
         sortedColumn: 'id',
+        searchTerm: '',
     };
 
     const options = {

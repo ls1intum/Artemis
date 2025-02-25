@@ -30,7 +30,9 @@
                 "authMechanism": "Zugriffsart",
                 "commitHash": "Commit Hash",
                 "timeStamp": "Zeitstempel",
-                "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden"
+                "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden",
+                "numberOfPages": "Es gibt {{ count }} Seiten",
+                "onePage": "Es gibt nur eine Seite"
             }
         }
     }
