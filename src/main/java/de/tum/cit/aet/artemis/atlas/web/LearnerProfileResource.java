@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
 
-    private static final int MIN_PROFILE_VALUE = 0;
+    private static final int MIN_PROFILE_VALUE = 1;
 
     private static final int MAX_PROFILE_VALUE = 5;
 
