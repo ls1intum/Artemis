@@ -31,7 +31,6 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { PROFILE_THEIA } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
