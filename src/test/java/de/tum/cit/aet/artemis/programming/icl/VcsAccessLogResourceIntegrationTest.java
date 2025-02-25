@@ -59,7 +59,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
         var accessLogsList = result.getResultsOnPage();
         assertThat(result.getNumberOfPages()).isEqualTo(2);
         assertThat(accessLogsList).hasSize(25);
-        VcsAccessLogDTO firstEntry = (VcsAccessLogDTO) accessLogsList.getFirst();
+        VcsAccessLogDTO firstEntry = accessLogsList.getFirst();
         assertThat(firstEntry.userId()).isEqualTo(user.getId());
         assertThat(firstEntry.commitHash()).isEqualTo("hash:1");
 
@@ -95,7 +95,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
         var accessLogsList = result.getResultsOnPage();
         assertThat(result.getNumberOfPages()).isEqualTo(2);
         assertThat(accessLogsList).hasSize(25);
-        VcsAccessLogDTO firstEntry = (VcsAccessLogDTO) accessLogsList.getFirst();
+        VcsAccessLogDTO firstEntry = accessLogsList.getFirst();
         assertThat(firstEntry.userId()).isEqualTo(user.getId());
         assertThat(firstEntry.commitHash()).isEqualTo("hash:1");
     }
@@ -112,7 +112,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
         var accessLogsList = result.getResultsOnPage();
         assertThat(result.getNumberOfPages()).isEqualTo(2);
         assertThat(accessLogsList).hasSize(25);
-        VcsAccessLogDTO firstEntry = (VcsAccessLogDTO) accessLogsList.getFirst();
+        VcsAccessLogDTO firstEntry = accessLogsList.getFirst();
         assertThat(firstEntry.userId()).isEqualTo(user.getId());
         assertThat(firstEntry.commitHash()).isEqualTo("hash:1");
     }
