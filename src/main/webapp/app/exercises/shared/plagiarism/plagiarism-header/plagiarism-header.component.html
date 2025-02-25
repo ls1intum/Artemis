@@ -14,7 +14,7 @@
             data-qa="confirm-plagiarism-button"
             jhiTranslate="artemisApp.plagiarism.confirm"
         ></button>
-
+        <jhi-help-icon class="m-0" [hidden]="!exercise.teamMode" text="artemisApp.plagiarism.teamModeDisabled" />
         <button
             [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
             class="btn btn-danger btn-sm"
