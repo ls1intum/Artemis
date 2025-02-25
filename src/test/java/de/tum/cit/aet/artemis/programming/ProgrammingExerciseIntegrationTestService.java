@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +56,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
@@ -132,6 +134,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * 2) LocalVC + LocalCI
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseIntegrationTestService {
 
     private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
