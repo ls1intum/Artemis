@@ -58,7 +58,7 @@
         </table>
     </div>
     <div class="d-flex flex-column align-items-end mt-2">
-        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5" />
+        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="page.set($event)" size="sm" [maxSize]="5" />
         <div class="text-muted text-end">
             @if (content().numberOfPages === 1) {
                 <span [jhiTranslate]="'artemisApp.repository.vcsAccessLog.onePage'"></span>

@@ -1,26 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
-import { of } from 'rxjs';
+import { MockDirective } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import '@angular/localize/init';
+import { of } from 'rxjs';
 import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { VcsRepositoryAccessLogService } from '../../../../../main/webapp/app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
+import { SearchResult, SortingOrder } from '../../../../../main/webapp/app/shared/table/pageable-table';
+import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
-    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let component: VcsRepositoryAccessLogViewComponent;
+    let accessLogService: VcsRepositoryAccessLogService;
+    let alertService: AlertService;
+    let searchSpy: jest.SpyInstance;
+
     const userId = 4;
-    let participationVcsAccessLogSpy: jest.SpyInstance;
-    let repositoryVcsAccessLogSpy: jest.SpyInstance;
 
     const mockVcsAccessLog: VcsAccessLogDTO[] = [
         {
@@ -45,13 +46,18 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         },
     ];
 
-    const route = { params: of({ repositoryId: '5' }) } as any as ActivatedRoute;
+    const route = { params: of({ repositoryId: '5', repositoryType: 'USER', exerciseId: 4 }) } as any as ActivatedRoute;
 
     function setupTestBed() {
         fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-        repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
-        participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
+        component = fixture.componentInstance;
+        accessLogService = TestBed.inject(VcsRepositoryAccessLogService);
+        alertService = TestBed.inject(AlertService);
+
+        searchSpy = jest.spyOn(accessLogService, 'search').mockResolvedValue({
+            resultsOnPage: mockVcsAccessLog,
+            numberOfPages: 1,
+        } as SearchResult<VcsAccessLogDTO>);
     }
 
     beforeEach(async () => {
@@ -59,29 +65,133 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
             imports: [VcsRepositoryAccessLogViewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: VcsRepositoryAccessLogService,
+                    useValue: { search: jest.fn() },
+                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockDirective(TranslateDirective),
             ],
         }).compileComponents();
     });
 
-    it('should load participation vcs access log', () => {
+    it('should create the component', () => {
         setupTestBed();
-        fixture.detectChanges();
-
-        expect(participationVcsAccessLogSpy).toHaveBeenCalledOnce();
+        expect(component).toBeTruthy();
     });
 
-    it('should load template repository vcs access log', () => {
+    it('should load participation vcs access log', async () => {
+        setupTestBed();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(searchSpy).toHaveBeenCalledOnce();
+        expect(component.content().resultsOnPage).toEqual(mockVcsAccessLog);
+    });
+
+    it('should load template repository vcs access log', async () => {
         route.params = of({ exerciseId: '10', repositoryType: 'TEMPLATE' });
         TestBed.overrideProvider(ActivatedRoute, { useValue: route });
 
         setupTestBed();
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();
+        expect(searchSpy).toHaveBeenCalledOnce();
+        expect(component.content().resultsOnPage).toEqual(mockVcsAccessLog);
+    });
+
+    it('should display an alert when fetching logs fails', async () => {
+        setupTestBed();
+        jest.spyOn(accessLogService, 'search').mockRejectedValue(new Error('error'));
+        const alertSpy = jest.spyOn(alertService, 'error');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.repository.vcsAccessLog.error');
+        expect(component.content().resultsOnPage).toEqual([]);
+    });
+    it('should correctly render log data in table', async () => {
+        setupTestBed();
+        fixture.detectChanges();
+        await fixture.whenStable(); // Wait for async changes
+        fixture.detectChanges();
+
+        const tableRows = fixture.nativeElement.querySelectorAll('tbody tr');
+
+        // Ensure the number of rows matches the expected data
+        expect(component.content().resultsOnPage).toEqual(mockVcsAccessLog);
+        expect(component.content().resultsOnPage.length).toEqual(2);
+        expect(tableRows.length).toBe(mockVcsAccessLog.length);
+
+        mockVcsAccessLog.forEach((log, index) => {
+            const columns = tableRows[index].querySelectorAll('td');
+
+            expect(columns[0].textContent.replace(/\s+/g, ' ').trim()).toBe(log.id.toString());
+            expect(columns[1].textContent.replace(/\s+/g, ' ').trim()).toBe(log.userId.toString());
+            expect(columns[2].textContent.replace(/\s+/g, ' ').trim()).toBe(`${log.name}, ${log.email}`);
+            expect(columns[3].textContent.replace(/\s+/g, ' ').trim()).toBe(log.repositoryActionType);
+            expect(columns[4].textContent.replace(/\s+/g, ' ').trim()).toBe(log.authenticationMechanism);
+            expect(columns[5].textContent.replace(/\s+/g, ' ').trim()).toBe(log.commitHash);
+        });
+    });
+
+    it('should correctly sort logs when clicking on column header', () => {
+        setupTestBed();
+        fixture.detectChanges();
+
+        const setSortedColumnSpy = jest.spyOn(component, 'setSortedColumn');
+
+        // Simulate clicking on a sortable header
+        const column = 'timestamp';
+        component.setSortedColumn(column);
+
+        fixture.detectChanges();
+
+        expect(setSortedColumnSpy).toHaveBeenCalledWith(column);
+        expect(component.getSortDirection(column)).toBe('ASCENDING');
+    });
+
+    it('should display correct pagination text for one page', async () => {
+        setupTestBed();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const paginationText = fixture.nativeElement.querySelector('.text-muted.text-end').textContent.trim();
+        expect(paginationText).toContain('artemisApp.repository.vcsAccessLog.onePage');
+    });
+
+    it('should toggle sorting order when the same column is clicked', () => {
+        setupTestBed();
+        fixture.detectChanges();
+
+        const columnName = 'userId';
+        component.sortedColumn.set(columnName);
+        component.sortingOrder.set(SortingOrder.ASCENDING);
+        component.setSortedColumn(columnName);
+
+        expect(component.sortingOrder()).toBe(SortingOrder.DESCENDING);
+
+        component.setSortedColumn(columnName);
+
+        expect(component.sortingOrder()).toBe(SortingOrder.ASCENDING);
+    });
+
+    it('should display correct pagination text for multiple pages', async () => {
+        setupTestBed();
+        jest.spyOn(accessLogService, 'search').mockResolvedValue({
+            resultsOnPage: mockVcsAccessLog,
+            numberOfPages: 3,
+        } as SearchResult<VcsAccessLogDTO>);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const paginationText = fixture.nativeElement.querySelector('.text-muted.text-end').textContent.trim();
+        expect(paginationText).toContain('artemisApp.repository.vcsAccessLog.numberOfPages');
     });
 });

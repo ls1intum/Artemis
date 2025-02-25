@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
@@ -37,25 +37,17 @@ export class VcsRepositoryAccessLogViewComponent {
 
     private readonly repositoryId = computed(() => {
         const repositoryId = this.params().repositoryId;
-        if (repositoryId) {
-            return Number(repositoryId);
-        }
-        return undefined;
+        return repositoryId ? Number(repositoryId) : undefined;
     });
     private readonly exerciseId = computed(() => {
         const exerciseId = this.params().exerciseId;
-        if (exerciseId) {
-            return Number(exerciseId);
-        }
-        return 0;
+        return exerciseId ? Number(exerciseId) : 0;
     });
     private readonly repositoryType = computed(() => this.params().repositoryType);
 
     constructor() {
-        effect(() => {
-            untracked(async () => {
-                await this.loadData();
-            });
+        effect(async () => {
+            await this.loadData();
         });
     }
 
@@ -82,11 +74,6 @@ export class VcsRepositoryAccessLogViewComponent {
         }
     }
 
-    async setPage(newPage: number) {
-        this.page.set(newPage);
-        await this.loadData();
-    }
-
     async setSortedColumn(column: string) {
         if (this.sortedColumn() === column) {
             this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
@@ -94,7 +81,6 @@ export class VcsRepositoryAccessLogViewComponent {
             this.sortedColumn.set(column);
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
-        await this.loadData();
     }
 
     getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
