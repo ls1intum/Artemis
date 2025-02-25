@@ -797,8 +797,7 @@ public class ExerciseService {
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
                 && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ApiNotPresentException(ExamLiveEventsApi.class, PROFILE_CORE));
-            User instructor = userRepository.getUser();
-            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
+            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
     }
 
