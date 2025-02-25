@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { VcsRepositoryAccessLogService } from '../../../../main/webapp/app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
 import { VcsAccessLogDTO } from '../../../../main/webapp/app/entities/vcs-access-log-entry.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from '../../../../main/webapp/app/shared/table/pageable-table';
 import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 import dayjs from 'dayjs';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('VcsRepositoryAccessLogService', () => {
     let service: VcsRepositoryAccessLogService;
@@ -49,8 +50,7 @@ describe('VcsRepositoryAccessLogService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [VcsRepositoryAccessLogService],
+            providers: [VcsRepositoryAccessLogService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(VcsRepositoryAccessLogService);

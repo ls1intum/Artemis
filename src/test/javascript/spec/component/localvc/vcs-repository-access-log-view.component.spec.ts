@@ -130,8 +130,8 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         mockVcsAccessLog.forEach((log, index) => {
             const columns = tableRows[index].querySelectorAll('td');
 
-            expect(columns[0].textContent.replace(/\s+/g, ' ').trim()).toBe(log.id.toString());
-            expect(columns[1].textContent.replace(/\s+/g, ' ').trim()).toBe(log.userId.toString());
+            expect(columns[0].textContent.replace(/\s+/g, ' ').trim()).toBe(log.id?.toString());
+            expect(columns[1].textContent.replace(/\s+/g, ' ').trim()).toBe(log.userId?.toString());
             expect(columns[2].textContent.replace(/\s+/g, ' ').trim()).toBe(`${log.name}, ${log.email}`);
             expect(columns[3].textContent.replace(/\s+/g, ' ').trim()).toBe(log.repositoryActionType);
             expect(columns[4].textContent.replace(/\s+/g, ' ').trim()).toBe(log.authenticationMechanism);
