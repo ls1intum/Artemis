@@ -135,13 +135,8 @@ public class PyrisDTOService {
         try {
             if (profileService.isLocalVcsActive()) {
                 return Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
-                    var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);
-                    if (lastCommitObjectId == null) {
-                        return null;
-                    }
-                    var lastCommitHash = lastCommitObjectId.getName();
                     try {
-                        return repositoryService.getFilesContentFromBareRepository(bareRepository, lastCommitHash);
+                        return repositoryService.getFilesContentFromBareRepositoryForLastCommit(bareRepository);
                     }
                     catch (IOException e) {
                         log.error("Could not fetch repository contents from bare repository", e);
