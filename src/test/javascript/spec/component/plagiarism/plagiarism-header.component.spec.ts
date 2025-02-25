@@ -171,7 +171,6 @@ describe('Plagiarism Header Component', () => {
 
         expect(helpIcon).toBeTruthy();
         expect(helpIcon.getAttribute('text')).toBe('artemisApp.plagiarism.teamModeDisabled');
-        expect(helpIcon.hidden).toBeFalse();
     });
 
     it('should hide team mode disabled help icon when teamMode is disabled', () => {
@@ -181,7 +180,6 @@ describe('Plagiarism Header Component', () => {
         const nativeElement = fixture.nativeElement;
         const helpIcon = nativeElement.querySelector('jhi-help-icon');
 
-        expect(helpIcon).toBeTruthy();
-        expect(helpIcon.hidden).toBeTrue();
+        expect(helpIcon).toBeFalsy();
     });
 });
