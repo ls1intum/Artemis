@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 
@@ -20,7 +19,7 @@ describe('StickyPopoverDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, StickyPopoverComponent],
+            imports: [StickyPopoverComponent],
         })
             .compileComponents()
             .then(() => {

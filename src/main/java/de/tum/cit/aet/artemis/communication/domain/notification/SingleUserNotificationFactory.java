@@ -49,6 +49,8 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_REPLY_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_REPLY_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TEXT;
@@ -254,6 +256,12 @@ public class SingleUserNotificationFactory {
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
+                placeholderValues = createPlaceholdersPlagiarism(affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle());
+            }
+            case PLAGIARISM_CASE_REPLY -> {
+                title = PLAGIARISM_CASE_REPLY_TITLE;
+                notificationText = PLAGIARISM_CASE_REPLY_TEXT;
                 placeholderValues = createPlaceholdersPlagiarism(affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
                         affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle());
             }

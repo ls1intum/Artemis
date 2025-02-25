@@ -23,7 +23,6 @@ describe('ComplaintResponseService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AccountService)],
         })
             .compileComponents()

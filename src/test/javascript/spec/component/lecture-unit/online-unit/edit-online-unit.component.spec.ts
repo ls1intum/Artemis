@@ -5,14 +5,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../../test.module';
 import { OnlineUnitFormComponent } from '../../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('EditOnlineUnitComponent', () => {
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
@@ -20,7 +24,7 @@ describe('EditOnlineUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
@@ -53,6 +57,10 @@ describe('EditOnlineUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         })

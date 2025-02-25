@@ -12,6 +12,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
@@ -134,7 +135,7 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY ->
                 createNotification((PlagiarismCase) notificationSubject, notificationType, typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
@@ -331,6 +332,10 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+    }
+
+    public void notifyInstructionAboutPlagiarismCaseReply(PlagiarismCase plagiarismCase, User instructor) {
+        notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_REPLY, instructor, userRepository.getUser());
     }
 
     /**

@@ -38,6 +38,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
@@ -134,6 +135,8 @@ public class NotificationConstants {
     public static final String NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE = "artemisApp.singleUserNotification.title.newPlagiarismCaseStudentSignificantSimilarity";
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent";
+
+    public static final String PLAGIARISM_CASE_REPLY_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseReply";
 
     public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationStudent";
 
@@ -236,6 +239,8 @@ public class NotificationConstants {
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseVerdictStudent";
 
+    public static final String PLAGIARISM_CASE_REPLY_TEXT = "artemisApp.singleUserNotification.text.plagiarismCaseReply";
+
     public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupRegistrationStudent";
 
     public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupDeregistrationStudent";
@@ -324,7 +329,7 @@ public class NotificationConstants {
             .put(EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED_TITLE).put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE)
             .put(NEW_MANUAL_FEEDBACK_REQUEST, NEW_MANUAL_FEEDBACK_REQUEST_TITLE).put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE)
             .put(NEW_CPC_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE).put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE)
-            .put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
+            .put(PLAGIARISM_CASE_REPLY, PLAGIARISM_CASE_REPLY_TITLE).put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
             .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE)

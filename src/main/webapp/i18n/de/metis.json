@@ -143,6 +143,7 @@
                 "editMessage": "Nachricht bearbeiten",
                 "deleteMessage": "Nachricht löschen",
                 "replyMessage": "Antworten im Thread",
+                "forwardMessage": "Nachricht weiterleiten",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
                 "undoDelete": "Löschen umkehren",
                 "bookmarkPost": "Beitrag speichern",
@@ -168,6 +169,15 @@
                 "tutor": "Tutor:in: Verantwortlich für die Unterstützung der Studierenden bei ihren Fragen zum Kurs und zu den Übungen.",
                 "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen.",
                 "deleted": "Gelöscht: Nutzer:in wurde gelöscht."
+            },
+            "forward": {
+                "forwardMessage": "Diese Nachricht weiterleiten",
+                "addMessage": "Eine Nachricht hinzufügen",
+                "searchBar": "Nach Name oder Kanal suchen",
+                "viewConversation": "Unterhaltung anzeigen",
+                "forwardedFrom": "Weitergeleitet von",
+                "showLess": "Weniger anzeigen",
+                "showMore": "Mehr anzeigen"
             }
         }
     }

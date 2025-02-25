@@ -1,6 +1,5 @@
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -128,7 +127,6 @@ describe('ProgrammingExerciseTask Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

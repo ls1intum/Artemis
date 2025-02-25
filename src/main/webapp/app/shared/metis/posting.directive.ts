@@ -102,6 +102,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         this.showDropdown = false;
     }
 
+    forwardMessage() {
+        this.reactionsBar.forwardMessage();
+    }
+
     checkIfPinned(): DisplayPriority {
         return this.reactionsBar.checkIfPinned();
     }

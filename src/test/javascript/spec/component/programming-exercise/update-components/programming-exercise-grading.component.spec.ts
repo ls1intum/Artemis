@@ -14,7 +14,12 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { ArtemisTestModule } from '../../../test.module';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -31,11 +36,15 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
 
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();
