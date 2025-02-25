@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -1032,7 +1033,7 @@ public class GitService extends AbstractGitService {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-        List<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
+        Set<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
