@@ -7,10 +7,10 @@ import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
 })
 export class LearnerProfileApiService extends BaseApiHttpService {
     async getCourseLearnerProfilesForCurrentUser(): Promise<Record<number, CourseLearnerProfileDTO>> {
-        return await this.get<Record<number, CourseLearnerProfileDTO>>('learner-profiles/course-learner-profiles');
+        return await this.get<Record<number, CourseLearnerProfileDTO>>('atlas/course-learner-profiles');
     }
 
     async putUpdatedCourseLearnerProfile(courseLearnerProfile: CourseLearnerProfileDTO): Promise<CourseLearnerProfileDTO> {
-        return this.put<CourseLearnerProfileDTO>(`learner-profiles/course-learner-profiles/${courseLearnerProfile.id}`, courseLearnerProfile);
+        return this.put<CourseLearnerProfileDTO>(`atlas/course-learner-profiles/${courseLearnerProfile.id}`, courseLearnerProfile);
     }
 }

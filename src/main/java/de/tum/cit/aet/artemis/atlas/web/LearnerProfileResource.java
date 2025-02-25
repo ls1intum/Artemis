@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/learner-profiles/")
+@RequestMapping("api/atlas/")
 public class LearnerProfileResource {
 
     private static final int MIN_PROFILE_VALUE = 0;
