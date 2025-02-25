@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import jakarta.validation.Valid;
 
@@ -24,7 +23,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -68,10 +66,13 @@ public class LectureTranscriptionResource {
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
-        List<LectureTranscriptionSegment> segments = transcriptionDTO.segments().stream()
-                .map(segment -> new LectureTranscriptionSegment(segment.startTime(), segment.endTime(), segment.text(), segment.slideNumber())).toList();
 
-        LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), segments, lectureUnit);
+        if (lectureUnit.getLectureTranscription() != null) {
+            lectureTranscriptionRepository.deleteById(lectureUnit.getLectureTranscription().getId());
+            lectureUnit.setLectureTranscription(null);
+        }
+
+        LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), transcriptionDTO.segments(), lectureUnit);
         lectureTranscription.setId(null);
 
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);

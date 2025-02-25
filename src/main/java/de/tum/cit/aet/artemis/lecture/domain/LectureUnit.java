@@ -79,7 +79,8 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
-    @OneToOne(mappedBy = "lectureUnit", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "lectureUnit")
+    @JsonIgnore
     protected LectureTranscription lectureTranscription;
 
     public String getName() {

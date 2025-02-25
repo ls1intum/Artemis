@@ -15,7 +15,9 @@
             <column name="language"
                     type="VARCHAR(2)"/>
             <column name="lecture_unit_id"
-                    type="BIGINT"/>
+                    type="BIGINT">
+                <constraints unique="true"/>
+            </column>
             <column name="segments"
                     type="json"/>
         </createTable>
