@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.glassfish.jersey.uri.UriComponent;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,7 +80,7 @@ public class LtiDeepLinkingService {
             default -> throw new BadRequestAlertException("Invalid deep linking type provided", "LTI", "invalidType");
         };
 
-        List<Map<String, Object>> contentItemsMap = contentItems.stream().map(LtiContentItem::toMap).collect(Collectors.toList());
+        List<Map<String, Object>> contentItemsMap = contentItems.stream().map(LtiContentItem::toMap).toList();
 
         lti13DeepLinkingResponse = lti13DeepLinkingResponse.setContentItems(contentItemsMap);
         return buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
@@ -112,7 +111,7 @@ public class LtiDeepLinkingService {
      */
     private List<LtiContentItem> populateExerciseContentItems(String courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.EXERCISE);
-        return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).collect(Collectors.toList());
+        return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
     }
 
     /**
@@ -120,7 +119,7 @@ public class LtiDeepLinkingService {
      */
     private List<LtiContentItem> populateLectureContentItems(String courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.LECTURE);
-        return lectureIds.stream().map(lectureId -> setLectureContentItem(courseId, String.valueOf(lectureId))).collect(Collectors.toList());
+        return lectureIds.stream().map(lectureId -> setLectureContentItem(courseId, String.valueOf(lectureId))).toList();
     }
 
     /**
