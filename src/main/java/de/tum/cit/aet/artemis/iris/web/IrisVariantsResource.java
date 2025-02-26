@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/iris/")
 public class IrisVariantsResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisVariantsResource.class);
@@ -40,7 +40,7 @@ public class IrisVariantsResource {
      * @param featureRaw the feature for which to retrieve the variants
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a List of the variants
      */
-    @GetMapping("iris/variants/{feature}")
+    @GetMapping("variants/{feature}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<PyrisVariantDTO>> getAllVariants(@PathVariable("feature") String featureRaw) {
         var feature = IrisSubSettingsType.valueOf(featureRaw.toUpperCase().replace("-", "_"));

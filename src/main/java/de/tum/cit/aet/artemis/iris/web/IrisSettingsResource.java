@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  */
 @Profile(PROFILE_IRIS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/iris/")
 public class IrisSettingsResource {
 
     private final UserRepository userRepository;
@@ -60,7 +60,7 @@ public class IrisSettingsResource {
      *
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
      */
-    @GetMapping("iris/global-iris-settings")
+    @GetMapping("global-iris-settings")
     @EnforceAtLeastInstructor
     public ResponseEntity<IrisSettings> getGlobalSettings() {
         var irisSettings = irisSettingsService.getGlobalSettings();

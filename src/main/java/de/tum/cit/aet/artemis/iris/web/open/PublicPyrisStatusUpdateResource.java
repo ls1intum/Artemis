@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
  */
 @RestController
 @Profile(PROFILE_IRIS)
-@RequestMapping("api/public/pyris/")
+@RequestMapping("api/iris/public/pyris/") // ToDo: Adapt Pyris to use the new path
 public class PublicPyrisStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;
