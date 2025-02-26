@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/assessment/")
-// DONE
 public class LongFeedbackTextResource {
 
     private static final Logger log = LoggerFactory.getLogger(LongFeedbackTextResource.class);
@@ -45,8 +44,6 @@ public class LongFeedbackTextResource {
     @GetMapping("feedbacks/{feedbackId}/long-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
-        // DONE
-
         log.debug("REST request to get long feedback: {}", feedbackId);
 
         final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);

@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/assessment/")
-// DONE
 public class RatingResource {
 
     private static final String ENTITY_NAME = "rating";
@@ -77,8 +76,6 @@ public class RatingResource {
     @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
-        // DONE
-
         // TODO allow for Instructors
         if (!authCheckService.isAdmin()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
@@ -98,8 +95,6 @@ public class RatingResource {
     @PostMapping("results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
     public ResponseEntity<Integer> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
-        // DONE
-
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.saveRating(resultId, ratingValue);
@@ -122,8 +117,6 @@ public class RatingResource {
     @PutMapping("results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
     public ResponseEntity<Integer> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
-        // DONE
-
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
@@ -139,8 +132,6 @@ public class RatingResource {
     @GetMapping("course/{courseId}/rating")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
-        // DONE
-
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);

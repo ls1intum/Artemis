@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/assessment/")
-// DONE
 public class ParticipantScoreResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
@@ -65,8 +64,6 @@ public class ParticipantScoreResource {
     @GetMapping("courses/{courseId}/course-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfCourse(@PathVariable Long courseId) {
-        // DONE
-
         long start = System.currentTimeMillis();
         log.debug("REST request to get course scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
@@ -93,8 +90,6 @@ public class ParticipantScoreResource {
     @GetMapping("exams/{examId}/exam-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
-        // DONE
-
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);

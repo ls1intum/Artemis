@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/assessment/")
-// DONE
 public class ComplaintResponseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
@@ -63,8 +62,6 @@ public class ComplaintResponseResource {
     @PostMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
-        // DONE
-
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponseRepresentingLock(complaint);
@@ -82,8 +79,6 @@ public class ComplaintResponseResource {
     @DeleteMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
-        // DONE
-
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         complaintResponseService.removeComplaintResponseRepresentingLock(complaint);
@@ -101,8 +96,6 @@ public class ComplaintResponseResource {
     @PatchMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
-        // DONE
-
         if (complaintResponseUpdate.action() == null) {
             throw new BadRequestAlertException("A complaint response action can not be null.", ENTITY_NAME, "complaintResponseUpdateActionIsNull");
         }

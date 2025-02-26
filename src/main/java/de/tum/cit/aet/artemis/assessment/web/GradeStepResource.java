@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/assessment/")
-// DONE - TODO: verify unused endpoints in client
 public class GradeStepResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
@@ -85,8 +84,6 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
-        // DONE
-
         log.debug("REST request to get all grade steps for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
@@ -108,8 +105,6 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
-        // DONE
-
         log.debug("REST request to get all grade steps for exam: {}", examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -184,8 +179,6 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
-        // DONE
-
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -223,8 +216,6 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
-        // DONE
-
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
