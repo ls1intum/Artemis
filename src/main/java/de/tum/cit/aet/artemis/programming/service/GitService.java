@@ -343,7 +343,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
     }
@@ -1108,7 +1108,7 @@ public class GitService extends AbstractGitService {
      * @return True if the status is clean
      * @throws GitAPIException if the state of the repository could not be retrieved.
      */
-    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
+    public boolean isClean(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
             Status status = git.status().call();
             return status.isClean();

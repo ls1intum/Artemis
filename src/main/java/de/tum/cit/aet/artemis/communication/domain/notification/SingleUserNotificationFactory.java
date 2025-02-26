@@ -21,8 +21,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR;
@@ -53,12 +51,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_REPLY_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_EXPIRES_SOON_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_EXPIRES_SOON_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_HAS_EXPIRED_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_HAS_EXPIRED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT;
@@ -66,12 +58,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationCreationTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationDeletionTarget;
@@ -96,7 +82,6 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 public class SingleUserNotificationFactory {
@@ -173,54 +158,6 @@ public class SingleUserNotificationFactory {
     @NotificationPlaceholderCreator(values = { DATA_EXPORT_CREATED, DATA_EXPORT_FAILED })
     public static String[] createPlaceholdersDataExport() {
         return new String[] {};
-    }
-
-    /**
-     * Creates a user notification based on the given SSH key and notification type.
-     *
-     * @param key              The SSH key related to the notification (currently unused).
-     * @param notificationType The type of notification to create (e.g., key added, expiring, or expired).
-     * @param recipient        The user who will receive the notification.
-     * @return A configured {@link SingleUserNotification}.
-     * @throws UnsupportedOperationException if the notification type is unsupported.
-     */
-    public static SingleUserNotification createNotification(UserSshPublicKey key, NotificationType notificationType, User recipient) {
-        switch (notificationType) {
-            case SSH_KEY_ADDED -> {
-                return new SingleUserNotification(recipient, SSH_KEY_ADDED_TITLE, SSH_KEY_ADDED_TEXT, true, new String[] {});
-            }
-            case SSH_KEY_EXPIRES_SOON -> {
-                return new SingleUserNotification(recipient, SSH_KEY_EXPIRES_SOON_TITLE, SSH_KEY_EXPIRES_SOON_TEXT, true, new String[] {});
-            }
-            case SSH_KEY_HAS_EXPIRED -> {
-                return new SingleUserNotification(recipient, SSH_KEY_HAS_EXPIRED_TITLE, SSH_KEY_HAS_EXPIRED_TEXT, true, new String[] {});
-            }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-    }
-
-    /**
-     * Creates a user notification based on the given SSH key and notification type.
-     *
-     * @param vcsAccessToken   The access token of the user
-     * @param notificationType The type of notification to create (e.g., key added, expiring, or expired).
-     * @param recipient        The user who will receive the notification.
-     * @return A configured {@link SingleUserNotification}.
-     * @throws UnsupportedOperationException if the notification type is unsupported.
-     */
-    public static SingleUserNotification createNotification(String vcsAccessToken, NotificationType notificationType, User recipient) {
-        switch (notificationType) {
-            case VCS_ACCESS_TOKEN_ADDED -> {
-                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_ADDED_TITLE, VCS_ACCESS_TOKEN_ADDED_TEXT, true, new String[] {});
-            }
-            case VCS_ACCESS_TOKEN_EXPIRED -> {
-                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_EXPIRED_TITLE, VCS_ACCESS_TOKEN_EXPIRED_TEXT, true, new String[] {});
-            }
-            case VCS_ACCESS_TOKEN_EXPIRES_SOON -> {
-                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE, VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT, true, new String[] {});
-            }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
     }
 
     /**

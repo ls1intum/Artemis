@@ -48,11 +48,11 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -76,7 +76,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private static final String TEST_PREFIX = "groupnotificationservice";
 
     @Autowired
-    private NotificationTestRepository notificationTestRepository;
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -231,12 +231,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // store the current notification count to let tests work even if notifications are created in other tests
-        notificationCountBeforeTest = notificationTestRepository.findAll().size();
+        notificationCountBeforeTest = notificationRepository.findAll().size();
     }
 
     @AfterEach
     void tearDown() {
-        notificationTestRepository.deleteAllInBatch();
+        notificationRepository.deleteAllInBatch();
     }
 
     /**
@@ -262,10 +262,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
         await().untilAsserted(
-                () -> assertThat(notificationTestRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
                         .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
 
-        List<Notification> capturedNotifications = notificationTestRepository.findAll();
+        List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
 
@@ -440,10 +440,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     @Test
     void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
-        var countBefore = notificationTestRepository.count();
+        var countBefore = notificationRepository.count();
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        var countAfter = notificationTestRepository.count();
+        var countAfter = notificationRepository.count();
         assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
     }
 

@@ -110,18 +110,4 @@ describe('HeaderParticipationPage', () => {
         component.ngOnChanges();
         expect(component.achievedPoints).toBe(42);
     });
-
-    it('should select the result with later completion date even if its id is lower', () => {
-        component.exercise.maxPoints = 100;
-        const earlierDate = dayjs().subtract(2, 'hours');
-        const laterDate = dayjs().subtract(1, 'hours');
-
-        const resultWithLowerId = { id: 1, score: 80, rated: true, completionDate: laterDate } as Result;
-        const resultWithHigherId = { id: 2, score: 50, rated: true, completionDate: earlierDate } as Result;
-
-        component.participation = { results: [resultWithHigherId, resultWithLowerId] } as StudentParticipation;
-
-        component.ngOnChanges();
-        expect(component.achievedPoints).toBe(80);
-    });
 });

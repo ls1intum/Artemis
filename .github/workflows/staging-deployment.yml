@@ -15,10 +15,6 @@ on:
         type: choice
         options: 
           - artemis-staging-localci.artemis.cit.tum.de
-      triggered_by:
-        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
-        required: false
-        type: string
 
 concurrency: ${{ github.event.inputs.environment_name }}
 
@@ -36,7 +32,6 @@ jobs:
           echo "Branch: ${{ github.event.inputs.branch_name }}"
           echo "Commit SHA: ${{ github.event.inputs.commit_sha }}"
           echo "Environment: ${{ github.event.inputs.environment_name }}"
-          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
 
       - name: Fetch workflow runs by branch and commit
         id: get_workflow_run

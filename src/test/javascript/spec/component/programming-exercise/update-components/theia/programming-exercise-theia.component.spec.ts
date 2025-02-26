@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,7 +21,7 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [ProgrammingExerciseTheiaComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe), MockDirective(TranslateDirective)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe)],
             providers: [
                 {
                     provide: ActivatedRoute,

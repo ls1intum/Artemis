@@ -11,7 +11,7 @@
             </div>
         </div>
         @for (exercise of exercisesWithPlagiarismCases; track exercise.id; let exerciseIndex = $index) {
-            <div #plagExerciseElement class="card mb-2" [id]="'exercise-with-plagiarism-case-' + exercise.id">
+            <div class="card mb-2">
                 <div class="card-header">
                     <div class="row">
                         <div class="col-3">

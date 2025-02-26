@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.core.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -151,7 +152,7 @@ public class ContinuousPlagiarismControlService {
                     try {
                         plagiarismPostService.createContinuousPlagiarismControlPlagiarismCasePost(post);
                     }
-                    catch (Exception e) {
+                    catch (ArtemisMailException e) {
                         // Catch mail exceptions to so that notification for the second student will be delivered
                         log.error("Cannot send a cpc email: postId={}, plagiarismCaseId={}.", post.getId(), post.getPlagiarismCase().getId());
                     }

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNoti
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -146,7 +147,7 @@ public class DataExportCreationService {
         try {
             singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
         }
-        catch (Exception e) {
+        catch (ArtemisMailException e) {
             log.warn("Failed to send email about successful data export creation");
         }
         return true;

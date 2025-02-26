@@ -7,31 +7,20 @@
     </div>
 
     <div class="plagiarism-header-right">
-        @if (comparison.status === plagiarismStatus.CONFIRMED) {
-            <button
-                class="btn btn-primary btn-sm"
-                data-qa="view-plagiarism-cases-button"
-                jhiTranslate="artemisApp.plagiarism.viewCases"
-                [routerLink]="['/course-management', exercise.course?.id, 'plagiarism-cases']"
-                [queryParams]="{ exerciseId: exercise.id }"
-                [disabled]="isLoading || exercise.teamMode"
-            ></button>
-        } @else {
-            <button
-                class="btn btn-success btn-sm"
-                (click)="confirmPlagiarism()"
-                data-qa="confirm-plagiarism-button"
-                jhiTranslate="artemisApp.plagiarism.confirm"
-                [disabled]="isLoading || exercise.teamMode"
-            ></button>
-        }
+        <button
+            [disabled]="comparison.status === plagiarismStatus.CONFIRMED || isLoading || exercise.teamMode"
+            class="btn btn-success btn-sm"
+            (click)="confirmPlagiarism()"
+            data-qa="confirm-plagiarism-button"
+            jhiTranslate="artemisApp.plagiarism.confirm"
+        ></button>
 
         <button
+            [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
             class="btn btn-danger btn-sm"
             (click)="denyPlagiarism()"
             data-qa="deny-plagiarism-button"
             jhiTranslate="artemisApp.plagiarism.deny"
-            [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
         ></button>
 
         <div class="vertical-divider"></div>

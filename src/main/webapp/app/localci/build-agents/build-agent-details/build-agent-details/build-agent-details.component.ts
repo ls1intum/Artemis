@@ -16,23 +16,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    imports: [
-        NgxDatatableModule,
-        DataTableComponent,
-        ArtemisDurationFromSecondsPipe,
-        ArtemisDatePipe,
-        FontAwesomeModule,
-        RouterModule,
-        CommonModule,
-        ResultComponent,
-        TranslateDirective,
-    ],
+    imports: [NgxDatatableModule, DataTableComponent, ArtemisDurationFromSecondsPipe, ArtemisDatePipe, FontAwesomeModule, RouterModule, CommonModule, ResultComponent],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);

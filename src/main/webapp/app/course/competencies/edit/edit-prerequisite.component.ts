@@ -9,12 +9,11 @@ import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequ
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-prerequisite',
     templateUrl: './edit-prerequisite.component.html',
-    imports: [PrerequisiteFormComponent, TranslateDirective],
+    imports: [PrerequisiteFormComponent],
 })
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
     private prerequisiteService = inject(PrerequisiteService);

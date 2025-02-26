@@ -10,11 +10,10 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-bar',
-    imports: [CommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective],
+    imports: [CommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule],
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',
 })

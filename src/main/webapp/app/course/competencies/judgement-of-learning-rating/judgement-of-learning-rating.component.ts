@@ -5,11 +5,10 @@ import { AlertService } from 'app/core/util/alert.service';
 
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
-    imports: [StarRatingComponent, HelpIconComponent, TranslateDirective],
+    imports: [StarRatingComponent, HelpIconComponent],
     templateUrl: './judgement-of-learning-rating.component.html',
 })
 export class JudgementOfLearningRatingComponent {

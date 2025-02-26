@@ -123,7 +123,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private get recommendedTeamSize(): boolean {
-        const pendingTeamSize = this.pendingTeam.students?.length || 0;
+        const pendingTeamSize = this.pendingTeam.students!.length;
         return pendingTeamSize >= this.config.minTeamSize! && pendingTeamSize <= this.config.maxTeamSize!;
     }
 
@@ -162,9 +162,6 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
-            if (!this.pendingTeam.students) {
-                this.pendingTeam.students = [];
-            }
             this.pendingTeam.students!.push(student);
         }
     }

@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
-import { getContrastingTextColor } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-header-course',
@@ -25,8 +24,6 @@ export class HeaderCourseComponent implements OnChanges {
 
     @Input() public course: Course;
 
-    public courseColor: string;
-    public contentColor: string;
     public courseDescription?: string;
     public enableShowMore = false;
     public longDescriptionShown = false;
@@ -34,8 +31,6 @@ export class HeaderCourseComponent implements OnChanges {
     faArrowDown = faArrowDown;
 
     ngOnChanges() {
-        this.courseColor = this.course.color || ARTEMIS_DEFAULT_COLOR;
-        this.contentColor = getContrastingTextColor(this.courseColor);
         this.adjustCourseDescription();
     }
 

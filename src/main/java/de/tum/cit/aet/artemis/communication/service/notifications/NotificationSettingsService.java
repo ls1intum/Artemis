@@ -33,9 +33,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGI
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -45,9 +42,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UPDATED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -142,19 +136,6 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED = "notification.user-notification.data-export-failed";
 
-    // ssh user notification settings group
-    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED = "notification.user-notification.ssh-key-added";
-
-    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON = "notification.user-notification.ssh-key-expires-soon";
-
-    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED = "notification.user-notification.ssh-key-has-expired";
-
-    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED = "notification.user-notification.vcs-access-token-added";
-
-    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED = "notification.user-notification.vcs-access-token-expired";
-
-    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON = "notification.user-notification.vcs-access-token-expires-soon";
-
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -194,15 +175,9 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
             // user mention notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
-            // data export and SSH notification setting (cannot be overridden by user)
+            // data export notification setting (cannot be overridden by user)
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
-            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED),
-            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON)));
+            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -247,13 +222,6 @@ public class NotificationSettingsService {
         map.put(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[]{CONVERSATION_NEW_REPLY_MESSAGE});
         map.put(NOTIFICATION__USER_NOTIFICATION__USER_MENTION, new NotificationType[]{CONVERSATION_USER_MENTIONED});
 
-        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED, new NotificationType[] { SSH_KEY_ADDED });
-        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON, new NotificationType[] { SSH_KEY_EXPIRES_SOON });
-        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED, new NotificationType[] { SSH_KEY_HAS_EXPIRED });
-        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED, new NotificationType[] { VCS_ACCESS_TOKEN_ADDED });
-        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED, new NotificationType[] { VCS_ACCESS_TOKEN_EXPIRED });
-        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON, new NotificationType[] { VCS_ACCESS_TOKEN_EXPIRES_SOON });
-
         NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Collections.unmodifiableMap(map);
     }
     // @formatter:on
@@ -266,8 +234,7 @@ public class NotificationSettingsService {
             PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR,
             TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED,
             TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST,
-            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE, SSH_KEY_ADDED,
-            SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
+            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types

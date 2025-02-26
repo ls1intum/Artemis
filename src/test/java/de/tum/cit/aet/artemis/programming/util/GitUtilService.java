@@ -96,7 +96,7 @@ public class GitUtilService {
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
-            remotePath.resolve(FILES.FILE4 + ".jar").toFile().createNewFile();
+            remotePath.resolve(FILES.FILE4.toString() + ".jar").toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
             GitService.commit(remoteGit).setMessage("initial commit").call();
 

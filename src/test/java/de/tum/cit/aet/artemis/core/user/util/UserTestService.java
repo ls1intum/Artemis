@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -126,9 +125,6 @@ public class UserTestService {
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
 
-    @Autowired
-    private NotificationTestRepository notificationTestRepository;
-
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -164,9 +160,6 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        if (student.getId() != null) {
-            notificationTestRepository.deleteAllInBatch(notificationTestRepository.findAllByRecipientId(student.getId()));
-        }
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 

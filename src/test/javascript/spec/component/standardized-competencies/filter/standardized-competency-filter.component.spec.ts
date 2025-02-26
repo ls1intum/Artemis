@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
-import { MockDirective } from 'ng-mocks';
 
 describe('StandardizedCompetencyFilterComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyFilterComponent>;
@@ -10,7 +8,7 @@ describe('StandardizedCompetencyFilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyFilterComponent, FormsModule, MockDirective(TranslateDirective)],
+            imports: [StandardizedCompetencyFilterComponent, FormsModule],
             declarations: [],
             providers: [],
         })

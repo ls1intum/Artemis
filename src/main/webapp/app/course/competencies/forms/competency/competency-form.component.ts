@@ -5,13 +5,12 @@ import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/for
 import { Competency } from 'app/entities/competency.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
-    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
+    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input() formData: CourseCompetencyFormData = {

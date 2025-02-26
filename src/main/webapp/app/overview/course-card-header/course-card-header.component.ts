@@ -3,7 +3,6 @@ import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
-import { getContrastingTextColor } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-course-card-header',
@@ -21,10 +20,8 @@ export class CourseCardHeaderComponent implements OnInit {
 
     CachingStrategy = CachingStrategy;
     color: string;
-    titleColor: string;
 
     ngOnInit() {
         this.color = this.courseColor() || this.ARTEMIS_DEFAULT_COLOR;
-        this.titleColor = getContrastingTextColor(this.color);
     }
 }

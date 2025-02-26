@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -63,7 +63,14 @@ public class PyrisDTOService {
         // var templateRepositoryContents = new HashMap<String, String>();
         // var solutionRepositoryContents = new HashMap<String, String>();
 
-        Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
+        Optional<Repository> testRepo = Optional.empty();
+        try {
+            testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
+        }
+        catch (GitAPIException e) {
+            log.error("Could not fetch existing test repository", e);
+        }
+        var testsRepositoryContents = testRepo.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -121,7 +128,7 @@ public class PyrisDTOService {
     private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
 
-        var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
+        var repositoryContents = getRepositoryContents(participation);
         return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -131,11 +138,12 @@ public class PyrisDTOService {
      * This is an exception safe way to fetch the repository, as it will return an empty map if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
      *
-     * @param repositoryUri the repositoryUri of the repository
+     * @param participation the participation
      * @return the repository or empty if it could not be fetched
      */
-    private Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
+    private Map<String, String> getRepositoryContents(ProgrammingExerciseParticipation participation) {
         try {
+            var repositoryUri = participation.getVcsRepositoryUri();
             if (profileService.isLocalVcsActive()) {
                 return Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
                     var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);

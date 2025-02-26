@@ -123,9 +123,14 @@ public class SshSettingsTestService {
 
         var validKey = createNewValidSSHKey(user, sshKey1);
         request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        var userKey = userSshPublicKeyRepository.findAll().getFirst();
+        userKey.setUserId(12L);
+        userSshPublicKeyRepository.save(userKey);
 
         request.delete(requestPrefix + "public-key/3443", HttpStatus.FORBIDDEN);
         request.get(requestPrefix + "public-key/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
+        request.get(requestPrefix + "public-key/" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
+
     }
 
     // Test

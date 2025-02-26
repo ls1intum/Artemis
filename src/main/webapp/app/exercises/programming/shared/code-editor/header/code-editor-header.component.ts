@@ -6,12 +6,11 @@ import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-code-editor-header',
     templateUrl: './code-editor-header.component.html',
-    imports: [NgbDropdown, ArtemisTranslatePipe, FormsModule, FontAwesomeModule, TranslateDirective],
+    imports: [NgbDropdown, ArtemisTranslatePipe, FormsModule, FontAwesomeModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorHeaderComponent {

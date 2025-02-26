@@ -13,7 +13,6 @@ import {
 } from 'app/course/competencies/components/import-course-competencies-settings/import-course-competencies-settings.component';
 import { CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -37,7 +36,7 @@ export interface ImportAllCourseCompetenciesResult {
 
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
-    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent, FaIconComponent, TranslateDirective],
+    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent, FaIconComponent],
     providers: [
         {
             provide: PagingService,

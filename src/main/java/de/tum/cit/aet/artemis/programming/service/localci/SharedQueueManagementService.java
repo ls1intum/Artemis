@@ -482,9 +482,10 @@ public class SharedQueueManagementService {
     public BuildTimingInfo isSubmissionProcessing(long participationId, String commitHash) {
         var buildJob = getProcessingJobs().stream().filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().assignmentCommitHash()))
                 .findFirst();
-        return buildJob
-                .map(buildJobQueueItem -> new BuildTimingInfo(buildJobQueueItem.jobTimingInfo().buildStartDate(), buildJobQueueItem.jobTimingInfo().estimatedCompletionDate()))
-                .orElse(null);
+        if (buildJob.isPresent()) {
+            return new BuildTimingInfo(buildJob.get().jobTimingInfo().buildStartDate(), buildJob.get().jobTimingInfo().estimatedCompletionDate());
+        }
+        return null;
     }
 
     public record BuildTimingInfo(ZonedDateTime buildStartDate, ZonedDateTime estimatedCompletionDate) {

@@ -7,11 +7,10 @@ import { onError } from 'app/shared/util/global.utils';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseCompetencyRelationFormComponent } from 'app/course/competencies/components/course-competency-relation-form/course-competency-relation-form.component';
 import { CourseCompetenciesRelationGraphComponent } from '../course-competencies-relation-graph/course-competencies-relation-graph.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-competencies-relation-modal',
-    imports: [CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent, TranslateDirective],
+    imports: [CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent],
     templateUrl: './course-competencies-relation-modal.component.html',
     styleUrl: './course-competencies-relation-modal.component.scss',
 })

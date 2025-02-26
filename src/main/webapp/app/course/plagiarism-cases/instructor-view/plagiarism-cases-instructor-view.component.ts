@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, OnInit, effect, inject, viewChildren } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -42,8 +42,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     groupedPlagiarismCases: GroupedPlagiarismCases;
     exercisesWithPlagiarismCases: Exercise[] = [];
 
-    exerciseWithPlagCasesElements = viewChildren<ElementRef>('plagExerciseElement');
-
     // method called as html template variable, angular only recognises reference variables in html if they are a property
     // of the corresponding component class
     getExerciseUrlSegment = getExerciseUrlSegment;
@@ -51,20 +49,10 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
 
-    constructor() {
-        // effect needs to be in constructor context, due to the possibility of ngOnInit being called from a non-injection
-        //context
-        effect(() => {
-            const exerciseId = Number(this.route.snapshot.queryParamMap?.get('exerciseId'));
-            if (exerciseId) {
-                this.scrollToExerciseAfterViewInit(exerciseId);
-            }
-        });
-    }
-
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+
         const plagiarismCasesForInstructor$ = this.examId
             ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
             : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
@@ -75,20 +63,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
                 this.groupedPlagiarismCases = this.getGroupedPlagiarismCasesByExercise(this.plagiarismCases);
             },
         });
-    }
-
-    /**
-     * scroll to the exercise with
-     */
-    scrollToExerciseAfterViewInit(exerciseId: number) {
-        const element = this.exerciseWithPlagCasesElements().find((elem) => elem.nativeElement.id === 'exercise-with-plagiarism-case-' + exerciseId);
-        if (element) {
-            element.nativeElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',
-                inline: 'nearest',
-            });
-        }
     }
 
     /**
