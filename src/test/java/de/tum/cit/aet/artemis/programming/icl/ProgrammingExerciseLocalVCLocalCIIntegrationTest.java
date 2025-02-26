@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIREC
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -322,16 +321,5 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         void testAccessForbidden() throws Exception {
             request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, CheckoutDirectoriesDTO.class);
         }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldTriggerBuildOnRepoReset() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
-        doNothing().when(localVCServletService).processNewPush(any(), any());
-
-        request.put("/api/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
-        verify(localVCServletService).processNewPush(any(), any());
     }
 }

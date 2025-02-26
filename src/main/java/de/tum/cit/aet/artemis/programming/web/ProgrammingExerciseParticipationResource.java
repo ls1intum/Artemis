@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -100,8 +99,6 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
 
-    private final ProfileService profileService;
-
     private final Optional<LocalVCServletService> localVCServletService;
 
     private final GitService gitService;
@@ -111,8 +108,7 @@ public class ProgrammingExerciseParticipationResource {
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, ProfileService profileService, Optional<LocalVCServletService> localVCServletService,
-            GitService gitService) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<LocalVCServletService> localVCServletService, GitService gitService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -127,7 +123,6 @@ public class ProgrammingExerciseParticipationResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.profileService = profileService;
         this.localVCServletService = localVCServletService;
         this.gitService = gitService;
     }
@@ -327,10 +322,8 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
-        if (profileService.isLocalVcsCiActive()) {
-            var targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
-            localVCServletService.orElseThrow().processNewPush(null, targetRepo);
-        }
+        var targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
+        localVCServletService.orElseThrow().processNewPush(null, targetRepo);
 
         return ResponseEntity.ok().build();
     }
