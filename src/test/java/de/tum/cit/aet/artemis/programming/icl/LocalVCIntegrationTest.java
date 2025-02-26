@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,7 +26,6 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -344,15 +341,5 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // assert that the folder names are correct
         assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
         assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldTriggerBuildOnRepoReset() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
-
-        request.put("/api/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
-        verify(localVCServletService).processNewPush(any(), any());
     }
 }

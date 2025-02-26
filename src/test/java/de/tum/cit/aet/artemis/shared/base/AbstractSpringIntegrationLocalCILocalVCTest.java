@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -185,6 +186,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected IrisExerciseChatSessionService irisExerciseChatSessionService;
+
+    @MockitoSpyBean
+    protected LocalVCServletService localVCServletService;
 
     @MockitoSpyBean
     protected PyrisEventService pyrisEventService;
