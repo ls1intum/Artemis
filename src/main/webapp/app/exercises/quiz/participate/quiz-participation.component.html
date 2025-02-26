@@ -38,11 +38,11 @@
                                         {{ remainingTimeText }}
                                     </span>
                                 </div>
-                            } @else if (submission.submitted && endDate) {
+                            } @else if (submission.submitted && quizExercise.dueDate) {
                                 <div class="align-content-center">
                                     <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
                                     <span id="results-available-value">
-                                        {{ endDate }}
+                                        {{ quizExercise.dueDate }}
                                     </span>
                                 </div>
                             }
