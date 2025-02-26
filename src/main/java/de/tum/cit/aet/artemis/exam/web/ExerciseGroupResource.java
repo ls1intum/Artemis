@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exam/")
 public class ExerciseGroupResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);

@@ -38,7 +38,7 @@ export class ExamParticipationService {
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
-        return `api/courses/${courseId}/exams/${examId}`;
+        return `api/exam/courses/${courseId}/exams/${examId}`;
     }
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
