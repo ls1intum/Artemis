@@ -18,7 +18,7 @@ export class CourseExerciseService {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
 
-    private resourceUrl = `api/courses`;
+    private resourceUrl = `api/exercise/courses`;
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -82,7 +82,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the exercise
      */
     startExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations`, {}).pipe(
+        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -95,7 +95,7 @@ export class CourseExerciseService {
      * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
      */
     startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
+        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -108,7 +108,7 @@ export class CourseExerciseService {
      * @param participationId - the unique identifier of the participation to continue
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
+        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -116,7 +116,7 @@ export class CourseExerciseService {
     }
 
     requestFeedback(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
+        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**

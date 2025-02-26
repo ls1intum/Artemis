@@ -26,7 +26,7 @@ describe('Course Management Service', () => {
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    const resourceUrl = 'api/courses';
+    const resourceUrl = 'api/exercise/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;

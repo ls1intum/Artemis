@@ -17,7 +17,7 @@ export class QuizParticipationService {
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.submissionService.convert(quizSubmission);
         return this.http
-            .post<Result>(`api/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
+            .post<Result>(`api/exercise/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
             .pipe(map((res: ResultResponseType) => this.submissionService.convertResponse(res)));
     }
 

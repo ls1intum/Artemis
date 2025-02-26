@@ -107,7 +107,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseFeedbackService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);

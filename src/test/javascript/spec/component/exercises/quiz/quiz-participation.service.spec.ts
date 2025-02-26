@@ -30,7 +30,7 @@ describe('Quiz Participation Service', () => {
             expect(res.body!.score).toBe(10);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/practice` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/submissions/practice` });
         req.flush(mockResult);
         tick();
     }));
