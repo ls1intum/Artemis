@@ -265,7 +265,7 @@ public class ParticipationResource {
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(participation);
     }
 
     /**

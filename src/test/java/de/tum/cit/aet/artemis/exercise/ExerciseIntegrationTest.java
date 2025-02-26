@@ -123,14 +123,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 participationUtilService.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
         }
-        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/core/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercise/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(submissions.size() + 1);
         assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(3);
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(1);
 
         for (Exercise exercise : course.getExercises()) {
-            StatsForDashboardDTO stats = request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            StatsForDashboardDTO stats = request.get("/api/exercise/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             assertThat(stats.getNumberOfComplaints()).isZero();
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
@@ -144,14 +144,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
         var textExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
-        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/core/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercise/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
         assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isZero();
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isZero();
 
         for (Exercise exercise : course.getExercises()) {
-            StatsForDashboardDTO stats = request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            StatsForDashboardDTO stats = request.get("/api/exercise/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             assertThat(stats.getNumberOfComplaints()).isZero();
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
@@ -552,7 +552,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseForAssessmentDashboard = request.get("/api/core/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
+                Exercise exerciseForAssessmentDashboard = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
                 assertThat(exerciseForAssessmentDashboard.getTutorParticipations()).as("Tutor participation was created").hasSize(1);
                 assertThat(exerciseForAssessmentDashboard.getExampleSubmissions()).as("Example submissions are not null").isEmpty();
 
@@ -587,7 +587,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
-        Exercise receivedExercise = request.get("/api/core/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
+        Exercise receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
         assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
     }
 
@@ -595,14 +595,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
         var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
-        request.get("/api/core/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         var exercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise().getExercises().iterator().next();
-        request.get("/api/core-exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
@@ -612,7 +612,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
-        var textExercise = request.get("/api/core-exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
+        var textExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
         assertThat(textExercise.getTutorParticipations().iterator().next().getStatus()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
@@ -634,7 +634,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Course course : courses) {
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
-                StatsForDashboardDTO stats = request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+                StatsForDashboardDTO stats = request.get("/api/exercise/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                        StatsForDashboardDTO.class);
                 assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
                 assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
 
@@ -668,7 +669,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
-        request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
