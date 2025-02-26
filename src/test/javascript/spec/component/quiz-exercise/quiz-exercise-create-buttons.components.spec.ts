@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
@@ -24,7 +23,6 @@ describe('QuizExercise Create Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

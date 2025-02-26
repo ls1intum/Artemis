@@ -56,7 +56,6 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         programmingExercise.buildConfig!.windfile = windFile;
 
         await TestBed.configureTestingModule({
-            imports: [],
             declarations: [ProgrammingExerciseEditCheckoutDirectoriesComponent, MockComponent(HelpIconComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

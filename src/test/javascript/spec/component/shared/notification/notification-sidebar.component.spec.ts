@@ -1,13 +1,12 @@
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, of, ReplaySubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -28,6 +27,10 @@ import { MockNotificationSettingsService } from '../../../helpers/mocks/service/
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { ActivatedRoute } from '@angular/router';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
@@ -60,7 +63,7 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), ArtemisTranslatePipe],
+            imports: [MockDirective(NgbTooltip), ArtemisTranslatePipe],
             declarations: [NotificationSidebarComponent, MockRouterLinkDirective, MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -71,6 +74,9 @@ describe('Notification Sidebar Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useClass: MockUserService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

@@ -1,7 +1,7 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
@@ -22,7 +22,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -45,6 +44,9 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 import { PROFILE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -103,14 +105,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -121,6 +116,7 @@ describe('Course Management Update Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
 
                 MockProvider(LoadImageService),
                 provideHttpClient(),
@@ -857,14 +853,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -872,6 +861,8 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 MockProvider(LoadImageService),
             ],
             declarations: [
@@ -896,6 +887,9 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 accountService = TestBed.inject(AccountService);
                 featureToggleService = TestBed.inject(FeatureToggleService);
                 featureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -982,14 +976,7 @@ describe('Course Management Update Component Create', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperComponent,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-            ],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -997,6 +984,8 @@ describe('Course Management Update Component Create', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
             ],
             declarations: [

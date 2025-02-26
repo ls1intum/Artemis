@@ -11,7 +11,6 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import '@angular/localize/init';
 import { MockDirective } from 'ng-mocks';
 
@@ -48,7 +47,6 @@ describe('LtiConfigurationComponent', () => {
             deleteLtiPlatform: jest.fn().mockReturnValue(of({})),
         };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [LtiConfigurationComponent, MockDirective(RouterLink)],
             providers: [
                 { provide: Router, useValue: mockRouter },

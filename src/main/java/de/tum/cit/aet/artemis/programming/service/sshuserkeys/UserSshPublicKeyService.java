@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service;
+package de.tum.cit.aet.artemis.programming.service.sshuserkeys;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -15,6 +15,7 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -29,8 +30,11 @@ public class UserSshPublicKeyService {
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository, SingleUserNotificationService singleUserNotificationService) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -55,8 +59,14 @@ public class UserSshPublicKeyService {
         newUserSshPublicKey.setKeyHash(keyHash);
         setLabelForKey(newUserSshPublicKey, sshPublicKey.label());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
-        newUserSshPublicKey.setExpiryDate(sshPublicKey.expiryDate());
+
+        if (sshPublicKey.expiryDate() != null) {
+            var expiryDate = sshPublicKey.expiryDate().withHour(3).withMinute(0).withSecond(0).withNano(0).plusDays(1);
+            newUserSshPublicKey.setExpiryDate(expiryDate);
+        }
+
         userSshPublicKeyRepository.save(newUserSshPublicKey);
+        singleUserNotificationService.notifyUserAboutNewlyAddedSshKey(user, newUserSshPublicKey);
     }
 
     /**
@@ -135,5 +145,14 @@ public class UserSshPublicKeyService {
      */
     public boolean hasUserSSHkeys(Long userId) {
         return userSshPublicKeyRepository.existsByUserId(userId);
+    }
+
+    /**
+     * Deletes all the ssh keys of a user
+     *
+     * @param userId the ID of the user.
+     */
+    public void deleteAllByUserId(Long userId) {
+        userSshPublicKeyRepository.deleteAllByUserId(userId);
     }
 }

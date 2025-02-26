@@ -1,11 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../test.module';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
@@ -17,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -37,6 +36,7 @@ import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-ha
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 class MockRouterWithEvents {
     public url = 'courses';
@@ -103,10 +103,13 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: AccountService, useClass: MockAccountService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             }).compileComponents();
 
@@ -152,7 +155,6 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
                 declarations: [
                     GuidedTourComponent,
                     MockDirective(TranslateDirective),
@@ -169,6 +171,9 @@ describe('GuidedTourService', () => {
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouter },
+                    { provide: AccountService, useClass: MockAccountService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             })
                 .compileComponents()
@@ -736,12 +741,15 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
                 declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(NavbarComponent)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: Router, useClass: MockRouterWithEvents },
+                    { provide: AccountService, useClass: MockAccountService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
             })
                 .compileComponents()

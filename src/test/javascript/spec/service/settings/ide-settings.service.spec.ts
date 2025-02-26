@@ -11,7 +11,6 @@ describe('IdeSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), IdeSettingsService],
         });
         service = TestBed.inject(IdeSettingsService);

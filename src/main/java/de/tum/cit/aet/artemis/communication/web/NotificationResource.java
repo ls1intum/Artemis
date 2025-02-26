@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -53,15 +54,15 @@ public class NotificationResource {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    private final TutorialGroupService tutorialGroupService;
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
 
     public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
-            NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
+            NotificationSettingsService notificationSettingsService, Optional<TutorialGroupApi> tutorialGroupApi) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.notificationSettingsService = notificationSettingsService;
-        this.tutorialGroupService = tutorialGroupService;
+        this.tutorialGroupApi = tutorialGroupApi;
     }
 
     /**
@@ -77,7 +78,14 @@ public class NotificationResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
                 currentUser.getLogin());
-        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser);
+
+        Set<Long> tutorialGroupIds;
+        if (tutorialGroupApi.isPresent()) {
+            tutorialGroupIds = tutorialGroupApi.get().findAllForNotifications(currentUser);
+        }
+        else {
+            tutorialGroupIds = Set.of();
+        }
         var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         var deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP, notificationSettings);
         var deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);

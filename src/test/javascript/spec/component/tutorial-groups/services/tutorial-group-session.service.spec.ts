@@ -13,7 +13,6 @@ describe('TutorialGroupSessionService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(TutorialGroupSessionService);
