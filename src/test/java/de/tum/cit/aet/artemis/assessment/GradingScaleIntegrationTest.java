@@ -457,7 +457,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteExamDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
         assertThat(foundGradingScale).isEmpty();

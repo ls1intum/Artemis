@@ -341,7 +341,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     private void generateStudentExams(Exam exam) throws Exception {
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         for (var studentExam : studentExams) {
             assertThat(studentExam.getExam()).isEqualTo(exam);
@@ -350,13 +350,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     private void generateMissingStudentExams(Exam exam, int expectedMissingStudent) throws Exception {
-        List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExam> missingStudentExams = request.postListWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(missingStudentExams).hasSize(expectedMissingStudent);
     }
 
     private void verifyStudentsExamAndExercisesAndQuizQuestions(Exam exam, int numberOfQuizQuestions) throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         verifyStudentExams(studentExams, exam.getExamUsers().size());
 
         verifyStudentExamsExercises(studentExams, exam.getNumberOfExercisesInExam());
@@ -393,7 +393,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam exam = examUtilService.addExam(course1, now().minusMinutes(5), now(), now().plusHours(2));
 
         // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -405,7 +405,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examRepository.save(exam);
 
         // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -417,7 +417,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examRepository.save(exam);
 
         // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -429,7 +429,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examRepository.save(exam);
 
         // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -441,15 +441,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
         Exam newExam = ExamFactory.generateExam(course1);
-        request.post("/api/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
-        request.put("/api/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN, Exam.class);
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/reset", HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+        request.post("/api/exam/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
+        request.put("/api/exam/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
+        request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN, Exam.class);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/reset", HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
                 HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -461,7 +461,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         testAllPreAuthorize(course, exam);
         ExamFactory.generateExam(course1);
 
-        request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
@@ -478,7 +478,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testCreateExam_checkCourseAccess_instructorNotInCourse_failsWithForbidden() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
 
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -487,7 +487,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam exam = ExamFactory.generateExam(course1, "examE");
         exam.setTitle("          Exam 123              ");
 
-        URI savedExamUri = request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        URI savedExamUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(savedExamUri), HttpStatus.OK, Exam.class);
 
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
@@ -499,7 +499,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testCreateExam_asInstructor_returnsBody() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examF");
 
-        Exam savedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
         assertThat(savedExam.getTitle()).isEqualTo(exam.getTitle());
     }
@@ -510,7 +510,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
         Exam exam = ExamFactory.generateExam(course, "examG");
 
-        Exam savedExam = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
         Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
         assertThat(channelFromDB).isNotNull();
@@ -524,7 +524,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         examA.setId(55L);
 
-        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -533,7 +533,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // Test for bad request when course id deviates from course specified in route.
         Exam examC = ExamFactory.generateExam(course1, "examC");
 
-        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
     }
 
     private List<Exam> provideExamsWithInvalidDates() {
@@ -565,7 +565,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @MethodSource("provideExamsWithInvalidDates")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithInvalidDates(Exam exam) throws Exception {
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -576,7 +576,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         examD.addExerciseGroup(ExamFactory.generateExerciseGroup(true, exam1));
 
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -587,7 +587,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examB.setCourse(null);
 
         // Test for bad request when course is null.
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -597,7 +597,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam exam = ExamFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
-        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        Exam createdExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
@@ -614,7 +614,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -623,7 +623,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // Course id in the updated exam and in the REST resource url do not match -> bad request
         Exam exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
-        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.put("/api/exam/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -632,7 +632,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
         exam.setId(1L);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -640,7 +640,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testUpdateExam_updatesExamTitle() throws Exception {
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
-        var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
         assertThat(returnedExam).isEqualTo(exam1);
     }
 
@@ -650,7 +650,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setTitle("Best exam ever");
 
-        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
@@ -661,7 +661,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusNanos(1));
 
-        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
@@ -672,7 +672,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         StudentExam studentExam = examUtilService.addStudentExam(exam1);
         exam1.setEndDate(exam1.getEndDate().plusHours(1));
 
-        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
     }
@@ -688,7 +688,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ZonedDateTime endDate = examWithModelingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate, startDate, endDate.plusSeconds(2));
 
-        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
     }
@@ -704,10 +704,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ZonedDateTime endDate = examWithModelingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate.plusHours(1), startDate.plusHours(2), endDate.plusHours(3));
 
-        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         StudentExam studentExam = examUtilService.addStudentExam(examWithModelingEx);
-        request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
+        request.patch(
+                "/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
                 3, HttpStatus.OK);
         verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
@@ -723,7 +724,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examWithModelingEx.setPublishResultsDate(now().minusHours(2));
         examWithModelingEx.setExampleSolutionPublicationDate(now().minusHours(1));
 
-        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
         Exercise exercise = fetchedExam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -745,7 +746,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         assertThat(examRepository.findAllExercisesWithDetailsByExamId(Long.MAX_VALUE)).isEmpty();
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
 
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
     }
@@ -766,7 +767,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         exerciseRepository.save(quizExercise);
         studentParticipationRepository.save(studentParticipation);
 
-        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        Exam returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
@@ -775,18 +776,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExam_asInstructor_WithQuizPool() throws Exception {
-        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        Exam returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
         assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
-        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
+        returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
         assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
-        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
+        returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
         assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForCourse_asInstructor() throws Exception {
-        var exams = request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
+        var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
         verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
 
         for (int i = 0; i < exams.size(); i++) {
@@ -799,7 +800,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
-        var exams = request.getList("/api/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
+        var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
         assertThat(course1.getInstructorGroupName()).isIn(instructor.getGroups());
 
         for (int i = 0; i < exams.size(); i++) {
@@ -841,7 +842,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteEmptyExam_asInstructor() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
@@ -851,7 +852,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam exam = examUtilService.addExam(course1);
         Channel examChannel = examUtilService.addExamChannel(exam, "test");
 
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
@@ -862,7 +863,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testDeleteExamWithQuizPool() throws Exception {
         Exam exam = examUtilService.addExamWithQuizPool(course1);
 
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         Optional<QuizPool> quizPool = quizPoolRepository.findByExamId(exam.getId());
         assertThat(quizPool.isPresent()).isFalse();
     }
@@ -872,20 +873,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
         exerciseRepository.save(textExercise);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteExamThatDoesNotExist() throws Exception {
-        request.delete("/api/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
+        request.delete("/api/exam/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetEmptyExam_asInstructor() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
@@ -894,14 +895,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
         exerciseRepository.save(textExercise);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testResetExamThatDoesNotExist() throws Exception {
-        request.delete("/api/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);
+        request.delete("/api/exam/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -910,7 +911,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam2.getExerciseGroups().getFirst());
         quizExerciseRepository.save(quizExercise);
 
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         quizExercise = (QuizExercise) exerciseRepository.findByIdElseThrow(quizExercise.getId());
         assertThat(quizExercise.getReleaseDate()).isNull();
         assertThat(quizExercise.getDueDate()).isNull();
@@ -925,20 +926,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         // Get the exam with all registered users
         // 1. without options
-        var exam1 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
+        var exam1 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
         assertThat(exam1.getExamUsers()).isEmpty();
         assertThat(exam1.getExerciseGroups()).isEmpty();
 
         // 2. with students, without exercise groups
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withStudents", "true");
-        var exam2 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         assertThat(exam2.getExamUsers()).hasSize(1);
         assertThat(exam2.getExerciseGroups()).isEmpty();
 
         // 3. with students, with exercise groups
         params.add("withExerciseGroups", "true");
-        var exam3 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        var exam3 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         assertThat(exam3.getExamUsers()).hasSize(1);
         assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
         for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
@@ -949,7 +950,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // 4. without students, with exercise groups
         params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
-        var exam4 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        var exam4 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         assertThat(exam4.getExamUsers()).isEmpty();
         assertThat(exam4.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
 
@@ -969,13 +970,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExamForTestRunDashboard_forbidden() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.FORBIDDEN, Exam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForTestRunDashboard_badRequest() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
+        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
     }
 
     @Test
@@ -984,7 +985,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -1001,7 +1002,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
-        request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
