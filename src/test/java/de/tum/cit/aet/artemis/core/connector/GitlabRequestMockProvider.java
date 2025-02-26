@@ -365,7 +365,7 @@ public class GitlabRequestMockProvider {
         var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO("acccess-token-name", userId, null, null, "acccess-token-value");
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
-        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/core/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
@@ -393,7 +393,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockListAndRevokePersonalAccessTokens(long expectedRequestCount, Map<Long, GitLabPersonalAccessTokenListResponseDTO> responseMap) {
-        final String urlPrefix = gitLabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens";
+        final String urlPrefix = gitLabApi.getGitLabServerUrl() + "/api/core/v4/personal_access_tokens";
         RequestMatcher requestMatcher = request -> {
             final String url = request.getURI().toString();
             if (!url.startsWith(urlPrefix)) {

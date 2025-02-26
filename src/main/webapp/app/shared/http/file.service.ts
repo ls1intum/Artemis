@@ -9,7 +9,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
-    private resourceUrl = 'api/files';
+    private resourceUrl = 'api/core/files';
 
     /**
      * Fetches the template file for the given programming language
@@ -41,7 +41,7 @@ export class FileService {
      * @returns markdown file
      */
     getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
+        return this.http.get<string>(`api/core/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**

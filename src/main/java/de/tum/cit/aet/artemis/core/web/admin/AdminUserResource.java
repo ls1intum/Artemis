@@ -70,7 +70,7 @@ import tech.jhipster.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminUserResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);

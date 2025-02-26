@@ -130,7 +130,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";

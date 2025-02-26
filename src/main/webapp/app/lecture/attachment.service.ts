@@ -151,6 +151,6 @@ export class AttachmentService {
      * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
      */
     getAttachmentFile(courseId: number, attachmentId: number): Observable<Blob> {
-        return this.http.get(`api/files/courses/${courseId}/attachments/${attachmentId}`, { responseType: 'blob' });
+        return this.http.get(`api/core/files/courses/${courseId}/attachments/${attachmentId}`, { responseType: 'blob' });
     }
 }

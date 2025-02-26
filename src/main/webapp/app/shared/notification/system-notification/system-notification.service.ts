@@ -14,7 +14,7 @@ export class SystemNotificationService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/communication/system-notifications';
-    public publicResourceUrl = 'api/public/system-notifications';
+    public publicResourceUrl = 'api/core/public/system-notifications';
 
     /**
      * Find a notification on the server using a GET request.

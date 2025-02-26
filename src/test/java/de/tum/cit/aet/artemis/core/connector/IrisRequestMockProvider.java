@@ -53,16 +53,16 @@ public class IrisRequestMockProvider {
 
     private MockRestServiceServer shortTimeoutMockServer;
 
-    @Value("${artemis.iris.url}/api/v1/pipelines")
+    @Value("${artemis.iris.url}/api/core/v1/pipelines")
     private URL pipelinesApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/webhooks")
+    @Value("${artemis.iris.url}/api/core/v1/webhooks")
     private URL webhooksApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/pipelines/")
+    @Value("${artemis.iris.url}/api/core/v1/pipelines/")
     private String variantsApiBaseURL;
 
-    @Value("${artemis.iris.url}/api/v1/health/")
+    @Value("${artemis.iris.url}/api/core/v1/health/")
     private URL healthApiURL;
 
     @Autowired

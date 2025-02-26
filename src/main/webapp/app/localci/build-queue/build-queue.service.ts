@@ -13,7 +13,7 @@ export class BuildQueueService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api';
-    public adminResourceUrl = 'api/admin';
+    public adminResourceUrl = 'api/core/admin';
     nestedDtoKey = 'pageable';
 
     /**

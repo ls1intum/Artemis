@@ -14,7 +14,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/attachments';
+    const resourceUrl = 'api/core/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 

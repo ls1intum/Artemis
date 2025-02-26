@@ -13,7 +13,7 @@ export class UserSettingsService {
 
     public notificationSettingsResourceUrl = 'api/communication/notification-settings';
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
-    public profilePictureResourceUrl = 'api/account/profile-picture';
+    public profilePictureResourceUrl = 'api/core/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;

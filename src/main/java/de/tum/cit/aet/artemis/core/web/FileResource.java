@@ -91,7 +91,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);

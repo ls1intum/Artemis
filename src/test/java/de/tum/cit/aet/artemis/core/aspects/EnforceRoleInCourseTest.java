@@ -46,7 +46,7 @@ class EnforceRoleInCourseTest extends AbstractEnforceRoleInResourceTest {
     }
 
     void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {
-        request.get("/api/test/" + endpoint + "/" + course.getId(), expectedStatus, Void.class);
+        request.get("/api/core/test/" + endpoint + "/" + course.getId(), expectedStatus, Void.class);
     }
 
     private static Stream<Arguments> generateArgumentStream(HttpStatus[] expectedStatus) {

@@ -45,7 +45,7 @@ describe('Course Management Service', () => {
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
 
-    const resourceUrl = 'api/courses';
+    const resourceUrl = 'api/core/courses';
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
@@ -454,7 +454,7 @@ describe('Course Management Service', () => {
     it('should download course archive', () => {
         const windowSpy = jest.spyOn(window, 'open').mockImplementation();
         courseManagementService.downloadCourseArchive(1);
-        expect(windowSpy).toHaveBeenCalledWith('api/courses/1/download-archive', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith(`${resourceUrl}/1/download-archive`, '_blank');
     });
 
     it('should archive the course', fakeAsync(() => {
@@ -538,7 +538,7 @@ describe('Course Management Service', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=true`);
+        expect(res.request.url).toBe(`${resourceUrl}/${courseId}/allowed-complaints?teamMode=true`);
 
         res.flush(expectedCount);
     });

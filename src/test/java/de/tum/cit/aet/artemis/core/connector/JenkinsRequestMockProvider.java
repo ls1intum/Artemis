@@ -437,7 +437,7 @@ public class JenkinsRequestMockProvider {
 
     public void mockGetAnyUser(boolean shouldFail, int requestCount) {
         final var httpStatus = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
-        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("api/json"))).andRespond(withStatus(httpStatus));
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("api/core/json"))).andRespond(withStatus(httpStatus));
     }
 
     public void mockRemoveUserFromGroups(Set<String> groupsToRemove, boolean shouldFail) throws IOException {

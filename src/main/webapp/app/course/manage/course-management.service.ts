@@ -45,7 +45,7 @@ export class CourseManagementService {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
 
-    private resourceUrl = 'api/courses';
+    private resourceUrl = 'api/core/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
