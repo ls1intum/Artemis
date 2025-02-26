@@ -116,6 +116,7 @@
             "totalScore": "Result",
             "maxScore": "Max Points",
             "remainingTime": "Time left",
+            "resultsAvailable": "Results available after",
             "waitingForStart": "Waiting for Start",
             "numberOfQuestions": "Number of Questions",
             "quizInstructions": {

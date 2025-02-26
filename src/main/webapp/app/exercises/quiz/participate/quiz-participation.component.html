@@ -38,6 +38,13 @@
                                         {{ remainingTimeText }}
                                     </span>
                                 </div>
+                            } @else if (submission.submitted && endDate) {
+                                <div class="align-content-center">
+                                    <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
+                                    <span id="results-available-value">
+                                        {{ endDate }}
+                                    </span>
+                                </div>
                             }
                             <jhi-button
                                 id="submit-quiz"
