@@ -205,7 +205,7 @@ public class FileService implements DisposableBean {
         copyFile(file, filePath);
 
         String currentFilename = filePath.getFileName().toString();
-        return new FilePathInformation(filePath, URI.create("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
+        return new FilePathInformation(filePath, URI.create("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
                 sanitizedOriginalFilename);
     }
 
