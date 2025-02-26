@@ -33,11 +33,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseExamExportErrorCause;
 import de.tum.cit.aet.artemis.core.domain.CourseExamExportState;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.fileupload.api.FileSubmissionExportApi;
@@ -77,14 +78,15 @@ public class CourseExamExportService {
 
     private final FileService fileService;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService,
             Optional<FileSubmissionExportApi> fileSubmissionExportApi, FileService fileService, Optional<TextSubmissionExportApi> textSubmissionExportApi,
             ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
-            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
+            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
+            Optional<ExamRepositoryApi> examRepositoryApi) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileSubmissionExportApi = fileSubmissionExportApi;
@@ -93,7 +95,7 @@ public class CourseExamExportService {
         this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
     }
 
     /**
@@ -177,6 +179,8 @@ public class CourseExamExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportExam(Exam exam, Path outputDir, List<String> exportErrors) {
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
@@ -201,7 +205,7 @@ public class CourseExamExportService {
 
         // Export exam exercises
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."), null);
-        var exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId());
+        var exercises = api.findAllExercisesWithDetailsByExamId(exam.getId());
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
 
         // Write report and error file
@@ -230,17 +234,18 @@ public class CourseExamExportService {
      * @return list of zip files
      */
     private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."), null);
 
         // Get every course and exam exercise
         Set<Exercise> courseExercises = course.getExercises();
 
         // Retrieve exams of the course and get exercises for each exam
-        List<Exam> courseExams = examRepository.findByCourseId(course.getId());
+        List<Exam> courseExams = api.findByCourseId(course.getId());
 
         // Calculate the amount of exercises for all exams
-        var examExercises = courseExams.stream().map(exam -> examRepository.findAllExercisesWithDetailsByExamId(exam.getId())).flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+        var examExercises = courseExams.stream().map(exam -> api.findAllExercisesWithDetailsByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
 
         int totalExercises = courseExercises.size() + examExercises.size();
         int progress = 0;
@@ -304,6 +309,8 @@ public class CourseExamExportService {
      */
     private List<Path> exportExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+
         Optional<Exam> firstExam = exams.stream().findFirst();
         if (firstExam.isEmpty()) {
             log.warn("Skipping exam export since the course does not have any exams");
@@ -323,7 +330,7 @@ public class CourseExamExportService {
             // Export each exam. We first fetch its exercises and then export them.
             var exportedExams = new ArrayList<Path>();
             for (var exam : exams) {
-                var examExercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId());
+                var examExercises = api.findAllExercisesWithDetailsByExamId(exam.getId());
                 var exportedExam = exportExam(notificationTopic, exam, examExercises, examsDir.toString(), currentProgress, totalExerciseCount, exportErrors, reportData);
                 exportedExams.addAll(exportedExam);
                 currentProgress += examExercises.size();

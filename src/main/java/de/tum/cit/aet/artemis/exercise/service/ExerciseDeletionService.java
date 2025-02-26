@@ -21,9 +21,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -60,7 +61,7 @@ public class ExerciseDeletionService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
@@ -84,7 +85,7 @@ public class ExerciseDeletionService {
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, Optional<TextApi> textApi, ChannelRepository channelRepository,
             ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
@@ -94,7 +95,7 @@ public class ExerciseDeletionService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -194,12 +195,13 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+            Set<StudentExam> studentExams = api.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : studentExams) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
                     studentExam.removeExercise(exercise);
-                    studentExamRepository.save(studentExam);
+                    api.save(studentExam);
                 }
             }
         }

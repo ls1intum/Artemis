@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -32,7 +33,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -76,14 +77,14 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final PlagiarismService plagiarismService;
 
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
+            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<ExamSubmissionApi> examSubmissionApi,
             PlagiarismService plagiarismService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
@@ -94,7 +95,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.userRepository = userRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.textAssessmentService = textAssessmentService;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.plagiarismService = plagiarismService;
     }
 
@@ -141,11 +142,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(exercise, textSubmission, user);
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
+
+            // Prevent multiple submissions (currently only for exam submissions)
+            textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 

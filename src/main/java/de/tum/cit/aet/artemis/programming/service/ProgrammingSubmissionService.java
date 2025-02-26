@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
@@ -38,8 +39,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -90,7 +91,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -110,13 +111,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ExamSubmissionApi> examSubmissionApi, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
             FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
-        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -124,7 +125,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.versionControlService = versionControlService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
@@ -301,7 +302,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         if (exercise.isExamExercise()) {
-            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ApiNotPresentException(ExamSubmissionApi.class, PROFILE_CORE));
+            return api.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
         }
         return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
     }

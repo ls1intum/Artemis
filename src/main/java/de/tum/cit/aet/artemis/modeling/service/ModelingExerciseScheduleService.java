@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
@@ -25,10 +26,11 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.service.IExerciseScheduleService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -52,16 +54,16 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private final TaskScheduler scheduler;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     public ModelingExerciseScheduleService(ScheduleService scheduleService, ModelingExerciseRepository modelingExerciseRepository, Environment env, CompassService compassService,
-            ExamDateService examDateService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            Optional<ExamDateApi> examDateApi, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.env = env;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
         this.scheduler = scheduler;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -151,13 +153,14 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private void scheduleExamExercise(ModelingExercise exercise) {
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
         var exam = exercise.getExerciseGroup().getExam();
-        var endDate = examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam);
+        var endDate = api.getLatestIndividualExamEndDateWithGracePeriod(exam);
         if (endDate == null) {
             log.error("Modeling exercise {} for exam {} cannot be scheduled properly, end date is not set", exercise.getId(), exam.getId());
             return;
         }
-        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
+        if (ZonedDateTime.now().isBefore(api.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
             var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
             exercise.setClusterBuildDate(buildDate);
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> buildModelingClusters(exercise).run());

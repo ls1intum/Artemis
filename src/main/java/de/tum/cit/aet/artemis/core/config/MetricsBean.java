@@ -36,14 +36,16 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -89,9 +91,9 @@ public class MetricsBean {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamMetricsApi> examMetricsApi;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final CourseRepository courseRepository;
 
@@ -176,7 +178,7 @@ public class MetricsBean {
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
+            Optional<StudentExamApi> studentExamApi, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
             StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
@@ -186,8 +188,8 @@ public class MetricsBean {
         this.healthContributors = healthContributors;
         this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = examRepository;
-        this.studentExamRepository = studentExamRepository;
+        this.examMetricsApi = examMetricsApi;
+        this.studentExamApi = studentExamApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
@@ -435,6 +437,8 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -458,11 +462,11 @@ public class MetricsBean {
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics
-        updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, examRepository::countExamsWithEndDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithEndDateBetween);
+        updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, api::countExamsWithEndDateBetween);
+        updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, api::countExamUsersInExamsWithEndDateBetween);
 
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
+        updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, api::countExamsWithStartDateBetween);
+        updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, api::countExamUsersInExamsWithStartDateBetween);
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -597,6 +601,7 @@ public class MetricsBean {
             return;
         }
 
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
         final long startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -610,7 +615,7 @@ public class MetricsBean {
         ensureCourseInformationIsSet(courses);
 
         final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
-        final List<Exam> examsInActiveCourses = examRepository.findExamsInCourses(courseIds);
+        final List<Exam> examsInActiveCourses = api.findExamsInCourses(courseIds);
 
         // Update multi gauges
         updateStudentsCourseMultiGauge(courses);
@@ -623,8 +628,8 @@ public class MetricsBean {
         activeCoursesGauge.set(courses.size());
         coursesGauge.set((int) courseRepository.count());
 
-        activeExamsGauge.set(examRepository.countAllActiveExams(now));
-        examsGauge.set((int) examRepository.count());
+        activeExamsGauge.set(api.countAllActiveExams(now));
+        examsGauge.set((int) api.count());
 
         log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -654,10 +659,11 @@ public class MetricsBean {
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
             final Tags tags = getExamMetricTags(courses, exam);
-            final long studentCount = studentExamRepository.countByExamId(exam.getId());
+            final long studentCount = api.countByExamId(exam.getId());
             return MultiGauge.Row.of(tags, studentCount);
         }).collect(Collectors.toCollection(ArrayList::new));
 

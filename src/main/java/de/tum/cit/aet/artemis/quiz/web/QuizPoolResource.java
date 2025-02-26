@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 
@@ -45,13 +47,13 @@ public class QuizPoolResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExamAccessService examAccessService;
+    private final Optional<ExamAccessApi> examAccessApi;
 
-    public QuizPoolResource(QuizPoolService quizPoolService, CourseRepository courseRepository, AuthorizationCheckService authCheckService, ExamAccessService examAccessService) {
+    public QuizPoolResource(QuizPoolService quizPoolService, CourseRepository courseRepository, AuthorizationCheckService authCheckService, Optional<ExamAccessApi> examAccessApi) {
         this.quizPoolService = quizPoolService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
-        this.examAccessService = examAccessService;
+        this.examAccessApi = examAccessApi;
     }
 
     /**
@@ -93,6 +95,6 @@ public class QuizPoolResource {
     private void validateCourseRole(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+        examAccessApi.ifPresent(api -> api.checkCourseAccessForInstructorElseThrow(courseId));
     }
 }

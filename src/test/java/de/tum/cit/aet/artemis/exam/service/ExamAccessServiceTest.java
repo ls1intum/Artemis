@@ -34,7 +34,10 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -67,6 +70,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExerciseTestRepository exerciseRepository;
 
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
     private Course course1;
 
     private Course course2;
@@ -82,6 +88,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ExerciseGroup exerciseGroup1;
 
     private ExerciseGroup exerciseGroup2;
+
+    private User student1;
 
     private StudentExam studentExam1;
 
@@ -102,7 +110,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor1.setGroups(Collections.singleton("course1InstructorGroup"));
         instructor2.setGroups(Collections.singleton("course2InstructorGroup"));
         userRepository.save(instructor1);
@@ -431,5 +439,78 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetOrCreateStudentExamElseThrow_tutor_skipAlert() {
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAllowedToGetExamResult_nonExamExercise() {
+        var exercise = new FileUploadExercise(); // implicitly, no exam exercise
+        exerciseRepository.save(exercise);
+
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(student1);
+        studentParticipationRepository.save(participation);
+
+        assertThatThrownBy(() -> examAccessService.checkIfAllowedToGetExamResult(exercise, participation, student1)).isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAllowedToGetExamResult_periodNotOver() {
+        exam1.setEndDate(ZonedDateTime.now().plusMinutes(10));
+        examRepository.save(exam1);
+
+        exerciseGroup1.setExam(exam1);
+        var exercise = exerciseGroup1.getExercises().stream().findFirst().orElseThrow();
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(student1);
+        studentParticipationRepository.save(participation);
+
+        assertThatNoException().isThrownBy(() -> examAccessService.checkIfAllowedToGetExamResult(exercise, participation, student1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAllowedToGetExamResult_periodOver_resultsPublished() {
+        exam1.setStartDate(ZonedDateTime.now().minusMinutes(11));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(10));
+        exam1.setPublishResultsDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam1);
+
+        studentExam1.setWorkingTime(1);
+        studentExamRepository.save(studentExam1);
+
+        exerciseGroup1.setExam(exam1);
+        var exercise = exerciseGroup1.getExercises().stream().findFirst().orElseThrow();
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(student1);
+        studentParticipationRepository.save(participation);
+
+        assertThatNoException().isThrownBy(() -> examAccessService.checkIfAllowedToGetExamResult(exercise, participation, student1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAllowedToGetExamResult_periodOver_forbidden() {
+        exam1.setStartDate(ZonedDateTime.now().minusMinutes(11));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(10));
+        exam1.setPublishResultsDate(null);
+        examRepository.save(exam1);
+
+        studentExam1.setWorkingTime(1);
+        studentExamRepository.save(studentExam1);
+
+        exerciseGroup1.setExam(exam1);
+        var exercise = exerciseGroup1.getExercises().stream().findFirst().orElseThrow();
+        exerciseGroup1.setExam(exam1);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(student1);
+        studentParticipationRepository.save(participation);
+
+        assertThatThrownBy(() -> examAccessService.checkIfAllowedToGetExamResult(exercise, participation, student1)).isInstanceOf(AccessForbiddenException.class);
     }
 }

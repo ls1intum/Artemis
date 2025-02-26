@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -189,6 +190,25 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
                 FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamExerciseSubmission_withoutParticipation() throws Exception {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+
+        var exam = examRepository.findByCourseId(course.getId()).getFirst();
+        var fileUploadExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof FileUploadExercise).findFirst().orElseThrow();
+
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
+        studentExam.addExercise(fileUploadExercise);
+        studentExamTestRepository.save(studentExam);
+
+        FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
+        var file = new MockMultipartFile("file", "file.pdf", "application/json", "some data".getBytes());
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
+                HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test

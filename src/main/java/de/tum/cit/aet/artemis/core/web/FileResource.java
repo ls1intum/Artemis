@@ -62,8 +62,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
@@ -116,7 +116,7 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    private final ExamUserRepository examUserRepository;
+    private final Optional<ExamUserApi> examUserApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -130,7 +130,7 @@ public class FileResource {
 
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
@@ -140,7 +140,7 @@ public class FileResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.examUserRepository = examUserRepository;
+        this.examUserApi = examUserApi;
         this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
@@ -403,7 +403,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
@@ -419,7 +421,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ApiNotPresentException(ExamUserApi.class, PROFILE_CORE));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);

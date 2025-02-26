@@ -16,8 +16,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -34,7 +35,7 @@ public class ResultWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseDateService exerciseDateService;
 
@@ -42,10 +43,10 @@ public class ResultWebsocketService {
 
     private final TeamRepository teamRepository;
 
-    public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+    public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
         this.teamRepository = teamRepository;
@@ -75,7 +76,8 @@ public class ResultWebsocketService {
         final var exercise = studentParticipation.getExercise();
         boolean isWorkingPeriodOver;
         if (exercise.isExamExercise()) {
-            isWorkingPeriodOver = examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
+            isWorkingPeriodOver = api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
         }
         else {
             isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);

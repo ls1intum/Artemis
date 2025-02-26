@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
@@ -68,7 +69,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -122,7 +123,7 @@ public class QuizExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -152,7 +153,7 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
+            Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
@@ -164,7 +165,7 @@ public class QuizExerciseResource {
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
@@ -714,8 +715,9 @@ public class QuizExerciseResource {
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
                         "examOfQuizExerciseNotEnded");

@@ -49,13 +49,14 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -112,7 +113,7 @@ public class ResultService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
@@ -136,7 +137,7 @@ public class ResultService {
             ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<StudentExamApi> studentExamApi,
             BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
@@ -154,7 +155,7 @@ public class ResultService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -356,11 +357,12 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
         if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
             var participant = studentParticipation.getParticipant();
-            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+            var studentExamOptional = api.findByExamIdAndUserId(exam.getId(), participant.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
