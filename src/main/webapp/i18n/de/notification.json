@@ -124,7 +124,13 @@
                 "addUserGroupChat": "Du wurdest zu einem Gruppenchat hinzugefügt",
                 "createGroupChat": "Neuer Gruppenchat",
                 "dataExportCreated": "Datenexport erstellt",
-                "dataExportFailed": "Datenexport fehlgeschlagen"
+                "dataExportFailed": "Datenexport fehlgeschlagen",
+                "sshKeyAdded": "Neuer SSH-Schlüssel hinzugefügt",
+                "sshKeyExpiresSoon": "SSH-Schlüssel läuft bald ab",
+                "sshKeyHasExpired": "SSH-Schlüssel ist abgelaufen",
+                "vcsAccessTokenAdded": "Neues VCS Zugriffstoken hinzugefügt",
+                "vcsAccessTokenExpired": "VCS Zugriffstoken abgelaufen",
+                "vcsAccessTokenExpiresSoon": "VCS Zugriffstoken läuft bald ab"
             },
             "text": {
                 "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
@@ -152,7 +158,13 @@
                 "addUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
                 "createGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
                 "dataExportCreated": "Dein Datenexport wurde erstellt und kann nun heruntergeladen werden.",
-                "dataExportFailed": "Dein Datenexport konnte nicht erstellt werden. Bitte versuche es später erneut."
+                "dataExportFailed": "Dein Datenexport konnte nicht erstellt werden. Bitte versuche es später erneut.",
+                "sshKeyAdded": "Du hast erfolgreich einen SSH-Schlüssel hinzugefügt",
+                "sshKeyExpiresSoon": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" läuft am {{ placeholderValues.1 }} ab.",
+                "sshKeyHasExpired": "Dein SSH-Schlüssel mit dem Label \"{{ placeholderValues.0 }}\" ist am {{ placeholderValues.1 }} abgelaufen.",
+                "vcsAccessTokenAdded": "Du hast erfolgreich ein persönliches Zugriffstoken hinzugefügt.",
+                "vcsAccessTokenExpired": "Dein persönliches Zugriffstoken ist abgelaufen.",
+                "vcsAccessTokenExpiresSoon": "Dein persönliches Zugriffstoken läuft bald ab."
             }
         },
         "tutorialGroupNotification": {

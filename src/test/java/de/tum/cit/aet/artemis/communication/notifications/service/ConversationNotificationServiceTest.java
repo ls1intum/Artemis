@@ -16,11 +16,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -62,9 +64,11 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     private OneToOneChat oneToOneChat;
+
+    private GroupChat groupChat;
 
     private User user1;
 
@@ -91,6 +95,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         oneToOneChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
         oneToOneChat = conversationRepository.save(oneToOneChat);
 
+        groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        groupChat.setCreator(user1);
+        groupChat.setCreationDate(ZonedDateTime.now());
+        groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
+        groupChat = conversationRepository.save(groupChat);
+
         conversationNotificationRepository.deleteAll();
     }
 
@@ -103,19 +114,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createNotificationForNewMessageInConversation() {
-        Post post = new Post();
-        post.setAuthor(user1);
-        post.setCreationDate(ZonedDateTime.now());
-        post.setConversation(oneToOneChat);
-        post.setVisibleForStudents(true);
-        post.setContent("hi test");
-        post = conversationMessageRepository.save(post);
+        Post post = createAndSavePostForUser(user1, oneToOneChat);
 
         ConversationNotification notification = conversationNotificationService.createNotification(post, oneToOneChat, course, Set.of());
         conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2));
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
-        Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
+        Notification sentNotification = notificationTestRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), post);
 
@@ -124,5 +129,27 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         conversationMessageRepository.deleteAllById(List.of(post.getId()));
         conversationParticipantRepository.deleteAllById(participants.stream().map(ConversationParticipant::getId).toList());
         conversationRepository.deleteAllById(List.of(oneToOneChat.getId()));
+    }
+
+    // This caused a bug in notifications on the mobile apps, see https://github.com/ls1intum/artemis-android/issues/391
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createNotificationForNewMessageInGroupChatContainsNonNullGroupName() {
+        Post post = createAndSavePostForUser(user1, groupChat);
+
+        ConversationNotification notification = conversationNotificationService.createNotification(post, groupChat, course, Set.of());
+        String[] notificationPlaceholders = notification.getTransientPlaceholderValuesAsArray();
+        String conversationName = notificationPlaceholders[3];
+        assertThat(conversationName).isNotNull();
+    }
+
+    private Post createAndSavePostForUser(User user, Conversation conversation) {
+        Post post = new Post();
+        post.setAuthor(user);
+        post.setCreationDate(ZonedDateTime.now());
+        post.setConversation(conversation);
+        post.setVisibleForStudents(true);
+        post.setContent("hi test");
+        return conversationMessageRepository.save(post);
     }
 }
