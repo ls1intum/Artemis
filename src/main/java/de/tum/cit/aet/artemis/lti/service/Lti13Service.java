@@ -72,7 +72,7 @@ public class Lti13Service {
 
     private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
 
-    private static final String COURSE_PATH_PATTERN = "/courses/{courseId}";
+    private static final String COURSE_PATH_PATTERN = "courses/{courseId}/**";
 
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
@@ -99,6 +99,9 @@ public class Lti13Service {
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final RestTemplate restTemplate;
+
+    private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
+            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, CourseRepository courseRepository,
             Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever,
@@ -374,137 +377,65 @@ public class Lti13Service {
 
     /**
      * Retrieves an Optional of a Course referenced by the given targetLinkUrl.
-     * This method extracts the course ID from the URL using predefined path patterns
-     * and then fetches the corresponding Course from the repository.
-     * Returns an empty Optional in the following cases:
-     * - The targetLinkUrl is malformed and cannot be parsed.
-     * - The URL does not match any known path pattern.
-     * - The extracted path does not contain a "courseId" variable.
-     * - No Course with the extracted ID exists in the repository.
+     * This method extracts the course ID from the URL using the pattern "courses/{courseId}/**".
      *
      * @param targetLinkUrl the target link URL to retrieve a Course
      * @return an Optional containing the Course if found, or an empty Optional otherwise
      */
     public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
-
         String targetLinkPath;
+
         try {
             targetLinkPath = new URI(targetLinkUrl).getPath();
         }
         catch (URISyntaxException ex) {
-            log.info("Malformed target link url: {}", targetLinkUrl);
+            log.debug("Malformed target link URL: {}", targetLinkUrl);
             return Optional.empty();
         }
 
-        Map<String, String> pathVariables = null;
-        if (matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
-        }
-        else if (matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(COMPETENCY_PATH_PATTERN, targetLinkPath);
-        }
-        else if (matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
-        }
-        else if (matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(LEARNING_PATH_PATH_PATTERN, targetLinkPath);
-        }
-        else if (matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
-        }
-        else if (matcher.match(IRIS_PATH_PATTERN, targetLinkPath)) {
-            pathVariables = matcher.extractUriTemplateVariables(IRIS_PATH_PATTERN, targetLinkPath);
-        }
-
-        if (pathVariables == null || !pathVariables.containsKey("courseId")) {
-            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
+        if (!matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
+            log.debug("Target link URL does not match the expected pattern: {}", targetLinkUrl);
             return Optional.empty();
         }
 
-        String courseId = pathVariables.get("courseId");
-        return courseRepository.findById(Long.valueOf(courseId));
+        return Optional.ofNullable(matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath).get("courseId")).flatMap(courseId -> {
+            try {
+                return courseRepository.findById(Long.valueOf(courseId));
+            }
+            catch (NumberFormatException ex) {
+                log.debug("Invalid courseId in target link URL: {}", targetLinkUrl);
+                return Optional.empty();
+            }
+        });
     }
 
     /**
-     * Checks if the target link URL references a competency.
+     * Determines the type of content referenced by the target link URL.
      *
-     * @param targetLinkUrl the target link URL
-     * @return true if the target link URL references a competency, false otherwise
+     * @param targetLinkUrl the target link URL to check
+     * @return the type of content referenced by the URL (e.g., COMPETENCY, LEARNING_PATH, IRIS, or UNKNOWN)
      */
-    private boolean targetLinkHasCompetency(String targetLinkUrl) {
+    private DeepLinkingType getTargetLinkType(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
-
         String targetLinkPath;
-        try {
-            targetLinkPath = new URI(targetLinkUrl).getPath();
-        }
-        catch (URISyntaxException ex) {
-            log.info("Malformed target link url: {}", targetLinkUrl);
-            return false;
-        }
 
-        if (!matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract competency from target link: {}", targetLinkUrl);
-            return false;
-        }
-
-        log.info("Competency link detected: {}", targetLinkUrl);
-        return true;
-    }
-
-    /**
-     * Checks if the target link URL references a learning path.
-     *
-     * @param targetLinkUrl the target link URL
-     * @return true if the target link URL references a learning path, false otherwise
-     */
-    private boolean targetLinkHasLearningPath(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-
-        String targetLinkPath;
         try {
             targetLinkPath = new URI(targetLinkUrl).getPath();
         }
         catch (URISyntaxException ex) {
             log.info("Malformed target link URL: {}", targetLinkUrl);
-            return false;
+            return DeepLinkingType.UNKNOWN;
         }
 
-        if (!matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract learning path from target link: {}", targetLinkUrl);
-            return false;
+        for (Map.Entry<String, DeepLinkingType> entry : TARGET_LINK_PATTERNS.entrySet()) {
+            if (matcher.match(entry.getKey(), targetLinkPath)) {
+                return entry.getValue();
+            }
         }
 
-        log.info("Learning path link detected: {}", targetLinkUrl);
-        return true;
-    }
-
-    /**
-     * Checks if the target link URL references an IRIS course dashboard.
-     *
-     * @param targetLinkUrl the target link URL
-     * @return true if the target link URL matches the IRIS course dashboard pattern, false otherwise
-     */
-    private boolean targetLinkHasIris(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-
-        String targetLinkPath;
-        try {
-            targetLinkPath = new URI(targetLinkUrl).getPath();
-        }
-        catch (URISyntaxException ex) {
-            log.info("Malformed target link URL: {}", targetLinkUrl);
-            return false;
-        }
-
-        if (!matcher.match(IRIS_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract IRIS course dashboard from target link: {}", targetLinkUrl);
-            return false;
-        }
-
-        log.info("IRIS course dashboard link detected: {}", targetLinkUrl);
-        return true;
+        log.info("No specific content type detected in target link: {}", targetLinkUrl);
+        return DeepLinkingType.UNKNOWN;
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
@@ -571,7 +502,8 @@ public class Lti13Service {
     }
 
     private boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
-        return targetLinkHasCompetency(targetLinkUrl) || targetLinkHasLearningPath(targetLinkUrl) || targetLecture.isPresent() || targetLinkHasIris(targetLinkUrl);
+        DeepLinkingType linkType = getTargetLinkType(targetLinkUrl);
+        return linkType == DeepLinkingType.COMPETENCY || linkType == DeepLinkingType.LEARNING_PATH || targetLecture.isPresent() || linkType == DeepLinkingType.IRIS;
     }
 
     /**
