@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture/")
 public class LectureResource {
 
     private static final Logger log = LoggerFactory.getLogger(LectureResource.class);

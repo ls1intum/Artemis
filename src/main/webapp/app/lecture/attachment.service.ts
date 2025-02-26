@@ -15,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<Attachment[]>;
 export class AttachmentService {
     protected http = inject(HttpClient);
 
-    public resourceUrl = 'api/attachments';
+    public resourceUrl = 'api/lecture/attachments';
 
     /**
      * Create a new attachment
@@ -90,7 +90,7 @@ export class AttachmentService {
      */
     findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Attachment[]>(`api/lectures/${lectureId}/attachments`, { observe: 'response' })
+            .get<Attachment[]>(`api/lecture/lectures/${lectureId}/attachments`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertAttachmentArrayResponseDatesFromServer(res)));
     }
 

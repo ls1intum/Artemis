@@ -14,7 +14,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/attachments';
+    const resourceUrl = 'api/lecture/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 
@@ -118,7 +118,7 @@ describe('Attachment Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lectures/${lectureId}/attachments`,
+                url: `api/lecture/lectures/${lectureId}/attachments`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
