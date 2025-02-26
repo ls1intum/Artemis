@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class FaqResource {
 
     private static final Logger log = LoggerFactory.getLogger(FaqResource.class);

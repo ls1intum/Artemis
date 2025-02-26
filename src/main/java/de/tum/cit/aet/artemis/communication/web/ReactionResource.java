@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class ReactionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ReactionResource.class);

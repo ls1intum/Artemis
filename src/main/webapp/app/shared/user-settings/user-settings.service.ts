@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 export class UserSettingsService {
     private http = inject(HttpClient);
 
-    public notificationSettingsResourceUrl = 'api/notification-settings';
+    public notificationSettingsResourceUrl = 'api/communication/notification-settings';
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
     public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();

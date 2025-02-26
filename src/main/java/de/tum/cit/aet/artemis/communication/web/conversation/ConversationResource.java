@@ -47,7 +47,7 @@ import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationResource.class);

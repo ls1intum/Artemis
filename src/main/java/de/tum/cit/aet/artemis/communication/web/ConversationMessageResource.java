@@ -48,7 +48,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class ConversationMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
@@ -213,7 +213,7 @@ public class ConversationMessageResource {
      * @return ResponseEntity with status 200 (OK) containing the list of posts in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @GetMapping("communication/courses/{courseId}/messages-source-posts")
+    @GetMapping("courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
         log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds.size());

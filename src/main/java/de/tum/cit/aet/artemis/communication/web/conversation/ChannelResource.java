@@ -59,7 +59,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("api/communication/courses/")
 public class ChannelResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelResource.class);

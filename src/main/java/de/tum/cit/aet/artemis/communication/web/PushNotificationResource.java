@@ -43,7 +43,7 @@ import io.jsonwebtoken.ExpiredJwtException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/push_notification/")
+@RequestMapping("api/communication/push_notification/")
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);

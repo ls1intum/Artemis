@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("api/communication/courses/")
 public class OneToOneChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
