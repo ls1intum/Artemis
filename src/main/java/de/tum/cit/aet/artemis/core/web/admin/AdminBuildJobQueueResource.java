@@ -98,10 +98,7 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on build agent {}", agentName);
         Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
                 .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
-        if (buildAgentDetails.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(buildAgentDetails.get());
+        return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

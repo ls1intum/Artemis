@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 import tech.jhipster.security.RandomUtil;
 
 /**
@@ -116,11 +117,13 @@ public class UserService {
 
     private final SavedPostRepository savedPostRepository;
 
+    private final UserSshPublicKeyService userSshPublicKeyService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository) {
+            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -136,6 +139,7 @@ public class UserService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
+        this.userSshPublicKeyService = userSshPublicKeyService;
     }
 
     /**
@@ -452,6 +456,7 @@ public class UserService {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
+            userSshPublicKeyService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
