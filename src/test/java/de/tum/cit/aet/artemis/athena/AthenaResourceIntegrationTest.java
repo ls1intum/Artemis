@@ -377,7 +377,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
         authHeaders.add("Authorization", athenaSecret);
-        var repoZip = request.getFile("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
+        var repoZip = request.getFile("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
                 authHeaders, null);
 
         // Check that ZIP contains file
@@ -393,7 +393,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add("Authorization", athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
-        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
+        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
     }
 
     @ParameterizedTest
@@ -407,6 +407,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong
-        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
     }
 }

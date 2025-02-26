@@ -203,7 +203,7 @@ public class SecurityConfiguration {
                     // Admin area requires specific authority.
                     .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
-                    .requestMatchers("/api/public/**").permitAll()
+                    .requestMatchers("/api/*/public/**").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
