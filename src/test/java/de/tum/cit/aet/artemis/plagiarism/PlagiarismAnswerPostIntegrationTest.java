@@ -351,7 +351,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteAnswerPost_asStudent_notFound() throws Exception {
         var countBefore = answerPostRepository.count();
-        request.delete("/api/courses/." + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
     }
 

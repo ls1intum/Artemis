@@ -427,7 +427,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(2);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
-        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
         assertThat(participation).isEmpty();
@@ -450,7 +450,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
 
-        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
         assertThat(participation).isEmpty();
@@ -472,7 +472,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
-        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
         assertThat(participation).isEmpty();
@@ -485,11 +485,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void deleteParticipation_student() throws Exception {
         // Allow students to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if users do not delete their own participation
         StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
-        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -497,17 +497,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void deleteParticipation_tutor() throws Exception {
         // Allow tutors to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "tutor1");
-        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if tutors do not delete their own participation
         StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/participations/" + -1, HttpStatus.NOT_FOUND);
+        request.delete("/api/exercise/participations/" + -1, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1335,7 +1335,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var result = ParticipationFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
-        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults()).hasSize(1);
@@ -1347,7 +1347,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void getParticipationBuildArtifact() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
-        request.getNullable("/api/participations/" + participation.getId() + "/build-artifact", HttpStatus.OK, Object.class);
+        request.getNullable("/api/exercise/participations/" + participation.getId() + "/build-artifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 
@@ -1357,7 +1357,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission1 = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var submission2 = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text2", Language.ENGLISH, true));
-        var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
+        var submissions = request.getList("/api/exercise/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
         assertThat(submissions).contains(submission1, submission2);
     }
 
@@ -1374,7 +1374,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
-        var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class, HttpStatus.OK);
+        var actualParticipation = request.putWithResponseBody("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class,
+                HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
         assertThat(actualParticipation.getInitializationState()).isEqualTo(!practiceMode && afterDueDate ? InitializationState.FINISHED : InitializationState.INACTIVE);
         assertThat(((ProgrammingExerciseStudentParticipation) actualParticipation).getBuildPlanId()).isNull();
