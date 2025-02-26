@@ -248,7 +248,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = courseRepository.save(course);
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/core/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         final var user = userTestRepository.findOneWithLearningPathsAndLearnerProfileByLogin(TEST_PREFIX + "student1337").orElseThrow();
 
         assertThat(user.getLearningPaths()).isNotNull();

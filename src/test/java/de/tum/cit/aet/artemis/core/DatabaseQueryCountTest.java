@@ -103,7 +103,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
-        return request.get("/api/core/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId()
+        return request.get("/api/exam/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId()
                 + "/conduction", HttpStatus.OK, StudentExam.class);
     }
 

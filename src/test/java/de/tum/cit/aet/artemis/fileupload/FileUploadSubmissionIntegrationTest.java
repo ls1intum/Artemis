@@ -140,7 +140,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
 
         if (differentFilePath) {
-            submission.setFilePath("/api/files/file-upload-exercises/1/submissions/1/file1.png");
+            submission.setFilePath("/api/core/files/file-upload-exercises/1/submissions/1/file1.png");
         }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
 

@@ -469,7 +469,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("courses/for-dashboard")
-        var courses = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        var courses = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         Exercise serverExercise = courses.courses().stream().filter(c -> c.course().getId().equals(course.getId())).findAny()
                 .flatMap(c -> c.course().getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
         assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
