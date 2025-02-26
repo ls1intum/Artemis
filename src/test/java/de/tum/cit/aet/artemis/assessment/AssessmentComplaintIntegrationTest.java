@@ -496,7 +496,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         courseRepository.save(course);
 
         final var params = new LinkedMultiValueMap<String, String>();
-        request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
+        request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -509,7 +509,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
+        final var submissionWithComplaintDTOs = request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
                 SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {

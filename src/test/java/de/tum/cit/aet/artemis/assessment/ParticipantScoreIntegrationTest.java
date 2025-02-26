@@ -181,7 +181,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         await().until(() -> participantScoreScheduleService.isIdle());
 
         for (StudentParticipation studentParticipation : participations) {
-            request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+            request.delete("/api/exercise/participations/" + studentParticipation.getId(), HttpStatus.OK);
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, student1.getId());
         assertThat(participations).isEmpty();
