@@ -334,7 +334,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
 
-        Course course = request.get("/api/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
+        Course course = request.get("/api/core/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         Exercise exercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);

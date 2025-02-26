@@ -1051,8 +1051,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(null);
         modelingExerciseRepository.save(classExercise);
 
-        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
         Course course = courseForDashboard.course();
         ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
 
@@ -1069,7 +1069,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
@@ -1081,7 +1081,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);

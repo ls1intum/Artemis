@@ -84,23 +84,23 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private String resourceUrl() {
-        return "/api/exercises/" + exercise.getId() + "/teams";
+        return "/api/exercise/exercises/" + exercise.getId() + "/teams";
     }
 
     private String resourceUrlWithWrongExerciseId() {
-        return "/api/exercises/" + (exercise.getId() + 1) + "/teams";
+        return "/api/exercise/exercises/" + (exercise.getId() + 1) + "/teams";
     }
 
     private String resourceUrlExistsTeamByShortName(String shortName) {
-        return "/api/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
+        return "api/exercise/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
     }
 
     private String resourceUrlSearchUsersInCourse(String loginOrName) {
-        return "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
+        return "api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
     }
 
     private String resourceUrlCourseWithExercisesAndParticipationsForTeam(Course course, Team team) {
-        return "/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
+        return "api/exercise/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
     }
 
     @Test
@@ -476,7 +476,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
         // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
-        ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
         assertThat(exerciseWithDetails.exercise().getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
     }

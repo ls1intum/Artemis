@@ -110,8 +110,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getMissingSettingsForCourse() throws Exception {
         activateIrisGlobally();
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
-        var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
         assertThat(loadedSettings2).isNotNull().usingRecursiveComparison().ignoringFieldsOfTypes(HashSet.class, TreeSet.class).ignoringActualNullFields()
                 .isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, false));
@@ -127,8 +127,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
-        var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison()
                 .ignoringFields("id", "course", "irisChatSettings.id", "irisLectureIngestionSettings.id", "irisCompetencyGenerationSettings.id").ignoringExpectedNullFields()
@@ -144,8 +144,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
-        request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
-        var loadedSettings = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
+        request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
+        var loadedSettings = request.get("/api/iris/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
         assertThat(loadedSettings)
                 .isNotNull().usingRecursiveComparison().ignoringCollectionOrderInFields("irisChatSettings.allowedVariants", "irisChatSettings.disabledProactiveEvents",
                         "irisLectureIngestionSettings.allowedVariants", "irisCompetencyGenerationSettings.allowedVariants")
@@ -159,7 +159,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         loadedSettings1.getIrisChatSettings().setEnabled(false);
         loadedSettings1.getIrisTextExerciseChatSettings().setEnabled(false);
@@ -167,8 +167,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         loadedSettings1.getIrisCompetencyGenerationSettings().setEnabled(false);
         loadedSettings1.getIrisLectureIngestionSettings().setEnabled(false);
 
-        var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
-        var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
+        var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).isNotNull().isEqualTo(loadedSettings2);
         // Ids of settings should not have changed
@@ -187,7 +187,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         var chatSubSettingsId = loadedSettings1.getIrisChatSettings().getId();
         var textExerciseChatSubSettingsId = loadedSettings1.getIrisTextExerciseChatSettings().getId();
@@ -200,8 +200,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         loadedSettings1.setIrisCompetencyGenerationSettings(null);
         loadedSettings1.setIrisLectureIngestionSettings(null);
 
-        var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
-        var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
+        var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
@@ -241,8 +241,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.getIrisLectureIngestionSettings().setEnabled(true);
         courseSettings.getIrisLectureIngestionSettings().setSelectedVariant(null);
 
-        var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
         assertThat(loadedSettings1).usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisTextExerciseChatSettings.id",
@@ -256,12 +256,12 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
-        var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         loadedSettings1.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of("PROGRESS_STALLED")));
 
-        var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
-        var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
+        var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         // Proactive events should have been updated
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
@@ -289,10 +289,10 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
             String operation = operations.get(i);
             SortedSet<String> category = new TreeSet<>(categories.get(i));
             if (operation.equals("COURSE")) {
-                var loadedSettings = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+                var loadedSettings = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
                 loadedSettings.getIrisChatSettings().setEnabledForCategories(category);
                 loadedSettings.getIrisTextExerciseChatSettings().setEnabledForCategories(category);
-                request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings, IrisSettings.class, HttpStatus.OK);
+                request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings, IrisSettings.class, HttpStatus.OK);
             }
             else if (operation.equals("EXERCISE")) {
                 programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
@@ -444,8 +444,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
         courseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
 
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
-        request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
+        request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 

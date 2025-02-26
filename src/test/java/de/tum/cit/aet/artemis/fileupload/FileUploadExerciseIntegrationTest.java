@@ -505,7 +505,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
         var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
+        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
                 FileUploadExercise.class);
 
         // this seems to be a flaky test, based on the execution order, the following line has a problem with authentication, this should fix it
@@ -519,14 +519,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepository.save(course);
-        request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
+        request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
         var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
+        request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
