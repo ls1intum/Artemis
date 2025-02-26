@@ -11,7 +11,7 @@ ext {
         "core"          :          ["INSTRUCTION": 0.861, "CLASS": 18],
         "exam"          :          ["INSTRUCTION": 0.937, "CLASS":  0],
         "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
-        "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
+        "fileupload"    :          ["INSTRUCTION": 0.931, "CLASS":  1],
         "iris"          :          ["INSTRUCTION": 0.751, "CLASS": 26],
         "lecture"       :          ["INSTRUCTION": 0.910, "CLASS":  0],
         "lti"           :          ["INSTRUCTION": 0.894, "CLASS":  2],

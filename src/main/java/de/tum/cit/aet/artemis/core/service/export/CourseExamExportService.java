@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.fileupload.api.FileSubmissionExportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -69,7 +69,7 @@ public class CourseExamExportService {
 
     private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
 
-    private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
+    private final Optional<FileSubmissionExportApi> fileSubmissionExportApi;
 
     private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
 
@@ -81,15 +81,15 @@ public class CourseExamExportService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            Optional<TextSubmissionExportApi> textSubmissionExportApi, FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
+    public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService,
+            Optional<FileSubmissionExportApi> fileSubmissionExportApi, FileService fileService, Optional<TextSubmissionExportApi> textSubmissionExportApi,
             ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
             QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
+        this.fileSubmissionExportApi = fileSubmissionExportApi;
         this.fileService = fileService;
         this.textSubmissionExportApi = textSubmissionExportApi;
-        this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
         this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
@@ -420,8 +420,8 @@ public class CourseExamExportService {
                         // Download the repositories' template, solution, tests and students' repositories
                         programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
                                 .ifPresent(exportedExercises::add);
-                    case FileUploadExercise fileUploadExercise -> exportedExercises.add(fileUploadExerciseWithSubmissionsExportService
-                            .exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case FileUploadExercise fileUploadExercise -> fileSubmissionExportApi.ifPresent(api -> exportedExercises
+                            .add(api.exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
                     case TextExercise textExercise -> textSubmissionExportApi.ifPresent(api -> exportedExercises
                             .add(api.exportTextExerciseWithSubmissions(textExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
                     case ModelingExercise modelingExercise -> exportedExercises.add(modelingExerciseWithSubmissionsExportService
