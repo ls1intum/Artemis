@@ -41,7 +41,7 @@ describe('Submission Export Service', () => {
         const exerciseType = ExerciseType.FILE_UPLOAD;
         const result = service.getExerciseUrl(exerciseType, exerciseId);
 
-        expect(result).toBe('file-upload-exercises/' + exerciseId);
+        expect(result).toBe('fileupload/file-upload-exercises/' + exerciseId);
     });
 
     it('check exercise url for unsupported exercise types', () => {

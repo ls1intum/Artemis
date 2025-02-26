@@ -37,7 +37,7 @@ export class SubmissionExportService {
             case ExerciseType.MODELING:
                 return 'modeling-exercises/' + exerciseId;
             case ExerciseType.FILE_UPLOAD:
-                return 'file-upload-exercises/' + exerciseId;
+                return 'fileupload/file-upload-exercises/' + exerciseId;
             default:
                 throw Error('Export not implemented for exercise type ' + exerciseType);
         }
