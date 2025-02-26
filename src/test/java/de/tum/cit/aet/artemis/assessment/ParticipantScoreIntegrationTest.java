@@ -147,8 +147,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
-        request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
+        request.getList("/api/assessment/courses/" + courseId + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
+        request.getList("/api/assessment/exams/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
     }
 
     @Test
@@ -181,7 +181,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         await().until(() -> participantScoreScheduleService.isIdle());
 
         for (StudentParticipation studentParticipation : participations) {
-            request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+            request.delete("/api/assessment/participations/" + studentParticipation.getId(), HttpStatus.OK);
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, student1.getId());
         assertThat(participations).isEmpty();
@@ -190,7 +190,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        request.delete("/api/assessment/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
     }
@@ -198,7 +198,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldDeleteExercise() throws Exception {
-        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/assessment/admin/courses/" + courseId, HttpStatus.OK);
         assertThat(courseRepository.existsById(courseId)).isFalse();
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(exerciseRepository.existsById(idOfTeamTextExercise)).isFalse();
@@ -207,7 +207,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
-        List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
+        List<ScoreDTO> courseScores = request.getList("/api/assessment/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
@@ -228,7 +228,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
             studentParticipationRepository.save(participation);
         });
 
-        List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
+        List<ScoreDTO> courseScores = request.getList("/api/assessment/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
@@ -240,7 +240,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
-        List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
+        List<ScoreDTO> courseScores = request.getList("/api/assessment/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");

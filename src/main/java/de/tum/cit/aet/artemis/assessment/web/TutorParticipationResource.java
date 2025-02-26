@@ -36,7 +36,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class TutorParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
@@ -81,6 +82,8 @@ public class TutorParticipationResource {
     @PostMapping("exercises/{exerciseId}/tutor-participations")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+        // DONE
+
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -109,6 +112,8 @@ public class TutorParticipationResource {
     @PostMapping("exercises/{exerciseId}/assess-example-submission")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorParticipation> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
+        // DONE
+
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -136,6 +141,8 @@ public class TutorParticipationResource {
     @DeleteMapping("guided-tour/exercises/{exerciseId}/example-submission")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
+        // DONE
+
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

@@ -59,7 +59,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class ComplaintResource {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
@@ -107,6 +108,7 @@ public class ComplaintResource {
     @PostMapping("complaints")
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
+        // DONE
         log.debug("REST request to save Complaint: {}", complaint);
 
         if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
@@ -151,6 +153,7 @@ public class ComplaintResource {
     @GetMapping(value = "complaints", params = { "submissionId" })
     @EnforceAtLeastStudent
     public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
+        // DONE
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
@@ -196,6 +199,7 @@ public class ComplaintResource {
     @GetMapping(value = "complaints", params = { "exerciseId" })
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
+        // DONE
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -216,6 +220,8 @@ public class ComplaintResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
+        // DONE
+
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -258,6 +264,8 @@ public class ComplaintResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
+        // DONE
+
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -294,6 +302,8 @@ public class ComplaintResource {
     @GetMapping(value = "complaints", params = { "courseId", "examId" })
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
+        // DONE
+
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

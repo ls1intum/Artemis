@@ -148,7 +148,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     public calculateTutorEffort(exerciseId: number, courseId: number): Observable<TutorEffort[]> {
         return this.http
-            .get<TutorEffort[]>(`api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, { observe: 'response' })
+            .get<TutorEffort[]>(`api/assessment/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TutorEffort[]>) => res.body!));
     }
 }

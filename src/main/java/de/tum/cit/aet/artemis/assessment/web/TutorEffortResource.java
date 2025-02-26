@@ -30,7 +30,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class TutorEffortResource {
 
     private static final Logger log = LoggerFactory.getLogger(TutorEffortResource.class);
@@ -64,6 +65,8 @@ public class TutorEffortResource {
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<TutorEffortDTO>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        // DONE
+
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
 
         // check courseId and exerciseId exist and are linked to each other

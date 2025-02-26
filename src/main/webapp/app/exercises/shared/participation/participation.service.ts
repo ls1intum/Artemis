@@ -31,6 +31,7 @@ export class ParticipationService {
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);
+        // ToDO: Missing
         return this.http
             .put<StudentParticipation>(`api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
@@ -38,6 +39,7 @@ export class ParticipationService {
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
         const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
+        // ToDO: Missing
         return this.http
             .put<StudentParticipation[]>(`api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
@@ -50,6 +52,7 @@ export class ParticipationService {
     }
 
     find(participationId: number): Observable<EntityResponseType> {
+        // ToDo: Missing
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
@@ -59,6 +62,7 @@ export class ParticipationService {
      * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
+        // ToDO: Missing
         return this.http
             .get<StudentParticipation>(`api/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
@@ -69,12 +73,14 @@ export class ParticipationService {
      * @param quizExerciseId The unique identifier of the quiz exercise
      */
     startQuizParticipation(quizExerciseId: number): Observable<EntityResponseType> {
+        // ToDO: Missing
         return this.http
             .post<StudentParticipation>(`api/quiz-exercises/${quizExerciseId}/start-participation`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
+        // ToDO: Missing
         const options = createRequestOption({ withLatestResults });
         return this.http
             .get<StudentParticipation[]>(`api/exercises/${exerciseId}/participations`, {
@@ -85,16 +91,19 @@ export class ParticipationService {
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
+        // TODO: Missing
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
 
     deleteForGuidedTour(participationId: number, req?: any): Observable<HttpResponse<any>> {
+        // TODO: Missing
         const options = createRequestOption(req);
         return this.http.delete<void>(`api/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
+        // TODO: Missing
         const copy = this.convertParticipationDatesFromClient(participation);
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, copy, { observe: 'response' })
@@ -102,6 +111,7 @@ export class ParticipationService {
     }
 
     downloadArtifact(participationId: number): Observable<BuildArtifact> {
+        // TODO: Missing
         return this.http.get(`${this.resourceUrl}/${participationId}/build-artifact`, { observe: 'response', responseType: 'blob' }).pipe(
             map((res: EntityBlobResponseType) => {
                 const fileNameCandidate = (res.headers.get('content-disposition') || '').split('filename=')[1];
@@ -116,7 +126,7 @@ export class ParticipationService {
     }
 
     getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
-        return this.http.get<{ [key: string]: string }>(`${this.resourceUrl}/${participationId}/results/build-job-ids`);
+        return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
     }
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {

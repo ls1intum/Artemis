@@ -75,7 +75,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     private Team team;
 
-    private final String resourceUrl = "/api/complaints";
+    private final String resourceUrl = "/api/assessment/complaints";
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -177,7 +177,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
+        request.patch("/api/assessment/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -201,7 +201,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
+        request.patch("/api/assessment/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -256,7 +256,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints?submissionId=" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/assessment/complaints?submissionId=" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {

@@ -15,7 +15,7 @@ export class TutorParticipationService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/exercises';
+    public resourceUrl = 'api/assessment/exercises';
 
     /**
      * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned

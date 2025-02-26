@@ -48,7 +48,8 @@ import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class BonusResource {
 
     private static final Logger log = LoggerFactory.getLogger(BonusResource.class);
@@ -95,6 +96,7 @@ public class BonusResource {
     @GetMapping("courses/{courseId}/exams/{examId}/bonus")
     @EnforceAtLeastStudent
     public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
+        // DONE
         log.debug("REST request to get bonus for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
 
@@ -137,6 +139,7 @@ public class BonusResource {
     @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
+        // DONE - not used by client
 
         // TODO: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -163,6 +166,7 @@ public class BonusResource {
     @PostMapping("courses/{courseId}/exams/{examId}/bonus")
     @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
+        // DONE
         log.debug("REST request to create a bonus for exam: {}", examId);
         if (bonus.getId() != null) {
             throw new BadRequestAlertException("A new bonus cannot already have an ID", ENTITY_NAME, "idexists");
@@ -228,6 +232,7 @@ public class BonusResource {
     @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
+        // DONE
         log.debug("REST request to update a updatedBonus: {}", bonusId);
 
         if (!Objects.equals(updatedBonus.getId(), bonusId)) {
@@ -282,6 +287,7 @@ public class BonusResource {
     @DeleteMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
+        // DONE
         log.debug("REST request to delete the bonus: {}", bonusId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Bonus bonus = bonusRepository.findByIdElseThrow(bonusId);

@@ -44,7 +44,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class GradingScaleResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);
@@ -85,6 +86,8 @@ public class GradingScaleResource {
     @GetMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
+        // DONE
+
         log.debug("REST request to get grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
@@ -102,6 +105,8 @@ public class GradingScaleResource {
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        // DONE
+
         log.debug("REST request to get grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
@@ -120,6 +125,8 @@ public class GradingScaleResource {
     @GetMapping("grading-scales")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
+        // DONE
+
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
@@ -135,6 +142,8 @@ public class GradingScaleResource {
     @PostMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) throws URISyntaxException {
+        // DONE
+
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
@@ -174,6 +183,8 @@ public class GradingScaleResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
+        // DONE
+
         log.debug("REST request to create a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
@@ -201,6 +212,8 @@ public class GradingScaleResource {
     @PutMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
+        // DONE
+
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -226,6 +239,8 @@ public class GradingScaleResource {
     @PutMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
+        // DONE
+
         log.debug("REST request to update a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examRepository.findByIdElseThrow(examId);
@@ -251,6 +266,8 @@ public class GradingScaleResource {
     @DeleteMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
+        // DONE
+
         log.debug("REST request to delete the grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -269,6 +286,8 @@ public class GradingScaleResource {
     @DeleteMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        // DONE
+
         log.debug("REST request to delete the grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);

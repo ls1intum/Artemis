@@ -67,7 +67,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE - TODO: verify unused endpoints in client
 public class ResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -124,6 +125,8 @@ public class ResultResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "true") boolean withSubmissions) {
+        // DONE
+
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
@@ -148,6 +151,8 @@ public class ResultResource {
     @GetMapping("participations/{participationId}/results/{resultId}")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
+        // TODO: verify unused endpoints in client
+
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         return new ResponseEntity<>(result, HttpStatus.OK);
@@ -166,6 +171,8 @@ public class ResultResource {
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
+        // DONE
+
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
@@ -189,6 +196,8 @@ public class ResultResource {
     @GetMapping("participations/{participationId}/results/build-job-ids")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
+        // DONE
+
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
@@ -210,6 +219,8 @@ public class ResultResource {
     @DeleteMapping("participations/{participationId}/results/{resultId}")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
+        // TODO: verify unused endpoints in client
+
         log.debug("REST request to delete Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         resultService.deleteResult(result, true);
@@ -230,6 +241,8 @@ public class ResultResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
+        // DONE
+
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
@@ -335,6 +348,8 @@ public class ResultResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("groupFeedback") boolean groupFeedback,
             @ModelAttribute FeedbackPageableDTO data) {
+        // DONE
+
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, groupFeedback);
         return ResponseEntity.ok(response);
     }
@@ -350,6 +365,8 @@ public class ResultResource {
     @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
+        // DONE
+
         long maxCount = resultService.getMaxCountForExercise(exerciseId);
         return ResponseEntity.ok(maxCount);
     }
@@ -374,6 +391,7 @@ public class ResultResource {
             @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
             @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
             @RequestParam(value = "feedbackId5", required = false) Long feedbackId5) {
+        // DONE
 
         List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
 

@@ -45,7 +45,8 @@ import de.tum.cit.aet.artemis.text.service.TextBlockService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// DONE
 public class ExampleSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
@@ -88,6 +89,8 @@ public class ExampleSubmissionResource {
     @PostMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
+        // DONE
+
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
             throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idExists");
@@ -107,6 +110,8 @@ public class ExampleSubmissionResource {
     @PutMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
+        // DONE
+
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
             return createExampleSubmission(exerciseId, exampleSubmission);
@@ -126,6 +131,8 @@ public class ExampleSubmissionResource {
     @PostMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> prepareExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long exampleSubmissionId) {
+        // DONE
+
         log.debug("REST request to prepare ExampleSubmission for assessment : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
@@ -166,6 +173,8 @@ public class ExampleSubmissionResource {
     @GetMapping("example-submissions/{exampleSubmissionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        // DONE
+
         log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
@@ -189,6 +198,8 @@ public class ExampleSubmissionResource {
     @DeleteMapping("example-submissions/{exampleSubmissionId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        // DONE
+
         log.debug("REST request to delete ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
@@ -207,6 +218,8 @@ public class ExampleSubmissionResource {
     @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
+        // DONE
+
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);

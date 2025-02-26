@@ -114,7 +114,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.put("/api/text-exercises", exercise, HttpStatus.OK);
+        request.put("/api/assessment/text-exercises", exercise, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreScheduleService.isIdle());

@@ -50,11 +50,11 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterErrorCategories', options.filters.errorCategories.join(','))
             .set('groupFeedback', groupFeedback.toString());
 
-        return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
+        return this.get<FeedbackAnalysisResponse>(`assessment/exercises/${options.exerciseId}/feedback-details`, { params });
     }
 
     getMaxCount(exerciseId: number): Promise<number> {
-        return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
+        return this.get<number>(`assessment/exercises/${exerciseId}/feedback-details-max-count`);
     }
 
     async getParticipationForFeedbackDetailText(exerciseId: number, feedbackIds: number[]): Promise<FeedbackAffectedStudentDTO[]> {
@@ -65,10 +65,11 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             params = params.set(`feedbackId${index + 1}`, id.toString());
         });
 
-        return this.get<FeedbackAffectedStudentDTO[]>(`exercises/${exerciseId}/feedback-details-participation`, { params });
+        return this.get<FeedbackAffectedStudentDTO[]>(`assessment/exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
+        // ToDo: Part of communication, adapt
         return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
     }
 }

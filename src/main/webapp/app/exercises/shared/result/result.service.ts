@@ -53,14 +53,16 @@ export class ResultService implements IResultService {
     private translateService = inject(TranslateService);
     private csvDownloadService = inject(CsvDownloadService);
 
-    private exerciseResourceUrl = 'api/exercises';
+    private exerciseResourceUrl = 'api/assessment/exercises';
     private resultResourceUrl = 'api/results';
-    private participationResourceUrl = 'api/participations';
+    private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
     // Size of tinyInt in SQL, that is used to store these values
 
     find(resultId: number): Observable<EntityResponseType> {
+        // ToDo: Not found, even used?
+
         return this.http
             .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultResponseDatesFromServer(res)));

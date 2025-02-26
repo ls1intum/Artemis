@@ -410,7 +410,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
+        request.postWithoutLocation("/api/assessment/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
     }
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
