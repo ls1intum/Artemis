@@ -337,7 +337,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     private void testAllPreAuthorize() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.FORBIDDEN, StudentExam.class);
-        request.getList("/api/exam/courses/exam/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test

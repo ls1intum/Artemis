@@ -141,7 +141,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private void testAllPreAuthorize() throws Exception {
         request.postWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
-        request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
+        request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
     }
@@ -243,7 +243,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
         assertThat(lecture.getLectureUnits()).isEmpty();
@@ -258,7 +258,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentUnit attachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlides(numberOfSlides);
         lectureWithSlides = lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentUnitWithSlides));
 
-        List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
 
         final Lecture finalLectureWithSlides = lectureWithSlides;
         Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
@@ -279,7 +279,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLectureForCourse_withLectureUnits_shouldGetLecturesWithLectureUnits() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(5);

@@ -97,7 +97,7 @@ public class AttachmentResource {
 
         Attachment result = attachmentRepository.save(attachment);
 
-        return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/lecture/attachments/" + result.getId())).body(result);
     }
 
     /**

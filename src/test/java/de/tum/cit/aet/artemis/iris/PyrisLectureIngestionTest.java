@@ -128,7 +128,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/lecture/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
@@ -163,7 +163,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/lecture/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
