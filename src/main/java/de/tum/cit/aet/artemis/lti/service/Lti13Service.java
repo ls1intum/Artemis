@@ -72,7 +72,7 @@ public class Lti13Service {
 
     private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
 
-    private static final String COURSE_PATH_PATTERN = "courses/{courseId}/**";
+    private static final String COURSE_PATH_PATTERN = "/courses/{courseId}/**";
 
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
