@@ -22,7 +22,7 @@ import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/art
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
-import { Component } from '@angular/core';
+import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 
 @Component({ template: '' })
@@ -250,4 +250,23 @@ describe('Plagiarism Cases Instructor View Component', () => {
         tick();
         expect(location.path()).toBe(`/course-management/${courseId}/${exercise1.type}-exercises/${exerciseId}/plagiarism`);
     }));
+
+    it('should scroll to the correct exercise element when scrollToExercise is called', () => {
+        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
+        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        component.exerciseWithPlagCasesElements = signal([elementRef1, elementRef2]);
+
+        component.scrollToExerciseAfterViewInit(1);
+
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+        });
+        expect(nativeElement2.scrollIntoView).not.toHaveBeenCalled();
+    });
 });

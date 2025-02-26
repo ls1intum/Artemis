@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -16,14 +17,14 @@ import { ArtemisTestModule } from '../../test.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditCompetencyComponent, OwlNativeDateTimeModule, MockComponent(CompetencyFormComponent)],
-            declarations: [],
+            imports: [EditCompetencyComponent, MockModule(OwlNativeDateTimeModule), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),

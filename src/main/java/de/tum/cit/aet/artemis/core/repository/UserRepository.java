@@ -85,6 +85,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
+    List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
 
@@ -582,6 +584,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
+
+    List<User> findAllByIdIn(List<Long> ids);
 
     /**
      * Searches for users by their login or full name.

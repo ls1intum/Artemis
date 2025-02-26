@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -56,17 +56,6 @@ describe('Plagiarism Header Component', () => {
         expect(comp.isLoading).toBeTrue();
     });
 
-    it('should disable confirm button if plagiarism status is dirty', () => {
-        comp.comparison.status = PlagiarismStatus.NONE;
-        comp.isLoading = true;
-
-        const nativeElement = fixture.nativeElement;
-        const button = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']") as ButtonComponent;
-        fixture.detectChanges();
-
-        expect(button.disabled).toBeTrue();
-    });
-
     it('should deny a plagiarism', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         comp.denyPlagiarism();
@@ -76,7 +65,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable deny button if plagiarism status is dirty', () => {
-        comp.comparison.status = PlagiarismStatus.NONE;
+        comp.comparison.status = PlagiarismStatus.DENIED;
         comp.isLoading = true;
 
         const nativeElement = fixture.nativeElement;
@@ -153,6 +142,8 @@ describe('Plagiarism Header Component', () => {
 
     it.each(['confirm-plagiarism-button', 'deny-plagiarism-button'])('should disable status update button for team exercises', (selector) => {
         comp.exercise.teamMode = true;
+        comp.comparison.status = PlagiarismStatus.NONE;
+        fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector(`[data-qa=${selector}]`) as ButtonComponent;
