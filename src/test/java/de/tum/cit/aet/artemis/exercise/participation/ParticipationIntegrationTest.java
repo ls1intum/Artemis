@@ -989,7 +989,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseRepository.save(quizEx);
         participationUtilService.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student2");
 
-        var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        var participations = request.getList("/api/exercise/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations).hasSize(4);
         participations.forEach(participation -> {
             var exercise = participation.getExercise();
@@ -1029,7 +1029,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
-        request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
+        request.getList("/api/exercise/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test

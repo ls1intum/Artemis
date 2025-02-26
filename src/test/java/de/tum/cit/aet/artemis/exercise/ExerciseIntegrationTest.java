@@ -123,14 +123,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 participationUtilService.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
         }
-        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/core/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(submissions.size() + 1);
         assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(3);
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(1);
 
         for (Exercise exercise : course.getExercises()) {
-            StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            StatsForDashboardDTO stats = request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             assertThat(stats.getNumberOfComplaints()).isZero();
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
@@ -144,14 +144,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
         var textExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
-        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/core/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
         assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isZero();
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isZero();
 
         for (Exercise exercise : course.getExercises()) {
-            StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            StatsForDashboardDTO stats = request.get("/api/core/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             assertThat(stats.getNumberOfComplaints()).isZero();
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
@@ -194,7 +194,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+                Exercise exerciseServer = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
 
                 // Test that certain properties were set correctly
                 assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
@@ -298,8 +298,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private void getExamExercise() throws Exception {
         TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
-        request.get("/api/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
-        request.get("/api/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -344,7 +344,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                ExerciseDetailsDTO exerciseWithDetailsWrapper = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+                ExerciseDetailsDTO exerciseWithDetailsWrapper = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
                 Exercise exerciseWithDetails = exerciseWithDetailsWrapper.exercise();
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
@@ -408,7 +408,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
         TextExercise exercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
-        request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
 
         ZonedDateTime now = ZonedDateTime.now();
         exam.setExampleSolutionPublicationDate(now.minusHours(1));
