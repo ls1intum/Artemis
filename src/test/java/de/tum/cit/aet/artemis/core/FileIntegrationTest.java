@@ -318,7 +318,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setAttachmentUnit(null);
         MockMultipartFile attachmentFile = new MockMultipartFile("attachment", "", "application/json", objectMapper.writeValueAsBytes(attachment));
 
-        return request.postWithMultipartFiles("/api/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
+        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
                 AttachmentUnit.class, expectedStatus);
     }
 
