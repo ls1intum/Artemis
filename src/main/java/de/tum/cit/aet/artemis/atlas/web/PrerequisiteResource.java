@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Profile(PROFILE_ATLAS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class PrerequisiteResource {
 
     @Value("${jhipster.clientApp.name}")

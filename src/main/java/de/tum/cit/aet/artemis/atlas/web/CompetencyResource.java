@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 @Profile(PROFILE_ATLAS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class CompetencyResource {
 
     @Value("${jhipster.clientApp.name}")

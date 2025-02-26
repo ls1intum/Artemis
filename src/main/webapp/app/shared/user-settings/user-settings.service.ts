@@ -12,7 +12,7 @@ export class UserSettingsService {
     private http = inject(HttpClient);
 
     public notificationSettingsResourceUrl = 'api/notification-settings';
-    public scienceSettingsResourceUrl = 'api/science-settings';
+    public scienceSettingsResourceUrl = 'api/atlas/science-settings';
     public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();

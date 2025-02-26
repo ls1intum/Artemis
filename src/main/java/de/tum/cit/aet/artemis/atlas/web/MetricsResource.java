@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 
 @Profile(PROFILE_ATLAS)
 @RestController
-@RequestMapping("api/metrics/")
+@RequestMapping("api/atlas/metrics/") // ToDo: This should not be in atlas, it's totally unrelated
 public class MetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsResource.class);

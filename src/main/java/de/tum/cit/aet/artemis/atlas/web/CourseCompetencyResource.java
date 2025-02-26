@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyE
 
 @Profile(PROFILE_ATLAS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class CourseCompetencyResource {
 
     private static final String ENTITY_NAME = "courseCompetency";
