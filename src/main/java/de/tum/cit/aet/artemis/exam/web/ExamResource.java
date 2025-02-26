@@ -76,7 +76,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -361,7 +360,7 @@ public class ExamResource {
             throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
         }
 
-        var event = examLiveEventsService.createAndDistributeExamAnnouncementEvent(exam, message, userRepository.getUser());
+        var event = examLiveEventsService.createAndDistributeExamAnnouncementEvent(exam, message);
         log.debug("createExamAnnouncement took {} for exam {}", TimeLogUtil.formatDurationFrom(start), examId);
         return ResponseEntity.ok(event.asDTO());
     }
@@ -1335,8 +1334,9 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
      */
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         log.debug("REST request to get deletion summary for exam : {}", examId);
         return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
     }
