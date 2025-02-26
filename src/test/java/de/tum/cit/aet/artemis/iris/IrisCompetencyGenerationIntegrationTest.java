@@ -98,7 +98,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+        request.post("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description",
                 new PyrisCompetencyExtractionInputDTO("a", new PyrisCompetencyRecommendationDTO[] {}), HttpStatus.FORBIDDEN);
     }
 }
