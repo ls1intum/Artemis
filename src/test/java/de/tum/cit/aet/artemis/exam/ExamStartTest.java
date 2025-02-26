@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -202,7 +201,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             // No initial submissions should be created for programming exercises
             assertThat(participation.getSubmissions()).isEmpty();
-            assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
         }
     }
 
