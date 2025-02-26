@@ -181,7 +181,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         await().until(() -> participantScoreScheduleService.isIdle());
 
         for (StudentParticipation studentParticipation : participations) {
-            request.delete("/api/assessment/participations/" + studentParticipation.getId(), HttpStatus.OK);
+            request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, student1.getId());
         assertThat(participations).isEmpty();
@@ -190,7 +190,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/assessment/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
     }
@@ -198,7 +198,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldDeleteExercise() throws Exception {
-        request.delete("/api/assessment/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
         assertThat(courseRepository.existsById(courseId)).isFalse();
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(exerciseRepository.existsById(idOfTeamTextExercise)).isFalse();

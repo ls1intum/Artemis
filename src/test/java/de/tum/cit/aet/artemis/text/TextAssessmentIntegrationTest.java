@@ -293,7 +293,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // Get Text Submission and Complaint
         request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
-        final Complaint complaint = request.get("/api/complaints?submissionId=" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
+        final Complaint complaint = request.get("/api/assessment/complaints?submissionId=" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
