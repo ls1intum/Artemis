@@ -14,7 +14,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/core/attachments';
+    const resourceUrl = 'api/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 
@@ -34,7 +34,7 @@ describe('Attachment Service', () => {
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
         elemDefault.releaseDate = dayjs();
-        elemDefault.link = '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.link = '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
         elemDefault.name = 'testss';
         elemDefault.lecture = new Lecture();
         elemDefault.attachmentType = AttachmentType.FILE;
@@ -157,7 +157,7 @@ describe('Attachment Service', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/files/courses/${courseId}/attachments/${attachmentId}`,
+                url: `api/core/files/courses/${courseId}/attachments/${attachmentId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

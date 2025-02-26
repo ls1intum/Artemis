@@ -1675,7 +1675,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         await().untilAsserted(() -> {
             userUtilService.changeUser(userPrefix + "instructor1");
-            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            var notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
             assertThat(notifications).as("Instructor get notified that lock operations were successful")
                     .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
                     .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
@@ -1716,7 +1716,7 @@ public class ProgrammingExerciseIntegrationTestService {
         await().untilAsserted(() -> {
             // login again since this is executed on another thread
             userUtilService.changeUser(userPrefix + "instructor1");
-            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            var notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
             assertThat(notifications).as("Instructor get notified that unlock operations were successful")
                     .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
                     .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));

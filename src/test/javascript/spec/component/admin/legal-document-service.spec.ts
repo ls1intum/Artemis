@@ -80,10 +80,10 @@ describe('LegalDocumentService', () => {
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
                 service.getPrivacyStatement(lang).subscribe((resp) => expect(resp).toEqual(expected));
-                req = httpMock.expectOne({ method: 'GET', url: `api/public/privacy-statement?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/core/public/privacy-statement?language=${lang}` });
             } else {
                 service.getImprint(lang).subscribe((resp) => expect(resp).toEqual(expected));
-                req = httpMock.expectOne({ method: 'GET', url: `api/public/imprint?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/core/public/imprint?language=${lang}` });
             }
             req.flush(expected);
             tick();

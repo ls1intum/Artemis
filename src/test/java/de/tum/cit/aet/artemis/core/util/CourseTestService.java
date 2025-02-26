@@ -585,7 +585,7 @@ public class CourseTestService {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
 
-        var chat = request.postWithResponseBody("/api/core/courses/" + course3.getId() + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + course3.getId() + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         var user = userUtilService.getUserByLogin(userPrefix + "student1");
 
         var participant = new ConversationParticipant();

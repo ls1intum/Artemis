@@ -59,7 +59,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         });
 
         // Send a request to the Artemis server as if the user had clicked the button in the UI
-        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+        request.postWithoutResponseBody("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description",
                 new PyrisCompetencyExtractionInputDTO(courseDescription, currentCompetencies), HttpStatus.ACCEPTED);
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);

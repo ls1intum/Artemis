@@ -88,7 +88,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
+        Faq returnedFaq = request.postWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
 
     }
 
@@ -100,7 +100,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
+        Faq returnedFaq = request.postWithResponseBody("/api/communication/courses/" + faq1.getCourse().getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -110,7 +110,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/communication/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
@@ -134,7 +134,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/communication/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
@@ -144,7 +144,8 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest?faqId=" + faq1.getId(), Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/communication/courses/" + faq1.getCourse().getId() + "/faqs/ingest?faqId=" + faq1.getId(), Optional.empty(), boolean.class,
+                HttpStatus.OK);
     }
 
     @Test

@@ -421,7 +421,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setConversation(channel);
         userUtilService.changeUser(testPrefix + "tutor1");
-        Post createdPost = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/messages", post, Post.class, HttpStatus.CREATED);
+        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", post, Post.class, HttpStatus.CREATED);
         assertThat(createdPost.getConversation().getId()).isEqualTo(channel.getId());
         userUtilService.changeUser(testPrefix + "instructor1");
 

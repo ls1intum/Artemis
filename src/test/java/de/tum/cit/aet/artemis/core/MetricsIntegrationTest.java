@@ -106,7 +106,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "user1337", roles = "INSTRUCTOR")
         void shouldReturnForbiddenForUserNotInCourse() throws Exception {
-            request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.FORBIDDEN, StudentMetricsDTO.class);
+            request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.FORBIDDEN, StudentMetricsDTO.class);
         }
     }
 
@@ -116,7 +116,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnExerciseInformation() throws Exception {
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var exerciseInformation = result.exerciseMetrics().exerciseInformation();
@@ -131,7 +131,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCategories() throws Exception {
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var categories = result.exerciseMetrics().categories();
@@ -147,7 +147,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldReturnAverageScores() throws Exception {
             final var exercises = exerciseTestRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
             exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 5));
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var averageScores = result.exerciseMetrics().averageScore();
@@ -167,7 +167,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
 
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var score = result.exerciseMetrics().score();
@@ -183,7 +183,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageLatestSubmission() throws Exception {
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var averageLatestSubmissions = result.exerciseMetrics().averageLatestSubmission();
@@ -204,7 +204,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnLatestSubmission() throws Exception {
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var latestSubmissions = result.exerciseMetrics().latestSubmission();
@@ -268,7 +268,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
             exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), MIN_SCORE_GREEN));
 
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var completed = result.exerciseMetrics().completed();
@@ -289,7 +289,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldReturnCompetencyInformation() throws Exception {
             course.setCompetencies(Set.of(competencyUtilService.createCompetency(course)));
 
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.competencyMetrics()).isNotNull();
 
@@ -318,7 +318,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             lectureUtilService.addLectureUnitsToLecture(testLecture, List.of(lectureUnit));
             course.addLectures(testLecture);
 
-            final var result = request.get("/api/core/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.lectureUnitStudentMetricsDTO()).isNotNull();
             final var lectureUnitInformation = result.lectureUnitStudentMetricsDTO().lectureUnitInformation();
