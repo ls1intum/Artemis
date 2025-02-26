@@ -232,7 +232,7 @@ public class ExamResource {
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
     /**

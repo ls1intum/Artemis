@@ -228,7 +228,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // add additional exam not active
         examUtilService.addExam(course10, ZonedDateTime.now().minusDays(10), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3));
 
-        List<Exam> activeExams = request.getList("/api/exams/active", HttpStatus.OK, Exam.class);
+        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class);
         // only exam3 should be returned
         assertThat(activeExams).containsExactly(exam3);
     }
@@ -812,7 +812,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        var exams = request.getList("/api/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+        var exams = request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
@@ -1077,7 +1077,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetExamForExamAssessmentDashboard_asStudent_forbidden() throws Exception {
-        request.get("/api/examcourses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
@@ -1263,7 +1263,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         course.setEndDate(now().minusMinutes(5));
         course = courseRepository.save(course);
 
-        request.put("/api/exam/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
         await().until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);

@@ -311,7 +311,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         // Remove student1 from the exam
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
 
         // Get the exam with all registered users
         var params = new LinkedMultiValueMap<String, String>();
@@ -370,7 +370,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
 
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
 
         List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
@@ -406,7 +406,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Create individual student exams
-        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
 
         // Get the student exam of student1
