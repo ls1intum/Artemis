@@ -131,7 +131,7 @@ public class FilePathService {
             return getStudentImageFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/core/files/attachments/lecture")) {
-            String lectureId = path.getName(4).toString();
+            String lectureId = path.getName(5).toString();
             return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
         }
         if (uriPath.startsWith("/api/core/files/attachments/attachment-unit")) {
@@ -147,12 +147,12 @@ public class FilePathService {
     private static Path actualPathForPublicAttachmentUnitFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         if (!publicPath.toString().contains("/slide")) {
-            String attachmentUnitId = path.getName(4).toString();
+            String attachmentUnitId = path.getName(5).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
         try {
-            String attachmentUnitId = path.getName(4).toString();
-            String slideId = path.getName(6).toString();
+            String attachmentUnitId = path.getName(5).toString();
+            String slideId = path.getName(7).toString();
             // check if the ids are valid long values
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
@@ -166,8 +166,8 @@ public class FilePathService {
     private static Path actualPathForPublicFileUploadExercisesFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         try {
-            String expectedExerciseId = path.getName(3).toString();
-            String expectedSubmissionId = path.getName(5).toString();
+            String expectedExerciseId = path.getName(4).toString();
+            String expectedSubmissionId = path.getName(6).toString();
             Long exerciseId = Long.parseLong(expectedExerciseId);
             Long submissionId = Long.parseLong(expectedSubmissionId);
             return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
@@ -250,7 +250,7 @@ public class FilePathService {
         try {
             // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
             // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
-            final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
+            final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 5).toString();
             final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
             return URI.create("/api/core/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
         }
@@ -262,7 +262,7 @@ public class FilePathService {
     private static URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
         try {
             // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
-            final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
+            final var expectedExerciseId = path.getName(path.getNameCount() - 4).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);
             return URI.create("/api/core/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
         }
