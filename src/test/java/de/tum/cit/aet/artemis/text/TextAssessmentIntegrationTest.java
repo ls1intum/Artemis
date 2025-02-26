@@ -868,7 +868,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
 
-        Course course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
+        Course course = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
+                Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
@@ -1140,7 +1141,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // check properties set
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
-        Exam examReturned = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        Exam examReturned = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         examReturned.getExerciseGroups().getFirst().getExercises().forEach(exerciseExamReturned -> {
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);

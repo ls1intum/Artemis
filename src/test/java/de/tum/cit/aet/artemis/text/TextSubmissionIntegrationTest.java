@@ -326,7 +326,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
 
         assertThat(returnedExerciseDetails.exercise().getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }
@@ -497,7 +497,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         final var blocks = Set.of(TextExerciseFactory.generateTextBlock(0, 11), TextExerciseFactory.generateTextBlock(12, 21), TextExerciseFactory.generateTextBlock(22, 26));
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
 
-        request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);
+        request.delete("/api/exercise/submissions/" + textSubmission.getId(), HttpStatus.OK);
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {

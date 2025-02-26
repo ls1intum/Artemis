@@ -141,23 +141,23 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/core/admin/queued-jobs", HttpStatus.OK, List.class);
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2));
-        var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs1 = request.get("/api/core/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(retrievedJobs.size() + 2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobs_instructorAccessForbidden() throws Exception {
-        request.get("/api/admin/queued-jobs", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/core/admin/queued-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetRunningBuildJobs_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/admin/running-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/core/admin/running-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).hasSize(2);
     }
 
@@ -194,14 +194,14 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgents_returnsAgents() throws Exception {
-        var retrievedAgents = request.get("/api/admin/build-agents", HttpStatus.OK, List.class);
+        var retrievedAgents = request.get("/api/core/admin/build-agents", HttpStatus.OK, List.class);
         assertThat(retrievedAgents).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
-        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.OK, BuildAgentInformation.class);
+        var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.OK, BuildAgentInformation.class);
         assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
     }
 
@@ -209,26 +209,26 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelProcessingBuildJob() throws Exception {
         BuildJobQueueItem buildJob = processingJobs.get(job1.id());
-        request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/core/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
         queuedJobs.put(job1);
-        request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/core/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelAllQueuedBuildJobs() throws Exception {
-        request.delete("/api/admin/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+        request.delete("/api/core/admin/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelAllRunningBuildJobs() throws Exception {
-        request.delete("/api/admin/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+        request.delete("/api/core/admin/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -255,7 +255,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelAllRunningBuildJobsForAgent() throws Exception {
-        request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.NO_CONTENT);
+        request.delete("/api/core/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -267,7 +267,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.save(finishedJob3);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         pageableSearchDTO.setSortingOrder(SortingOrder.ASCENDING);
-        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+        var result = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(3);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob2.getBuildJobId());
         assertThat(result.get(1).id()).isEqualTo(finishedJob3.getBuildJobId());
@@ -305,7 +306,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         searchParams.add("buildDurationUpper", "600");
 
         // Check that only the failed job is returned
-        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, searchParams);
+        var result = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, searchParams);
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(failedFinishedJob.getBuildJobId());
     }
@@ -326,7 +327,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildAgents_instructorAccessForbidden() throws Exception {
-        request.get("/api/admin/build-agents", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/core/admin/build-agents", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -352,7 +353,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
-        var response = request.get("/api/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
+        var response = request.get("/api/core/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
         assertThat(response).isNotNull();
         assertThat(response.totalBuilds()).isEqualTo(2);
         assertThat(response.successfulBuilds()).isEqualTo(1);
@@ -366,10 +367,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 
-        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
 
-        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 
@@ -379,13 +380,13 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 
-        request.put("/api/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
+        request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
         await().until(() -> {
             var agents = buildAgentInformation.values();
             return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
         });
 
-        request.put("/api/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
+        request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
         await().until(() -> {
             var agents = buildAgentInformation.values();
             return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);

@@ -839,7 +839,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var channel = tutorialGroupTestRepository.getTutorialGroupChannel(exampleOneTutorialGroupId).orElseThrow();
         var post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
 
-        request.delete("/api/admin/courses/" + exampleCourseId, HttpStatus.OK);
+        request.delete("/api/core/admin/courses/" + exampleCourseId, HttpStatus.OK);
 
         assertThat(courseRepository.findById(exampleCourseId)).isEmpty();
         assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).isEmpty();
