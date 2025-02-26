@@ -379,7 +379,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
 
-                request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+                request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
 
                 exercise.setExampleSolutionPublicationDate(now.minusHours(1));
                 exerciseRepository.save(exercise);
