@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/exercises/")
+@RequestMapping("api/exercise/")
 public class ExerciseScoresChartResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
