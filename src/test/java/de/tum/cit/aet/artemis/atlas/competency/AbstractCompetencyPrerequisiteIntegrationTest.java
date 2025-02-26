@@ -290,7 +290,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
-        request.delete("/api/lecture/lectures" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
+        request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
         CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         assertThat(result.getLectureUnitLinks()).map(CompetencyLectureUnitLink::getLectureUnit).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
     }

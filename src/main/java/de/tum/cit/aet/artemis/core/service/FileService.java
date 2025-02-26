@@ -96,13 +96,13 @@ public class FileService implements DisposableBean {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
+    public static final String MARKDOWN_FILE_SUBPATH = "/api/core/files/markdown/";
 
-    public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
+    public static final String DEFAULT_FILE_SUBPATH = "/api/core/files/temp/";
 
-    public static final String BACKGROUND_FILE_SUBPATH = "/api/files/drag-and-drop/backgrounds/";
+    public static final String BACKGROUND_FILE_SUBPATH = "/api/core/files/drag-and-drop/backgrounds/";
 
-    public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
+    public static final String PICTURE_FILE_SUBPATH = "/api/core/files/drag-and-drop/drag-items/";
 
     /**
      * These directories get falsely marked as files and should be ignored during copying.
