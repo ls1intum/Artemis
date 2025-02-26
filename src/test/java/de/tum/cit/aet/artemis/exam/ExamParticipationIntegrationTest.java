@@ -406,8 +406,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Create individual student exams
-        List<StudentExam> generatedStudentExams = request.postListWithResponseBody(
-                "/api/exam/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
 
         // Get the student exam of student1
         Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student1)).findFirst();
