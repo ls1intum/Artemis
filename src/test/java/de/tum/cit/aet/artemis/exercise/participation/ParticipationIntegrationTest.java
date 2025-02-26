@@ -1784,7 +1784,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
             }
             var participation = request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
-            ;
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
             assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
             assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
