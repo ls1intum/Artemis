@@ -129,7 +129,7 @@ public class AdminUserResource {
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
-            return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
+            return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(newUser);
         }
     }

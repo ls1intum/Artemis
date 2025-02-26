@@ -101,8 +101,8 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         mockGrantReadAccess(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
-        request.put("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
+        request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
@@ -115,8 +115,8 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
-        request.put("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);

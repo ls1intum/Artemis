@@ -29,7 +29,7 @@ export class SubmissionService {
     private accountService = inject(AccountService);
 
     public resourceUrl = 'api/exercise/submissions';
-    public resourceUrlParticipation = 'api/participations';
+    public resourceUrlParticipation = 'api/exercise/participations';
 
     /**
      * Delete an existing submission
