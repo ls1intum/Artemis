@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.SYSTEM_ACCOUNT;
-
-import java.util.Objects;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
@@ -18,8 +15,6 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultStats;
  * A class containing a shared logic for creating an HTTP response about plagiarism checks results
  */
 public class PlagiarismResultResponseBuilder {
-
-    private static final String CONTINUOUS_PLAGIARISM_CONTROL_CREATED_BY_VALUE = "CPC";
 
     private PlagiarismResultResponseBuilder() {
     }
@@ -41,22 +36,12 @@ public class PlagiarismResultResponseBuilder {
                 .flatMap(comparison -> Stream.of(comparison.getSubmissionA().getSubmissionId(), comparison.getSubmissionB().getSubmissionId())).distinct().count();
         double averageSimilarity = getSimilarities(plagiarismResult).average().orElse(0.0);
         double maximalSimilarity = getSimilarities(plagiarismResult).max().orElse(0.0);
-        var createdBy = getCreatedBy(plagiarismResult);
-        var stats = new PlagiarismResultStats(numberOfDetectedSubmissions, averageSimilarity, maximalSimilarity, createdBy);
+        var stats = new PlagiarismResultStats(numberOfDetectedSubmissions, averageSimilarity, maximalSimilarity, plagiarismResult.getCreatedBy());
 
         return ResponseEntity.ok(new PlagiarismResultDTO<>(plagiarismResult, stats));
     }
 
     private static DoubleStream getSimilarities(PlagiarismResult<?> plagiarismResult) {
         return plagiarismResult.getComparisons().stream().mapToDouble(PlagiarismComparison::getSimilarity);
-    }
-
-    private static String getCreatedBy(PlagiarismResult<?> result) {
-        if (Objects.equals(result.getCreatedBy(), SYSTEM_ACCOUNT)) {
-            return CONTINUOUS_PLAGIARISM_CONTROL_CREATED_BY_VALUE;
-        }
-        else {
-            return result.getCreatedBy();
-        }
     }
 }
