@@ -320,7 +320,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Clean up to prevent exceptions during reset database
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -336,20 +336,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.FORBIDDEN, StudentExam.class);
-        request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.FORBIDDEN, StudentExam.class);
+        request.getList("/api/exam/courses/exam/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExam_asInstructor() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.OK, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.OK, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamsForExam_asInstructor() throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExams).hasSize(2);
     }
 
@@ -364,7 +364,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var programmingExercise = exerciseUtilService.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
         programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, programmingExercise);
 
-        StudentExam studentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.OK,
+        StudentExam studentExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.OK,
                 StudentExam.class);
 
         // check that the submission policy is included in the response
@@ -411,7 +411,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         jenkinsRequestMockProvider.reset();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
-        request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).isEmpty();
         assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();

@@ -117,7 +117,7 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().getLast();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
     }
 
     /**
