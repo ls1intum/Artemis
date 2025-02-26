@@ -94,7 +94,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
-        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/core/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
                 ExamUser.class, HttpStatus.OK);
         byte[] getUserSignatureResponse = request.get(updateExamUserResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
 
@@ -318,7 +318,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setAttachmentUnit(null);
         MockMultipartFile attachmentFile = new MockMultipartFile("attachment", "", "application/json", objectMapper.writeValueAsBytes(attachment));
 
-        return request.postWithMultipartFiles("/api/core/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
+        return request.postWithMultipartFiles("/api/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
                 AttachmentUnit.class, expectedStatus);
     }
 

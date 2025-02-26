@@ -108,7 +108,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Void submitExam(StudentExam studentExam) throws Exception {
-        request.postWithoutLocation("/api/core/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit",
+        request.postWithoutLocation("/api/exam/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit",
                 studentExam, HttpStatus.OK, null);
         return null;
     }

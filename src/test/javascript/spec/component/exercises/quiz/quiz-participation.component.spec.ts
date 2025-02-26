@@ -657,7 +657,7 @@ describe('QuizParticipationComponent', () => {
                 submission: quizSubmission,
                 participation: { exercise: quizExerciseForPractice } as StudentParticipation,
             } as Result);
-            expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/exercise/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);

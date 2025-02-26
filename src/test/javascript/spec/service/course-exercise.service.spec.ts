@@ -190,7 +190,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
@@ -218,7 +218,7 @@ describe('Course Management Service', () => {
 
             requestAndExpectDateConversion(
                 'POST',
-                `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
                 returnedFromService,
                 participation.exercise,
                 true,
@@ -247,7 +247,13 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('PUT', `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion(
+            'PUT',
+            `api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
