@@ -177,9 +177,10 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         assertThat(updatedCourse.getRestrictedAthenaModulesAccess()).as("restricted Athena modules access was correctly updated for the course")
                 .isEqualTo(course.getRestrictedAthenaModulesAccess());
 
-        ProgrammingExercise updatedProgrammingExercise = request.get("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, ProgrammingExercise.class);
-        ProgrammingExercise updatedProgrammingExerciseRestrictedModule = request.get("/api/programming-exercises/" + programmingExerciseRestrictedModule.getId(), HttpStatus.OK,
+        ProgrammingExercise updatedProgrammingExercise = request.get("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK,
                 ProgrammingExercise.class);
+        ProgrammingExercise updatedProgrammingExerciseRestrictedModule = request.get("/api/programming/programming-exercises/" + programmingExerciseRestrictedModule.getId(),
+                HttpStatus.OK, ProgrammingExercise.class);
         TextExercise updatedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
         TextExercise updatedTextExerciseRestrictedModule = request.get("/api/text/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK, TextExercise.class);
 

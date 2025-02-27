@@ -164,31 +164,31 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobsForCourse_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/programming/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2));
-        var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs1 = request.get("/api/programming/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/programming/courses/" + course.getId() + "/queued-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRunningBuildJobsForCourse_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/courses/" + course.getId() + "/running-jobs", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/programming/courses/" + course.getId() + "/running-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRunningBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/running-jobs", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/programming/courses/" + course.getId() + "/running-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -235,7 +235,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelBuildJobForCourse() throws Exception {
         BuildJobQueueItem buildJob = processingJobs.get(job1.id());
-        request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/programming/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -243,13 +243,13 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
         queuedJobs.put(job1);
         queuedJobs.put(job2);
-        request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+        request.delete("/api/programming/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllRunningBuildJobsForCourse() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+        request.delete("/api/programming/courses/" + course.getId() + "/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -318,7 +318,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+        var result = request.getList("/api/programming/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
@@ -337,7 +337,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             buildJobRepository.save(finishedJobForLogs);
             BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
-            var response = request.get("/api/build-log/6", HttpStatus.OK, String.class);
+            var response = request.get("/api/programming/build-log/6", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
         }
         finally {

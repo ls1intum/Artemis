@@ -67,7 +67,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile(String templateKey, int expectedScriptActions) throws Exception {
-        String template = request.get("/api/aeolus/programming/templates/" + templateKey, HttpStatus.OK, String.class);
+        String template = request.get("/api/programming/aeolus/templates/" + templateKey, HttpStatus.OK, String.class);
         assertThat(template).isNotEmpty();
         Windfile windfile = Windfile.deserialize(template);
         assertWindfileIsCorrect(windfile, expectedScriptActions);

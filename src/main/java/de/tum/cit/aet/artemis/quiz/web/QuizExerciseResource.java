@@ -243,7 +243,7 @@ public class QuizExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -797,7 +797,7 @@ public class QuizExerciseResource {
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
+        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 

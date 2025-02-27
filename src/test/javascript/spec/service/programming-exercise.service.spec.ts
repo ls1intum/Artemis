@@ -27,7 +27,7 @@ describe('ProgrammingExercise Service', () => {
     let httpMock: HttpTestingController;
 
     let defaultProgrammingExercise: ProgrammingExercise;
-    const resourceUrl = 'api/programming-exercises';
+    const resourceUrl = 'api/programming/programming-exercises';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

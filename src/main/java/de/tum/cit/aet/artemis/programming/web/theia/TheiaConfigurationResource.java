@@ -27,7 +27,7 @@ public class TheiaConfigurationResource {
     }
 
     /**
-     * GET /api/theia/images?language=<language>: Get the images for a specific language
+     * GET /api/programming/theia/images?language=<language>: Get the images for a specific language
      *
      * @param language the language for which the images should be retrieved
      * @return a map of flavor/name -> image-link
