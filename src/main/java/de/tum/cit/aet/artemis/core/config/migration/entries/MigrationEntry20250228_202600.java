@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.core.config.migration.entries;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -32,6 +33,20 @@ public class MigrationEntry20250228_202600 extends MigrationEntry {
 
     private static final Logger log = LoggerFactory.getLogger(MigrationEntry20250228_202600.class);
 
+    private static final int ATTACHMENTS_BATCH_SIZE = 300;
+
+    private static final int QUIZ_QUESTIONS_BATCH_SIZE = 300;
+
+    private static final int DRAG_ITEMS_BATCH_SIZE = 300;
+
+    private static final int COURSES_BATCH_SIZE = 100;
+
+    private static final int USERS_BATCH_SIZE = 300;
+
+    private static final int EXAM_USERS_BATCH_SIZE = 100;
+
+    private static final int FILE_UPLOAD_SUBMISSIONS_BATCH_SIZE = 300;
+
     private final AttachmentRepository attachmentRepository;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -59,188 +74,284 @@ public class MigrationEntry20250228_202600 extends MigrationEntry {
     }
 
     @Override
+    @Transactional
     public void execute() {
         log.info("Starting migration entry 20250228_202600");
 
-        updateAttachmentLinks();
-        updateQuizQuestionBackgroundImagePaths();
-        updateDragItemFilePaths();
-        updateCourseIconPaths();
-        updateUserImageUrls();
-        updateStudentExamAssetPaths();
-        updateFileUploadSubmissionPaths();
+        updateAttachmentLinks(ATTACHMENTS_BATCH_SIZE);
+        updateQuizQuestionBackgroundImagePaths(QUIZ_QUESTIONS_BATCH_SIZE);
+        updateDragItemFilePaths(DRAG_ITEMS_BATCH_SIZE);
+        updateCourseIconPaths(COURSES_BATCH_SIZE);
+        updateUserImageUrls(USERS_BATCH_SIZE);
+        updateStudentExamAssetPaths(EXAM_USERS_BATCH_SIZE);
+        updateFileUploadSubmissionPaths(FILE_UPLOAD_SUBMISSIONS_BATCH_SIZE);
+
+        log.info("Completed migration entry 20250228_202600");
     }
 
     private String updatePrefix(String link) {
         return link.replace("/api/files", "/api/core/files");
     }
 
-    private void updateAttachmentLinks() {
-        log.info("Updating attachment links");
-        List<Attachment> attachments = attachmentRepository.findAll();
-        attachments.forEach(attachment -> {
-            String link = attachment.getLink();
-            if (link == null) {
-                log.info("Attachment {} has no link. Skipping...", attachment.getId());
-                return;
+    @Transactional
+    protected void updateAttachmentLinks(int batchSize) {
+        log.info("Updating attachment links with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<Attachment> attachmentsPage;
+
+        do {
+            attachmentsPage = attachmentRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (Attachment attachment : attachmentsPage.getContent()) {
+                String link = attachment.getLink();
+                if (link == null) {
+                    log.info("Attachment {} has no link. Skipping...", attachment.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("Attachment {} has a link that does not start with /api/files: {}. Skipping...", attachment.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                attachment.setLink(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("Attachment {} has a link that does not start with /api/files: {}. Skipping...", attachment.getId(), link);
-                return;
-            }
+            attachmentRepository.saveAll(attachmentsPage.getContent());
+            page++;
+        }
+        while (attachmentsPage.hasNext());
 
-            link = updatePrefix(link);
-            attachment.setLink(link);
-        });
-        attachmentRepository.saveAll(attachments);
-        log.info("Updated {} attachments", attachments.size());
+        log.info("Updated {} attachments", totalUpdated);
     }
 
-    private void updateQuizQuestionBackgroundImagePaths() {
-        log.info("Updating quiz question background file paths");
-        List<QuizQuestion> quizQuestions = quizQuestionRepository.findAll();
-        quizQuestions.stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion).forEach(quizQuestion -> {
-            String link = ((DragAndDropQuestion) quizQuestion).getBackgroundFilePath();
-            if (link == null) {
-                log.info("Quiz question {} has no background file paths. Skipping...", quizQuestion.getId());
-                return;
+    @Transactional
+    protected void updateQuizQuestionBackgroundImagePaths(int batchSize) {
+        log.info("Updating quiz question background file paths with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<QuizQuestion> quizQuestionsPage;
+
+        do {
+            quizQuestionsPage = quizQuestionRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (QuizQuestion quizQuestion : quizQuestionsPage.getContent()) {
+                if (!(quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion)) {
+                    continue;
+                }
+
+                String link = dragAndDropQuestion.getBackgroundFilePath();
+
+                if (link == null) {
+                    log.info("Quiz question {} has no background file paths. Skipping...", quizQuestion.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("Quiz question {} has a background file paths that does not start with /api/files: {}. Skipping...", quizQuestion.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                dragAndDropQuestion.setBackgroundFilePath(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("Quiz question {} has a background file paths that does not start with /api/files: {}. Skipping...", quizQuestion.getId(), link);
-                return;
-            }
+            quizQuestionRepository.saveAll(quizQuestionsPage.getContent());
+            page++;
+        }
+        while (quizQuestionsPage.hasNext());
 
-            link = updatePrefix(link);
-            ((DragAndDropQuestion) quizQuestion).setBackgroundFilePath(link);
-        });
-        quizQuestionRepository.saveAll(quizQuestions);
-        log.info("Updated {} quiz questions", quizQuestions.size());
+        log.info("Updated {} quiz questions", totalUpdated);
     }
 
-    private void updateDragItemFilePaths() {
-        log.info("Updating drag item picture file path");
-        List<DragItem> dragItems = dragItemRepository.findAll();
-        dragItems.forEach(dragItem -> {
-            String link = dragItem.getPictureFilePath();
-            if (link == null) {
-                log.info("Drag item {} has no picture file path. Skipping...", dragItem.getId());
-                return;
+    @Transactional
+    protected void updateDragItemFilePaths(int batchSize) {
+        log.info("Updating drag item picture file path with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<DragItem> dragItemsPage;
+
+        do {
+            dragItemsPage = dragItemRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (DragItem dragItem : dragItemsPage.getContent()) {
+                String link = dragItem.getPictureFilePath();
+                if (link == null) {
+                    log.info("Drag item {} has no picture file path. Skipping...", dragItem.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("Drag item {} has a picture file path that does not start with /api/files: {}. Skipping...", dragItem.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                dragItem.setPictureFilePath(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("Drag item {} has a picture file path that does not start with /api/files: {}. Skipping...", dragItem.getId(), link);
-                return;
-            }
+            dragItemRepository.saveAll(dragItemsPage.getContent());
+            page++;
+        }
+        while (dragItemsPage.hasNext());
 
-            link = updatePrefix(link);
-            dragItem.setPictureFilePath(link);
-        });
-        dragItemRepository.saveAll(dragItems);
-        log.info("Updated {} drag items", dragItems.size());
+        log.info("Updated {} drag items", totalUpdated);
     }
 
-    private void updateCourseIconPaths() {
-        log.info("Updating course icons");
-        List<Course> courses = courseRepository.findAll();
-        courses.forEach(course -> {
-            String link = course.getCourseIcon();
-            if (link == null) {
-                log.info("Course {} has no icon. Skipping...", course.getId());
-                return;
+    @Transactional
+    protected void updateCourseIconPaths(int batchSize) {
+        log.info("Updating course icons with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<Course> coursesPage;
+
+        do {
+            coursesPage = courseRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (Course course : coursesPage.getContent()) {
+                String link = course.getCourseIcon();
+                if (link == null) {
+                    log.info("Course {} has no icon. Skipping...", course.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("Course {} has an icon that does not start with /api/files: {}. Skipping...", course.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                course.setCourseIcon(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("Course {} has an icon that does not start with /api/files: {}. Skipping...", course.getId(), link);
-                return;
-            }
+            courseRepository.saveAll(coursesPage.getContent());
+            page++;
+        }
+        while (coursesPage.hasNext());
 
-            link = updatePrefix(link);
-            course.setCourseIcon(link);
-        });
-        courseRepository.saveAll(courses);
-        log.info("Updated {} courses", courses.size());
+        log.info("Updated {} courses", totalUpdated);
     }
 
-    private void updateUserImageUrls() {
-        log.info("Updating user image urls");
-        List<User> users = userRepository.findAll();
-        users.forEach(user -> {
-            String link = user.getImageUrl();
-            if (link == null) {
-                log.info("User {} has no image url. Skipping...", user.getId());
-                return;
+    @Transactional
+    protected void updateUserImageUrls(int batchSize) {
+        log.info("Updating user image urls with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<User> usersPage;
+
+        do {
+            usersPage = userRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (User user : usersPage.getContent()) {
+                String link = user.getImageUrl();
+                if (link == null) {
+                    log.info("User {} has no image url. Skipping...", user.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("User {} has an image url that does not start with /api/files: {}. Skipping...", user.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                user.setImageUrl(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("User {} has an image url that does not start with /api/files: {}. Skipping...", user.getId(), link);
-                return;
-            }
+            userRepository.saveAll(usersPage.getContent());
+            page++;
+        }
+        while (usersPage.hasNext());
 
-            link = updatePrefix(link);
-            user.setImageUrl(link);
-        });
-        userRepository.saveAll(users);
-        log.info("Updated {} users", users.size());
+        log.info("Updated {} users", totalUpdated);
     }
 
-    private void updateStudentExamAssetPaths() {
-        log.info("Updating exam user asset paths");
-        List<ExamUser> examUsers = examUserRepository.findAll();
-        examUsers.forEach(examUser -> {
-            String signingImagePath = examUser.getSigningImagePath();
-            if (signingImagePath == null) {
-                log.info("Exam user {} has no signature image path. Skipping...", examUser.getId());
-                return;
+    @Transactional
+    protected void updateStudentExamAssetPaths(int batchSize) {
+        log.info("Updating exam user asset paths with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<ExamUser> examUsersPage;
+
+        do {
+            examUsersPage = examUserRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (ExamUser examUser : examUsersPage.getContent()) {
+                boolean updated = false;
+
+                String signingImagePath = examUser.getSigningImagePath();
+                if (signingImagePath != null && signingImagePath.startsWith("/api/files")) {
+                    signingImagePath = updatePrefix(signingImagePath);
+                    examUser.setSigningImagePath(signingImagePath);
+                    updated = true;
+                }
+                else if (signingImagePath != null) {
+                    log.info("Exam user {} has a signature image path that does not start with /api/files: {}. Skipping...", examUser.getId(), signingImagePath);
+                }
+
+                String studentImagePath = examUser.getStudentImagePath();
+                if (studentImagePath != null && studentImagePath.startsWith("/api/files")) {
+                    studentImagePath = updatePrefix(studentImagePath);
+                    examUser.setStudentImagePath(studentImagePath);
+                    updated = true;
+                }
+                else if (studentImagePath != null) {
+                    log.info("Exam user {} has a student image that does not start with /api/files: {}. Skipping...", examUser.getId(), studentImagePath);
+                }
+
+                if (updated) {
+                    totalUpdated++;
+                }
             }
 
-            if (!signingImagePath.startsWith("/api/files")) {
-                log.info("Exam user {} has a signature image path that does not start with /api/files: {}. Skipping...", examUser.getId(), signingImagePath);
-                return;
-            }
+            examUserRepository.saveAll(examUsersPage.getContent());
+            page++;
+        }
+        while (examUsersPage.hasNext());
 
-            signingImagePath = updatePrefix(signingImagePath);
-            examUser.setSigningImagePath(signingImagePath);
-
-            String studentImagePath = examUser.getStudentImagePath();
-            if (studentImagePath == null) {
-                log.info("Exam user {} has no student image. Skipping...", examUser.getId());
-                return;
-            }
-
-            if (!studentImagePath.startsWith("/api/files")) {
-                log.info("Exam user {} has a student image that does not start with /api/files: {}. Skipping...", examUser.getId(), studentImagePath);
-                return;
-            }
-
-            studentImagePath = updatePrefix(studentImagePath);
-            examUser.setStudentImagePath(studentImagePath);
-        });
-        examUserRepository.saveAll(examUsers);
-        log.info("Updated {} exam users", examUsers.size());
+        log.info("Updated {} exam users", totalUpdated);
     }
 
-    private void updateFileUploadSubmissionPaths() {
-        log.info("Updating file upload submissions");
-        List<FileUploadSubmission> fileUploadSubmissions = fileUploadSubmissionRepository.findAll();
-        fileUploadSubmissions.forEach(fileUploadSubmission -> {
-            String link = fileUploadSubmission.getFilePath();
-            if (link == null) {
-                log.info("File upload submission {} has no file path. Skipping...", fileUploadSubmission.getId());
-                return;
+    @Transactional
+    protected void updateFileUploadSubmissionPaths(int batchSize) {
+        log.info("Updating file upload submissions with batch size: {}", batchSize);
+        int page = 0;
+        long totalUpdated = 0;
+        Page<FileUploadSubmission> submissionsPage;
+
+        do {
+            submissionsPage = fileUploadSubmissionRepository.findAll(PageRequest.of(page, batchSize));
+
+            for (FileUploadSubmission fileUploadSubmission : submissionsPage.getContent()) {
+                String link = fileUploadSubmission.getFilePath();
+                if (link == null) {
+                    log.info("File upload submission {} has no file path. Skipping...", fileUploadSubmission.getId());
+                    continue;
+                }
+
+                if (!link.startsWith("/api/files")) {
+                    log.info("File upload submission {} has a file path that does not start with /api/files: {}. Skipping...", fileUploadSubmission.getId(), link);
+                    continue;
+                }
+
+                link = updatePrefix(link);
+                fileUploadSubmission.setFilePath(link);
+                totalUpdated++;
             }
 
-            if (!link.startsWith("/api/files")) {
-                log.info("File upload submission {} has a file path that does not start with /api/files: {}. Skipping...", fileUploadSubmission.getId(), link);
-                return;
-            }
+            fileUploadSubmissionRepository.saveAll(submissionsPage.getContent());
+            page++;
+        }
+        while (submissionsPage.hasNext());
 
-            link = updatePrefix(link);
-            fileUploadSubmission.setFilePath(link);
-        });
-        fileUploadSubmissionRepository.saveAll(fileUploadSubmissions);
-        log.info("Updated {} file upload submissions", fileUploadSubmissions.size());
+        log.info("Updated {} file upload submissions", totalUpdated);
     }
 
     @Override
