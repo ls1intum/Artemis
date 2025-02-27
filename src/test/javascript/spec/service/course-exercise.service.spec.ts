@@ -133,7 +133,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([programmingExercise]));
 
-        requestAndExpectDateConversion('GET', `api/programming/courses//${course.id}/programming-exercises`, returnedFromService, programmingExercise);
+        requestAndExpectDateConversion('GET', `api/programming/courses/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
         tick();
     }));
 
@@ -144,7 +144,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([modelingExercise]));
 
-        requestAndExpectDateConversion('GET', `api/modeling/courses//${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
+        requestAndExpectDateConversion('GET', `api/modeling/courses/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
         tick();
     }));
 
@@ -155,7 +155,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([textExercise]));
 
-        requestAndExpectDateConversion('GET', `api/text/courses//${course.id}/text-exercises`, returnedFromService, textExercise);
+        requestAndExpectDateConversion('GET', `api/text/courses/${course.id}/text-exercises`, returnedFromService, textExercise);
         tick();
     }));
 
