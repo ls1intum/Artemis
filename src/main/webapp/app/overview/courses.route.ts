@@ -22,7 +22,7 @@ export enum CourseOverviewRoutePath {
     COMMUNICATION = 'communication',
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/overview/courses.component').then((m) => m.CoursesComponent),
@@ -140,12 +140,14 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/quiz/participate/quiz-participation.route').then((m) => m.routes),
             },
             {
-                path: 'exercises/file-upload-exercises/:exerciseId',
+                path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
+                loadComponent: () => import('app/exercises/file-upload/participate/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.fileUploadExercise',
+                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
                 },
-                loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.route').then((m) => m.routes),
+                canActivate: [UserRouteAccessService],
+                canDeactivate: [PendingChangesGuard],
             },
 
             {
@@ -326,14 +328,5 @@ const routes: Routes = [
                 pathMatch: 'full',
             },
         ],
-    },
-];
-
-const COURSE_ROUTES = [...routes];
-
-export const coursesState: Routes = [
-    {
-        path: '',
-        children: COURSE_ROUTES,
     },
 ];
