@@ -1,6 +1,5 @@
 import { Course } from 'app/entities/course.model';
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
 import { Channel, ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { UserCredentials } from '../users';

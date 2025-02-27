@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the navigation bar at the top.

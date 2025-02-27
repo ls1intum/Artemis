@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
+import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 export class ModelingEditor {

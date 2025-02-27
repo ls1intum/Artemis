@@ -1,6 +1,5 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
-import { EXERCISE_BASE } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text exercise example submission creation page.

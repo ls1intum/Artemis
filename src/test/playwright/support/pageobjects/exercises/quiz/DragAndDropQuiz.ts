@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
+import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { drag } from '../../../utils';
 import { Locator } from '@playwright/test';
 

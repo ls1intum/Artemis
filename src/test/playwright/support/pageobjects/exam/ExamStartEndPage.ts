@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../../constants';
 import { users } from '../../users';
 
 export class ExamStartEndPage {

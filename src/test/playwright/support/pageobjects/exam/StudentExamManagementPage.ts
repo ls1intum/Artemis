@@ -1,5 +1,4 @@
 import { Page, expect } from '@playwright/test';
-import { COURSE_BASE } from '../../constants';
 import { users } from '../../users';
 
 export class StudentExamManagementPage {

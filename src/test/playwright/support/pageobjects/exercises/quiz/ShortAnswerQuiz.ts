@@ -1,4 +1,3 @@
-import { EXERCISE_BASE } from '../../../constants';
 import { Page } from '@playwright/test';
 
 export class ShortAnswerQuiz {

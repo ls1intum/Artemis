@@ -2,7 +2,6 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { clearTextField, enterDate } from '../../utils';
-import { COURSE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.

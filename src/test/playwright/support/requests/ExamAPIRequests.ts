@@ -4,7 +4,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { UserCredentials } from '../users';
