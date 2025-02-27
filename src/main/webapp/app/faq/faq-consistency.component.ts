@@ -15,7 +15,7 @@ export class FaqConsistencyComponent {
     improvement = input<string>('');
     close = output<void>();
 
-    formattedConsistency = signal<{ inconsistency: string; suggestion: string }[]>([]);
+    formattedConsistency = signal<{ inconsistentFaq: string; suggestion: string }[]>([]);
 
     protected readonly faCheck = faCheck;
 
@@ -25,7 +25,7 @@ export class FaqConsistencyComponent {
                 this.inconsistencies().map((inconsistency, index) => {
                     const suggestion = this.suggestions()[index];
                     return {
-                        inconsistency: inconsistency,
+                        inconsistentFaq: inconsistency,
                         suggestion: suggestion,
                     };
                 }),
