@@ -799,7 +799,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExercisesForCourse() throws Exception {
-        final var path = "/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
+        final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
         var programmingExercisesServer = request.getList(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExercisesServer).isNotEmpty();
         // TODO add more assertions
@@ -807,7 +807,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
-        final var path = "/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
+        final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 

@@ -68,7 +68,8 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         quizSubmission.submitted(isSubmitted);
 
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=" + isSubmitted, quizSubmission, QuizSubmission.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=" + isSubmitted, quizSubmission, QuizSubmission.class,
+                HttpStatus.OK);
 
         if (isSubmitted) {
             assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isOne();

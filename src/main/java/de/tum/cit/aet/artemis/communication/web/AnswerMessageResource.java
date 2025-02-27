@@ -65,7 +65,7 @@ public class AnswerMessageResource {
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
         log.debug("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
+        return ResponseEntity.created(new URI("/api/communication/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
     }
 
     /**

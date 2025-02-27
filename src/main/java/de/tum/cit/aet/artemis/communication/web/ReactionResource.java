@@ -52,7 +52,7 @@ public class ReactionResource {
     public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
         try {
             Reaction createdReaction = reactionService.createReaction(courseId, reaction);
-            return ResponseEntity.created(new URI("/api/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
+            return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
         }
         catch (DataIntegrityViolationException ex) {
             // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client

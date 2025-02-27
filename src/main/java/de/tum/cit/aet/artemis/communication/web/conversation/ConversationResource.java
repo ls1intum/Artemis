@@ -74,7 +74,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/conversations: Returns all conversations of a course where the requesting user is a member
+     * GET /api/communication/courses/:courseId/conversations: Returns all conversations of a course where the requesting user is a member
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
@@ -92,7 +92,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/conversations/:conversationId/favorite : Updates the favorite status of a conversation for the requesting user
+     * POST /api/communication/courses/:courseId/conversations/:conversationId/favorite : Updates the favorite status of a conversation for the requesting user
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation
@@ -110,7 +110,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/conversations/:conversationId/hidden : Updates the hidden status of a conversation for the requesting user
+     * POST /api/communication/courses/:courseId/conversations/:conversationId/hidden : Updates the hidden status of a conversation for the requesting user
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation
@@ -128,7 +128,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/conversations/:conversationId/muted : Updates a conversation's muted status for the requesting user
+     * POST /api/communication/courses/:courseId/conversations/:conversationId/muted : Updates a conversation's muted status for the requesting user
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation
@@ -146,7 +146,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/unread-messages : Checks for unread messages of the current user
+     * GET /api/communication/courses/:courseId/unread-messages : Checks for unread messages of the current user
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
@@ -162,7 +162,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * PATCH /api/courses/:courseId/conversations/:conversationId/mark-as-read : Marks all messages as read for the requesting user in the given conversation
+     * PATCH /api/communication/courses/:courseId/conversations/:conversationId/mark-as-read : Marks all messages as read for the requesting user in the given conversation
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation
@@ -182,7 +182,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/code-of-conduct/agreement : Checks if the user agrees to the code of conduct
+     * GET /api/communication/courses/:courseId/code-of-conduct/agreement : Checks if the user agrees to the code of conduct
      *
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
@@ -198,7 +198,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * PATCH /api/courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
+     * PATCH /api/communication/courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
      *
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok)
@@ -215,7 +215,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/code-of-conduct/responsible-users : Users responsible for the course
+     * GET /api/communication/courses/:courseId/code-of-conduct/responsible-users : Users responsible for the course
      *
      * @param courseId the course's ID
      * @return ResponseEntity with the status 200 (Ok) and a list of users responsible for the course
@@ -237,7 +237,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
+     * GET /api/communication/courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation

@@ -94,7 +94,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
     /**

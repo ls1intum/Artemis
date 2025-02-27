@@ -1325,8 +1325,8 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/programming/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
     // TEST

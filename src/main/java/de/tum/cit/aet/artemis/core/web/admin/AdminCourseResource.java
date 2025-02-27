@@ -158,7 +158,7 @@ public class AdminCourseResource {
         Course finalCreatedCourse = createdCourse;
         Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(finalCreatedCourse, channelType));
 
-        return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }
 
     /**

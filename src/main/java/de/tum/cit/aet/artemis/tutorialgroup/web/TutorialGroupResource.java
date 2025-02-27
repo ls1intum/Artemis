@@ -264,7 +264,7 @@ public class TutorialGroupResource {
             tutorialGroupChannelManagementService.createChannelForTutorialGroup(persistedTutorialGroup);
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
                 .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 

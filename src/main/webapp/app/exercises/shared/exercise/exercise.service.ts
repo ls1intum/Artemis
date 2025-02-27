@@ -63,7 +63,7 @@ export class ExerciseService {
 
     public resourceUrl = 'api/exercise/exercises';
     public adminResourceUrl = 'api/exam/admin/exercises';
-    public courseResourceUrl = 'api/courses';
+    public courseResourceUrl = 'api/core/courses';
 
     /**
      * Persist a new exercise

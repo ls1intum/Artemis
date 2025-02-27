@@ -27,12 +27,12 @@ export class ParticipationService {
     private submissionService = inject(SubmissionService);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/participations';
+    public resourceUrl = 'api/exercise/participations';
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);
         return this.http
-            .put<StudentParticipation>(`api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
@@ -40,7 +40,7 @@ export class ParticipationService {
         const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
         // ToDO: Missing
         return this.http
-            .put<StudentParticipation[]>(`api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
@@ -63,7 +63,7 @@ export class ParticipationService {
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         // ToDO: Missing
         return this.http
-            .get<StudentParticipation>(`api/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .get<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
@@ -80,7 +80,7 @@ export class ParticipationService {
     findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResults });
         return this.http
-            .get<StudentParticipation[]>(`api/exercises/${exerciseId}/participations`, {
+            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })

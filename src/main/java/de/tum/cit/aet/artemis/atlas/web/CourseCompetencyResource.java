@@ -263,7 +263,7 @@ public class CourseCompetencyResource {
         var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     // Competency Relation Endpoints

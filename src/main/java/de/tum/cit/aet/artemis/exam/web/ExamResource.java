@@ -391,7 +391,7 @@ public class ExamResource {
         // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examCopied.getId()))
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
     }
 

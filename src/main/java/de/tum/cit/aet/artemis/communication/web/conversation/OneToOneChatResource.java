@@ -64,7 +64,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
+     * POST /api/communication/courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
      *
      * @param courseId                   the id of the course
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
@@ -96,7 +96,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/one-to-one-chats/:userId: Starts a new one to one chat in a course
+     * POST /api/communication/courses/:courseId/one-to-one-chats/:userId: Starts a new one to one chat in a course
      *
      * @param courseId the id of the course
      * @param userId   the id of the participating user

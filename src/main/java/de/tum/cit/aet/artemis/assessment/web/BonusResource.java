@@ -188,7 +188,7 @@ public class BonusResource {
         gradingScaleRepository.save(bonusToGradingScale);
 
         filterBonusForResponse(savedBonus, false);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
+        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 

@@ -154,7 +154,7 @@ export class ExamParticipationService {
      * @returns a List of all StudentExams without Exercises per User and Course
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
-        const url = `api/courses/${courseId}/test-exams-per-user`;
+        const url = `api/exam/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
             .get<StudentExam[]>(url, { observe: 'response' })
             .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));

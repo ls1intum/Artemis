@@ -173,8 +173,8 @@ public class TutorialGroupFreePeriodResource {
 
         tutorialGroupFreePeriodService.cancelOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId + "/tutorial-free-periods/"
-                + persistedTutorialGroupFreePeriod.getId())).body(persistedTutorialGroupFreePeriod);
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId
+                + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId())).body(persistedTutorialGroupFreePeriod);
     }
 
     /**

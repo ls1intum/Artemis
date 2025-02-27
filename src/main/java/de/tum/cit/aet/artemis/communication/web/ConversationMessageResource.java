@@ -96,7 +96,7 @@ public class ConversationMessageResource {
         sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
+        return ResponseEntity.created(new URI("/api/cpmmunication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**

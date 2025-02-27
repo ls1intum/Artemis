@@ -226,7 +226,7 @@ public class TutorialGroupSessionResource {
         updateTutorialGroupSession(newSession, overlappingPeriodOptional);
         newSession = tutorialGroupSessionRepository.save(newSession);
 
-        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+        return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
                 .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
     }
 
