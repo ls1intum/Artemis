@@ -301,7 +301,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
                 textExercise = (TextExercise) exerciseRepository.findByIdElseThrow(textExercise.getId());
                 textExercise.setCategories(category.stream().map(cat -> "{\"color\":\"#6ae8ac\",\"category\":\"" + cat + "\"}").collect(Collectors.toSet()));
-                request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+                request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
             }
         }
 

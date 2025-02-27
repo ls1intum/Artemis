@@ -180,7 +180,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
         assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);

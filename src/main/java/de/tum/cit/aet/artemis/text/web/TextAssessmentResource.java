@@ -71,7 +71,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/text/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")

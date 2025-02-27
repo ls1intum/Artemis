@@ -19,7 +19,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
 
-    private resourceUrl = 'api/text-exercises';
+    private resourceUrl = 'api/text/text-exercises';
 
     /**
      * Store a new text exercise on the server.

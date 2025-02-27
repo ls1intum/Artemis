@@ -190,7 +190,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
     }

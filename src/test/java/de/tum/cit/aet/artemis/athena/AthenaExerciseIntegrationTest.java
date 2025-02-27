@@ -84,7 +84,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -93,7 +93,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -104,7 +104,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
     }
 
     @Test
@@ -112,7 +112,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -123,7 +123,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -133,7 +133,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -180,8 +180,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         ProgrammingExercise updatedProgrammingExercise = request.get("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, ProgrammingExercise.class);
         ProgrammingExercise updatedProgrammingExerciseRestrictedModule = request.get("/api/programming-exercises/" + programmingExerciseRestrictedModule.getId(), HttpStatus.OK,
                 ProgrammingExercise.class);
-        TextExercise updatedTextExercise = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
-        TextExercise updatedTextExerciseRestrictedModule = request.get("/api/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK, TextExercise.class);
+        TextExercise updatedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        TextExercise updatedTextExerciseRestrictedModule = request.get("/api/text/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK, TextExercise.class);
 
         // Check that the default exercises still have their module set
         assertThat(updatedProgrammingExercise.getFeedbackSuggestionModule()).as("Athena module for the programming exercise was unchanged")
