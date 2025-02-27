@@ -2,7 +2,6 @@ import { Page, expect } from '@playwright/test';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
-import { COURSE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.

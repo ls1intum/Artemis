@@ -8,7 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class GroupChatService {
-    public resourceUrl = 'api/communicatin/courses/';
+    public resourceUrl = 'api/communication/courses/';
 
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
