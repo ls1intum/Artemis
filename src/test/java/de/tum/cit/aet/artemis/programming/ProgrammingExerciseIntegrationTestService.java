@@ -1496,7 +1496,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programing/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 

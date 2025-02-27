@@ -216,7 +216,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintResponse.setResponseText("accepted");
 
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+        Result receivedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
