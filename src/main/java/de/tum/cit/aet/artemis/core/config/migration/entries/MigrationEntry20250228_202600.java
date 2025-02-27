@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -62,8 +61,8 @@ public class MigrationEntry20250228_202600 extends MigrationEntry {
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     public MigrationEntry20250228_202600(AttachmentRepository attachmentRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository,
-            CourseRepository courseRepository, UserRepository userRepository, ExamUserRepository examUserRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadSubmission fileUploadSubmission, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
+            CourseRepository courseRepository, UserRepository userRepository, ExamUserRepository examUserRepository,
+            FileUploadSubmissionRepository fileUploadSubmissionRepository) {
         this.attachmentRepository = attachmentRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
@@ -76,8 +75,6 @@ public class MigrationEntry20250228_202600 extends MigrationEntry {
     @Override
     @Transactional
     public void execute() {
-        log.info("Starting migration entry 20250228_202600");
-
         updateAttachmentLinks(ATTACHMENTS_BATCH_SIZE);
         updateQuizQuestionBackgroundImagePaths(QUIZ_QUESTIONS_BATCH_SIZE);
         updateDragItemFilePaths(DRAG_ITEMS_BATCH_SIZE);
@@ -85,8 +82,6 @@ public class MigrationEntry20250228_202600 extends MigrationEntry {
         updateUserImageUrls(USERS_BATCH_SIZE);
         updateStudentExamAssetPaths(EXAM_USERS_BATCH_SIZE);
         updateFileUploadSubmissionPaths(FILE_UPLOAD_SUBMISSIONS_BATCH_SIZE);
-
-        log.info("Completed migration entry 20250228_202600");
     }
 
     private String updatePrefix(String link) {
