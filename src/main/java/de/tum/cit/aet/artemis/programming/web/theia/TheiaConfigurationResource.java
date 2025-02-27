@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Profile(PROFILE_THEIA)
 @RestController
-@RequestMapping("api/theia/")
+@RequestMapping("api/programming/theia/")
 public class TheiaConfigurationResource {
 
     private final TheiaConfiguration theiaConfiguration;

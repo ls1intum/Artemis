@@ -96,7 +96,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, saQuizQuestion1, saQuizQuestion2, saQuizQuestion3));
         dndQuizQuestion0.setQuizGroup(quizGroup3);
 
-        QuizPool responseQuizPool = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class,
+        QuizPool responseQuizPool = request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class,
                 HttpStatus.OK, null);
 
         assertThat(responseQuizPool.getExam().getId()).isEqualTo(exam.getId());
@@ -115,7 +115,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizQuestion.setTitle(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
+        request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -125,7 +125,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
+        request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -135,7 +135,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
+        request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -145,7 +145,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundCourseId = 0;
-        request.putWithResponseBody("/api/courses/" + notFoundCourseId + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.NOT_FOUND, null);
+        request.putWithResponseBody("/api/quiz/courses/" + notFoundCourseId + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.NOT_FOUND, null);
     }
 
     @Test
@@ -155,7 +155,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundExamId = 0;
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + notFoundExamId + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.NOT_FOUND, null);
+        request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + notFoundExamId + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.NOT_FOUND, null);
     }
 
     @Test
@@ -170,7 +170,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizPool.setQuizQuestions(List.of(mcQuizQuestion, dndQuizQuestion, saQuizQuestion));
         QuizPool savedQuizPool = quizPoolService.update(exam.getId(), quizPool);
 
-        QuizPool responseQuizPool = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
+        QuizPool responseQuizPool = request.get("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
         assertThat(responseQuizPool.getExam().getId()).isEqualTo(exam.getId());
         assertThat(responseQuizPool.getQuizGroups()).hasSize(savedQuizPool.getQuizGroups().size()).containsExactlyInAnyOrder(savedQuizPool.getQuizGroups().getFirst(),
                 savedQuizPool.getQuizGroups().get(1));
@@ -182,7 +182,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQuizPoolNotFound() throws Exception {
         Exam examWithoutQuizPool = examUtilService.addExam(course);
-        QuizPool responseQuizPool = request.get("/api/courses/" + course.getId() + "/exams/" + examWithoutQuizPool.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
+        QuizPool responseQuizPool = request.get("/api/quiz/courses/" + course.getId() + "/exams/" + examWithoutQuizPool.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
         assertThat(responseQuizPool).isNull();
     }
 

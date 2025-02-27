@@ -98,7 +98,7 @@ import io.jsonwebtoken.lang.Arrays;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
