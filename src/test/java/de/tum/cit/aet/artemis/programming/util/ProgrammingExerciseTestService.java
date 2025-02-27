@@ -1390,7 +1390,7 @@ public class ProgrammingExerciseTestService {
 
         // Construct trigger-build url and execute request
         submissionType = submissionType == null ? SubmissionType.MANUAL : submissionType;
-        String url = "/api/programming/programming-submissions" + participation.getId() + "/trigger-build?submissionType=" + submissionType.name();
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=" + submissionType.name();
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
@@ -1427,7 +1427,7 @@ public class ProgrammingExerciseTestService {
         }
 
         // Construct trigger-build url and execute request
-        String url = "/api/programming/programming-submissions" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert

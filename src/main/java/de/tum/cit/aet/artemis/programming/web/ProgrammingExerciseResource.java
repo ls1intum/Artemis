@@ -258,7 +258,7 @@ public class ProgrammingExerciseResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            return ResponseEntity.created(new URI("/api/programming/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);
+            return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);

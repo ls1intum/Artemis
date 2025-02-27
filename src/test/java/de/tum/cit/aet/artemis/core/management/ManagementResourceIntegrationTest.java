@@ -117,7 +117,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         // Try to access 5 different endpoints with programming feature toggle disabled
         request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
-        request.postWithoutLocation("/api/programming/programming-submissions" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
