@@ -37,11 +37,10 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
 
     lecturesWithDetails: LectureWithDetails[] = [];
 
-    private readonly fileService: FileService;
-
     constructor(
         private readonly metisService: MetisService,
         private readonly lectureService: LectureService,
+        private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
