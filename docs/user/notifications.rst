@@ -174,6 +174,12 @@ The following tables gives an overview of all supported notification types:
      -
      - courseTitle(0), messageContent(1), messageCreationDate(2), messageAuthor(3), answerMessageContent(4), answerMessageCreationDate(5), answerMessageAuthor(6)
 
+   * - CONVERSATION_USER_MENTIONED
+     - X
+     - X
+     - X
+     - courseTitle(0), messageContent(1), messageCreationDate(2), messageAuthor(3), answerMessageContent(4), answerMessageCreationDate(5), answerMessageAuthor(6), conversationName(7), imageUrl(8), userId(9), postingId(10), parentPostId(11)
+
    * - CONVERSATION_CREATE_GROUP_CHAT
      - X
      - X
@@ -402,6 +408,17 @@ The following tables gives an overview of all supported notification types:
      -
      - courseTitle(0), exerciseTitle(1)
 
+   * - DATA_EXPORT_CREATED
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
+
+   * - DATA_EXPORT_FAILED
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
 
 
 
