@@ -54,9 +54,356 @@ Overview
 
 The following tables gives an overview of all supported notification types:
 
-|supported-notification-types-overview-1|
-|supported-notification-types-overview-2|
-|supported-notification-types-overview-3|
+.. list-table:: Notification Types
+   :widths: 20 10 10 10 150
+   :header-rows: 1
+
+   * - NotificationType
+     - Push
+     - Web
+     - Email
+     - PlaceholderValues
+
+
+   * - **Course-Wide Discussion Notifications**
+     -
+     -
+     -
+     -
+
+   * - NEW_COURSE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4)
+
+   * - NEW_REPLY_FOR_COURSE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4), answerPostContent(5), answerPostCreationDate(6), answerPostAuthor(7)
+
+   * - NEW_ANNOUNCEMENT_POST
+     - X
+     - X
+     - X
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4)
+
+   * - **Exercise Notifications**
+     -
+     -
+     -
+     -
+
+   * - EXERCISE_RELEASED
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
+
+   * - EXERCISE_PRACTICE
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
+
+   * - EXERCISE_SUBMISSION_ASSESSED
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseType(1), exerciseTitle(2)
+
+   * - FILE_SUBMISSION_SUCCESSFUL
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
+
+   * - NEW_EXERCISE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4), exerciseTitle(5)
+
+   * - NEW_REPLY_FOR_EXERCISE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4), answerPostContent(5), answerPostCreationDate(6), answerPostAuthor(7), exerciseTitle(8)
+
+   * - **Lecture Notifications**
+     -
+     -
+     -
+     -
+
+   * - ATTACHMENT_CHANGE
+     - X
+     - X
+     - X
+     - courseTitle(0), attachmentName(1), exerciseName/lectureName(2)
+
+   * - NEW_LECTURE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4), lectureTitle(5)
+
+   * - NEW_REPLY_FOR_LECTURE_POST
+     - X
+     - X
+     -
+     - courseTitle(0), postTitle(1), postContent(2), postCreationDate(3), postAuthor(4), answerPostContent(5), answerPostCreationDate(6), answerPostAuthor(7), lectureTitle(8)
+
+   * - **New message/replies Notifications**
+     -
+     -
+     -
+     -
+
+   * - CONVERSATION_NEW_MESSAGE
+     - X
+     - X
+     -
+     - newMessageChannel: courseTitle(0), messageContent(1), messageCreationDate(2), channelName(3), author(4); newMessageGroupChat: courseTitle(0), messageContent(1), messageCreationDate(2), author(3); newMessageDirect: courseTitle(0), messageContent(1), messageCreationDate(2), author(3)
+
+
+   * - CONVERSATION_NEW_REPLY_MESSAGE
+     - X
+     - X
+     -
+     - courseTitle(0), messageContent(1), messageCreationDate(2), messageAuthor(3), answerMessageContent(4), answerMessageCreationDate(5), answerMessageAuthor(6)
+
+   * - CONVERSATION_CREATE_GROUP_CHAT
+     - X
+     - X
+     -
+     - courseTitle(0), responsibleForActionName(1)
+
+   * - CONVERSATION_ADD_USER_CHANNEL
+     - X
+     - X
+     -
+     - courseTitle(0), channelName(1), responsibleForActionName(2)
+
+   * - CONVERSATION_ADD_USER_GROUP_CHAT
+     -
+     - X
+     -
+     - courseTitle(0), responsibleForActionName(1)
+
+   * - CONVERSATION_REMOVE_USER_GROUP_CHAT
+     -
+     - X
+     -
+     - courseTitle(0), responsibleForActionName(1)
+
+   * - CONVERSATION_REMOVE_USER_CHANNEL
+     -
+     - X
+     -
+     - courseTitle(0), channelName(1), responsibleForActionName(2)
+
+   * - CONVERSATION_DELETE_CHANNEL
+     -
+     - X
+     -
+     - courseTitle(0), channelName(1), responsibleForActionName(2)
+
+   * - **Tutorial Group Notifications**
+     -
+     -
+     -
+     -
+
+   * - TUTORIAL_GROUP_REGISTRATION_STUDENT
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1), nameUserResponsibleForAction(2)
+
+   * - TUTORIAL_GROUP_DEREGISTRATION_STUDENT
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1), nameUserResponsibleForAction(2)
+
+   * - TUTORIAL_GROUP_DELETED
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1)
+
+   * - TUTORIAL_GROUP_UPDATED
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1)
+
+   * - **Tutor Notifications**
+     -
+     -
+     -
+     -
+
+   * - TUTORIAL_GROUP_REGISTRATION_TUTOR
+     - X
+     - X
+     - X
+     - courseTitle(0), studentName(1), tutorialGroupTitle(2), nameUserResponsibleForAction(3)
+
+   * - TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR
+     - X
+     - X
+     - X
+     - courseTitle(0), numberOfStudents(1), tutorialGroupTitle(2), nameUserResponsibleForAction(3)
+
+   * - TUTORIAL_GROUP_DEREGISTRATION_TUTOR
+     - X
+     - X
+     - X
+     - courseTitle(0), studentName(1), tutorialGroupTitle(2), nameUserResponsibleForAction(3)
+
+   * - TUTORIAL_GROUP_ASSIGNED
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1), nameUserResponsibleForAction(2)
+
+   * - TUTORIAL_GROUP_UNASSIGNED
+     - X
+     - X
+     - X
+     - courseTitle(0), tutorialGroupTitle(1), nameUserResponsibleForAction(2)
+
+   * - **Editor Notifications**
+     -
+     -
+     -
+     -
+
+   * - PROGRAMMING_TEST_CASES_CHANGED
+     -
+     - X
+     -
+     - courseTitle(0), exerciseTitle(1)
+
+   * - **Instructor Notifications**
+     -
+     -
+     -
+     -
+
+   * - COURSE_ARCHIVE_STARTED
+     - X
+     -
+     -
+     - courseTitle(0)
+
+   * - COURSE_ARCHIVE_FINISHED_WITHOUT_ERRORS
+     -
+     - X
+     -
+     - courseTitle(0)
+
+   * - COURSE_ARCHIVE_FINISHED_WITH_ERRORS
+     -
+     - X
+     -
+     - courseTitle(0), archiveErrors(1)
+
+   * - COURSE_ARCHIVE_FAILED
+     -
+     - X
+     -
+     - courseTitle(0), archiveErrors(1)
+
+   * - EXAM_ARCHIVE_STARTED
+     -
+     - X
+     -
+     - courseTitle(0), examTitle(1)
+
+   * - EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS
+     -
+     - X
+     -
+     - courseTitle(0), examTitle(1)
+
+   * - EXAM_ARCHIVE_FINISHED_WITH_ERRORS
+     -
+     - X
+     -
+     - courseTitle(0), examTitle(1), archiveErrors(2)
+
+   * - EXAM_ARCHIVE_FAILED
+     -
+     - X
+     -
+     - courseTitle(0), examTitle(1), archiveErrors(2)
+
+   * - **Unassigned Notifications**
+     -
+     -
+     -
+     -
+
+   * - EXERCISE_UPDATED
+     -
+     - X
+     -
+     - courseTitle(0), exerciseTitle(1)
+
+   * - QUIZ_EXERCISE_STARTED
+     - X
+     - X
+     -
+     - courseTitle(0), exerciseTitle(1)
+
+   * - DUPLICATE_TEST_CASE
+     - X
+     - X
+     - X
+     - courseTitle(0)
+
+   * - ILLEGAL_SUBMISSION
+     -
+     - X
+     -
+     - courseTitle(0), exerciseTitle(1)
+
+   * - NEW_PLAGIARISM_CASE_STUDENT
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseTitle(1)
+
+   * - NEW_CPC_PLAGIARISM_CASE_STUDENT
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseType(1) exerciseTitle(2)
+
+   * - PLAGIARISM_CASE_VERDICT_STUDENT
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseType(1) exerciseTitle(2)
+
+   * - PLAGIARISM_CASE_REPLY
+     - X
+     - X
+     - X
+     - courseTitle(0), exerciseType(1) exerciseTitle(2)
+
+   * - NEW_MANUAL_FEEDBACK_REQUEST
+     -
+     - X
+     -
+     - courseTitle(0), exerciseTitle(1)
+
+
+
 
 Settings
 ^^^^^^^^
