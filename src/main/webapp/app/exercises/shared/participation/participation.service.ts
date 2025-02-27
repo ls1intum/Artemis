@@ -38,7 +38,6 @@ export class ParticipationService {
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
         const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
-        // ToDO: Missing
         return this.http
             .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
@@ -51,7 +50,6 @@ export class ParticipationService {
     }
 
     find(participationId: number): Observable<EntityResponseType> {
-        // ToDo: Missing
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
@@ -61,7 +59,6 @@ export class ParticipationService {
      * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
-        // ToDO: Missing
         return this.http
             .get<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));

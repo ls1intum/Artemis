@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/core/admin/") // ToDo: no client occurrences found (yet)
+@RequestMapping("api/core/admin/")
 public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);

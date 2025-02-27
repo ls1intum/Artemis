@@ -35,7 +35,7 @@ public class IrisVariantsResource {
     }
 
     /**
-     * GET iris/variants/{feature}: Retrieve all available variants offered by Pyris for a certain feature
+     * GET variants/{feature}: Retrieve all available variants offered by Pyris for a certain feature
      *
      * @param featureRaw the feature for which to retrieve the variants
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a List of the variants

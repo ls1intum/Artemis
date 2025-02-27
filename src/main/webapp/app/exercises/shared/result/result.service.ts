@@ -61,8 +61,6 @@ export class ResultService implements IResultService {
     // Size of tinyInt in SQL, that is used to store these values
 
     find(resultId: number): Observable<EntityResponseType> {
-        // ToDo: Not found, even used?
-
         return this.http
             .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultResponseDatesFromServer(res)));

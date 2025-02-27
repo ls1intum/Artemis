@@ -137,8 +137,6 @@ public class BonusResource {
     @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
-        // ToDo: not used by client
-
         // TODO: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 

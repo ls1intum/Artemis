@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/core/admin/")// ToDo: no client occurrences found (yet)
+@RequestMapping("api/core/admin/")
 public class AdminDataExportResource {
 
     private final DataExportService dataExportService;

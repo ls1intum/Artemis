@@ -1122,7 +1122,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /api/core/courses/:courseId/members/search: Searches for members of a course
+     * GET /courses/:courseId/members/search: Searches for members of a course
      *
      * @param courseId    id of the course
      * @param loginOrName the search term to search login and names by

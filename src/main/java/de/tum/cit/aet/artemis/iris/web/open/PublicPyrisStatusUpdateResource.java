@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
  */
 @RestController
 @Profile(PROFILE_IRIS)
-@RequestMapping("api/iris/public/pyris/") // ToDo: Adapt Pyris to use the new path
+@RequestMapping("api/iris/public/pyris/")
 public class PublicPyrisStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;
@@ -134,7 +134,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/iris/public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     * {@code POST public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -158,7 +158,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/iris/public/pyris/pipelines/lecture-chat/runs/{runId}/status} : Set the status of a Lecture Chat job.
+     * {@code POST public/pyris/pipelines/lecture-chat/runs/{runId}/status} : Set the status of a Lecture Chat job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -232,7 +232,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/iris/public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
+     * {@code POST public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -257,7 +257,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/iris/public/pyris/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
+     * {@code POST public/pyris/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update

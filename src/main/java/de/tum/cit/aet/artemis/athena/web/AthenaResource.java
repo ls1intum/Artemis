@@ -153,7 +153,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
+     * GET text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
@@ -168,7 +168,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
+     * GET programming-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
@@ -182,7 +182,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
+     * GET modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
@@ -196,7 +196,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
+     * GET courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
      *
      * @param courseId the id of the course the text exercise belongs to
      * @return 200 Ok if successful with the modules as body
@@ -208,7 +208,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     * GET courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
      * @param courseId the id of the course the programming exercise belongs to
      * @return 200 Ok if successful with the modules as body
@@ -220,7 +220,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
+     * GET courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
      *
      * @param courseId the id of the course the modeling exercise belongs to
      * @return 200 Ok if successful with the modules as body
@@ -244,7 +244,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
@@ -261,7 +261,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/public/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
@@ -277,7 +277,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
@@ -293,7 +293,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/public/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check

@@ -56,7 +56,7 @@ public class IrisSettingsResource {
     }
 
     /**
-     * GET iris/global-iris-settings: Retrieve the raw iris settings for the course.
+     * GET global-iris-settings: Retrieve the raw iris settings for the course.
      *
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
      */
