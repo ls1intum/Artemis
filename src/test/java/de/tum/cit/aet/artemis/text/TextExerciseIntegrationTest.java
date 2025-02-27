@@ -155,7 +155,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitEnglishTextExercise() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
-        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
         textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
         Optional<TextSubmission> result = textSubmissionRepository.findById(textSubmission.getId());
@@ -1391,7 +1391,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);
@@ -1402,7 +1402,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);

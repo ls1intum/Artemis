@@ -130,7 +130,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
@@ -142,7 +142,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
         assertThat(returnedPosts).isNull();
     }
 
@@ -151,7 +151,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testGetPlagiarismPostsForCourse_BadRequest() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
         assertThat(returnedPosts).isNull();
     }
 

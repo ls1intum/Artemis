@@ -275,13 +275,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentOfCourse() throws Exception {
-        final var result = request.get("/api/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
+        final var result = request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK,
+                LectureUnitForLearningPathNodeDetailsDTO.class);
         assertThat(result).isEqualTo(LectureUnitForLearningPathNodeDetailsDTO.of(textUnit));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentNotInCourse() throws Exception {
-        request.get("/api/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
     }
 }

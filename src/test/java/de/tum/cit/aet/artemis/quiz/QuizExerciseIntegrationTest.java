@@ -1573,7 +1573,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             quizQuestion.setInvalid(true);
         }
-        request.delete("/api/exercises/" + quizExercise.getId() + "/reset", OK);
+        request.delete("/api/exercise/exercises/" + quizExercise.getId() + "/reset", OK);
 
         quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
