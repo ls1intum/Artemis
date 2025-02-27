@@ -339,8 +339,9 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         List<Team> destinationTeamsInDatabase = teamRepo.findAllByExerciseId(destinationExercise.getId());
         assertThat(actualTeamsAfterImport).as("Imported teams were persisted into destination exercise.").isEqualTo(destinationTeamsInDatabase);
 
-        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison().ignoringFields("id", "exercise", "createdDate", "lastModifiedDate")
-                .usingOverriddenEquals().ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
+        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison()
+                .ignoringFields("id", "exercise", "createdDate", "createdBy", "lastModifiedDate", "lastModifiedBy").usingOverriddenEquals()
+                .ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {

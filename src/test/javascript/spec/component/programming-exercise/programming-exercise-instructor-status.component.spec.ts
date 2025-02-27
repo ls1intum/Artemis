@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/entities/result.model';
@@ -16,6 +15,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
@@ -26,11 +28,13 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
             ],
         })
             .compileComponents()

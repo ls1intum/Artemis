@@ -37,8 +37,6 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
 
     lecturesWithDetails: LectureWithDetails[] = [];
 
-    private readonly fileService: FileService;
-
     constructor(
         private readonly metisService: MetisService,
         private readonly lectureService: LectureService,

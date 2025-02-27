@@ -94,11 +94,16 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     togglePin() {
         this.reactionsBar.togglePin();
         this.showDropdown = false;
+        this.changeDetector.detectChanges();
     }
 
     deletePost() {
         this.reactionsBar.deletePosting();
         this.showDropdown = false;
+    }
+
+    forwardMessage() {
+        this.reactionsBar.forwardMessage();
     }
 
     checkIfPinned(): DisplayPriority {

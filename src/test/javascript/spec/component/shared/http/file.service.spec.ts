@@ -20,7 +20,6 @@ describe('FileService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), FileService],
         });
         fileService = TestBed.inject(FileService);

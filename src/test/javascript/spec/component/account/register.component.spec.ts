@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { RegisterService } from 'app/account/register/register.service';
 import { RegisterComponent } from 'app/account/register/register.component';
@@ -13,6 +12,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Register Component Tests', () => {
     describe('RegisterComponent', () => {
@@ -22,13 +22,14 @@ describe('Register Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, RegisterComponent],
+                imports: [RegisterComponent],
                 providers: [
                     FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
                     { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
                 ],
             })
                 .overrideTemplate(RegisterComponent, '')

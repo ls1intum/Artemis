@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static java.util.Map.entry;
-
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
 
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map
@@ -82,14 +83,24 @@ public class StaticCodeAnalysisConfigurer {
 
     private static final List<String> CATEGORY_NAMES_RUBOCOP = List.of("Bundler", "Gemspec", "Layout", "Lint", "Metrics", "Migration", "Naming", "Security", "Style");
 
+    private static final List<String> CATEGORY_NAMES_DART_ANALYZE = List.of("TODO", "HINT", "COMPILE_TIME_ERROR", "CHECKED_MODE_COMPILE_TIME_ERROR", "STATIC_WARNING",
+            "SYNTACTIC_ERROR", "LINT");
+
     // @formatter:off
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.ofEntries(
-            entry(ProgrammingLanguage.C, createDefaultCategoriesForC()),
-            entry(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava()),
-            entry(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF)),
-            entry(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP)),
-            entry(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift())
-    );
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories;
+
+    static {
+        Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> map = new EnumMap<>(ProgrammingLanguage.class);
+        map.put(ProgrammingLanguage.C, createDefaultCategoriesForC());
+        map.put(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE));
+        map.put(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
+        map.put(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF));
+        map.put(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP));
+        map.put(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY));
+        map.put(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
+
+        languageToDefaultCategories = Collections.unmodifiableMap(map);
+    }
     // @formatter:on
 
     /**

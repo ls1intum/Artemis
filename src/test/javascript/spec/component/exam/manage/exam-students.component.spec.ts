@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,11 +16,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
 import { ExamUser } from 'app/entities/exam/exam-user.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -60,7 +62,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [NgxDatatableModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),
@@ -70,7 +72,14 @@ describe('ExamStudentsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }],
+            providers: [
+                provideRouter([]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamStudentsComponent);

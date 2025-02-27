@@ -1,7 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
-import { ArtemisTestModule } from '../test.module';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -12,7 +11,6 @@ describe('QuizPoolService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting(), QuizPoolService],
         });
         quizPoolService = TestBed.inject(QuizPoolService);

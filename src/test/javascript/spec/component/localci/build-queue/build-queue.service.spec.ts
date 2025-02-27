@@ -29,8 +29,8 @@ describe('BuildQueueService', () => {
     filterOptions.buildAgentAddress = '[127.0.0.1]:5701';
     filterOptions.buildDurationFilterLowerBound = 1;
     filterOptions.buildDurationFilterUpperBound = 10;
-    filterOptions.buildStartDateFilterFrom = dayjs('2024-01-01');
-    filterOptions.buildStartDateFilterTo = dayjs('2024-01-02');
+    filterOptions.buildSubmissionDateFilterFrom = dayjs('2024-01-01');
+    filterOptions.buildSubmissionDateFilterTo = dayjs('2024-01-02');
     filterOptions.status = 'SUCCESSFUL';
 
     const buildLogEntries: BuildLogEntry[] = [
@@ -48,14 +48,13 @@ describe('BuildQueueService', () => {
         expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);
         expect(req.request.params.get('buildDurationLower')).toBe(filterOptions.buildDurationFilterLowerBound?.toString());
         expect(req.request.params.get('buildDurationUpper')).toBe(filterOptions.buildDurationFilterUpperBound?.toString());
-        expect(req.request.params.get('startDate')).toBe(filterOptions.buildStartDateFilterFrom?.toISOString());
-        expect(req.request.params.get('endDate')).toBe(filterOptions.buildStartDateFilterTo?.toISOString());
+        expect(req.request.params.get('startDate')).toBe(filterOptions.buildSubmissionDateFilterFrom?.toISOString());
+        expect(req.request.params.get('endDate')).toBe(filterOptions.buildSubmissionDateFilterTo?.toISOString());
         expect(req.request.params.get('buildStatus')).toBe(filterOptions.status);
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -538,7 +537,7 @@ describe('BuildQueueService', () => {
     });
 
     it('should return build job statistics', fakeAsync(() => {
-        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0 };
+        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0, timeOutBuilds: 0, missingBuilds: 0 };
 
         service.getBuildJobStatistics(SpanType.WEEK).subscribe((data) => {
             expect(data).toEqual(expectedResponse);

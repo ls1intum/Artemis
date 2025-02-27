@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
@@ -56,7 +57,8 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermiss
 // TODO: rewrite this test to use LocalVC instead of GitLab
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, "gitlab", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS, PROFILE_APOLLON })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, "gitlab", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
+        PROFILE_APOLLON })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
