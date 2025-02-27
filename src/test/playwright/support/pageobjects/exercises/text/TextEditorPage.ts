@@ -1,7 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { getExercise } from '../../../utils';
 import { Fixtures } from '../../../../fixtures/fixtures';
-import { EXERCISE_BASE } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the text editor page.

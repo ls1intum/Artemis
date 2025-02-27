@@ -5,7 +5,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 import { Lecture } from 'app/entities/lecture.model';
 import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
-import { BASE_API, COURSE_ADMIN_BASE, COURSE_BASE, Exercise } from '../constants';
+import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
 import { Exam } from 'app/entities/exam/exam.model';

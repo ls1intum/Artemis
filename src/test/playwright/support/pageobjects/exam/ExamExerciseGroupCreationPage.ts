@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { AdditionalData, COURSE_BASE, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
+import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
 import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';

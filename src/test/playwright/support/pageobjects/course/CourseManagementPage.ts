@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
-import { COURSE_ADMIN_BASE, COURSE_BASE } from '../../constants';
+import { COURSE_ADMIN_BASE } from '../../constants';
 import { Course } from 'app/entities/course.model';
 
 /**

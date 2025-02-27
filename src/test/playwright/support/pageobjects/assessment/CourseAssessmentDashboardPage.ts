@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../../constants';
 import { Commands } from '../../commands';
 
 export class CourseAssessmentDashboardPage {

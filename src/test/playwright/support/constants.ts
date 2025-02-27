@@ -5,9 +5,7 @@ import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programmi
 
 // Requests
 export const BASE_API = 'api';
-export const EXERCISE_BASE = `${BASE_API}/exercises`;
 
-export const COURSE_BASE = `${BASE_API}/courses`;
 export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
 
 export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming/programming-exercises`;

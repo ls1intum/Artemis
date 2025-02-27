@@ -4,7 +4,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { UserCredentials } from '../../users';
 import { Commands } from '../../commands';
 import { ExamStartEndPage } from './ExamStartEndPage';
-import { COURSE_BASE } from '../../constants';
 
 export class ExamTestRunPage {
     private readonly page: Page;

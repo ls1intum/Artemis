@@ -1,4 +1,3 @@
-import { EXERCISE_BASE } from '../../../constants';
 import { getExercise } from '../../../utils';
 import { Page } from '@playwright/test';
 

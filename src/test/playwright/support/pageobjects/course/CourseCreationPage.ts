@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { COURSE_ADMIN_BASE, COURSE_BASE } from '../../constants';
+import { COURSE_ADMIN_BASE } from '../../constants';
 import { enterDate } from '../../utils';
 
 /**
