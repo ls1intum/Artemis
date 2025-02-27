@@ -15,7 +15,7 @@ export class NavigationBar {
      * Opens the course management page via the menu at the top and waits until it is loaded.
      */
     async openCourseManagement() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/course-management-overview*`);
+        const responsePromise = this.page.waitForResponse(`api/core/courses/course-management-overview*`);
         await this.page.goto('/course-management');
         await responsePromise;
         await this.page.waitForURL('**/course-management**');

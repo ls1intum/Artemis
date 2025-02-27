@@ -68,11 +68,11 @@ export abstract class AbstractExerciseAssessmentPage {
                 if (accept) {
                     responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/submissions/*/text-assessment-after-complaint`);
                 } else {
-                    responsePromise = this.page.waitForResponse(`${BASE_API}/complaints/*/response`);
+                    responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/complaints/*/response`);
                 }
                 break;
             case ExerciseType.MODELING:
-                responsePromise = this.page.waitForResponse(`${BASE_API}/complaints/*/response`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/complaints/*/response`);
                 break;
             case ExerciseType.FILE_UPLOAD:
                 responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/file-upload-submissions/*/assessment-after-complaint`);

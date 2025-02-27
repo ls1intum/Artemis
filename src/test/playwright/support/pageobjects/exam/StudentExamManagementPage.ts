@@ -10,13 +10,13 @@ export class StudentExamManagementPage {
     }
 
     async clickGenerateStudentExams() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/generate-student-exams`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/generate-student-exams`);
         await this.page.click('#generateStudentExamsButton');
         await responsePromise;
     }
 
     async clickRegisterCourseStudents() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/register-course-students`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/register-course-students`);
         await this.page.click('#register-course-students');
         return await responsePromise;
     }

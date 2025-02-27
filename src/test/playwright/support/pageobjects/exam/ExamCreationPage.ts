@@ -135,7 +135,7 @@ export class ExamCreationPage {
      * @returns Response object.
      */
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams`);
         await this.page.locator('#save-exam').click();
         return await responsePromise;
     }
@@ -145,7 +145,7 @@ export class ExamCreationPage {
      * @returns Response object.
      */
     async update() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams`);
         await this.page.locator('#save-exam').click();
         return await responsePromise;
     }

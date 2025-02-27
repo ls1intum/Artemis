@@ -27,13 +27,13 @@ export class TextEditorPage {
     }
 
     async saveAndContinue() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/text-submissions`);
+        const responsePromise = this.page.waitForResponse(`api/text/exercises/*/text-submissions`);
         await this.page.click('#save');
         return await responsePromise;
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/text-submissions`);
+        const responsePromise = this.page.waitForResponse(`api/text/exercises/*/text-submissions`);
         await this.page.locator('#submit button').click();
         return await responsePromise;
     }

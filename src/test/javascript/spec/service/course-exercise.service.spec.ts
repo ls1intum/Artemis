@@ -134,7 +134,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([programmingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
+        requestAndExpectDateConversion('GET', `api/programming/courses//${course.id}/programming-exercises`, returnedFromService, programmingExercise);
         tick();
     }));
 
@@ -145,7 +145,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([modelingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
+        requestAndExpectDateConversion('GET', `api/modeling/courses//${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
         tick();
     }));
 
@@ -156,7 +156,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([textExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/text-exercises`, returnedFromService, textExercise);
+        requestAndExpectDateConversion('GET', `api/text/courses//${course.id}/text-exercises`, returnedFromService, textExercise);
         tick();
     }));
 
@@ -167,7 +167,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
+        requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
         tick();
     }));
 

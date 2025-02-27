@@ -78,7 +78,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the student group of the course
      * */
     async addStudentToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/students/${credentials.username}`);
+        const responsePromise = this.page.waitForResponse(`api/core/courses/*/students/${credentials.username}`);
         await this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName').locator('a').click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;
@@ -97,7 +97,7 @@ export class CourseManagementPage {
     }
 
     async updateCourse(course: Course) {
-        const response = this.page.waitForResponse(`${COURSE_BASE}/${course.id}`);
+        const response = this.page.waitForResponse(`api/core/courses/${course.id}`);
         await this.page.locator('#save-entity').click();
         await response;
     }

@@ -19,7 +19,7 @@ export class ExamStartEndPage {
     }
 
     async pressStartWithWait() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/student-exams/*/conduction`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/*/conduction`);
         await this.page.locator('#start-exam').click();
         await responsePromise;
     }
@@ -33,7 +33,7 @@ export class ExamStartEndPage {
     }
 
     async pressFinish() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/student-exams/submit`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/submit`);
         await this.page.locator('#end-exam').click();
         return await responsePromise;
     }
@@ -59,7 +59,7 @@ export class ExamStartEndPage {
     }
 
     async pressShowSummary() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/student-exams/*/summary`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/*/summary`);
         await this.page.locator('#showExamSummaryButton').click();
         await responsePromise;
     }

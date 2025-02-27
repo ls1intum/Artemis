@@ -44,14 +44,14 @@ export class ExamExerciseGroupCreationPage {
     }
 
     async clickSave(): Promise<ExerciseGroup> {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         const response = await responsePromise;
         return response.json();
     }
 
     async update() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         await responsePromise;
     }

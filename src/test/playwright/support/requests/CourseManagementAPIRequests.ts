@@ -163,7 +163,7 @@ export class CourseManagementAPIRequests {
     }
 
     private async addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
-        await this.page.request.post(`${COURSE_BASE}/${courseId}/${roleIdentifier}/${username}`);
+        await this.page.request.post(`api/core/courses/${courseId}/${roleIdentifier}/${username}`);
     }
 
     /**
@@ -184,7 +184,7 @@ export class CourseManagementAPIRequests {
             endDate,
             channelName: 'lecture-' + titleLowercase(title),
         };
-        const response = await this.page.request.post(`${BASE_API}/lectures`, { data });
+        const response = await this.page.request.post(`api/lecture}/lectures`, { data });
         return response.json();
     }
 
@@ -194,7 +194,7 @@ export class CourseManagementAPIRequests {
      * @param lectureId - The ID of the lecture to be deleted.
      */
     async deleteLecture(lectureId: number) {
-        await this.page.request.delete(`${BASE_API}/lectures/${lectureId}`);
+        await this.page.request.delete(`api/lecture/lectures/${lectureId}`);
     }
 
     async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
@@ -205,7 +205,7 @@ export class CourseManagementAPIRequests {
             ended: false,
             numberOfExamSessions: 0,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        const response = await this.page.request.post(`api/exam/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();
     }
 }
