@@ -1772,8 +1772,8 @@ public class ProgrammingExerciseTestService {
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         exercise.setProblemStatement(String.format("""
                 Problem statement
-                ![mountain.jpg](/api/files/markdown/%s)
-                <img src="/api/files/markdown/%s" width="400">
+                ![mountain.jpg](/api/core/files/markdown/%s)
+                <img src="/api/core/files/markdown/%s" width="400">
                 """, embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream(),

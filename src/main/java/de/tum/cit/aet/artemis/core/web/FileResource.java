@@ -220,7 +220,7 @@ public class FileResource {
 
         var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        var fileUpload = fileUploadService.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var fileUpload = fileUploadService.findByPath("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
             return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);

@@ -94,7 +94,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     void autoIngestionWhenAttachmentUnitCreatedAndAutoUpdateEnabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("/api/files/temp/example.txt");
+        this.attachment.setLink("/api/core/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
@@ -112,7 +112,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     void noAutoIngestionWhenAttachmentUnitCreatedAndAutoUpdateDisabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("/api/files/temp/example.txt");
+        this.attachment.setLink("/api/core/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");

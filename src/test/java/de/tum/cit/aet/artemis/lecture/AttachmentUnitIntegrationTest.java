@@ -92,7 +92,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("/api/files/temp/example.txt");
+        this.attachment.setLink("/api/core/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
