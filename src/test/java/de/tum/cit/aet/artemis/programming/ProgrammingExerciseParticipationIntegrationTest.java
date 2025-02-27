@@ -714,7 +714,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExerciseWithAuxRepo);
 
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
-            PATH_PREFIX = "/api/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
+            PATH_PREFIX = "/api/programming/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
         }
 
         @Test
@@ -803,7 +803,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
                     any(Boolean.class));
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
-            PATH_PREFIX = "/api/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
+            PATH_PREFIX = "/api/programming/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
         }
 
         @Test

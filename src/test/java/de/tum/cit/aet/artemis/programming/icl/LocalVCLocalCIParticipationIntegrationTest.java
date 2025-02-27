@@ -90,7 +90,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var user = userTestRepository.getUser();
         vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,
                 AuthenticationMechanism.SSH, "", ""));
-        var li = request.getList("/api/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
+        var li = request.getList("/api/programming/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
         assertThat(li.size()).isEqualTo(1);
         assertThat(li.getFirst().userId()).isEqualTo(user.getId());
     }
