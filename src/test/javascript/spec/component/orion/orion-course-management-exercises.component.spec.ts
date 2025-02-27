@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -10,7 +9,6 @@ describe('OrionCourseManagementExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [OrionCourseManagementExercisesComponent, MockComponent(CourseManagementExercisesComponent)],
         })
             .compileComponents()

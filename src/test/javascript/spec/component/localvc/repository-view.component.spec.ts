@@ -18,7 +18,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -34,7 +33,6 @@ describe('RepositoryViewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DomainService, useValue: mockDomainService },
@@ -156,7 +154,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
@@ -195,7 +193,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toBeUndefined();
+        expect(component.participation).toEqual({});
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.AUXILIARY_REPOSITORY, mockAuxiliaryRepository]);
@@ -204,7 +202,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 
@@ -341,7 +338,6 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
         expect(component.paramSub?.closed).toBeTrue();
     });
 });

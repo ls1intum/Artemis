@@ -7,7 +7,6 @@ import { CompetencyManagementComponent } from 'app/course/competencies/competenc
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -32,6 +31,10 @@ import {
 } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -48,7 +51,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbProgressbar],
+            imports: [NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
                 MockHasAnyAuthorityDirective,
@@ -83,6 +86,9 @@ describe('CompetencyManagementComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();

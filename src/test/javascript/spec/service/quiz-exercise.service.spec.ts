@@ -8,7 +8,6 @@ import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exer
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
 import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -44,7 +43,6 @@ describe('QuizExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

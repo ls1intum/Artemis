@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ArtemisTestModule } from '../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -25,6 +24,10 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { ElementRef } from '@angular/core';
+import { ComplaintType } from 'app/entities/complaint.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -67,7 +70,6 @@ describe('ComplaintsStudentViewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ComplaintsStudentViewComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -89,6 +91,8 @@ describe('ComplaintsStudentViewComponent', () => {
                     provide: CourseManagementService,
                     useClass: MockCourseManagementService,
                 },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -144,6 +148,39 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
             expect(userMock).toHaveBeenCalledOnce();
+        }));
+
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            component.exercise = examExercise;
+            component.result = result;
+            component.exam = defaultExam;
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+            const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+
+            fixture.detectChanges();
+
+            //Check if button is available
+            expect(component.complaint).toBeUndefined();
+            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
+
+            // Mock complaint scrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            const button = fixture.debugElement.nativeElement.querySelector('#complain');
+            button.click();
+
+            fixture.detectChanges();
+
+            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         }));
 
         it('should be visible on test run', fakeAsync(() => {
@@ -202,6 +239,71 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should initialize with complaint', fakeAsync(() => {
             testInitWithResultStub(of({ body: complaint } as EntityResponseType));
             expect(component.complaint).toStrictEqual(complaint);
+        }));
+
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            testInitWithResultStub(of());
+            const courseWithMaxComplaints: Course = {
+                ...course,
+                maxComplaints: 3,
+            };
+            const exerciseWithMaxComplaints: Exercise = {
+                ...courseExercise,
+                course: courseWithMaxComplaints,
+            };
+            component.course = courseWithMaxComplaints;
+            component.exercise = exerciseWithMaxComplaints;
+
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+            component.remainingNumberOfComplaints = 1;
+
+            fixture.detectChanges();
+
+            // Mock complaint scrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            const button = fixture.debugElement.nativeElement.querySelector('#complain');
+            button.click();
+
+            fixture.detectChanges();
+
+            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            tick(); // Wait for update to happen
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+        }));
+
+        it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            testInitWithResultStub(of());
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+
+            fixture.detectChanges();
+
+            //Check if button is available
+            expect(component.complaint).toBeUndefined();
+
+            // Mock complaint scrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
+            button.click();
+
+            fixture.detectChanges();
+
+            expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
+            tick(); // Wait for update to happen
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         }));
 
         it('should not be available if before or at assessment due date', fakeAsync(() => {

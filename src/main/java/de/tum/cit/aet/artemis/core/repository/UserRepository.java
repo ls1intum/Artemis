@@ -85,6 +85,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
+    List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
 
@@ -98,6 +100,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+
+    @Query("""
+            SELECT u
+            FROM User u
+            LEFT JOIN FETCH u.groups
+            LEFT JOIN FETCH u.authorities
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
+            WHERE u.login = :login
+                AND clp.course.id = :courseId
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
@@ -159,8 +173,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMUsageAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
     Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -583,6 +597,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
 
+    List<User> findAllByIdIn(List<Long> ids);
+
     /**
      * Searches for users by their login or full name.
      *
@@ -742,10 +758,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.irisAccepted = :acceptDatetime
+            SET user.externalLLMUsageAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
-    void updateIrisAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+    void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
     @Query("""
             SELECT DISTINCT user
@@ -889,6 +905,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
+    }
+
+    /**
+     * Get user with user groups and authorities of currently logged-in user
+     *
+     * @param courseId the id of the course for which to load the user and the course learner profile
+     * @return currently logged-in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
     }
 
     /**

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -11,6 +10,9 @@ import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ImprintComponent', () => {
     let component: ImprintComponent;
@@ -19,7 +21,6 @@ describe('ImprintComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
@@ -27,6 +28,8 @@ describe('ImprintComponent', () => {
                     provide: SessionStorageService,
                     useClass: MockSyncStorage,
                 },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);

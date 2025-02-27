@@ -49,13 +49,13 @@ public class AttachmentUnitService {
 
     private final Optional<IrisSettingsRepository> irisSettingsRepository;
 
-    private final CompetencyProgressApi competencyProgressService;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressApi competencyProgressService, LectureUnitService lectureUnitService) {
+            Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -63,7 +63,7 @@ public class AttachmentUnitService {
         this.slideRepository = slideRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.irisSettingsRepository = irisSettingsRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
 
@@ -157,7 +157,7 @@ public class AttachmentUnitService {
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
         existingAttachmentUnit.setCompetencyLinks(existingCompetencyLinks);
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit)));
 
         return savedAttachmentUnit;
     }

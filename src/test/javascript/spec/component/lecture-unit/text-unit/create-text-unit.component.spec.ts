@@ -10,10 +10,16 @@ import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../../test.module';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('CreateTextUnitComponent', () => {
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
@@ -21,7 +27,7 @@ describe('CreateTextUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
@@ -56,6 +62,11 @@ describe('CreateTextUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();

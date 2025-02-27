@@ -19,10 +19,11 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { ElementRef, signal } from '@angular/core';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
@@ -48,6 +49,11 @@ describe('LearningPathLectureUnitComponent', () => {
         visibleToStudents: true,
         source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
     };
+
+    MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+    MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+    // @ts-ignore
+    MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

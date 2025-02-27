@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -21,6 +20,7 @@ import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/en
 import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
+import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -31,7 +31,6 @@ describe('ProgrammingExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -383,7 +382,7 @@ describe('ProgrammingExercise Service', () => {
 
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
-        service.exportInstructorRepository(exerciseId, 'AUXILIARY', undefined).subscribe();
+        service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());

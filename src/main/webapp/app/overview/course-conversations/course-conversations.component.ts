@@ -40,6 +40,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/button.compon
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -169,6 +170,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: null | SavedPostStatus = null;
+    showOnlyPinned = false;
+    pinnedCount: number = 0;
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -206,6 +209,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
         });
+    }
+
+    togglePinnedView(): void {
+        this.showOnlyPinned = !this.showOnlyPinned;
+    }
+
+    onPinnedCountChanged(newCount: number): void {
+        this.pinnedCount = newCount;
+        if (this.pinnedCount == 0 && this.showOnlyPinned) {
+            this.showOnlyPinned = false;
+        }
+        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {
@@ -265,7 +280,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.channelActions$
                 .pipe(
                     debounceTime(500),
-                    distinctUntilChanged((prev, curr) => prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name),
+                    distinctUntilChanged(
+                        (prev, curr) => curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
+                    ),
                     takeUntil(this.ngUnsubscribe),
                 )
                 .subscribe((channelAction) => {
@@ -604,5 +621,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.searchElement()!.nativeElement.focus();
         }
+    }
+
+    onTriggerNavigateToPost(post: Posting) {
+        let id = (post as Post)?.conversation?.id;
+        this.focusPostId = post.id;
+        this.openThreadOnFocus = false;
+        if (post.id === undefined) {
+            return;
+        } else if ((post as Post)?.conversation?.id === undefined) {
+            this.openThreadOnFocus = true;
+            id = (post as AnswerPost)?.post?.conversation?.id;
+            this.focusPostId = (post as AnswerPost)?.post?.id;
+        }
+
+        this.metisConversationService.setActiveConversation(id);
+        this.changeDetector.detectChanges();
     }
 }

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 
 describe('FormStatusBarComponent', () => {
@@ -8,7 +7,6 @@ describe('FormStatusBarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [],
         })

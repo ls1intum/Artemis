@@ -1,0 +1,38 @@
+.forwarded-message-container {
+    display: flex;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    position: relative;
+
+    .forwarded-message-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .forwarded-message-header {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .forwarded-message-author {
+        font-weight: bold;
+    }
+
+    .forwarded-message-body {
+        overflow: hidden;
+        max-height: 7rem;
+    }
+
+    .forwarded-message-body.expanded {
+        max-height: none;
+    }
+}
+
+.left-border-line {
+    background-color: var(--metis-gray);
+    width: 4px;
+    border-radius: 3px;
+    margin-right: 0.5rem;
+}

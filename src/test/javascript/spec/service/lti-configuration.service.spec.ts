@@ -11,7 +11,6 @@ describe('LtiConfigurationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), LtiConfigurationService],
         });
         service = TestBed.inject(LtiConfigurationService);

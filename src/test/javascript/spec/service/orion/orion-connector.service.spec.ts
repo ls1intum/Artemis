@@ -2,16 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Injector } from '@angular/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedUtilConnector, OrionState, OrionVCSConnector } from 'app/shared/orion/orion';
 import { AlertService } from 'app/core/util/alert.service';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
@@ -22,13 +23,13 @@ describe('OrionConnectorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 OrionConnectorService,
                 Injector,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
 
@@ -190,10 +191,10 @@ describe('OrionConnectorService', () => {
     });
 
     it('should forward selectRepository', () => {
-        serviceUnderTest.selectRepository(REPOSITORY.SOLUTION);
+        serviceUnderTest.selectRepository(RepositoryType.SOLUTION);
 
         expect((window as any).orionVCSConnector.selectRepository).toHaveBeenCalledOnce();
-        expect((window as any).orionVCSConnector.selectRepository).toHaveBeenCalledWith(REPOSITORY.SOLUTION);
+        expect((window as any).orionVCSConnector.selectRepository).toHaveBeenCalledWith(RepositoryType.SOLUTION);
     });
 
     it('should forward buildAndTestLocally', () => {

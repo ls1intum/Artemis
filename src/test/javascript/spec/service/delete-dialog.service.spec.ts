@@ -15,7 +15,6 @@ describe('Delete Dialog Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [DeleteDialogService, { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(DeleteDialogService);

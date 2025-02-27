@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -19,8 +18,15 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { provideHttpClient } from '@angular/common/http';
 
-describe('TextblockFeedbackEditorComponent', () => {
+describe('TextBlockFeedbackEditorComponent', () => {
     let component: TextBlockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
     let compiled: any;
@@ -29,7 +35,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip)],
             declarations: [
                 TextBlockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
@@ -45,6 +51,10 @@ describe('TextblockFeedbackEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
             ],
         }).compileComponents();
     });
@@ -147,7 +157,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on dismiss button click', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.MANUAL;
-        // @ts-ignore
+        //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
         fixture.detectChanges();
@@ -168,7 +178,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should set correctionStatus of the feedback to undefined on connection of feedback with the grading instruction', () => {
         // given
         component.feedback.correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
-        // @ts-ignore
+        //@ts-ignore
         jest.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
@@ -180,7 +190,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     it('should send assessment event if feedback type changed', () => {
         component.feedback.text = 'FeedbackSuggestion:accepted:Test';
-        // @ts-ignore
+        //@ts-ignore
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).toHaveBeenCalledOnce();
