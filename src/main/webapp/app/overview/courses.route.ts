@@ -222,7 +222,8 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,
-                loadChildren: () => import('./course-conversations/course-conversations.route').then((m) => m.routes),
+                pathMatch: 'full',
+                loadComponent: () => import('app/overview/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
