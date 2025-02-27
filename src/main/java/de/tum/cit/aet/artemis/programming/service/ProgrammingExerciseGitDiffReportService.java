@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,24 +14,24 @@ import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -59,23 +60,23 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final FileService fileService;
-
     private final GitDiffReportParserService gitDiffReportParserService;
+
+    private final ProfileService profileService;
 
     public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, FileService fileService,
-            GitDiffReportParserService gitDiffReportParserService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, GitDiffReportParserService gitDiffReportParserService,
+            ProfileService profileService) {
         this.gitService = gitService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.fileService = fileService;
         this.gitDiffReportParserService = gitDiffReportParserService;
+        this.profileService = profileService;
     }
 
     /**
@@ -113,7 +114,7 @@ public class ProgrammingExerciseGitDiffReportService {
         }
 
         try {
-            var newReport = generateReport(templateParticipation, solutionParticipation);
+            var newReport = createReportForTemplateWithSolution(templateParticipation.getVcsRepositoryUri(), solutionParticipation.getVcsRepositoryUri());
             newReport.setTemplateRepositoryCommitHash(templateHash);
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
@@ -183,14 +184,17 @@ public class ProgrammingExerciseGitDiffReportService {
     public ProgrammingExerciseGitDiffReport createReportForSubmissionWithTemplate(ProgrammingExercise exercise, ProgrammingSubmission submission)
             throws GitAPIException, IOException {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        Repository templateRepo = prepareTemplateRepository(templateParticipation);
+        var vcsRepositoryUri = ((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri();
 
-        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri(), submission.getCommitHash(),
-                false);
+        // TODO: for LocalVC, we should do that without checking out the repository
+        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
+        Repository templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
+        Repository submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
+
         var oldTreeParser = new FileTreeIterator(templateRepo);
-        var newTreeParser = new FileTreeIterator(repo1);
+        var newTreeParser = new FileTreeIterator(submissionRepository);
         var report = createReport(templateRepo, oldTreeParser, newTreeParser);
-        gitService.switchBackToDefaultBranchHead(repo1);
+        gitService.switchBackToDefaultBranchHead(submissionRepository);
         return report;
     }
 
@@ -225,18 +229,19 @@ public class ProgrammingExerciseGitDiffReportService {
      * Creates a new ProgrammingExerciseGitDiffReport for an exercise.
      * It will take the git-diff between the template and solution repositories and return all changes.
      *
-     * @param templateParticipation The participation for the template
-     * @param solutionParticipation The participation for the solution
+     * @param templateVcsRepositoryUri The vcsRepositoryUri of the template participation
+     * @param solutionVcsRepositoryUri The vcsRepositoryUri of the solution participation
      * @return The changes between template and solution
      * @throws GitAPIException If there was an issue with JGit
      */
-    private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
-        // TODO: in case of LocalVC, we should calculate the diff in the bare origin repository
-        Repository templateRepo = prepareTemplateRepository(templateParticipation);
-        var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
-        gitService.resetToOriginHead(solutionRepo);
-        gitService.pullIgnoreConflicts(solutionRepo);
+    private ProgrammingExerciseGitDiffReport createReportForTemplateWithSolution(VcsRepositoryUri templateVcsRepositoryUri, VcsRepositoryUri solutionVcsRepositoryUri)
+            throws GitAPIException, IOException {
+        Repository templateRepo;
+        Repository solutionRepo;
+        // TODO: for LocalVC, we should do that without checking out the repository
+        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
+        templateRepo = prepareRepository(templateVcsRepositoryUri);
+        solutionRepo = prepareRepository(solutionVcsRepositoryUri);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
@@ -245,14 +250,14 @@ public class ProgrammingExerciseGitDiffReportService {
     }
 
     /**
-     * Prepares the template repository for the git diff calculation by checking it out and resetting it to the origin head.
+     * Prepares a repository for the git diff calculation by checking it out and resetting it to the origin head.
      *
-     * @param templateParticipation The participation for the template
+     * @param vcsRepositoryUri The vcsRepositoryUri of the participation of the repository
      * @return The checked out template repository
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
-    private Repository prepareTemplateRepository(TemplateProgrammingExerciseParticipation templateParticipation) throws GitAPIException {
-        var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUri(), true);
+    private Repository prepareRepository(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
+        Repository templateRepo = gitService.getOrCheckoutRepository(vcsRepositoryUri, true);
         gitService.resetToOriginHead(templateRepo);
         gitService.pullIgnoreConflicts(templateRepo);
         return templateRepo;
@@ -269,34 +274,7 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
         var repositoryUri = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUri();
-        var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
-        var repo1Path = repo1.getLocalPath();
-        var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
-        FileSystemUtils.copyRecursively(repo1Path, repo2Path);
-        repo1 = gitService.checkoutRepositoryAtCommit(repo1, submission1.getCommitHash());
-        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUri);
-        repo2 = gitService.checkoutRepositoryAtCommit(repo2, submission2.getCommitHash());
-        return parseFilesAndCreateReport(repo1, repo2);
-    }
-
-    /**
-     * Parses the files of the given repositories and creates a new ProgrammingExerciseGitDiffReport containing the git-diff.
-     *
-     * @param repo1 The first repository
-     * @param repo2 The second repository
-     * @return The report with the changes between the two repositories at their checked out state
-     * @throws IOException     If an error occurs while accessing the file system
-     * @throws GitAPIException If an error occurs while accessing the git repository
-     */
-    @NotNull
-    private ProgrammingExerciseGitDiffReport parseFilesAndCreateReport(Repository repo1, Repository repo2) throws IOException, GitAPIException {
-        var oldTreeParser = new FileTreeIterator(repo1);
-        var newTreeParser = new FileTreeIterator(repo2);
-
-        var report = createReport(repo1, oldTreeParser, newTreeParser);
-        gitService.switchBackToDefaultBranchHead(repo1);
-        gitService.switchBackToDefaultBranchHead(repo2);
-        return report;
+        return generateReportForCommits(repositoryUri, submission1.getCommitHash(), submission2.getCommitHash());
     }
 
     /**
@@ -332,4 +310,75 @@ public class ProgrammingExerciseGitDiffReportService {
         return report.getTemplateRepositoryCommitHash().equals(templateHash) && report.getSolutionRepositoryCommitHash().equals(solutionHash);
     }
 
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a repository and two commit hashes.
+     *
+     * @param repositoryUri The repository for which the report should be created
+     * @param commitHash1   The first commit hash
+     * @param commitHash2   The second commit hash
+     * @return The report with the changes between the two commits
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     * @throws IOException     If an error occurs while accessing the file system
+     */
+    public ProgrammingExerciseGitDiffReport generateReportForCommits(VcsRepositoryUri repositoryUri, String commitHash1, String commitHash2) throws GitAPIException, IOException {
+        Repository repository;
+        if (profileService.isLocalVcsActive()) {
+            log.debug("Using local VCS generateReportForCommits on repo {}", repositoryUri);
+            repository = gitService.getBareRepository(repositoryUri);
+        }
+        else {
+            log.debug("Checking out repo {} for generateReportForCommits", repositoryUri);
+            repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+        }
+
+        RevCommit commitOld = repository.parseCommit(repository.resolve(commitHash1));
+        RevCommit commitNew = repository.parseCommit(repository.resolve(commitHash2));
+
+        if (commitOld == null || commitNew == null) {
+            log.error("Could not find the commits with the provided commit hashes in the repository: {} and {}", commitHash1, commitHash2);
+            return null;
+        }
+
+        return createReport(repository, commitOld, commitNew);
+    }
+
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for a participation and a commit hash.
+     * If both commit hashes are the same, the report will be the diff of the commit with an empty file.
+     *
+     * @param repository The repository for which the report should be created
+     * @param commitOld  The old commit
+     * @param commitNew  The new commit
+     * @return The report with the changes between the two commits
+     * @throws IOException If an error occurs while accessing the file system
+     */
+    @NotNull
+    private ProgrammingExerciseGitDiffReport createReport(Repository repository, RevCommit commitOld, RevCommit commitNew) throws IOException {
+        StringBuilder diffs = new StringBuilder();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (DiffFormatter formatter = new DiffFormatter(out)) {
+            formatter.setRepository(repository);
+            formatter.setContext(10); // Set the context lines
+            formatter.setDiffComparator(RawTextComparator.DEFAULT);
+            formatter.setDetectRenames(true);
+
+            // If the commit hashes are the same, we want to compare the commit with an empty file
+            // This is useful for the initial commit of a repository
+            if (commitOld.getName().equals(commitNew.getName())) {
+                formatter.format(null, commitNew);
+            }
+            else {
+                formatter.format(commitOld, commitNew);
+            }
+
+            diffs.append(out.toString(StandardCharsets.UTF_8));
+        }
+        var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diffs.toString(), false, false);
+        var report = new ProgrammingExerciseGitDiffReport();
+        for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
+            gitDiffEntry.setGitDiffReport(report);
+        }
+        report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
+        return report;
+    }
 }

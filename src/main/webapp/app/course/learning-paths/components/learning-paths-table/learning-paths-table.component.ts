@@ -11,6 +11,7 @@ import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 enum TableColumn {
     ID = 'ID',
@@ -22,7 +23,7 @@ enum TableColumn {
 @Component({
     selector: 'jhi-learning-paths-table',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe],
+    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './learning-paths-table.component.html',
     styleUrls: ['./learning-paths-table.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
