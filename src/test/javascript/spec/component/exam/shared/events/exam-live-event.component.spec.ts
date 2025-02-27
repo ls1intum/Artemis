@@ -27,7 +27,6 @@ describe('ExamLiveEventComponent', () => {
     it('should display the correct event type and author', () => {
         component.event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as ExamLiveEvent;
 
         fixture.detectChanges();
@@ -88,7 +87,6 @@ describe('ExamLiveEventComponent', () => {
             problemStatement: 'New problem statement',
             exerciseId: 1,
             exerciseName: 'Programming Exercise',
-            createdBy: 'John Doe',
         } as ProblemStatementUpdateEvent;
 
         fixture.detectChanges();
@@ -106,7 +104,6 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when acknowledge button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
         component.event = mockEvent;
         component.showAcknowledge = true;
@@ -123,7 +120,6 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when navigate to exercise button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
         component.event = mockEvent;
         component.showAcknowledge = true;
