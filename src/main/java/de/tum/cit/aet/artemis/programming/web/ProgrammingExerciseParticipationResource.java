@@ -327,10 +327,8 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
-        if (profileService.isLocalVcsCiActive()) {
-            var targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
-            localVCServletService.orElseThrow().processNewPush(null, targetRepo);
-        }
+        var targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
+        localVCServletService.orElseThrow().processNewPush(null, targetRepo);
 
         return ResponseEntity.ok().build();
     }
