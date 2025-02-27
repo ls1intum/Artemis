@@ -291,7 +291,7 @@ describe('ProgrammingExercise Service', () => {
         expected.zipFileForImport = dummyFile;
         request.zipFileForImport = dummyFile;
         service.importFromFile(request, course.id).subscribe((resp) => expect(resp.body).toEqual(expected));
-        const url = `api/courses/1/programming-exercises/import-from-file`;
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
         tick();

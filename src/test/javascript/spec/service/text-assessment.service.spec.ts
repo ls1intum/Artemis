@@ -79,7 +79,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
-            url: `api/participations/${1}/results/${6}/text-assessment`,
+            url: `api/text/participations/${1}/results/${6}/text-assessment`,
             method: 'PUT',
         });
         req.flush(result);
@@ -110,7 +110,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
-            url: `api/participations/${1}/results/${6}/submit-text-assessment`,
+            url: `api/text/participations/${1}/results/${6}/submit-text-assessment`,
             method: 'POST',
         });
         req.flush(result);
@@ -130,7 +130,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
-            url: `api/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
+            url: `api/text/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
             method: 'PUT',
         });
         req.flush(result);
@@ -147,7 +147,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
+            url: `api/text/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
             method: 'POST',
         });
         req.flush(result);
@@ -164,7 +164,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `api/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
+            url: `api/text/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
             method: 'DELETE',
         });
         req.flush(result);

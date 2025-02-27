@@ -42,8 +42,8 @@ class LocalVCServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         request.post("/api/programming/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", null, HttpStatus.NOT_FOUND);
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
+        request.post("/api/programming/courses/" + course.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", null, HttpStatus.NOT_FOUND);
+        request.post("/api/programming/courses/" + course.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", null, HttpStatus.NOT_FOUND);
 
         verifyNoInteractions(versionControlService);
         verifyNoInteractions(instanceMessageSendService);

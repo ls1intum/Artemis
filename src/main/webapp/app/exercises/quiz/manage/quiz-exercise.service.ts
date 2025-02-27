@@ -117,7 +117,7 @@ export class QuizExerciseService {
      */
     findForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/quiz/courses/${courseId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 

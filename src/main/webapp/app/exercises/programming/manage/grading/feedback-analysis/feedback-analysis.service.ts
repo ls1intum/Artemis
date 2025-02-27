@@ -70,6 +70,6 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
         // ToDo: Part of communication, adapt
-        return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
+        return this.post<ChannelDTO>(`communication/courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
     }
 }
