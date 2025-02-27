@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/plagiarism/")
 public class PlagiarismAnswerPostResource {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismAnswerPostResource.class);

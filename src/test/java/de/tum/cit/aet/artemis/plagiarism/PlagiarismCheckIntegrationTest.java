@@ -66,7 +66,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
         var exerciseId = plagiarismUtilService.createModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
 
         // when
-        var result = createPlagiarismResult("/api/modeling-exercises/" + exerciseId + "/check-plagiarism");
+        var result = createPlagiarismResult("/api/modeling/modeling-exercises/" + exerciseId + "/check-plagiarism");
 
         // then
         verifyPlagiarismResult(result);
@@ -79,7 +79,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
         var exerciseId = plagiarismUtilService.createTeamModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
 
         // when
-        var result = createPlagiarismResult("/api/modeling-exercises/" + exerciseId + "/check-plagiarism");
+        var result = createPlagiarismResult("/api/modeling/modeling-exercises/" + exerciseId + "/check-plagiarism");
 
         // then
         verifyPlagiarismResult(result);
