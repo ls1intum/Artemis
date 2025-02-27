@@ -1367,7 +1367,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     jenkinsRequestMockProvider.reset();
                     jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(),
                             false);
-                    request.postWithoutLocation("/api/programming/programming-submissions" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                    request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
                             .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                     assertThat(programmingSubmission).isPresent();
@@ -1456,7 +1456,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(),
                             false);
                     userUtilService.changeUser(studentExam.getUser().getLogin());
-                    request.postWithoutLocation("/api/programming/programming-submissions" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                    request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
                 }
             }
@@ -1933,7 +1933,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                 jenkinsRequestMockProvider.reset();
                 jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
-                request.postWithoutLocation("/api/programming/programming-submissions" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+                request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                 Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
                         .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
