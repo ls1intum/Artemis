@@ -206,7 +206,7 @@ export class ExamAPIRequests {
             exam,
             ...gradingScale,
         };
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
+        await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
     }
 
     async getGradeSummary(exam: Exam, studentExam: StudentExam) {
