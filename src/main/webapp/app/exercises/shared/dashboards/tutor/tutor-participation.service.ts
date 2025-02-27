@@ -52,7 +52,7 @@ export class TutorParticipationService {
      */
     deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise): Observable<void> {
         if (course && this.accountService.isAtLeastTutorInCourse(course)) {
-            return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/example-submission`);
+            return this.http.delete<void>(`api/exercise/guided-tour/exercises/${exercise.id}/example-submission`);
         }
         return new Observable();
     }

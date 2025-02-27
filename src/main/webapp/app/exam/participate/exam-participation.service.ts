@@ -254,7 +254,7 @@ export class ExamParticipationService {
      * @param quizSubmission
      */
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `api/exercises/${exerciseId}/submissions/exam`;
+        const url = `api/quiz/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 

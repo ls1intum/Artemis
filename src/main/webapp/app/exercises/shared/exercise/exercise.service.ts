@@ -204,7 +204,7 @@ export class ExerciseService {
      * @returns void
      */
     evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<any>(`api/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
+        return this.http.post<any>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {

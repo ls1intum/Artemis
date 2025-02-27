@@ -274,7 +274,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+        Result receivedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
@@ -304,7 +304,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -322,7 +322,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.OK);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).isPresent();
     }
 

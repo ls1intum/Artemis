@@ -168,7 +168,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
     }
@@ -179,7 +179,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 
@@ -192,7 +192,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         course.setInstructorGroupName("abc");
         courseUtilService.saveCourse(course);
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
     }
 
@@ -202,7 +202,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         baseExportOptions.setExportAllParticipants(true);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
     }
 
@@ -213,7 +213,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         long NOT_EXISTING_EXERCISE_ID = 5489218954L;
         request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
-        request.post("/api/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
         request.post("/api/fileupload/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
     }
 
@@ -223,7 +223,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         baseExportOptions.setFilterLateSubmissions(true);
         baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 
@@ -233,7 +233,8 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         File textZip = request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(textZip, textSubmission1, textSubmission2, textSubmission3);
 
-        File modelingZip = request.postWithResponseBodyFile("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
+        File modelingZip = request.postWithResponseBodyFile("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions,
+                HttpStatus.OK);
         assertZipContains(modelingZip, modelingSubmission1, modelingSubmission2, modelingSubmission3);
 
         File fileUploadUip = request.postWithResponseBodyFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions,

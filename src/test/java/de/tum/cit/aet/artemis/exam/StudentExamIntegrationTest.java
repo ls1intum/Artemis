@@ -1383,9 +1383,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
                     modelingSubmission.setExplanationText(newExplanation);
-                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                    request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
                     var savedModelingSubmission = request.get(
-                            "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                            "/api/modeling/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
                             ModelingSubmission.class);
                     // check that the submission was saved
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
@@ -1559,7 +1559,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
         });
-        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
                 HttpStatus.OK);
         // check the submission
         assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull().isNotEmpty();
@@ -1945,7 +1945,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 String newModel = "This is a new model";
                 var modelingSubmission = (ModelingSubmission) submission;
                 modelingSubmission.setModel(newModel);
-                request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
             }
             else if (exercise instanceof TextExercise) {
                 var textSubmission = (TextSubmission) submission;
@@ -2920,7 +2920,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             final String changedModel = "This is a changed and submitted model";
             final String changedExplanation = "This is a changed and submitted explanation";
             changeModelingSubmission(changedModel, changedExplanation);
-            request.put("/api/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+            request.put("/api/modeling/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
 
             DragAndDropMapping changedMapping = getchangedDragAndDropMapping(1, 0);
 
@@ -2931,7 +2931,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             final List<Integer> selectedOptionIndices = List.of(0, 1);
             List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
 
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // load Quiz Submissions Submitted Answers (for comparison) * 3
             final int quizQueryCount = 3;
@@ -3051,7 +3051,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
             // Given
             getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
             quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
 
             final String text = "Changed short answer text";

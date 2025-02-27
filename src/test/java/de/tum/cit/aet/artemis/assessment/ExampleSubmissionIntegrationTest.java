@@ -213,7 +213,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
@@ -226,10 +226,11 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission exampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.putWithResponseBody("/api/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
-        Result cleanResult = request.get("/api/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment",
-                HttpStatus.OK, Result.class);
+        Result cleanResult = request.get(
+                "/api/modeling/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                Result.class);
         for (Feedback feedback : cleanResult.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
             assertThat(feedback.getDetailText()).isNull();
