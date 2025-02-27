@@ -34,7 +34,12 @@ const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ENROLL,
-        loadChildren: () => import('./course-registration/course-registration.route').then((m) => m.routes),
+        loadComponent: () => import('app/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.studentDashboard.enroll.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: CourseOverviewRoutePath.ARCHIVE,
@@ -88,7 +93,8 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/exercise-details/course-exercise-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/orion/participation/orion-course-exercise-details.component').then((m) => m.OrionCourseExerciseDetailsComponent),
+                        pathMatch: 'full',
                     },
                 ],
             },
@@ -262,7 +268,6 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.route').then((m) => m.routes),
                     },
                 ],
             },
