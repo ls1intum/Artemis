@@ -95,12 +95,13 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/text/participate/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
-                path: 'exercises/programming-exercises/:exerciseId/code-editor',
+                path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
+                loadComponent: () => import('app/exercises/programming/participate/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.programmingExercise',
+                    pageTitle: 'artemisApp.editor.home.title',
                 },
-                loadChildren: () => import('../exercises/programming/participate/programming-participation.route').then((m) => m.routes),
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'exercises/:exerciseId/repository',
