@@ -105,3 +105,21 @@
     visibility: visible;
     opacity: 1;
 }
+
+.flex-wrapper {
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.one-line {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}

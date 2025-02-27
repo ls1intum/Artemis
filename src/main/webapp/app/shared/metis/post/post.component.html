@@ -15,7 +15,7 @@
             {{ posting.creationDate | artemisDate: 'time' }}
         </span>
     }
-    @if (!isConsecutive()) {
+    @if (!isConsecutive() || posting.originalAnswerId) {
         <div class="ps-3">
             <jhi-posting-header
                 [previewMode]="previewMode()"
@@ -27,6 +27,18 @@
                 (onUserNameClicked)="onUserNameClicked()"
                 [lastReadDate]="lastReadDate()"
             />
+        </div>
+    }
+    @if (posting.originalAnswerId) {
+        <div class="message-container post-content-padding text-muted fs-smaller mt-1">
+            <div class="message-content">
+                <span jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
+                <span class="flex-wrapper">
+                    <a (click)="onTriggerNavigateToPost(originalAnswer!)" class="one-line">
+                        {{ originalAnswer?.post?.content }}
+                    </a>
+                </span>
+            </div>
         </div>
     }
     <div class="align-items-center">

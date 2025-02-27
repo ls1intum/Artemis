@@ -152,7 +152,8 @@
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
                 "thread": "Thread",
-                "saved": "Saved for later"
+                "saved": "Saved for later",
+                "repliedToThread": "replied to a thread:"
             },
             "answerPost": {
                 "created": "New reply successfully created",

@@ -10,6 +10,8 @@ export class Post extends Posting {
     public plagiarismCase?: PlagiarismCase;
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;
+    public isConsecutive?: boolean = false;
+    public originalAnswerId?: number;
     public forwardedPosts?: Post[] = [];
     public forwardedAnswerPosts?: AnswerPost[] = [];
 

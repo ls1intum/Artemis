@@ -40,6 +40,7 @@ import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions
 import { Posting } from 'app/entities/metis/posting.model';
 import { throwError } from 'rxjs';
 import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 
 @Component({
     selector: 'jhi-post',
@@ -75,6 +76,7 @@ import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/fo
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     metisService = inject(MetisService);
+    answerPostService = inject(AnswerPostService);
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
@@ -127,6 +129,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     forwardedPosts = input<Post[]>([]);
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
+    originalAnswer?: AnswerPost;
     course: Course;
 
     constructor() {
@@ -219,6 +222,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
         this.assignPostingToPost();
+        this.loadOriginalAnswerContent();
         this.fetchForwardedMessages();
     }
 
@@ -335,5 +339,20 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     protected onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
+    }
+
+    private loadOriginalAnswerContent(): void {
+        if (this.posting.originalAnswerId) {
+            const courseId = this.course.id;
+            this.answerPostService.getSourceAnswerPostsByIds(courseId!, [this.posting.originalAnswerId]).subscribe({
+                next: (res) => {
+                    this.originalAnswer = res[0];
+                    this.changeDetector.detectChanges();
+                },
+                error: () => {
+                    throwError('AnswerPost not found');
+                },
+            });
+        }
     }
 }

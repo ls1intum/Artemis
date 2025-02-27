@@ -7,12 +7,13 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -125,5 +126,47 @@ describe('MessageReplyInlineInputComponent', () => {
         tick();
         expect(component.isLoading).toBeFalse();
         expect(onEditSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should toggle sendAsDirectMessage value', () => {
+        expect(component.sendAsDirectMessage()).toBe(false);
+        component.toggleSendAsDirectMessage();
+        expect(component.sendAsDirectMessage()).toBe(true);
+        component.toggleSendAsDirectMessage();
+        expect(component.sendAsDirectMessage()).toBe(false);
+    });
+
+    it('should reset form group with provided content', () => {
+        component.posting = { content: 'old content' } as any;
+        component.resetFormGroup('new content');
+        expect(component.posting.content).toBe('new content');
+        expect(component.formGroup.get('content')?.value).toBe('new content');
+    });
+
+    it('should create posting as direct message when sendAsDirectMessage is true', fakeAsync(() => {
+        component.posting = { ...metisPostToCreateUser1, content: '' };
+        (component as any).activeConversation = () => ({ id: 42, title: 'Test Conversation' }) as any;
+        component.sendAsDirectMessage.set(true);
+        component.ngOnChanges();
+
+        const newContent = 'direct message content';
+        component.formGroup.setValue({ content: newContent });
+
+        const createdAnswerPost: AnswerPost = { ...component.posting, id: 123, content: newContent } as AnswerPost;
+        metisServiceCreateStub.mockReturnValue(of(createdAnswerPost));
+
+        const createPostSpy = jest.spyOn(metisService, 'createPost');
+        const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
+
+        component.createPosting();
+        tick();
+
+        expect(createPostSpy).toHaveBeenCalledWith({
+            content: createdAnswerPost.content,
+            conversation: { id: 42, title: 'Test Conversation' },
+            originalAnswerId: createdAnswerPost.id,
+        });
+        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith(createdAnswerPost);
+        expect(component.isLoading).toBeFalse();
     }));
 });

@@ -19,6 +19,7 @@
             "goToExercise": "Go to exercise",
             "goToLecture": "Go to lecture",
             "goToExam": "Go to exam",
+            "sendAsDirectMessage": "Also send as direct message",
             "conversationMessages": {
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",

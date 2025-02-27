@@ -152,7 +152,8 @@
                 "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
                 "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
                 "thread": "Thread",
-                "saved": "Für später gespeichert"
+                "saved": "Für später gespeichert",
+                "repliedToThread": "hat auf einen Thread geantwortet:"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
