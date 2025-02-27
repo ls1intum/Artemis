@@ -204,14 +204,6 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
-
-                    // TODO: Remove once fully migrated
-                    // Admin area requires specific authority.
-                    .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-                    // Publicly accessible API endpoints (allowed for everyone).
-                    .requestMatchers("/api/public/**").permitAll()
-                    // TODO: Remove once fully migrated
-
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
