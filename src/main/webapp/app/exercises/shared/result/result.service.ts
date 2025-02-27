@@ -54,7 +54,7 @@ export class ResultService implements IResultService {
     private csvDownloadService = inject(CsvDownloadService);
 
     private exerciseResourceUrl = 'api/assessment/exercises';
-    private resultResourceUrl = 'api/results';
+    private resultResourceUrl = 'api/assessment/results';
     private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
