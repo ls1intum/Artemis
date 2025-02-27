@@ -2929,7 +2929,7 @@ public class CourseTestService {
         var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
 
         var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint, complaintResponse, null, new HashSet<>());
-        request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
+        request.putWithResponseBody("/api/text/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
                 + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
         // Feedback request
@@ -2945,7 +2945,7 @@ public class CourseTestService {
         var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);
 
         final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback, feedbackResponse, null, new HashSet<>());
-        request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
+        request.putWithResponseBody("/api/text/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
         await().until(participantScoreScheduleService::isIdle);

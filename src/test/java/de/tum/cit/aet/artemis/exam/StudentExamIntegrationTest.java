@@ -1397,7 +1397,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     var textSubmission = (TextSubmission) submission;
                     final var newText = "New Text";
                     textSubmission.setText(newText);
-                    request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                    request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
                     var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
@@ -1951,7 +1951,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 var textSubmission = (TextSubmission) submission;
                 final var newText = "New Text";
                 textSubmission.setText(newText);
-                request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
             }
             else if (exercise instanceof QuizExercise quizExercise) {
                 submitQuizInExam(quizExercise, (QuizSubmission) submission);
@@ -2915,7 +2915,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             // Given
             final String changedAnswer = "This is a changed and submitted answer";
             textSubmission.setText(changedAnswer);
-            request.put("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+            request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
 
             final String changedModel = "This is a changed and submitted model";
             final String changedExplanation = "This is a changed and submitted explanation";
