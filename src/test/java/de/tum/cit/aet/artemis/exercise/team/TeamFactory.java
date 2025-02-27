@@ -43,10 +43,6 @@ public class TeamFactory {
         if (owner != null) {
             team.setOwner(owner);
         }
-        if (creatorLogin != null) {
-            team.setCreatedBy(creatorLogin);
-            team.setLastModifiedBy(creatorLogin);
-        }
         return team;
     }
 
