@@ -181,11 +181,22 @@ const routes: Routes = [
                 children: [
                     {
                         path: '',
-                        loadChildren: () => import('./course-competencies/course-competencies.route').then((m) => m.routes),
+                        pathMatch: 'full',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.competencies',
+                        },
+                        loadComponent: () => import('app/overview/course-competencies/course-competencies.component').then((m) => m.CourseCompetenciesComponent),
+                        canActivate: [UserRouteAccessService],
                     },
                     {
                         path: ':competencyId',
-                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.competencies',
+                        },
+                        canActivate: [UserRouteAccessService],
                     },
                 ],
             },
