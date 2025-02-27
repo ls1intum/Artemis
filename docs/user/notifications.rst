@@ -298,6 +298,46 @@ The following tables gives an overview of all supported notification types:
      - X
      -
 
+   * - **SSH Key Notifications**
+     -
+     -
+     -
+
+   * - SSH_KEY_ADDED
+     - X
+     - X
+     - X
+
+   * - SSH_KEY_EXPIRES_SOON
+     - X
+     - X
+     - X
+
+   * - SSH_KEY_HAS_EXPIRED
+     - X
+     - X
+     - X
+
+   * - **VCS Access Token Notifications**
+     -
+     -
+     -
+
+   * - VCS_ACCESS_TOKEN_ADDED
+     - X
+     - X
+     - X
+
+   * - VCS_ACCESS_TOKEN_EXPIRED
+     - X
+     - X
+     - X
+
+   * - VCS_ACCESS_TOKEN_EXPIRES_SOON
+     - X
+     - X
+     - X
+
    * - **Unassigned Notifications**
      -
      -
