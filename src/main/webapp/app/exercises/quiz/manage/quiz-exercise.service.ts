@@ -20,7 +20,7 @@ export class QuizExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
-    private resourceUrl = 'api/quiz-exercises';
+    private resourceUrl = 'api/quiz/quiz-exercises';
 
     /**
      * Create the given quiz exercise

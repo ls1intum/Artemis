@@ -219,7 +219,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
-        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
+        return this.http.get<StudentParticipation[]>(`api/exercise/courses/${courseId}/participations`);
     }
 
     /**

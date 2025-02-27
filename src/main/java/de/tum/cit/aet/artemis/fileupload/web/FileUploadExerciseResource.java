@@ -162,7 +162,7 @@ public class FileUploadExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -196,7 +196,7 @@ public class FileUploadExerciseResource {
         importedFileUploadExercise.validateGeneralSettings();
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
