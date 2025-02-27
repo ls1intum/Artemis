@@ -3339,7 +3339,7 @@ public class CourseTestService {
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
-        return "/api/courses/" + courseId + "/online-course-configuration";
+        return "/api/lti/courses/" + courseId + "/online-course-configuration";
     }
 
     // Test

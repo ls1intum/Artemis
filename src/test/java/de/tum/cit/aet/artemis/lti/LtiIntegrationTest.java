@@ -65,7 +65,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         Page<LtiPlatformConfiguration> expectedPlatforms = ltiPlatformConfigurationRepository.findAll(Pageable.unpaged());
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -78,7 +78,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
     void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
-        request.get("/api/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+        request.get("/api/lti/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test
@@ -91,7 +91,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         doReturn(expectedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         LtiPlatformConfiguration actualPlatform = objectMapper.readValue(jsonContent, LtiPlatformConfiguration.class);
@@ -106,7 +106,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
-        request.performMvcRequest(delete("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
+        request.performMvcRequest(delete("/api/admin/lti/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         verify(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));

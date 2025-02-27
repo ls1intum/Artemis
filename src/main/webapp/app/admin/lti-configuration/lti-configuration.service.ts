@@ -13,7 +13,7 @@ export class LtiConfigurationService {
      */
     query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
-        return this.http.get<LtiPlatformConfiguration[]>('api/lti-platforms', {
+        return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
             params,
             observe: 'response',
         });

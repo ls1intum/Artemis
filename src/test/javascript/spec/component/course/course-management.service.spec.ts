@@ -165,7 +165,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/online-course-configuration` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/lti/courses/1/online-course-configuration` });
         req.flush(returnedFromService);
         tick();
     }));
