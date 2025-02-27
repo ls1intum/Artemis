@@ -107,19 +107,21 @@
 }
 
 .flex-wrapper {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    flex: 1;
-    min-width: 0;
-    max-width: 100%;
-    vertical-align: middle;
+    width: 100%;
+    gap: 0.3rem;
+}
+
+.replied-text {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .one-line {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    vertical-align: middle;
 }

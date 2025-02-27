@@ -143,6 +143,7 @@
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
+                "viewThread": "View thread",
                 "forwardMessage": "Forward message",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",

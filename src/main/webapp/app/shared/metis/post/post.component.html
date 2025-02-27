@@ -32,8 +32,8 @@
     @if (posting.originalAnswerId) {
         <div class="message-container post-content-padding text-muted fs-smaller mt-1">
             <div class="message-content">
-                <span jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
                 <span class="flex-wrapper">
+                    <span class="replied-text" jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
                     <a (click)="onTriggerNavigateToPost(originalAnswer!)" class="one-line">
                         {{ originalAnswer?.post?.content }}
                     </a>
@@ -206,10 +206,19 @@
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
-            <fa-icon [icon]="faComments" class="item-icon" />
-            <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
-        </button>
+        @if (!isThreadSidebar) {
+            @if (!posting.originalAnswerId) {
+                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
+                    <fa-icon [icon]="faComments" class="item-icon" />
+                    <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
+                </button>
+            } @else {
+                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? onTriggerNavigateToPost(originalAnswer!) : reactionsBarComponent()?.openAnswerView()">
+                    <fa-icon [icon]="faComments" class="item-icon" />
+                    <span jhiTranslate="artemisApp.metis.post.viewThread"></span>
+                </button>
+            }
+        }
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
             <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>

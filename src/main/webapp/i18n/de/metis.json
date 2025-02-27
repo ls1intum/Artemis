@@ -143,6 +143,7 @@
                 "editMessage": "Nachricht bearbeiten",
                 "deleteMessage": "Nachricht löschen",
                 "replyMessage": "Antworten im Thread",
+                "viewThread": "Thread ansehen",
                 "forwardMessage": "Nachricht weiterleiten",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
                 "undoDelete": "Löschen umkehren",

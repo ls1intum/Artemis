@@ -1,6 +1,6 @@
 <div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
     @if (getPostingType() === 'post') {
-        @if (hoverBar() && sortedAnswerPosts()?.length === 0) {
+        @if (!originalAnswerId && !isThreadSidebar() && hoverBar() && sortedAnswerPosts()?.length === 0) {
             <div>
                 <button class="reaction-button clickable reply-btn" (click)="isCommunicationPage() ? openThread.emit() : openAnswerView()">
                     <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
