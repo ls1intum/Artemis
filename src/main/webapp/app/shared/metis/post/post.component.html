@@ -92,33 +92,31 @@
                         @if (originalPostDetails) {
                             <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
                         }
-                        @if (pageType !== PageType.OVERVIEW) {
-                            <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">
-                                @if (!previewMode()) {
-                                    <!-- Post reactions (that appear when post is hovered) -->
-                                    <jhi-posting-reactions-bar
-                                        [lastReadDate]="lastReadDate()"
-                                        [isReadOnlyMode]="readOnlyMode()"
-                                        [previewMode]="previewMode()"
-                                        [course]="course"
-                                        [posting]="posting"
-                                        [(showAnswers)]="showAnswers"
-                                        [sortedAnswerPosts]="sortedAnswerPosts"
-                                        [isCommunicationPage]="isCommunicationPage"
-                                        [isThreadSidebar]="isThreadSidebar"
-                                        (openPostingCreateEditModal)="openCreateAnswerPostModal()"
-                                        (openThread)="openThread.emit()"
-                                        (isModalOpen)="displayInlineInput = true"
-                                        (mayEditOutput)="onMayEdit($event)"
-                                        (mayDeleteOutput)="onMayDelete($event)"
-                                        (canPinOutput)="onCanPin($event)"
-                                        [originalPostDetails]="originalPostDetails"
-                                        (isDeleteEvent)="onDeleteEvent(true)"
-                                        (onBookmarkClicked)="toggleSavePost()"
-                                    />
-                                }
-                            </div>
-                        }
+                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">
+                            @if (!previewMode()) {
+                                <!-- Post reactions (that appear when post is hovered) -->
+                                <jhi-posting-reactions-bar
+                                    [lastReadDate]="lastReadDate()"
+                                    [isReadOnlyMode]="readOnlyMode()"
+                                    [previewMode]="previewMode()"
+                                    [course]="course"
+                                    [posting]="posting"
+                                    [(showAnswers)]="showAnswers"
+                                    [sortedAnswerPosts]="sortedAnswerPosts"
+                                    [isCommunicationPage]="isCommunicationPage"
+                                    [isThreadSidebar]="isThreadSidebar"
+                                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                                    (openThread)="openThread.emit()"
+                                    (isModalOpen)="displayInlineInput = true"
+                                    (mayEditOutput)="onMayEdit($event)"
+                                    (mayDeleteOutput)="onMayDelete($event)"
+                                    (canPinOutput)="onCanPin($event)"
+                                    [originalPostDetails]="originalPostDetails"
+                                    (isDeleteEvent)="onDeleteEvent(true)"
+                                    (onBookmarkClicked)="toggleSavePost()"
+                                />
+                            }
+                        </div>
                     </div>
                 </div>
             }
