@@ -111,7 +111,7 @@ export const routes: Routes = [
                 loadComponent: () => import('app/exercises/programming/participate/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'artemisApp.editor.home.title',
+                    pageTitle: 'overview.programmingExercise',
                 },
                 canActivate: [UserRouteAccessService],
             },
