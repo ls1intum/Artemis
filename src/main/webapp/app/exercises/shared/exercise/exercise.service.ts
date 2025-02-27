@@ -62,7 +62,7 @@ export class ExerciseService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/exercise/exercises';
-    public adminResourceUrl = 'api/exam/admin/exercises';
+    public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/core/courses';
 
     /**
