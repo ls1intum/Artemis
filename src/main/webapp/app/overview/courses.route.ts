@@ -273,12 +273,16 @@ const routes: Routes = [
                 ],
             },
             {
-                path: 'plagiarism-cases',
-                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.route').then((m) => m.routes),
+                path: 'plagiarism-cases/:plagiarismCaseId',
+                loadComponent: () =>
+                    import('app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component').then(
+                        (m) => m.PlagiarismCaseStudentDetailViewComponent,
+                    ),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.plagiarismCases',
+                    pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
                 },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: CourseOverviewRoutePath.FAQ,
