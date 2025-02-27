@@ -424,9 +424,3 @@ The push notification settings can currently only be found in the respective app
     :width: 300
 .. |notification-push| image:: notifications/notification-push.png
     :width: 300
-.. |supported-notification-types-overview-1| image:: notifications/supported-notification-types-overview-1.png
-    :width: 1000
-.. |supported-notification-types-overview-2| image:: notifications/supported-notification-types-overview-2.png
-    :width: 1000
-.. |supported-notification-types-overview-3| image:: notifications/supported-notification-types-overview-3.png
-    :width: 1000
