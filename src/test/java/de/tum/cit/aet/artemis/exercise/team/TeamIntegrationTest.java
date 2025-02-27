@@ -92,15 +92,15 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private String resourceUrlExistsTeamByShortName(String shortName) {
-        return "api/exercise/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
+        return "/api/exercise/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
     }
 
     private String resourceUrlSearchUsersInCourse(String loginOrName) {
-        return "api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
+        return "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
     }
 
     private String resourceUrlCourseWithExercisesAndParticipationsForTeam(Course course, Team team) {
-        return "api/exercise/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
+        return "/api/exercise/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
     }
 
     @Test
