@@ -5,6 +5,8 @@ on:
       - develop
   pull_request:
     types: [opened, synchronize, reopened]
+env:
+  java: 21
 jobs:
   build:
     name: Build and analyze
@@ -13,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
