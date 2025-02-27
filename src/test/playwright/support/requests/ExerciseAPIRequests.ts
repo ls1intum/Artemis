@@ -198,11 +198,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`api/exam/programming/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
     }
 
     async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`api/exam/programming/repository/${repositoryId}/file?file=${filename}`);
+        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
     }
 
     /**

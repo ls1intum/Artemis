@@ -184,7 +184,7 @@ export class CourseManagementAPIRequests {
             endDate,
             channelName: 'lecture-' + titleLowercase(title),
         };
-        const response = await this.page.request.post(`api/lecture}/lectures`, { data });
+        const response = await this.page.request.post(`api/lecture/lectures`, { data });
         return response.json();
     }
 
@@ -205,7 +205,7 @@ export class CourseManagementAPIRequests {
             ended: false,
             numberOfExamSessions: 0,
         };
-        const response = await this.page.request.post(`api/exam/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();
     }
 }
