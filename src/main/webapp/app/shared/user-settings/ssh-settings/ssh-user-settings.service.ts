@@ -73,7 +73,7 @@ export class SshUserSettingsService implements IASshUserSettingsService {
      * Retrieves a specific public SSH keys of a user
      */
     getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {
-        return this.http.get<UserSshPublicKey>(`api/programming/sh-settings/public-key/${keyId}`);
+        return this.http.get<UserSshPublicKey>(`api/programming/ssh-settings/public-key/${keyId}`);
     }
 
     /**
