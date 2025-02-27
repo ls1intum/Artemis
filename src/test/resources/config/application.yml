@@ -15,7 +15,6 @@ logging:
         ROOT: INFO
         de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: INFO
-        org.springframework.security: TRACE
 
 artemis:
     version: 1.3.3-beta7
