@@ -198,6 +198,6 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
 
-        return request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.OK, null);
+        return request.putWithResponseBody("/api/quiz/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.OK, null);
     }
 }

@@ -67,7 +67,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         quizSubmission.submitted(isSubmitted);
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=" + isSubmitted, quizSubmission, QuizSubmission.class, HttpStatus.OK);
 
         if (isSubmitted) {
@@ -112,7 +112,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         }
 
         // calculate statistics
-        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
+        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
                 QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);

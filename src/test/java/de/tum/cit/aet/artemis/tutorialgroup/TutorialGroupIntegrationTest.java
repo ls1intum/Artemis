@@ -153,7 +153,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTitle_asUser_shouldReturnTitle() throws Exception {
         // when
-        var tutorialGroupTitle = request.get("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/title", HttpStatus.OK, String.class);
+        var tutorialGroupTitle = request.get("/api/tutorialgroup/tutorial-groups/" + exampleOneTutorialGroupId + "/title", HttpStatus.OK, String.class);
         // then
         var title = tutorialGroupTestRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         assertThat(tutorialGroupTitle).isEqualTo(title);
@@ -246,7 +246,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getUniqueLanguageValues_TwoUniqueValues_ShouldReturnBoth() throws Exception {
-        var languageValues = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups/language-values", HttpStatus.OK, String.class);
+        var languageValues = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/language-values", HttpStatus.OK, String.class);
         assertThat(languageValues).containsExactlyInAnyOrder(Language.ENGLISH.name(), Language.GERMAN.name());
     }
 
@@ -345,10 +345,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         TutorialGroup tutorialGroup;
         if (useSingleEndpoint) {
-            tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+            tutorialGroup = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         }
         else {
-            tutorialGroup = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
+            tutorialGroup = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
                     .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().orElseThrow();
         }
 
@@ -945,7 +945,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             return tutorialGroupService.getOneOfCourse(course, user, exampleOneTutorialGroupId);
         }
         else {
-            return request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+            return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         }
     }
 
@@ -956,7 +956,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             return tutorialGroupService.findAllForCourse(course, user).stream().toList();
         }
         else {
-            return request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            return request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
         }
     }
 
@@ -1039,7 +1039,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
         String csvContent = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1062,7 +1062,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
         String csvContent = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1078,7 +1078,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1097,7 +1097,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
         String csvContent = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1121,7 +1121,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1148,7 +1148,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1182,7 +1182,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then

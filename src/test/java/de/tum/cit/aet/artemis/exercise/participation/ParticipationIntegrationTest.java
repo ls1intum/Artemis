@@ -1783,13 +1783,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
             quizEx = exerciseRepository.save(quizEx);
 
-            request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizEx, ZonedDateTime.now().minusSeconds(10)));
-                request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
+                request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
             }
-            var participation = request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
+                    HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
             assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
             assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);

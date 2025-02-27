@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";

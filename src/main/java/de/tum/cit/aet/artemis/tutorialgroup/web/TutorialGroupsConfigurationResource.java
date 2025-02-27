@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";

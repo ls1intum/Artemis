@@ -176,7 +176,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
 
@@ -273,7 +273,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             userUtilService.changeUser(user.getLogin());
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
             final var studentParticipation = studentParticipationRepository
@@ -324,7 +324,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
 

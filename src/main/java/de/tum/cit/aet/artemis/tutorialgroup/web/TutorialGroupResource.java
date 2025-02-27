@@ -73,7 +73,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
