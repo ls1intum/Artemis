@@ -50,7 +50,13 @@ const routes: Routes = [
     // so we need to load it outside the normal course routing
     {
         path: ':courseId/register',
-        loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.route').then((m) => m.routes),
+        loadComponent: () =>
+            import('app/overview/course-registration/course-registration-detail/course-registration-detail.component').then((m) => m.CourseRegistrationDetailComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.studentDashboard.enroll.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':courseId',
@@ -156,7 +162,7 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/course-lectures/course-lecture-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
                     },
                 ],
             },
@@ -202,7 +208,8 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.DASHBOARD,
-                loadChildren: () => import('./course-dashboard/course-dashboard.route').then((m) => m.routes),
+                pathMatch: 'full',
+                loadComponent: () => import('app/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
