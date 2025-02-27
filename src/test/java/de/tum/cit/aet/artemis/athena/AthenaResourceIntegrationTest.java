@@ -358,7 +358,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
-        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class,
+                HttpStatus.OK);
 
         // Check that nothing went wrong, even with Athena enabled
         assertThat(response).as("response is not null").isNotNull();

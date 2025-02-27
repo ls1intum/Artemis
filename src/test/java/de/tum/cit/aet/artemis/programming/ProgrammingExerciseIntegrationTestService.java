@@ -1488,7 +1488,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_asTutor() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
         final List<ProgrammingExerciseTestCase> returnedTests = request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
         final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
@@ -1496,13 +1496,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        final var endpoint = "/programing/programming-exercises/" + programmingExercise.getId() + "/test-cases";
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant");
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
@@ -1514,7 +1514,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
                 testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1539,7 +1539,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
                 testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1549,14 +1549,14 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void updateTestCases_nonExistingExercise_notFound() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
-        final var endpoint = "/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
@@ -1565,7 +1565,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream()
                 .map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), -1., testCase.getId() + 1.0, testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
     }
@@ -1576,7 +1576,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var firstUpdate = updates.getFirst();
         firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), -1.0, firstUpdate.bonusPoints(), firstUpdate.visibility());
         updates.set(0, firstUpdate);
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.performMvcRequest(
                 MockMvcRequestBuilders.patch(new URI("/api" + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
@@ -1604,7 +1604,7 @@ public class ProgrammingExerciseIntegrationTestService {
         firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), firstUpdate.bonusMultiplier(), null, firstUpdate.visibility());
         updates.set(0, firstUpdate);
 
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1622,7 +1622,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
             test.setWeight(42.0);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
@@ -1642,17 +1642,17 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void lockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1667,7 +1667,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation2.getStudents());
 
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/lock-all-repositories";
         request.postWithoutLocation("/api" + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
@@ -1685,12 +1685,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.post("/api" + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1705,7 +1705,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/unlock-all-repositories";
         request.postWithoutLocation("/api" + endpoint, null, HttpStatus.OK, null);
 
         verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUri(), participation1.getStudent().orElseThrow(),
