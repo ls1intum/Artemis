@@ -3,7 +3,7 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
 
 export class ExamAssessmentPage extends AbstractExerciseAssessmentPage {
     async submitModelingAssessment() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling-submissions/*/result/*/assessment*`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/result/*/assessment*`);
         this.page.on('dialog', (dialog) => dialog.accept());
         await super.submitWithoutInterception();
         return await responsePromise;

@@ -142,7 +142,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetModelingExercise_asStudent_Forbidden() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
+        request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
 
     @Test
@@ -150,14 +150,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testGetModelingExercise_asTA() throws Exception {
         exerciseUtilService.addChannelToExercise(classExercise);
 
-        ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         assertThat(receivedModelingExercise.getId()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testGetModelingExercise_tutorNotInCourse() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
+        request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
 
     @Test
@@ -171,7 +171,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         exerciseUtilService.addChannelToExercise(classExercise);
 
-        ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
 
         assertThat(receivedModelingExercise.isGradingInstructionFeedbackUsed()).isTrue();
     }
@@ -179,13 +179,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExerciseForCourse_asTA() throws Exception {
-        request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
+        request.get("/api/modeling/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testGetModelingExerciseForCourse_tutorNotInCourse() throws Exception {
-        request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/modeling/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
 
     @ParameterizedTest
@@ -198,7 +198,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.setTitle("new modeling exercise");
         modelingExercise.setChannelName(channelName);
-        ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.getId());
 
         assertThat(receivedModelingExercise.getGradingCriteria()).hasSize(3);
@@ -207,17 +207,17 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
-        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(-1L);
-        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testCreateModelingExercise_instructorNotInCourse() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -229,15 +229,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 1)));
         modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
         createdModelingExercise.setGradingCriteria(gradingCriteria);
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.OK,
-                params);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", createdModelingExercise, ModelingExercise.class,
+                HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
@@ -249,7 +249,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateModelingExerciseWrongCourseId_asInstructor() throws Exception {
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
-        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
+        request.put("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -263,8 +263,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.OK,
-                params);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class,
+                HttpStatus.OK, params);
 
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
@@ -285,7 +285,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         createdModelingExercise.setCourse(newCourse);
 
         // Modeling exercise update with the new course should fail.
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", createdModelingExercise, ModelingExercise.class,
+                HttpStatus.CONFLICT);
         assertThat(returnedModelingExercise).isNull();
     }
 
