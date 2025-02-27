@@ -262,7 +262,7 @@ public class FilePathService {
     private static URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
         try {
             // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
-            final var expectedExerciseId = path.getName(path.getNameCount() - 4).toString();
+            final var expectedExerciseId = path.getName(path.getNameCount() - 2).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);
             return URI.create("/api/core/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
         }

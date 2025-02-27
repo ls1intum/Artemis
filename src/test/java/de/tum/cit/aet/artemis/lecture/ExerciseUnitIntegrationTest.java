@@ -183,7 +183,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
@@ -211,7 +211,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         for (Exercise exercise : exercisesOfCourse) {
-            request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+            request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
         }
 
         verify(competencyProgressApi, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());
