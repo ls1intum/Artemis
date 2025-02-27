@@ -11,5 +11,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
  * @param toBeRewritten The text to be rewritten
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisRewritingPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String toBeRewritten) {
+public record PyrisRewritingPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String toBeRewritten, Long courseId) {
 }

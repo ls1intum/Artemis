@@ -26,6 +26,14 @@
                         (markdownChange)="handleMarkdownChange($event)"
                     />
                 </div>
+                @if (showConsistencyCheck()) {
+                    <faq-consistency-check
+                        [suggestions]="renderedConsistencyCheckResultMarkdown().suggestions"
+                        [inconsistencies]="renderedConsistencyCheckResultMarkdown().inconsistencies"
+                        [improvement]="renderedConsistencyCheckResultMarkdown().improvement"
+                        (close)="dismissConsistencyCheck()"
+                    />
+                }
                 <div class="form-group position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                     <jhi-category-selector [categories]="faqCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
