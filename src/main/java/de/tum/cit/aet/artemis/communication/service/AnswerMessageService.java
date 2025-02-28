@@ -90,6 +90,7 @@ public class AnswerMessageService extends PostingService {
         }
 
         var conversationId = answerMessage.getPost().getConversation().getId();
+        // For group chats we need the participants to generate the conversation title
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
 
