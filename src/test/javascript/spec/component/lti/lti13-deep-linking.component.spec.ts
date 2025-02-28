@@ -14,6 +14,7 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { DeepLinkingType } from 'app/lti/lti.constants';
 
 function HttpLoaderFactory(http: HttpClient) {
     return new TranslateHttpLoader(http);
@@ -273,9 +274,9 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('competency', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.COMPETENCY).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
@@ -292,9 +293,9 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('learningPath', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
@@ -311,9 +312,9 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('iris', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
@@ -334,14 +335,10 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        expect(httpMock.post).toHaveBeenCalledWith(
-            `api/lti13/deep-linking/${component.courseId}`,
-            null,
-            expect.objectContaining({
-                observe: 'response',
-                params: expect.any(HttpParams),
-            }),
-        );
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+            observe: 'response',
+            params: new HttpParams().set('resourceType', DeepLinkingType.LECTURE).set('contentIds', '1,2').set('ltiIdToken', '').set('clientRegistrationId', ''),
+        });
     }));
 
     it('should show an error when no content is selected', () => {
