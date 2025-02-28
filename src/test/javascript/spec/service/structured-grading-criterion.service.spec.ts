@@ -12,7 +12,6 @@ describe('Structured Grading Criteria Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(StructuredGradingCriterionService);

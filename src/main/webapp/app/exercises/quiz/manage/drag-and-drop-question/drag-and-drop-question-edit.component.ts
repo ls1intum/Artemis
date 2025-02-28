@@ -1000,7 +1000,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @returns returns a blob created from the data url
      */
     dataUrlToBlob(dataUrl: string): Blob {
-        // Seperate metadata from base64-encoded content
+        // Separate metadata from base64-encoded content
         const byteString = window.atob(dataUrl.split(',')[1]);
         // Isolate the MIME type (e.g "image/png")
         const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];

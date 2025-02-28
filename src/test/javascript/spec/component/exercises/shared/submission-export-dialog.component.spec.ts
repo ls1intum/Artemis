@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -12,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import { of } from 'rxjs';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Submission Export Dialog Component', () => {
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
@@ -33,11 +33,12 @@ describe('Submission Export Dialog Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [
                 { provide: SubmissionExportService, useValue: MockProvider(SubmissionExportService) },
                 { provide: ExerciseService, useClass: MockExerciseService },
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
             ],
         })
             .compileComponents()

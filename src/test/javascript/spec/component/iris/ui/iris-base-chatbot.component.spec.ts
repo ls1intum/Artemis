@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,7 +19,6 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import {
     mockClientMessage,
     mockServerMessage,
@@ -50,19 +49,21 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        acceptIris: jest.fn(),
+        acceptExternalLLMUsage: jest.fn(),
     } as any;
     let accountMock = {
-        userIdentity: { irisAccepted: dayjs() },
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
+        setUserAcceptedExternalLLMUsage: jest.fn(),
     } as any;
 
     beforeEach(async () => {
         accountMock = {
-            userIdentity: { irisAccepted: dayjs() },
+            userIdentity: { externalLLMUsageAccepted: dayjs() },
+            setUserAcceptedExternalLLMUsage: jest.fn(),
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisFormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
+            imports: [FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -113,19 +114,19 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to false if user has not accepted the policy', () => {
-        accountMock.userIdentity.irisAccepted = undefined;
+    it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
+        accountMock.userIdentity.externalLLMUsageAccepted = undefined;
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
 
-    it('should set userAccepted to true if user has accepted the policy', () => {
+    it('should set userAccepted to true if user has accepted the external LLM usage policy', () => {
         component.ngOnInit();
         expect(component.userAccepted).toBeTrue();
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = jest.spyOn(mockUserService, 'acceptIris');
+        const stub = jest.spyOn(mockUserService, 'acceptExternalLLMUsage');
         stub.mockReturnValue(of(new HttpResponse<void>()));
 
         component.acceptPermission();
@@ -383,7 +384,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(sendButton.disabled).toBeTruthy();
     });
-    it('should not render submit button if userAccepted is false', () => {
+    it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
         component.userAccepted = false;
         component.isLoading = false;
         component.error = undefined;
@@ -498,7 +499,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(suggestionButtons).toHaveLength(0);
     });
 
-    it('should not render suggestions if userAccepted is false', () => {
+    it('should not render suggestions if hasUserAcceptedExternalLLMUsage is false', () => {
         // Arrange
         const expectedSuggestions = ['suggestion1', 'suggestion2'];
         const mockMessages = [mockClientMessage, mockServerMessage];

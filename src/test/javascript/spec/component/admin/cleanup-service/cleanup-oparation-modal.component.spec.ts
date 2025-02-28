@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -29,7 +29,7 @@ describe('CleanupOperationModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CleanupOperationModalComponent, ArtemisSharedModule],
+            imports: [CleanupOperationModalComponent],
             declarations: [MockDirective(TranslateDirective)],
             providers: [
                 { provide: DataCleanupService, useValue: mockCleanupService },
@@ -111,7 +111,7 @@ describe('CleanupOperationModalComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons', // Mock URL
+            url: 'https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons', // Mock URL
         });
 
         jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
@@ -133,7 +133,7 @@ describe('CleanupOperationModalComponent', () => {
         comp.executeCleanupOperation();
 
         expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
-        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons: 500 Internal Server Error');
+        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons: 500 Internal Server Error');
     });
 
     it('should close the modal', () => {

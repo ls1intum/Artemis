@@ -9,7 +9,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -123,6 +123,7 @@ export class CourseUpdateComponent implements OnInit {
     faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
+    atlasEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialGroupsFeatureActivated = false;
@@ -188,6 +189,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                 }
+                this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
                 this.isAthenaEnabled = profileInfo.activeProfiles.includes(PROFILE_ATHENA);
             }
@@ -326,15 +328,18 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue();
+        const course = this.courseForm.getRawValue() as Course;
+        // NOTE: prevent overriding this value accidentally
+        // TODO: move presentationScore to gradingScale to avoid this
+        course.presentationScore = this.course.presentationScore;
 
         if (this.communicationEnabled && this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         } else if (this.communicationEnabled && !this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             this.communicationEnabled = false;
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
 
         if (!course.enrollmentEnabled) {

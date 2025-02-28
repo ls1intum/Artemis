@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -54,7 +54,7 @@ export type ProblemStatementUpdateEvent = ExamLiveEvent & {
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationLiveEventsService {
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private examParticipationService = inject(ExamParticipationService);
     private localStorageService = inject(LocalStorageService);
     private httpClient = inject(HttpClient);
@@ -182,7 +182,7 @@ export class ExamParticipationLiveEventsService {
     }
 
     private fetchPreviousExamEvents() {
-        this.httpClient.get<ExamLiveEvent[]>(`/api/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((events: ExamLiveEvent[]) => {
+        this.httpClient.get<ExamLiveEvent[]>(`/api/exam/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((events: ExamLiveEvent[]) => {
             this.events = events;
             this.events.forEach((event) => {
                 event.createdDate = convertDateFromServer(event.createdDate)!;

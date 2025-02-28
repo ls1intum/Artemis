@@ -110,7 +110,7 @@ describe('CommitHistoryComponent', () => {
         programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
 
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
 
@@ -131,7 +131,7 @@ describe('CommitHistoryComponent', () => {
 
     it('should load student participation', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -152,7 +152,7 @@ describe('CommitHistoryComponent', () => {
 
     it('should load student commits', () => {
         setupComponent();
-        activatedRoute.setParameters({ participationId: 2 });
+        activatedRoute.setParameters({ repositoryId: 2 });
 
         // Trigger ngOnInit
         component.ngOnInit();

@@ -1,14 +1,18 @@
 import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffReportModalComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('GitDiffReportModalComponent', () => {
     let comp: GitDiffReportModalComponent;
@@ -26,8 +30,13 @@ describe('GitDiffReportModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffReportComponent)],
+            imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportModalComponent);
         comp = fixture.componentInstance;

@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { tap } from 'rxjs/operators';
@@ -37,7 +37,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private examService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
     private modalService = inject(NgbModal);
     private accountService = inject(AccountService);

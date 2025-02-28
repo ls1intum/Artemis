@@ -9,7 +9,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
-    private resourceUrl = 'api/files';
+    private resourceUrl = 'api/core/files';
 
     /**
      * Fetches the template file for the given programming language
@@ -41,7 +41,7 @@ export class FileService {
      * @returns markdown file
      */
     getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
+        return this.http.get<string>(`${this.resourceUrl}/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**
@@ -67,14 +67,26 @@ export class FileService {
      * @param downloadName the name given to the attachment
      */
     downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true);
+        const newWindow = window.open('about:blank');
+        newWindow!.location.href = normalizedDownloadUrl;
+        return newWindow;
+    }
+
+    /**
+     * Creates the URL to download a attachment file
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     * @param downloadName the name given to the attachment
+     * @param encodeName whether or not to encode the downloadName
+     */
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
-        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(downloadName + '.' + extension);
-        const newWindow = window.open('about:blank');
-        newWindow!.location.href = normalizedDownloadUrl;
-        return newWindow;
+        const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
+        return restOfUrl + '/' + encodedDownloadName;
     }
 
     /**
@@ -83,7 +95,7 @@ export class FileService {
      * @param lectureId the id of the lecture
      */
     downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`api/files/attachments/lecture/${lectureId}/merge-pdf`, {
+        return this.http.get(`${this.resourceUrl}/attachments/lecture/${lectureId}/merge-pdf`, {
             observe: 'response',
             responseType: 'blob',
         });

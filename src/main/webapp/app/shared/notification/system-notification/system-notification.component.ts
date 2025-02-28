@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +21,7 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private systemNotificationService = inject(SystemNotificationService);
 
     readonly INFO = SystemNotificationType.INFO;
@@ -44,7 +44,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 setTimeout(() => {
-                    this.websocketStatusSubscription = this.jhiWebsocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
+                    this.websocketStatusSubscription = this.websocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
                 }, 500);
             } else {
                 this.websocketStatusSubscription?.unsubscribe();
@@ -68,8 +68,8 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
      * The server submits the entire list of relevant system notifications if they are updated
      */
     private subscribeSocket() {
-        this.jhiWebsocketService.subscribe(WEBSOCKET_CHANNEL);
-        this.jhiWebsocketService.receive(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+        this.websocketService.subscribe(WEBSOCKET_CHANNEL);
+        this.websocketService.receive(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
             notifications.forEach((notification) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);

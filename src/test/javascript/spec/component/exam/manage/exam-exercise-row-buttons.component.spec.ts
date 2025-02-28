@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -14,6 +13,12 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('Exam Exercise Row Buttons Component', () => {
     const course = new Course();
@@ -96,7 +101,12 @@ describe('Exam Exercise Row Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);

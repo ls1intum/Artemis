@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 
@@ -16,7 +16,7 @@ export interface IConflictStateService {
  */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorConflictStateService extends DomainDependentService implements IConflictStateService, OnDestroy {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
 
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
     private websocketConnections: Map<string, string> = new Map();
@@ -30,7 +30,7 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
      * Unsubscribe fromm all subscriptions.
      */
     ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
+        Object.values(this.websocketConnections).forEach((channel) => this.websocketService.unsubscribe(channel));
     }
 
     /**

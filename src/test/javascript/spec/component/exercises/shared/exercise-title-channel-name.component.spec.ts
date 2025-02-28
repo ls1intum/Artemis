@@ -7,7 +7,12 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { SessionStorageService } from 'ngx-webstorage';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from '../../../../../../main/webapp/app/entities/exercise.model';
-import { ArtemisTestModule } from '../../../test.module';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseTitleChannelNameComponent', () => {
     let component: ExerciseTitleChannelNameComponent;
@@ -16,8 +21,13 @@ describe('ExerciseTitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [{ provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
     });
 

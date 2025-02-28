@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -25,7 +25,7 @@ export interface IParticipationWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private participationService = inject(ParticipationService);
 
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -159,7 +159,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
-                    this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.websocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
@@ -171,7 +171,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                         this.subscribedExercises.delete(exerciseId!);
                         const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
                         if (subscribedTopic) {
-                            this.jhiWebsocketService.unsubscribe(subscribedTopic);
+                            this.websocketService.unsubscribe(subscribedTopic);
                             this.openResultWebsocketSubscriptions.delete(exerciseId!);
                         }
                     }
@@ -205,8 +205,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
             subscribedParticipations!.add(participationId);
 
-            this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.jhiWebsocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            this.websocketService.subscribe(participationResultTopic);
+            this.websocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
         }
     }
 

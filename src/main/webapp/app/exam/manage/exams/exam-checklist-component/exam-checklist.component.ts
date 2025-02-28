@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -40,7 +40,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private studentExamService = inject(StudentExamService);

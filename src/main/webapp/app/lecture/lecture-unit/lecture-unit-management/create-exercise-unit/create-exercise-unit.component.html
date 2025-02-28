@@ -1,76 +1,68 @@
-@if (isLoading) {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="sr-only" jhiTranslate="loading"></span>
+<div class="container">
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <h2 jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
         </div>
     </div>
-} @else {
     <div class="row">
-        <div class="row">
-            <div class="col-12 mx-auto">
-                <h2 jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
-            </div>
+        <div class="col-sm-6">
+            <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
         </div>
-        <div class="row">
-            <div class="col-sm-6">
-                <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12 mx-auto">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                <th jhiSortBy="id">
-                                    id
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="type">
-                                    {{ 'artemisApp.exercise.type' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="title">
-                                    {{ 'artemisApp.exercise.title' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="shortName">
-                                    {{ 'artemisApp.exercise.shortName' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="releaseDate">
-                                    {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="dueDate">
-                                    {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="assessmentDueDate">
-                                    {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
-                                    <fa-icon [icon]="faSort" />
-                                </th>
+    </div>
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                            <th jhiSortBy="id">
+                                id
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="type">
+                                <span jhiTranslate="artemisApp.exercise.type"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="title">
+                                <span jhiTranslate="artemisApp.exercise.title"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="shortName">
+                                <span jhiTranslate="artemisApp.exercise.shortName"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="releaseDate">
+                                <span jhiTranslate="artemisApp.exercise.releaseDate"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="dueDate">
+                                <span jhiTranslate="artemisApp.exercise.dueDate"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="assessmentDueDate">
+                                <span jhiTranslate="artemisApp.exercise.assessmentDueDate"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (exercise of exercisesAvailableForUnitCreation; track exercise) {
+                            <tr
+                                (click)="selectExerciseForUnitCreation(exercise)"
+                                [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"
+                                id="exercise-{{ exercise.id }}"
+                            >
+                                <td>{{ exercise.id ? exercise.id : '' }}</td>
+                                <td>{{ exercise.type ? exercise.type : '' }}</td>
+                                <td>{{ exercise.title ? exercise.title : '' }}</td>
+                                <td>{{ exercise.shortName ? exercise.shortName : '' }}</td>
+                                <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @for (exercise of exercisesAvailableForUnitCreation; track exercise) {
-                                <tr
-                                    (click)="selectExerciseForUnitCreation(exercise)"
-                                    [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"
-                                    id="exercise-{{ exercise.id }}"
-                                >
-                                    <td>{{ exercise.id ? exercise.id : '' }}</td>
-                                    <td>{{ exercise.type ? exercise.type : '' }}</td>
-                                    <td>{{ exercise.title ? exercise.title : '' }}</td>
-                                    <td>{{ exercise.shortName ? exercise.shortName : '' }}</td>
-                                    <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                    <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                    <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="row">
@@ -91,4 +83,4 @@
             </div>
         </div>
     </div>
-}
+</div>

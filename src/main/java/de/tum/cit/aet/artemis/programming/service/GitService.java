@@ -71,6 +71,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -342,7 +343,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
+    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
     }
@@ -1022,29 +1023,38 @@ public class GitService extends AbstractGitService {
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
-     * @param repo The repository to scan for files and directories.
+     * @param repo         The repository to scan for files and directories.
+     * @param omitBinaries do not include binaries to reduce payload size
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
-    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+    public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
+        List<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
             Path nextPath = nextFile.toPath();
 
-            // filter out symlinks
             if (Files.isSymbolicLink(nextPath)) {
                 log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
+                continue;
+            }
+
+            if (omitBinaries && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
+                log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }
 
             files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
         }
         return files;
+    }
+
+    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+        return listFilesAndFolders(repo, false);
     }
 
     /**
@@ -1098,7 +1108,7 @@ public class GitService extends AbstractGitService {
      * @return True if the status is clean
      * @throws GitAPIException if the state of the repository could not be retrieved.
      */
-    public boolean isClean(Repository repo) throws GitAPIException {
+    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
             Status status = git.status().call();
             return status.isClean();

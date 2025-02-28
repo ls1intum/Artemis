@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/exam/admin/")
 public class AdminExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminExamResource.class);

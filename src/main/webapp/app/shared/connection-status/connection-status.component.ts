@@ -1,7 +1,7 @@
 import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../language/translate.directive';
@@ -13,7 +13,7 @@ import { TranslateDirective } from '../language/translate.directive';
     imports: [NgClass, FaIconComponent, TranslateDirective],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
 
     @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
     @Input() isExamMode = false;

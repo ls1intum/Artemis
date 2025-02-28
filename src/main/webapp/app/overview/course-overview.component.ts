@@ -41,7 +41,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -69,6 +69,7 @@ import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
 import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -132,7 +133,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private teamService = inject(TeamService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
@@ -162,6 +163,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     communicationRouteLoaded: boolean;
+    atlasEnabled = false;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
@@ -254,6 +256,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -382,7 +385,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem: SidebarItem = this.getCompetenciesItems();
             sidebarItems.push(competenciesItem);
             if (this.course?.learningPathsEnabled) {
@@ -620,11 +623,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
-
-            // Listen for changes to the control configuration; works for initial config as well
             this.controlsSubscription =
-                this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
+                this.controlConfiguration.subject?.subscribe(async (controls: TemplateRef<any>) => {
                     this.controls = controls;
+                    this.tryRenderControls();
+                    await firstValueFrom(provider.controlsRendered);
                     this.tryRenderControls();
                 }) || undefined;
         }
@@ -782,7 +785,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.teamAssignmentUpdateListener.unsubscribe();
         }
         if (this.quizExercisesChannel) {
-            this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
+            this.websocketService.unsubscribe(this.quizExercisesChannel);
         }
         this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
@@ -805,8 +808,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
-            this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.subscribe(this.quizExercisesChannel);
+            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {

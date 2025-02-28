@@ -15,7 +15,7 @@ export class ComplaintResponseService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    private resourceUrl = 'api/complaints';
+    private resourceUrl = 'api/assessment/complaints';
 
     /**
      * Checks if a complaint response is locked for the currently logged-in user

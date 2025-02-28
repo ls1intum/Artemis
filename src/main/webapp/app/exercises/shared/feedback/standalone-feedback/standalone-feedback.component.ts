@@ -16,7 +16,7 @@ import { FeedbackComponent } from '../feedback.component';
     imports: [FeedbackComponent],
 })
 export class StandaloneFeedbackComponent implements OnInit {
-    route = inject(ActivatedRoute);
+    private route = inject(ActivatedRoute);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
 

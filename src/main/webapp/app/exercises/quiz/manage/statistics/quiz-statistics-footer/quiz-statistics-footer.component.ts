@@ -5,7 +5,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
@@ -36,7 +36,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizExerciseService = inject(QuizExerciseService);
     private quizStatisticUtil = inject(QuizStatisticUtil);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
 
     @Input() isQuizPointStatistic: boolean;
@@ -119,7 +119,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**

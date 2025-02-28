@@ -53,12 +53,13 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("api/communication/courses/")
 public class ChannelResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelResource.class);
@@ -77,7 +78,7 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
-    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
@@ -86,7 +87,7 @@ public class ChannelResource extends ConversationManagementResource {
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            ConversationService conversationService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -95,13 +96,13 @@ public class ChannelResource extends ConversationManagementResource {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
-        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
-     * GET /api/courses/:courseId/channels/overview: Returns an overview of all channels in a course
+     * GET courses/:courseId/channels/overview: Returns an overview of all channels in a course
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
@@ -130,7 +131,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
+     * GET courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
@@ -155,7 +156,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
+     * GET courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
      *
      * @param courseId   the id of the course
      * @param exerciseId the id of the channel
@@ -180,7 +181,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
+     * GET courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
      *
      * @param courseId  the id of the course
      * @param lectureId the id of the channel
@@ -206,7 +207,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/: Creates a new channel in a course
+     * POST courses/:courseId/channels/: Creates a new channel in a course
      *
      * @param courseId   the id of the course
      * @param channelDTO the dto containing the properties of the channel to be created
@@ -221,6 +222,14 @@ public class ChannelResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(course);
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
+        var channelToCreate = new Channel();
+        channelToCreate.setName(channelDTO.getName());
+        channelToCreate.setIsPublic(channelDTO.getIsPublic());
+        channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(channelDTO.getDescription());
+        channelToCreate.setIsCourseWide(channelDTO.getIsCourseWide());
+
         if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
@@ -230,7 +239,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * PUT /api/courses/:courseId/channels/:channelId: Updates a channel in a course
+     * PUT courses/:courseId/channels/:channelId: Updates a channel in a course
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel to be updated
@@ -259,7 +268,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * DELETE /api/courses/:courseId/channels/:channelId: Deletes a channel in a course
+     * DELETE courses/:courseId/channels/:channelId: Deletes a channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the channel to be deleted
@@ -277,7 +286,7 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
 
-        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresent(tutorialGroup -> {
+        tutorialGroupChannelManagementApi.flatMap(groupChannelManagementApi -> groupChannelManagementApi.getTutorialGroupBelongingToChannel(channel)).ifPresent(tutorialGroup -> {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         });
 
@@ -290,7 +299,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/archive : Archives a channel in a course
+     * POST courses/:courseId/channels/:channelId/archive : Archives a channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the channel to be archived
@@ -309,7 +318,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/unarchive : Unarchives an archived channel in a course
+     * POST courses/:courseId/channels/:channelId/unarchive : Unarchives an archived channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the archived channel to be unarchived
@@ -328,7 +337,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/grant-channel-moderator : Grants members of a channel the channel moderator role
+     * POST courses/:courseId/channels/:channelId/grant-channel-moderator : Grants members of a channel the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
@@ -351,7 +360,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/revoke-channel-moderator : Revokes the channel moderator role
+     * POST courses/:courseId/channels/:channelId/revoke-channel-moderator : Revokes the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
@@ -378,7 +387,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
+     * POST courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
      *
      * @param courseId          the id of the course
      * @param channelId         the id of the channel
@@ -419,7 +428,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/deregister : Deregisters users from a channel of a course
+     * POST courses/:courseId/channels/:channelId/deregister : Deregisters users from a channel of a course
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
@@ -457,7 +466,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
+     * POST courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
      *
      * @param courseId               where the channel is being created.
      * @param exerciseId             for which the feedback channel is being created.
@@ -481,12 +490,11 @@ public class ChannelResource extends ConversationManagementResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
-
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
     /**
-     * POST /api/courses/:courseId/channels/mark-as-read: Marks all channels of a course as read for the current user.
+     * POST courses/:courseId/channels/mark-as-read: Marks all channels of a course as read for the current user.
      *
      * @param courseId the id of the course.
      * @return ResponseEntity with status 200 (Ok).
@@ -501,6 +509,38 @@ public class ChannelResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         conversationService.markAllConversationOfAUserAsRead(course.getId(), requestingUser);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST courses/:courseId/channels/:channelId/toggle-privacy
+     *
+     * Toggles the privacy status of a channel: If the channel is public, it becomes private;
+     * if it is private, it becomes public.
+     *
+     * @param courseId  The ID of the course to which the channel belongs
+     * @param channelId The ID of the channel whose privacy status will be changed
+     * @return The updated channel's DTO
+     */
+    @PostMapping("{courseId}/channels/{channelId}/toggle-privacy")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<ChannelDTO> toggleChannelPrivacy(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to toggle privacy for channel : {}", channelId);
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
+        if (!channelFromDatabase.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+
+        channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
+
+        boolean isCurrentlyPublic = Boolean.TRUE.equals(channelFromDatabase.getIsPublic());
+        channelFromDatabase.setIsPublic(!isCurrentlyPublic);
+
+        var updatedChannel = channelRepository.save(channelFromDatabase);
+
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {

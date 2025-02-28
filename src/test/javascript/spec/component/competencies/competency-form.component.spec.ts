@@ -1,21 +1,22 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -25,16 +26,14 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
-            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService)],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents();
+            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
 
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
         competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
         competencyFormComponent = competencyFormComponentFixture.componentInstance;
 

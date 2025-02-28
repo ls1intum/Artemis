@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { PointCounter } from 'app/entities/quiz/point-counter.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
@@ -31,7 +31,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private changeDetector = inject(ChangeDetectorRef);
     private serverDateService = inject(ArtemisServerDateService);
 
@@ -83,14 +83,14 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.jhiWebsocketService.subscribe(this.websocketChannelForData);
+            this.websocketService.subscribe(this.websocketChannelForData);
 
             if (!this.quizExerciseChannel) {
                 this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
-                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+                this.websocketService.subscribe(this.quizExerciseChannel);
+                this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
                     if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
                         this.loadQuizSuccess(quiz);
                     }
@@ -98,7 +98,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             }
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadNewData(quiz.quizPointStatistic);
             });
         });
@@ -152,7 +152,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**

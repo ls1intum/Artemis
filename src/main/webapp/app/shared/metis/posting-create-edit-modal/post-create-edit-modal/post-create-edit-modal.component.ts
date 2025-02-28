@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, OnChanges, OnInit, input } from '@angular/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
@@ -38,7 +38,7 @@ export interface ContextSelectorOption {
     ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
-    @Input() isCommunicationPage: boolean;
+    isCommunicationPage = input<boolean>(false);
 
     exercises?: Exercise[];
     lectures?: Lecture[];

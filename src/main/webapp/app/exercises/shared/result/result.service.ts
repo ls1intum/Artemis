@@ -53,9 +53,9 @@ export class ResultService implements IResultService {
     private translateService = inject(TranslateService);
     private csvDownloadService = inject(CsvDownloadService);
 
-    private exerciseResourceUrl = 'api/exercises';
-    private resultResourceUrl = 'api/results';
-    private participationResourceUrl = 'api/participations';
+    private exerciseResourceUrl = 'api/assessment/exercises';
+    private resultResourceUrl = 'api/assessment/results';
+    private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
     // Size of tinyInt in SQL, that is used to store these values
@@ -260,8 +260,8 @@ export class ResultService implements IResultService {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
                 if (resultWithPoints.pointsPerCriterion) {
-                    resultWithPoints.pointsPerCriterion.forEach((value, key) => {
-                        pointsMap.set(Number(key), value);
+                    Object.entries(resultWithPoints.pointsPerCriterion).forEach(([key, value]) => {
+                        pointsMap.set(+key, value);
                     });
                 }
                 resultWithPoints.pointsPerCriterion = pointsMap;

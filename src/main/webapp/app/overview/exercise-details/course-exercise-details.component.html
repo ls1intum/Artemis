@@ -190,7 +190,8 @@
                     </div>
                 }
                 @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" [isChatGptWrapper]="isChatGptWrapper" />
+                    <!-- TODO TW: This "feature" is only temporary for a paper. -->
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">

@@ -22,6 +22,7 @@ export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     channelToCreate: ChannelDTO = new ChannelDTO();
     isPublicChannel = true;
     isAnnouncementChannel = false;
+    isCourseWideChannel = false;
 
     onChannelTypeChanged($event: ChannelType) {
         this.isPublicChannel = $event === 'PUBLIC';
@@ -31,16 +32,21 @@ export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
         this.isAnnouncementChannel = $event;
     }
 
+    onIsCourseWideChannelChanged($event: boolean) {
+        this.isCourseWideChannel = $event;
+    }
+
     onFormSubmitted($event: ChannelFormData) {
         this.createChannel($event);
     }
 
     createChannel(formData: ChannelFormData) {
-        const { name, description, isPublic, isAnnouncementChannel } = formData;
+        const { name, description, isPublic, isAnnouncementChannel, isCourseWideChannel } = formData;
         this.channelToCreate.name = name ? name.trim() : undefined;
         this.channelToCreate.description = description ? description.trim() : undefined;
         this.channelToCreate.isPublic = isPublic ?? false;
         this.channelToCreate.isAnnouncementChannel = isAnnouncementChannel ?? false;
+        this.channelToCreate.isCourseWide = isCourseWideChannel ?? false;
         this.close(this.channelToCreate);
     }
 }

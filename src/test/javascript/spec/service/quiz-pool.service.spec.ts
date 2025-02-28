@@ -1,7 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
-import { ArtemisTestModule } from '../test.module';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -12,7 +11,6 @@ describe('QuizPoolService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting(), QuizPoolService],
         });
         quizPoolService = TestBed.inject(QuizPoolService);
@@ -28,7 +26,7 @@ describe('QuizPoolService', () => {
         const response = firstValueFrom(quizPoolService.update(courseId, examId, quizPool));
         const req = httpMock.expectOne({
             method: 'PUT',
-            url: `api/courses/${courseId}/exams/${examId}/quiz-pools`,
+            url: `api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`,
         });
         req.flush(updatedQuizPool);
         expect((await response)?.body).toEqual(updatedQuizPool);
@@ -42,7 +40,7 @@ describe('QuizPoolService', () => {
         const response = firstValueFrom(quizPoolService.find(courseId, examId));
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `api/courses/${courseId}/exams/${examId}/quiz-pools`,
+            url: `api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`,
         });
         req.flush(quizPool);
         expect((await response)?.body).toEqual(quizPool);

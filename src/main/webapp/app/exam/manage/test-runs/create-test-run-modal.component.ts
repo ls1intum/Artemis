@@ -63,15 +63,6 @@ export class CreateTestRunModalComponent implements OnInit {
     }
 
     /**
-     * Track the items by id on the exercise Tables.
-     * @param index {number}
-     * @param item {Exercise}
-     */
-    trackId(index: number, item: Exercise) {
-        return item.id;
-    }
-
-    /**
      * Returns true if an exercise has been selected for every exercise group
      */
     get testRunConfigured(): boolean {

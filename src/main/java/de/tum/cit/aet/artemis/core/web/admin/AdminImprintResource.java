@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.service.LegalDocumentService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminImprintResource {
 
     private final LegalDocumentService legalDocumentService;

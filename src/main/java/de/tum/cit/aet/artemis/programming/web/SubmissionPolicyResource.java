@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class SubmissionPolicyResource {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);

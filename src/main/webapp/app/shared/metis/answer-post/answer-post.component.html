@@ -20,9 +20,9 @@
         <div class="ps-3">
             <jhi-posting-header
                 [posting]="posting"
-                [readOnlyMode]="isReadOnlyMode"
+                [readOnlyMode]="isReadOnlyMode()"
                 [isCommunicationPage]="isCommunicationPage"
-                [lastReadDate]="lastReadDate"
+                [lastReadDate]="lastReadDate()"
                 [isDeleted]="isDeleted"
                 (onUserNameClicked)="onUserNameClicked()"
             />
@@ -44,10 +44,11 @@
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                 />
                 <div class="post-content-padding hover-actions">
-                    <jhi-answer-post-reactions-bar
-                        [isReadOnlyMode]="isReadOnlyMode"
+                    <jhi-posting-reactions-bar
+                        [isReadOnlyMode]="isReadOnlyMode()"
+                        [course]="course"
                         [posting]="posting"
-                        [isLastAnswer]="isLastAnswer"
+                        [isLastAnswer]="isLastAnswer()"
                         [isThreadSidebar]="isThreadSidebar"
                         (openPostingCreateEditModal)="createAnswerPostModal.open()"
                         (reactionsUpdated)="onReactionsUpdated($event)"
@@ -65,10 +66,10 @@
     </div>
     @if (!isDeleted) {
         <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
-            <jhi-answer-post-reactions-bar
-                [isReadOnlyMode]="isReadOnlyMode"
+            <jhi-posting-reactions-bar
+                [isReadOnlyMode]="isReadOnlyMode()"
                 [posting]="posting"
-                [isLastAnswer]="isLastAnswer"
+                [isLastAnswer]="isLastAnswer()"
                 [isThreadSidebar]="isThreadSidebar"
                 (openPostingCreateEditModal)="createAnswerPostModal.open()"
                 (reactionsUpdated)="onReactionsUpdated($event)"
@@ -78,7 +79,7 @@
         </div>
     }
 </div>
-<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef" />
+<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef()" />
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown) {
@@ -102,6 +103,10 @@
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
             <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+        </button>
+        <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
+            <fa-icon [icon]="faShare" class="item-icon" />
+            <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
     </div>
 }

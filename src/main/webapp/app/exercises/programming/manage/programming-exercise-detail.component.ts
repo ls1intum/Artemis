@@ -45,12 +45,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
@@ -60,7 +60,6 @@ import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -68,8 +67,8 @@ import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../share
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -120,6 +119,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly ButtonSize = ButtonSize;
     protected readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
 
     protected readonly faUndo = faUndo;
@@ -230,7 +230,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 );
                             }
                             this.supportsAuxiliaryRepositories =
-                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
                                 false;
                             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
@@ -269,9 +269,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.checkAndAlertInconsistencies();
-                        this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                            programmingExercise.programmingLanguage,
-                        ).plagiarismCheckSupported;
+                        this.plagiarismCheckSupported =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
 
                         /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();
@@ -406,7 +405,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: exercise.templateParticipation,
                         exerciseId: exercise.id,
-                        type: 'TEMPLATE',
+                        type: RepositoryType.TEMPLATE,
                     },
                 },
                 {
@@ -415,7 +414,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: exercise.solutionParticipation,
                         exerciseId: exercise.id,
-                        type: 'SOLUTION',
+                        type: RepositoryType.SOLUTION,
                     },
                 },
                 {
@@ -424,7 +423,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: {
                         participation: { repositoryUri: exercise.testRepositoryUri },
                         exerciseId: exercise.id,
-                        type: 'TESTS',
+                        type: RepositoryType.TESTS,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&

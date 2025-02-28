@@ -70,8 +70,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.showCloneUrlWithoutToken = data.showCloneUrlWithoutToken;
-                        profileInfo.useVersionControlAccessToken = data.useVersionControlAccessToken;
+                        profileInfo.repositoryAuthenticationMechanisms = data.repositoryAuthenticationMechanisms;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data.textAssessmentAnalyticsEnabled;
@@ -99,7 +98,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo.pipe(filter((x) => x != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
+        return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {

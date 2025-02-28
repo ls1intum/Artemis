@@ -1,13 +1,16 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
-import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ImportCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
@@ -16,7 +19,7 @@ describe('ImportCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportCompetenciesComponent, ArtemisTestModule, ArtemisFormsModule],
+            imports: [ImportCompetenciesComponent],
             declarations: [],
             providers: [
                 {
@@ -26,6 +29,10 @@ describe('ImportCompetenciesComponent', () => {
                     } as ActivatedRoute,
                 },
                 { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

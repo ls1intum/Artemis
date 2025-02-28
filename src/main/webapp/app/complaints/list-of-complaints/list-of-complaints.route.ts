@@ -9,7 +9,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 
 export const listOfComplaintsRoute: Routes = [
     {
-        path: ':courseId/complaints',
+        path: 'complaints',
         loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
@@ -22,7 +22,7 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/exams/:examId/complaints',
+        path: 'exams/:examId/complaints',
         loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
@@ -36,7 +36,7 @@ export const listOfComplaintsRoute: Routes = [
     },
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/complaints',
+            path: exerciseType + '-exercises/:exerciseId/complaints',
             component: ListOfComplaintsComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -47,7 +47,7 @@ export const listOfComplaintsRoute: Routes = [
         };
     }),
     {
-        path: ':courseId/more-feedback-requests',
+        path: 'more-feedback-requests',
         loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
@@ -61,7 +61,7 @@ export const listOfComplaintsRoute: Routes = [
     },
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/more-feedback-requests',
+            path: exerciseType + '-exercises/:exerciseId/more-feedback-requests',
             component: ListOfComplaintsComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

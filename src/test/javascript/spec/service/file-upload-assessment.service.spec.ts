@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { ArtemisTestModule } from '../test.module';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
@@ -18,7 +17,6 @@ describe('Modeling Assessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(FileUploadAssessmentService);
@@ -62,7 +60,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/file-upload-submissions/${submissionId}/feedback`,
+                    url: `api/fileupload/file-upload-submissions/${submissionId}/feedback`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -89,7 +87,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/file-upload-submissions/${submissionId}/feedback?submit=true`,
+                    url: `api/fileupload/file-upload-submissions/${submissionId}/feedback?submit=true`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -104,7 +102,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/file-upload-submissions/${submissionId}/result`,
+                    url: `api/fileupload/file-upload-submissions/${submissionId}/result`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
@@ -133,7 +131,7 @@ describe('Modeling Assessment Service', () => {
                     .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId)
                     .pipe(take(1))
                     .subscribe((resp) => (httpExpectedResult = resp));
-                const req = httpMock.expectOne({ url: `api/file-upload-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
+                const req = httpMock.expectOne({ url: `api/fileupload/file-upload-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
                 expect(httpExpectedResult.body).toEqual(expected);
             });
@@ -146,7 +144,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 httpMock.expectOne({
-                    url: `api/file-upload-submissions/${submissionId}/cancel-assessment`,
+                    url: `api/fileupload/file-upload-submissions/${submissionId}/cancel-assessment`,
                     method: 'PUT',
                 });
                 expect(expectedResult).toEqual({});

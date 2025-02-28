@@ -3,7 +3,7 @@ import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
@@ -26,7 +26,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected router = inject(Router);
     protected accountService = inject(AccountService);
     protected quizExerciseService = inject(QuizExerciseService);
-    protected jhiWebsocketService = inject(JhiWebsocketService);
+    protected websocketService = inject(WebsocketService);
     protected changeDetector = inject(ChangeDetectorRef);
 
     question: QuizQuestion;
@@ -68,17 +68,17 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.jhiWebsocketService.subscribe(this.websocketChannelForData);
+            this.websocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadQuiz(quiz, true);
             });
         });
     }
 
     ngOnDestroy() {
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**

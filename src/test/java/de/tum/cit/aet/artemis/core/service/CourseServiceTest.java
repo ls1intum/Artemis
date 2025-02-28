@@ -318,7 +318,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         }
         StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
 
-        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
                 HttpStatus.OK);
         assertThat(registrationFailures).containsExactly(dto2);
     }

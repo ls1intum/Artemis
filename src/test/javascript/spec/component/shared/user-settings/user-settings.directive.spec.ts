@@ -1,12 +1,11 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
@@ -17,6 +16,8 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * needed for testing the abstract UserSettingsDirective
@@ -51,15 +52,15 @@ describe('User Settings Directive', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(ChangeDetectorRef),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserSettingsService, useClass: MockUserSettingsService },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

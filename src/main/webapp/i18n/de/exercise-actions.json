@@ -49,8 +49,6 @@
             "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
             "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
             "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",
-            "repositoryPassword": "Dein Passwort lautet:",
-            "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
@@ -70,7 +68,13 @@
             "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
             "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
-            "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?"
+            "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?",
+            "externalLLMUsage": {
+                "popUpLabel": "Bestätigung der externen LLM-Verwendung",
+                "popUpMessage": "Indem du fortfährst, bestätigst du, dass du mind. 18 Jahre alt bist und dass du damit einverstanden bist, dass deine Interaktionen mit Artemis und die notwendigen kontextbezogenen Daten, z.B. dein Code, von Microsoft und OpenAI (d.h. außerhalb unseres Universitätsrechenzentrums) verarbeitet werden.",
+                "accept": "Akzeptieren",
+                "decline": "Ablehnen"
+            }
         }
     }
 }

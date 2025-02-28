@@ -1,9 +1,8 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { SimpleChange } from '@angular/core';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -13,19 +12,22 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import * as utils from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { By } from '@angular/platform-browser';
-import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -87,11 +89,14 @@ describe('ResultComponent', () => {
         global.URL.revokeObjectURL = jest.fn();
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ParticipationService, useValue: participationServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
