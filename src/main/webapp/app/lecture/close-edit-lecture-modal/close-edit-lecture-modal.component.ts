@@ -1,12 +1,12 @@
 import { Component, Input, inject } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-close-edit-lecture-modal',
-    imports: [TranslateDirective, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, FontAwesomeModule],
     templateUrl: './close-edit-lecture-modal.component.html',
 })
 export class CloseEditLectureModalComponent {

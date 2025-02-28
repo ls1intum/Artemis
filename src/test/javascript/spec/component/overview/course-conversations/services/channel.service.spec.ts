@@ -19,7 +19,6 @@ describe('ChannelService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -199,6 +198,20 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
+        tick();
+    }));
+
+    it('toggleChannelPrivacy', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, isPublic: false };
+        const expected = { ...returnedFromService };
+
+        service
+            .toggleChannelPrivacy(1, 2)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/communication/courses/1/channels/2/toggle-privacy' });
+        req.flush(returnedFromService);
         tick();
     }));
 });

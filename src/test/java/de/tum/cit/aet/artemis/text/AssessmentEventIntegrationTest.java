@@ -72,7 +72,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         List<TextAssessmentEvent> events = TextExerciseFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         for (TextAssessmentEvent event : events) {
-            request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
+            request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
         }
     }
 
@@ -105,7 +105,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
 
-        request.post("/api/event-insights/text-assessment/events", event, expected);
+        request.post("/api/text/event-insights/text-assessment/events", event, expected);
     }
 
     /**
@@ -118,7 +118,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         event.setId(1L);
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
+        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -128,7 +128,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         textSubmissionTestRepository.saveAndFlush(textSubmission);
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
+        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -141,9 +141,9 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
 
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
+        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
 
-        var foundEvents = request.getList("/api/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
+        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
         assertThat(foundEvents).hasSize(1);
         TextAssessmentEvent foundEvent = foundEvents.getFirst();
         assertThat(foundEvent.getId()).isNotNull();
@@ -168,7 +168,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         // Add two events with two different tutor ids
         textAssessmentEventRepository.saveAll(List.of(event1, event2));
 
-        int numberOfTutorsInvolved = request.get("/api/event-insights/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
+        int numberOfTutorsInvolved = request.get("/api/text/event-insights/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
                 HttpStatus.OK, Integer.class);
 
         assertThat(numberOfTutorsInvolved).isEqualTo(2);

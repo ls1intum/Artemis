@@ -8,7 +8,7 @@ describe('CourseCompetencyApiService', () => {
     let httpClient: HttpTestingController;
     let courseCompetencyApiService: CourseCompetencyApiService;
 
-    const baseUrl = 'api';
+    const baseUrl = 'api/atlas';
 
     const courseId = 1;
 

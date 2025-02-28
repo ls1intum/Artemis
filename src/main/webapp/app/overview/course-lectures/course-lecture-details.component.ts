@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PROFILE_IRIS } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
@@ -87,6 +88,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     isProduction = true;
     isTestServer = false;
     endsSameDay = false;
+    irisEnabled = false;
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -101,20 +103,20 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     }
 
     ngOnInit(): void {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.isProduction = profileInfo.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+            this.irisEnabled = profileInfo.activeProfiles?.includes(PROFILE_IRIS);
+        });
+
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
             if (this.lectureId) {
                 // science logging
                 this.setResourceId(this.lectureId);
                 this.logEvent();
-
                 this.loadData();
             }
-        });
-
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
         });
     }
 
@@ -140,9 +142,11 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                 ).length > 0;
                         }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
-                        this.irisSettingsService.getCombinedCourseSettings(this.lecture?.course?.id!).subscribe((irisSettings) => {
-                            this.irisSettings = irisSettings;
-                        });
+                        if (this.irisEnabled && this.lecture?.course?.id) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
+                                this.irisSettings = irisSettings;
+                            });
+                        }
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });

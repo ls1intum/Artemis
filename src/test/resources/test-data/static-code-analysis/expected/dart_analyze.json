@@ -1,0 +1,16 @@
+{
+  "tool": "DART_ANALYZE",
+  "issues": [
+    {
+      "filePath": "lib/bust.dart",
+      "startLine": 2,
+      "endLine": 2,
+      "startColumn": 3,
+      "endColumn": 4,
+      "rule": "empty_statements",
+      "category": "LINT",
+      "message": "Unnecessary empty statement.",
+      "priority": "note"
+    }
+  ]
+}

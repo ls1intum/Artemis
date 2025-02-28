@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisSharedPipesModule } from '../shared/pipes/shared-pipes.module';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 /**
  * Component responsible for sending deep linking content.
@@ -15,7 +15,7 @@ import { ArtemisSharedPipesModule } from '../shared/pipes/shared-pipes.module';
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisSharedPipesModule],
+    imports: [TranslateDirective, FormsModule, SafeResourceUrlPipe],
 })
 export class Lti13SelectContentComponent implements OnInit {
     private route = inject(ActivatedRoute);

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -22,6 +21,10 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import * as monaco from 'monaco-editor';
 import { MockClipboardItem } from '../../../helpers/mocks/service/mock-clipboard-item';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -29,7 +32,11 @@ describe('MonacoEditorActionIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
+            imports: [MonacoEditorComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(MonacoEditorComponent);
@@ -59,8 +66,18 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([
-        { action: new AttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: AttachmentAction.DEFAULT_INSERT_TEXT },
-        { action: new UrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: UrlAction.DEFAULT_INSERT_TEXT },
+        {
+            action: new AttachmentAction(),
+            text: 'Attachment',
+            url: 'https://test.invalid/img.png',
+            defaultText: AttachmentAction.DEFAULT_INSERT_TEXT,
+        },
+        {
+            action: new UrlAction(),
+            text: 'Link',
+            url: 'https://test.invalid/',
+            defaultText: UrlAction.DEFAULT_INSERT_TEXT,
+        },
     ])('should insert $text', ({ action, text, url, defaultText }: { action: UrlAction | AttachmentAction; text: string; url: string; defaultText: string }) => {
         const prefix = text === 'Attachment' ? '!' : '';
         comp.registerAction(action);
@@ -127,7 +144,12 @@ describe('MonacoEditorActionIntegration', () => {
         const lines = ['One', '', 'Two', 'Three'];
         const bulletedLines = lines.map((line) => (line ? `- ${line}` : ''));
         comp.setText(lines.join('\n'));
-        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
+        comp.setSelection({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: lines.length,
+            endColumn: lines[lines.length - 1].length + 1,
+        });
         // Introduce list
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(bulletedLines.join('\n'));
@@ -241,10 +263,26 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it.each([
-        { action: new BoldAction(), textWithoutDelimiters: 'Here is some bold text.', textWithDelimiters: '**Here is some bold text.**' },
-        { action: new ItalicAction(), textWithoutDelimiters: 'Here is some italic text.', textWithDelimiters: '*Here is some italic text.*' },
-        { action: new UnderlineAction(), textWithoutDelimiters: 'Here is some underlined text.', textWithDelimiters: '<ins>Here is some underlined text.</ins>' },
-        { action: new CodeAction(), textWithoutDelimiters: 'Here is some code.', textWithDelimiters: '`Here is some code.`' },
+        {
+            action: new BoldAction(),
+            textWithoutDelimiters: 'Here is some bold text.',
+            textWithDelimiters: '**Here is some bold text.**',
+        },
+        {
+            action: new ItalicAction(),
+            textWithoutDelimiters: 'Here is some italic text.',
+            textWithDelimiters: '*Here is some italic text.*',
+        },
+        {
+            action: new UnderlineAction(),
+            textWithoutDelimiters: 'Here is some underlined text.',
+            textWithDelimiters: '<ins>Here is some underlined text.</ins>',
+        },
+        {
+            action: new CodeAction(),
+            textWithoutDelimiters: 'Here is some code.',
+            textWithDelimiters: '`Here is some code.`',
+        },
         {
             action: new ColorAction(),
             textWithoutDelimiters: 'Here is some blue.',
@@ -256,8 +294,16 @@ describe('MonacoEditorActionIntegration', () => {
             textWithoutDelimiters: 'Here is some red.',
             textWithDelimiters: '<span class="red">Here is some red.</span>', // No argument -> default color is red
         },
-        { action: new CodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```\npublic void main() { }\n```' },
-        { action: new CodeBlockAction('java'), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
+        {
+            action: new CodeBlockAction(),
+            textWithoutDelimiters: 'public void main() { }',
+            textWithDelimiters: '```\npublic void main() { }\n```',
+        },
+        {
+            action: new CodeBlockAction('java'),
+            textWithoutDelimiters: 'public void main() { }',
+            textWithDelimiters: '```java\npublic void main() { }\n```',
+        },
         {
             action: new QuoteAction(),
             initialText: '> ',
@@ -322,7 +368,12 @@ describe('MonacoEditorActionIntegration', () => {
         expect(text).toBe(textWithDelimiters);
         // Selection
         const textLines = text.split('\n');
-        const fullSelection = { startLineNumber: 1, startColumn: 1, endLineNumber: textLines.length, endColumn: textLines[textLines.length - 1].length + 1 };
+        const fullSelection = {
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: textLines.length,
+            endColumn: textLines[textLines.length - 1].length + 1,
+        };
         comp.setSelection(fullSelection);
         // Toggle off
         action.executeInCurrentEditor(actionArgs);

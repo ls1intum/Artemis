@@ -60,7 +60,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -338,6 +338,11 @@ public final class Constants {
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_ATHENA = "athena";
+
+    /**
+     * The name of the Spring profile used for Atlas functionality.
+     */
+    public static final String PROFILE_ATLAS = "atlas";
 
     /**
      * The name of the Spring profile used for Athena functionality.

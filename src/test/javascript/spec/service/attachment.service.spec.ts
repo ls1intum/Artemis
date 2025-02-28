@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,13 +14,12 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/attachments';
+    const resourceUrl = 'api/lecture/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -36,7 +34,7 @@ describe('Attachment Service', () => {
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
         elemDefault.releaseDate = dayjs();
-        elemDefault.link = '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.link = '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
         elemDefault.name = 'testss';
         elemDefault.lecture = new Lecture();
         elemDefault.attachmentType = AttachmentType.FILE;
@@ -120,7 +118,7 @@ describe('Attachment Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lectures/${lectureId}/attachments`,
+                url: `api/lecture/lectures/${lectureId}/attachments`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -159,7 +157,7 @@ describe('Attachment Service', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/files/courses/${courseId}/attachments/${attachmentId}`,
+                url: `api/core/files/courses/${courseId}/attachments/${attachmentId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

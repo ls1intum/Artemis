@@ -152,7 +152,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             backdrop: 'static',
         });
         // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.subsequentExerciseGroupSelection = false;
+        examImportModalRef.componentInstance.subsequentExerciseGroupSelection.set(false);
 
         const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
 

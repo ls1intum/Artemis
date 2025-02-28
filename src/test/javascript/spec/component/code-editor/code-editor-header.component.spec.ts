@@ -1,7 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { ArtemisTestModule } from '../../test.module';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 
 import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 
@@ -11,7 +9,6 @@ describe('CodeEditorHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbDropdownMocksModule],
             declarations: [],
             providers: [],
         })

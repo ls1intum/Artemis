@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.net.URLDecoder.decode;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -96,9 +96,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
-            File root = new File(prefixPath + "build/resources/main/static/");
-            if (root.exists() && root.isDirectory()) {
-                servletWebServer.setDocumentRoot(root);
+            Path root = Path.of(prefixPath + "build/resources/main/static/");
+            if (Files.exists(root) && Files.isDirectory(root)) {
+                servletWebServer.setDocumentRoot(root.toFile());
             }
         }
     }
@@ -136,6 +136,5 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/public/**");
-        ;
     }
 }

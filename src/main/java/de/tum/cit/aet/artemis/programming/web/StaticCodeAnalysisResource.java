@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class StaticCodeAnalysisResource {
 
     private static final String ENTITY_NAME = "StaticCodeAnalysisCategory";

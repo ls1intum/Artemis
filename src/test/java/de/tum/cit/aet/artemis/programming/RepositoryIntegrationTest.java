@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -83,15 +84,17 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
-    private final String studentRepoBaseUrl = "/api/repository/";
+    private final String studentRepoBaseUrl = "/api/programming/repository/";
 
-    private final String filesContentBaseUrl = "/api/repository-files-content/";
+    private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
 
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
 
     private final String currentLocalFileContent = "testContent";
+
+    private final byte[] currentLocalBinaryFileContent = { (byte) 0b10101010, (byte) 0b11001100, (byte) 0b11110000 };
 
     private final String currentLocalFolderName = "currentFolderName";
 
@@ -143,6 +146,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // write content to the created file
         FileUtils.write(studentFile, currentLocalFileContent, Charset.defaultCharset());
 
+        // add binary file to the repo folder
+        var studentFilePathBinary = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        var studentFileBinary = Files.createFile(studentFilePathBinary).toFile();
+        FileUtils.writeByteArrayToFile(studentFileBinary, currentLocalBinaryFileContent);
+
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
@@ -155,12 +163,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
-        // add file to the template repo folder
+        // add files to the template repo folder
         var templateFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName);
         var templateFile = Files.createFile(templateFilePath).toFile();
 
-        // write content to the created file
+        var templateBinaryFilePath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        var templateBinaryFile = Files.createFile(templateBinaryFilePath).toFile();
+
+        // write content to the created files
         FileUtils.write(templateFile, currentLocalFileContent, Charset.defaultCharset());
+        FileUtils.writeByteArrayToFile(templateBinaryFile, currentLocalBinaryFileContent);
 
         // add folder to the template repo folder
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
@@ -267,6 +279,22 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithOmitBinaries() throws Exception {
+        var queryParams = "?omitBinaries=true";
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+
+        assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
+
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
@@ -344,7 +372,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.cit.aet.artemis.programming.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.cit.aet.artemis.programming.domain.File.class), FileType.FILE);
-        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class), anyBoolean());
 
         MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
         mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
@@ -378,14 +406,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+
+            if (studentFile.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
-        FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
         Path newPath = Path.of(studentRepository.localRepoFile + "/newFile");
         var file2 = Files.createFile(newPath).toFile();
@@ -398,7 +428,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
-            assertThat(files.get(key)).isTrue();
+            if (file2.getName().equals(key)) {
+                assertThat(files.get(key)).isTrue();
+            }
+
         }
     }
 

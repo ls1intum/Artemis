@@ -15,7 +15,6 @@
         <input
             id="field_categories"
             [hidden]="categories && categories.length >= 2"
-            [style.margin-top.px]="categories && categories.length > 0 ? 3 : 0"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"

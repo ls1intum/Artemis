@@ -42,7 +42,6 @@ describe('Grading System Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(GradingSystemService);

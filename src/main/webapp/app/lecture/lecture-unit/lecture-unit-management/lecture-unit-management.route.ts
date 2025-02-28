@@ -1,31 +1,8 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-
-@Injectable({ providedIn: 'root' })
-export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
-    private attachmentUnitService = inject(AttachmentUnitService);
-
-    resolve(route: ActivatedRouteSnapshot): Observable<AttachmentUnit> {
-        const lectureId = route.params['lectureId'];
-        const attachmentUnitId = route.params['attachmentUnitId'];
-        if (attachmentUnitId) {
-            return this.attachmentUnitService.findById(attachmentUnitId, lectureId).pipe(
-                filter((response: HttpResponse<AttachmentUnit>) => response.ok),
-                map((attachmentUnit: HttpResponse<AttachmentUnit>) => attachmentUnit.body!),
-            );
-        }
-        return of(new AttachmentUnit());
-    }
-}
+import { AttachmentUnitResolve } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [
     {

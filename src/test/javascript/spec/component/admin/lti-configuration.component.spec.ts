@@ -11,7 +11,6 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import '@angular/localize/init';
 import { MockDirective } from 'ng-mocks';
 
@@ -48,7 +47,6 @@ describe('LtiConfigurationComponent', () => {
             deleteLtiPlatform: jest.fn().mockReturnValue(of({})),
         };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [LtiConfigurationComponent, MockDirective(RouterLink)],
             providers: [
                 { provide: Router, useValue: mockRouter },
@@ -86,7 +84,7 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getDynamicRegistrationUrl()).toContain('/lti/dynamic-registration');
 
         // Test for getDeepLinkingUrl
-        expect(component.getDeepLinkingUrl()).toContain('/api/public/lti13/deep-link');
+        expect(component.getDeepLinkingUrl()).toContain('/api/lti/public/lti13/deep-link');
 
         // Test for getToolUrl
         expect(component.getToolUrl()).toContain('/courses');
@@ -95,10 +93,10 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getKeysetUrl()).toContain('/.well-known/jwks.json');
 
         // Test for getInitiateLoginUrl
-        expect(component.getInitiateLoginUrl()).toContain('/api/public/lti13/initiate-login');
+        expect(component.getInitiateLoginUrl()).toContain('/api/lti/public/lti13/initiate-login');
 
         // Test for getRedirectUri
-        expect(component.getRedirectUri()).toContain('/api/public/lti13/auth-callback');
+        expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
     });
 
     it('should sort platforms', () => {

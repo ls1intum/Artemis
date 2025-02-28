@@ -10,7 +10,7 @@ import { inject } from '@angular/core';
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     protected restResourceUrl?: string;
     protected http = inject(HttpClient);
-    protected jhiWebsocketService = inject(WebsocketService);
+    protected websocketService = inject(WebsocketService);
 
     protected constructor() {
         super();
@@ -30,11 +30,11 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         const [domainType, domainValue] = domain;
         switch (domainType) {
             case DomainType.PARTICIPATION:
-                return `api/repository/${domainValue.id}`;
+                return `api/programming/repository/${domainValue.id}`;
             case DomainType.TEST_REPOSITORY:
-                return `api/test-repository/${domainValue.id}`;
+                return `api/programming/test-repository/${domainValue.id}`;
             case DomainType.AUXILIARY_REPOSITORY:
-                return `api/auxiliary-repository/${domainValue.id}`;
+                return `api/programming/auxiliary-repository/${domainValue.id}`;
         }
     }
 }
