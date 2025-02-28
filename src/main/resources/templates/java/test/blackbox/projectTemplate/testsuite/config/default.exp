@@ -115,13 +115,13 @@ proc PROGRAM_enter_ {expr comment} {
 
     # Check result
     expect {
-    -re "$expr\[\r\n\]+$prompt" {
+    -re "$expr\[\\r\\n\]+$prompt" {
         pass "$expr $comment"
     }
-    -re "\[:\].*\[\r\n\]+$prompt" {
+    -re "\[:\].*\[\\r\\n\]+$prompt" {
          fail "$expr (got answer, but none expected) $comment"
      }
-    -re "\[!\].*\[\r\n\]+$prompt" {
+    -re "\[!\].*\[\\r\\n\]+$prompt" {
         send_user "\n"
          fail "$expr (got error, but none expected) $comment"
      }
@@ -169,13 +169,13 @@ proc PROGRAM_test_ {expr result comment} {
 
     # Check result
     expect {
-    -re "$cmd\[\r\n \]+$answer *$quoted\[ \r\n\]+$prompt" {
+    -re "$cmd\[\\r\\n \]+$answer *$quoted\[ \\r\\n\]+$prompt" {
         pass "$expr $comment"
     }
-    -re "\[:\].*\[\r\n\]+$prompt" {
+    -re "\[:\].*\[\\r\\n\]+$prompt" {
          fail "$expr (got wrong answer, expected \"$result\") $comment"
      }
-    -re "\[!\].*\[\r\n\]+$prompt" {
+    -re "\[!\].*\[\\r\\n\]+$prompt" {
         send_user "\n"
          fail "$expr (got error, but expected \"$result\") $comment"
      }
