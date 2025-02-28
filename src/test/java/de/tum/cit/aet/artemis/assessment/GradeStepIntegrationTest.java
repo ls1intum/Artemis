@@ -90,7 +90,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
-        var result = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
+        var result = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
         assertThat(result).isNull();
     }
 
@@ -98,7 +98,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
         createGradeScale();
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
 
     /**
@@ -109,7 +109,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void testGetAllGradeStepsForCourse() throws Exception {
         createGradeScale();
 
-        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
+        GradeStepsDTO gradeStepsDTO = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
         assertThat(gradeStepsDTO.gradeType()).isEqualTo(GradeType.GRADE);
         assertThat(gradeStepsDTO.title()).isEqualTo(course.getTitle());
@@ -141,7 +141,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
     /**
@@ -153,7 +153,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void testGetAllGradeStepsForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
 
     /**
@@ -180,7 +180,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
+        GradeStepsDTO gradeStepsDTO = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK,
+                GradeStepsDTO.class);
 
         assertThat(gradeStepsDTO.gradeType()).isEqualTo(GradeType.BONUS);
         assertThat(gradeStepsDTO.title()).isEqualTo(exam.getTitle());
@@ -194,7 +195,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
     /**
@@ -213,7 +214,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         courseGradingScale = gradingScaleRepository.save(courseGradingScale);
         Long gradeStepId = courseGradingScale.getGradeSteps().stream().iterator().next().getId();
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
+        GradeStep foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
@@ -224,7 +225,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
     /**
@@ -243,7 +244,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         examGradingScale = gradingScaleRepository.save(examGradingScale);
         Long gradeStepId = examGradingScale.getGradeSteps().stream().iterator().next().getId();
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
+        GradeStep foundGradeStep = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
                 GradeStep.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
@@ -255,7 +256,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -284,7 +285,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
 
-        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
+        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo(gradeName);
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
@@ -304,7 +305,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
-        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=0", HttpStatus.OK, GradeDTO.class);
+        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=0", HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo(noParticipationGrade);
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
@@ -337,7 +338,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         coursePlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
         plagiarismCaseRepository.save(coursePlagiarismCase);
 
-        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=50", HttpStatus.OK, GradeDTO.class);
+        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=50", HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo(plagiarismGrade);
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);
@@ -350,7 +351,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -362,7 +363,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void testGetGradeStepByPercentageForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.FORBIDDEN, GradeDTO.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.FORBIDDEN,
+                GradeDTO.class);
     }
 
     /**
@@ -384,8 +386,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam);
 
-        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35", HttpStatus.OK,
-                GradeDTO.class);
+        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35",
+                HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo("Test grade");
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);

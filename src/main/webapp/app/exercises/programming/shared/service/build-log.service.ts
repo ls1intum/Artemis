@@ -11,7 +11,7 @@ export interface IBuildLogService {
 export class BuildLogService implements IBuildLogService {
     private http = inject(HttpClient);
 
-    private assignmentResourceUrl = 'api/repository';
+    private assignmentResourceUrl = 'api/programming/repository';
 
     /**
      * Retrieves the build logs for a given participation and optionally, a given result.

@@ -9,7 +9,7 @@ const themeChangedSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
-    private resourceUrl = 'api/plantuml';
+    private resourceUrl = 'api/programming/plantuml';
     private encoder: HttpParameterCodec;
 
     private readonly themeService = inject(ThemeService);
