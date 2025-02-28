@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
@@ -41,9 +40,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
 
     private Lecture lecture1;
 
