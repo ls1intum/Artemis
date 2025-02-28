@@ -140,7 +140,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             var parameters = buildParameters(span, periodIndex, graph);
-            Integer[] result = request.get("/api/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
+            Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(expectedResultLength);
         }
     }
@@ -166,7 +166,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         var courseId = course.getId();
         for (GraphType graph : courseGraphs) {
             var parameters = buildParameters(span, periodIndex, graph, view, courseId);
-            Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
+            Integer[] result = request.get("/api/core/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(7);
         }
     }
@@ -180,7 +180,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         var exerciseId = exercise.getId();
         for (GraphType graph : exerciseGraphs) {
             var parameters = buildParameters(span, periodIndex, graph, view, exerciseId);
-            Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
+            Integer[] result = request.get("/api/core/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(7);
         }
     }
@@ -221,7 +221,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Long courseId = course.getId();
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("courseId", "" + courseId);
-        CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
+        CourseManagementStatisticsDTO result = request.get("/api/core/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
 
         assertThat(result.averageScoreOfCourse()).isEqualTo(66.0);
         assertThat(result.averageScoresOfExercises()).hasSize(2);
@@ -273,7 +273,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("exerciseId", "" + firstTextExerciseId);
-        ExerciseManagementStatisticsDTO result = request.get("/api/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class, parameters);
+        ExerciseManagementStatisticsDTO result = request.get("/api/core/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class,
+                parameters);
 
         assertThat(result.averageScoreOfExercise()).isEqualTo(75.0);
         assertThat(result.maxPointsOfExercise()).isEqualTo(10);

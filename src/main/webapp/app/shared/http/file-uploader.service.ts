@@ -19,7 +19,7 @@ export class FileUploaderService {
      * @return A promise with the response from the server or an error
      */
     uploadMarkdownFile(file: File): Promise<FileUploadResponse> {
-        return this.uploadFile(file, '/api/markdown-file-upload', MAX_FILE_SIZE);
+        return this.uploadFile(file, '/api/core/markdown-file-upload', MAX_FILE_SIZE);
     }
 
     /**
@@ -33,7 +33,7 @@ export class FileUploaderService {
         if (!courseId || !conversationId) {
             return Promise.reject(new Error('No course or conversation available for the file upload.'));
         }
-        const url = `/api/files/courses/${courseId}/conversations/${conversationId}`;
+        const url = `/api/core/files/courses/${courseId}/conversations/${conversationId}`;
         return this.uploadFile(file, url, MAX_FILE_SIZE_COMMUNICATION);
     }
 

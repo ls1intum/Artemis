@@ -51,9 +51,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 
-    private final String participationsBaseUrl = "/api/programming-exercise-participations/";
+    private final String participationsBaseUrl = "/api/programming/programming-exercise-participations/";
 
-    private final String exercisesBaseUrl = "/api/programming-exercises/";
+    private final String exercisesBaseUrl = "/api/programming/programming-exercises/";
 
     private ProgrammingExercise programmingExercise;
 
@@ -634,7 +634,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         addStudentParticipationWithResult(null, null);
         participationUtilService.addResultToParticipation(null, null, programmingExerciseParticipation);
 
-        final var response = request.get("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK, Boolean.class);
+        final var response = request.get("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK,
+                Boolean.class);
 
         assertThat(response).isTrue();
     }
@@ -644,7 +645,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void checkIfParticipationHasResult_withoutResult_returnsFalse() throws Exception {
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        final var response = request.get("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK, Boolean.class);
+        final var response = request.get("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK,
+                Boolean.class);
 
         assertThat(response).isFalse();
     }
@@ -654,7 +656,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void checkResetRepository_noAccess_forbidden() throws Exception {
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
-        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -665,8 +667,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
 
-        request.put("/api/programming-exercise-participations/" + practiceParticipation.getId() + "/reset-repository?gradedParticipationId=" + gradedParticipation.getId(), null,
-                HttpStatus.FORBIDDEN);
+        request.put(
+                "/api/programming/programming-exercise-participations/" + practiceParticipation.getId() + "/reset-repository?gradedParticipationId=" + gradedParticipation.getId(),
+                null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -677,7 +680,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExerciseStudentParticipation.setLocked(true);
         programmingExerciseParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 
-        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -686,7 +689,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -711,7 +714,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExerciseWithAuxRepo);
 
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
-            PATH_PREFIX = "/api/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
+            PATH_PREFIX = "/api/programming/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
         }
 
         @Test
@@ -768,7 +771,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
         doNothing().when(gitService).switchBackToDefaultBranchHead(any());
 
-        request.getMap("/api/programming-exercise-participations/" + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
+        request.getMap("/api/programming/programming-exercise-participations/" + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
     }
 
     /**
@@ -800,7 +803,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
                     any(Boolean.class));
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
-            PATH_PREFIX = "/api/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
+            PATH_PREFIX = "/api/programming/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
         }
 
         @Test
@@ -836,7 +839,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class);
     }
 
     @Test
@@ -844,14 +847,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void retrieveCommitInfoGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        assertThat(request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+        assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class))
+                .isEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void retrieveCommitInfoEditorForbidden() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
     }
 
     @Test
@@ -861,14 +865,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void retrieveCommitHistoryStudentNotOwningParticipationForbidden() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
     }
 
     @Test
@@ -878,7 +882,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {

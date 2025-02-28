@@ -8,7 +8,7 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 export class TheiaService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/theia';
+    private resourceUrl = 'api/programming/theia';
 
     /**
      * Fetches the theia images for the given programming language

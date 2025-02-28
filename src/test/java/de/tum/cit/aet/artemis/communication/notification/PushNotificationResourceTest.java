@@ -58,7 +58,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void shouldRegisterTokenWhenCredentialsAreValid() throws Exception {
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
 
         assertThat(response.secretKey()).isNotEmpty();
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
@@ -107,7 +107,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         shouldRegisterTokenWhenCredentialsAreValid();
 
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/push_notification/unregister", HttpStatus.OK, body);
+        request.delete("/api/communication/push_notification/unregister", HttpStatus.OK, body);
 
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
                 PushNotificationDeviceType.FIREBASE);
@@ -119,6 +119,6 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER")
     void testUnregisterNonExistentRegistration() throws Exception {
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest("Does not exist", PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/push_notification/unregister", HttpStatus.NOT_FOUND, body);
+        request.delete("/api/communication/push_notification/unregister", HttpStatus.NOT_FOUND, body);
     }
 }

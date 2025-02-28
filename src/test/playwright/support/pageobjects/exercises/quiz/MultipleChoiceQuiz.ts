@@ -1,4 +1,3 @@
-import { EXERCISE_BASE } from '../../../constants';
 import { getExercise } from '../../../utils';
 import { Page } from '@playwright/test';
 
@@ -18,7 +17,7 @@ export class MultipleChoiceQuiz {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/submissions/live?submit=true`);
+        const responsePromise = this.page.waitForResponse(`api/quiz/exercises/*/submissions/live?submit=true`);
         await this.page.locator('#submit-quiz').click();
         return await responsePromise;
     }

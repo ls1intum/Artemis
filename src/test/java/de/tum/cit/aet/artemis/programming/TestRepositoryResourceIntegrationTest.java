@@ -47,7 +47,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     private static final String TEST_PREFIX = "testrepositoryresourceint";
 
-    private final String testRepoBaseUrl = "/api/test-repository/";
+    private final String testRepoBaseUrl = "/api/programming/test-repository/";
 
     private ProgrammingExercise programmingExercise;
 

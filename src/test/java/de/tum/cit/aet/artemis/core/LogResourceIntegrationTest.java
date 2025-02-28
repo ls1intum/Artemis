@@ -16,7 +16,7 @@ class LogResourceIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetList() throws Exception {
-        request.get("/api/admin/logs", HttpStatus.OK, List.class);
+        request.get("/api/core/admin/logs", HttpStatus.OK, List.class);
     }
 
     @Test
@@ -25,7 +25,7 @@ class LogResourceIntegrationTest extends AbstractSpringIntegrationIndependentTes
         LoggerVM logger = new LoggerVM();
         logger.setLevel("DEBUG");
         logger.setName("logger");
-        LoggerVM response = request.putWithResponseBody("/api/admin/logs", logger, LoggerVM.class, HttpStatus.OK);
+        LoggerVM response = request.putWithResponseBody("/api/core/admin/logs", logger, LoggerVM.class, HttpStatus.OK);
         assertThat(response).isEqualTo(logger);
     }
 }

@@ -48,7 +48,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture/")
 public class AttachmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentResource.class);
@@ -97,7 +97,7 @@ public class AttachmentResource {
 
         Attachment result = attachmentRepository.save(attachment);
 
-        return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/lecture/attachments/" + result.getId())).body(result);
     }
 
     /**
