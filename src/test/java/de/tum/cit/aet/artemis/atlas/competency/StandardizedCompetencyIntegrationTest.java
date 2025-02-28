@@ -60,7 +60,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.get("/api/atlas/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
             request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
-            request.get("/api/atlas/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
         }
 
         @Test
@@ -481,33 +480,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 assertThat(actualKnowledgeAreaA).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaA));
                 assertThat(actualKnowledgeAreaB).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaB));
                 assertThat(actualKnowledgeAreaB.competencies().getFirst()).isEqualTo(StandardizedCompetencyResultDTO.of(competency1));
-            }
-        }
-
-        @Nested
-        class GetKnowledgeArea {
-
-            @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-            void shouldReturnKnowledgeArea() throws Exception {
-                var expectedKnowledgeArea = standardizedCompetencyUtilService.saveKnowledgeArea("Knowledge Area 2", "KA2", "description", knowledgeArea);
-
-                var child1 = standardizedCompetencyUtilService.saveKnowledgeArea("Child 1", "C1", "description", expectedKnowledgeArea);
-                var child2 = standardizedCompetencyUtilService.saveKnowledgeArea("Child 2", "C2", "description", expectedKnowledgeArea);
-                var competency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "", expectedKnowledgeArea,
-                        null);
-                expectedKnowledgeArea.setChildren(Set.of(child1, child2));
-                expectedKnowledgeArea.setCompetencies(Set.of(competency));
-
-                var actualKnowledgeArea = request.get("/api/atlas/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.getId(), HttpStatus.OK, KnowledgeArea.class);
-
-                assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
-            }
-
-            @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-            void shouldReturn404() throws Exception {
-                request.get("/api/atlas/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
             }
         }
 
