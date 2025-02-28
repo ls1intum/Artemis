@@ -260,7 +260,8 @@ public class NotificationSettingsService {
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
-    // Please adapt the above docs if you change the supported notification types
+    // Please adapt the above docs if you change the supported notification types.
+    // Note: When adding new types here, please create issues in the artemis-ios and artemis-android repos, so that these new notifcations can be displayed!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT,
             PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR,
