@@ -210,7 +210,7 @@ describe('ChannelService', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
-        const req = httpMock.expectOne({ method: 'POST', url: '/api/courses/1/channels/2/toggle-privacy' });
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/communication/courses/1/channels/2/toggle-privacy' });
         req.flush(returnedFromService);
         tick();
     }));

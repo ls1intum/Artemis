@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.Science)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class ScienceResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceResource.class);

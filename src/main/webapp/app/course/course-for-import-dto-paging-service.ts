@@ -12,7 +12,7 @@ type EntityResponseType = SearchResult<CourseForImportDTO>;
 export class CourseForImportDTOPagingService extends PagingService<CourseForImportDTO> {
     private http = inject(HttpClient);
 
-    private readonly RESOURCE_URL = 'api/courses';
+    private readonly RESOURCE_URL = 'api/core/courses';
 
     constructor() {
         super();

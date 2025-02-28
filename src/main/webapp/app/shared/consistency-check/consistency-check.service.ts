@@ -8,7 +8,7 @@ import { ConsistencyCheckError } from 'app/entities/consistency-check-result.mod
 export class ConsistencyCheckService {
     private http = inject(HttpClient);
 
-    private readonly RESOURCE_URL = 'api/programming-exercises';
+    private readonly RESOURCE_URL = 'api/exercise/programming-exercises';
 
     /**
      * Request consistency checks for a given programming exercise
