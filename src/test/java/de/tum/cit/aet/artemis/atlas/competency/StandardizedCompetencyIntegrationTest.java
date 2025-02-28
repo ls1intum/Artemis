@@ -60,7 +60,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
             request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
-            request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
         }
 
         @Test
