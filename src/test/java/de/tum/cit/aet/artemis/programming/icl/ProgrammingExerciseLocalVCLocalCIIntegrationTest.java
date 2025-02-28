@@ -329,7 +329,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldTriggerBuildOnRepoReset() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
+        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any(), true);
         doNothing().when(localVCServletService).processNewPush(any(), any());
 
         request.put("/api/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
