@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('Header Course Component', () => {
     let fixture: ComponentFixture<HeaderCourseComponent>;
@@ -23,7 +26,10 @@ describe('Header Course Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -30,7 +30,7 @@ export class ProgrammingExerciseTaskService {
 
     ignoreInactive = true;
 
-    public resourceUrl = 'api/programming-exercises';
+    public resourceUrl = 'api/programming/programming-exercises';
 
     get totalWeights() {
         return sum(this.testCases.map(({ weight }) => weight ?? 0));

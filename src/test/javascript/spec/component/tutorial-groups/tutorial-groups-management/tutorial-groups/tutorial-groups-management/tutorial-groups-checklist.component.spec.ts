@@ -30,7 +30,6 @@ describe('TutorialGroupsChecklistComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 TutorialGroupsChecklistComponent,
                 LoadingIndicatorContainerStubComponent,

@@ -189,6 +189,7 @@ public class RepositoryService {
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
+    // TODO: can we offer this method without commitId as well?
     public Map<String, String> getFilesContentFromBareRepository(Repository repository, String commitId) throws IOException {
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(repository.resolve(commitId));
@@ -482,9 +483,9 @@ public class RepositoryService {
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
+    public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        return gitService.isClean(repository);
+        return gitService.isWorkingCopyClean(repository);
     }
 
     /**
@@ -495,9 +496,9 @@ public class RepositoryService {
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
+    public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch);
-        return gitService.isClean(repository);
+        return gitService.isWorkingCopyClean(repository);
     }
 
     /**

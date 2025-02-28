@@ -30,7 +30,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/results/*/submit-text-assessment`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/results/*/submit-text-assessment`);
         await this.page.locator('#submit').click();
         return await responsePromise;
     }

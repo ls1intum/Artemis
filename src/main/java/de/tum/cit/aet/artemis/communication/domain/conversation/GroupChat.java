@@ -75,7 +75,11 @@ public class GroupChat extends Conversation {
 
     @Override
     public String getHumanReadableNameForReceiver(User sender) {
-        return getName();
+        String name = getName();
+        if (name == null || name.isBlank()) {
+            return generateName();
+        }
+        return name;
     }
 
     @Override

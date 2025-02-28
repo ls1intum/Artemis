@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -13,7 +12,6 @@ describe('Submission Export Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(SubmissionExportService);
@@ -29,21 +27,21 @@ describe('Submission Export Service', () => {
         const exerciseType = ExerciseType.TEXT;
         const result = service.getExerciseUrl(exerciseType, exerciseId);
 
-        expect(result).toBe('text-exercises/' + exerciseId);
+        expect(result).toBe('text/text-exercises/' + exerciseId);
     });
 
     it('check exercise url for modeling exercise', () => {
         const exerciseType = ExerciseType.MODELING;
         const result = service.getExerciseUrl(exerciseType, exerciseId);
 
-        expect(result).toBe('modeling-exercises/' + exerciseId);
+        expect(result).toBe('modeling/modeling-exercises/' + exerciseId);
     });
 
     it('check exercise url for file upload exercise', () => {
         const exerciseType = ExerciseType.FILE_UPLOAD;
         const result = service.getExerciseUrl(exerciseType, exerciseId);
 
-        expect(result).toBe('file-upload-exercises/' + exerciseId);
+        expect(result).toBe('fileupload/file-upload-exercises/' + exerciseId);
     });
 
     it('check exercise url for unsupported exercise types', () => {
