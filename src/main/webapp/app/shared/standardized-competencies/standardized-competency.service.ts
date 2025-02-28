@@ -8,7 +8,7 @@ import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/c
 export class StandardizedCompetencyService {
     private httpClient = inject(HttpClient);
 
-    private resourceURL = 'api/standardized-competencies';
+    private resourceURL = 'api/atlas/standardized-competencies';
 
     getStandardizedCompetency(competencyId: number) {
         return this.httpClient.get<StandardizedCompetency>(`${this.resourceURL}/${competencyId}`, { observe: 'response' });

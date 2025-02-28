@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterBody;
@@ -55,9 +56,9 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
-    void testRegister() throws Exception {
+    void shouldRegisterTokenWhenCredentialsAreValid() throws Exception {
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
 
         assertThat(response.secretKey()).isNotEmpty();
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
@@ -68,15 +69,45 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
         assertThat(config.getExpirationDate()).isInTheFuture();
+        assertThat(config.getVersionCode()).isNull();
     }
 
     @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
-    void testUnregister() throws Exception {
-        testRegister();
+    void shouldRegisterVersionCodeWhenSupplied() throws Exception {
+        PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT, "1.1.1");
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
+
+        assertThat(response.secretKey()).isNotEmpty();
+        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
+                PushNotificationDeviceType.FIREBASE);
+
+        // TODO: why do the tests sometimes return 2 device configurations?
+        assertThat(deviceConfigurations).hasSizeBetween(1, 2); // this avoids flaky tests, normally the size should be 1, but apparently some cleanup does not work
+        PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
+        assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
+        assertThat(config.getExpirationDate()).isInTheFuture();
+        assertThat(config.getVersionCode()).isEqualTo("1.1.1");
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldNotRegisterWhenWrongFormatOfVersionCodeIsSupplied() throws Exception {
+        PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT, "asdf");
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
+        assertThat(response).isNull();
+        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
+                PushNotificationDeviceType.FIREBASE);
+        assertThat(deviceConfigurations).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldUnregisterWhenRequestingWithValidToken() throws Exception {
+        shouldRegisterTokenWhenCredentialsAreValid();
 
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/push_notification/unregister", HttpStatus.OK, body);
+        request.delete("/api/communication/push_notification/unregister", HttpStatus.OK, body);
 
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
                 PushNotificationDeviceType.FIREBASE);
@@ -88,6 +119,6 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER")
     void testUnregisterNonExistentRegistration() throws Exception {
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest("Does not exist", PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/push_notification/unregister", HttpStatus.NOT_FOUND, body);
+        request.delete("/api/communication/push_notification/unregister", HttpStatus.NOT_FOUND, body);
     }
 }

@@ -6,7 +6,6 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -30,7 +29,6 @@ describe('HeaderExercisePageWithDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 HeaderExercisePageWithDetailsComponent,
                 MockComponent(DifficultyBadgeComponent),

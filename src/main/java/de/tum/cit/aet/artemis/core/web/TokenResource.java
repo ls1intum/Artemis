@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class TokenResource {
 
     private final JWTCookieService jwtCookieService;

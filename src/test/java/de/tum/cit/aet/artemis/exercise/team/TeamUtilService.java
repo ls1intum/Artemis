@@ -59,10 +59,6 @@ public class TeamUtilService {
         if (owner != null) {
             team.setOwner(owner);
         }
-        if (creatorLogin != null) {
-            team.setCreatedBy(creatorLogin);
-            team.setLastModifiedBy(creatorLogin);
-        }
         return team;
     }
 

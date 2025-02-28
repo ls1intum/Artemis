@@ -9,7 +9,6 @@ describe('IncludedInScoreBadge', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

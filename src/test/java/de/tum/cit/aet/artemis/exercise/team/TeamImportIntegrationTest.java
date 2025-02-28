@@ -55,7 +55,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private static final String REGISTRATION_NUMBER_PREFIX = "tii";
 
     private String fromExerciseEndpointUrl() {
-        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
     }
 
     private String importFromExerciseUrl(Exercise exercise, TeamImportStrategyType importStrategyType) {
@@ -75,7 +75,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private String fromListEndpointUrl() {
-        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
     }
 
     private String importFromListUrl(TeamImportStrategyType importStrategyType) {
@@ -339,8 +339,9 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         List<Team> destinationTeamsInDatabase = teamRepo.findAllByExerciseId(destinationExercise.getId());
         assertThat(actualTeamsAfterImport).as("Imported teams were persisted into destination exercise.").isEqualTo(destinationTeamsInDatabase);
 
-        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison().ignoringFields("id", "exercise", "createdDate", "lastModifiedDate")
-                .usingOverriddenEquals().ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
+        assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison()
+                .ignoringFields("id", "exercise", "createdDate", "createdBy", "lastModifiedDate", "lastModifiedBy").usingOverriddenEquals()
+                .ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {

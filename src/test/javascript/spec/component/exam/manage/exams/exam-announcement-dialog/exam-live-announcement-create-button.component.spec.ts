@@ -7,7 +7,8 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../../../test.module';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     let component: ExamLiveAnnouncementCreateButtonComponent;
@@ -17,10 +18,10 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: NgbModal, useValue: { open: jest.fn() } },
                 { provide: AlertService, useValue: { closeAll: jest.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

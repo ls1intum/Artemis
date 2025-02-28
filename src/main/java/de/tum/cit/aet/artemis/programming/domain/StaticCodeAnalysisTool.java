@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import static java.util.Map.entry;
-
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ public enum StaticCodeAnalysisTool {
     CHECKSTYLE("checkstyle-result.xml"),
     CLIPPY("clippy.sarif"),
     DART_ANALYZE("dart_analyze.sarif"),
+    ESLINT("eslint.sarif"),
     GCC("gcc.xml"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
@@ -29,15 +29,22 @@ public enum StaticCodeAnalysisTool {
     // @formatter:on
 
     // @formatter:off
-    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.ofEntries(
-        entry(ProgrammingLanguage.C, List.of(GCC)),
-        entry(ProgrammingLanguage.DART, List.of(DART_ANALYZE)),
-        entry(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD)),
-        entry(ProgrammingLanguage.PYTHON, List.of(RUFF)),
-        entry(ProgrammingLanguage.RUBY, List.of(RUBOCOP)),
-        entry(ProgrammingLanguage.RUST, List.of(CLIPPY)),
-        entry(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT))
-    ));
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE;
+
+    static {
+        Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> map = new EnumMap<>(ProgrammingLanguage.class);
+        map.put(ProgrammingLanguage.C, List.of(GCC));
+        map.put(ProgrammingLanguage.DART, List.of(DART_ANALYZE));
+        map.put(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD));
+        map.put(ProgrammingLanguage.JAVASCRIPT, List.of(ESLINT));
+        map.put(ProgrammingLanguage.PYTHON, List.of(RUFF));
+        map.put(ProgrammingLanguage.RUBY, List.of(RUBOCOP));
+        map.put(ProgrammingLanguage.RUST, List.of(CLIPPY));
+        map.put(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT));
+        map.put(ProgrammingLanguage.TYPESCRIPT, List.of(ESLINT));
+
+        TOOLS_OF_PROGRAMMING_LANGUAGE = Collections.unmodifiableMap(map);
+    }
     // @formatter:on
 
     private final String fileName;

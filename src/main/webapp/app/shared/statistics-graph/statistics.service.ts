@@ -14,8 +14,8 @@ export class StatisticsService {
     private http = inject(HttpClient);
 
     private basePath = 'management/statistics/';
-    private resourceUrl = 'api/' + this.basePath;
-    private adminResourceUrl = 'api/admin/' + this.basePath;
+    private resourceUrl = 'api/core/' + this.basePath;
+    private adminResourceUrl = 'api/core/admin/' + this.basePath;
 
     /**
      * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days and the given period

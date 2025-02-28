@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
@@ -18,7 +18,6 @@ import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
@@ -26,6 +25,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -46,7 +49,6 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -56,6 +58,10 @@ describe('ParticipationComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(EventManager),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
