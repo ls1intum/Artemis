@@ -368,7 +368,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -414,7 +414,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(confirmSpy).toHaveBeenCalledOnce();
@@ -573,7 +573,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submission: { submissionDate: now, submitted: true } as QuizSubmission } as Result);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/preview`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/preview`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -657,7 +657,7 @@ describe('QuizParticipationComponent', () => {
                 submission: quizSubmission,
                 participation: { exercise: quizExerciseForPractice } as StudentParticipation,
             } as Result);
-            expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/exercise/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);

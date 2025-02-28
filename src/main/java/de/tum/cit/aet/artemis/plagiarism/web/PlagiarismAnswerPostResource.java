@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/plagiarism/")
 public class PlagiarismAnswerPostResource {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismAnswerPostResource.class);
@@ -55,7 +55,7 @@ public class PlagiarismAnswerPostResource {
         AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPost);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         plagiarismAnswerPostService.informInstructorAboutPostReply(createdAnswerPost.getPost());
-        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
+        return ResponseEntity.created(new URI("/api/plagiarism/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
 
     /**

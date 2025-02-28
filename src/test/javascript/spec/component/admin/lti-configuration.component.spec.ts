@@ -84,7 +84,7 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getDynamicRegistrationUrl()).toContain('/lti/dynamic-registration');
 
         // Test for getDeepLinkingUrl
-        expect(component.getDeepLinkingUrl()).toContain('/api/public/lti13/deep-link');
+        expect(component.getDeepLinkingUrl()).toContain('/api/lti/public/lti13/deep-link');
 
         // Test for getToolUrl
         expect(component.getToolUrl()).toContain('/courses');
@@ -93,10 +93,10 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getKeysetUrl()).toContain('/.well-known/jwks.json');
 
         // Test for getInitiateLoginUrl
-        expect(component.getInitiateLoginUrl()).toContain('/api/public/lti13/initiate-login');
+        expect(component.getInitiateLoginUrl()).toContain('/api/lti/public/lti13/initiate-login');
 
         // Test for getRedirectUri
-        expect(component.getRedirectUri()).toContain('/api/public/lti13/auth-callback');
+        expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
     });
 
     it('should sort platforms', () => {

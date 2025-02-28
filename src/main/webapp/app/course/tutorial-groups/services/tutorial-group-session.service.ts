@@ -20,7 +20,7 @@ export class TutorialGroupSessionService {
     private httpClient = inject(HttpClient);
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/tutorialgroup';
 
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient

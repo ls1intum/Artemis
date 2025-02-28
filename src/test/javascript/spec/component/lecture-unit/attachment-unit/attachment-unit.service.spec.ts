@@ -113,7 +113,7 @@ describe('AttachmentUnitService', () => {
                 attachment: {
                     id: 1,
                     name: 'Unit1',
-                    link: '/api/files/attachments/attachment-unit/235/Unit_1_.pdf',
+                    link: '/api/lecture/files/attachments/attachment-unit/235/Unit_1_.pdf',
                     version: 1,
                     attachmentType: 'FILE',
                 },
@@ -212,7 +212,7 @@ describe('AttachmentUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
+                url: `api/lecture/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

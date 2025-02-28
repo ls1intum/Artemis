@@ -134,9 +134,9 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `api/exams/${mockExam.id}`,
+            url: `api/exam/exams/${mockExam.id}`,
         });
-        expect(req.request.url).toBe(`api/exams/${mockExam.id}`);
+        expect(req.request.url).toBe(`api/exam/exams/${mockExam.id}`);
 
         // CLEANUP
         req.flush(expected);
@@ -654,7 +654,7 @@ describe('Exam Management Service Tests', () => {
 
         const windowSpy = jest.spyOn(window, 'open').mockImplementation();
         service.downloadExamArchive(course.id!, mockExam.id!);
-        expect(windowSpy).toHaveBeenCalledWith('api/courses/456/exams/1/download-archive', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith('api/exam/courses/456/exams/1/download-archive', '_blank');
     }));
 
     it('should archive the exam', fakeAsync(() => {
@@ -704,7 +704,7 @@ describe('Exam Management Service Tests', () => {
 
         const exercises = [textExercise, modelingExercise, programmingExercise];
         service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exams/1/exercises-with-potential-plagiarism' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/1/exercises-with-potential-plagiarism' });
         req.flush(exercises);
         tick();
     }));
