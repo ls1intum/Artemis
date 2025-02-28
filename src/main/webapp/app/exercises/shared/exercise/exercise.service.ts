@@ -61,9 +61,9 @@ export class ExerciseService {
     private translateService = inject(TranslateService);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/exercises';
-    public adminResourceUrl = 'api/admin/exercises';
-    public courseResourceUrl = 'api/courses';
+    public resourceUrl = 'api/exercise/exercises';
+    public adminResourceUrl = 'api/exercise/admin/exercises';
+    public courseResourceUrl = 'api/core/courses';
 
     /**
      * Persist a new exercise
@@ -204,7 +204,7 @@ export class ExerciseService {
      * @returns void
      */
     evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<any>(`api/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
+        return this.http.post<any>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {

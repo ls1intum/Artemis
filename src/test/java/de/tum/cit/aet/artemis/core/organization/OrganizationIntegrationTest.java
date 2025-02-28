@@ -64,7 +64,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course1 = courseRepository.save(course1);
         course2 = courseRepository.save(course2);
 
-        List<Course> coursesToEnroll = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
+        List<Course> coursesToEnroll = request.getList("/api/core/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToEnroll).contains(course1).contains(course2);
     }
 
@@ -103,13 +103,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course2 = courseRepository.save(course2);
         course3 = courseRepository.save(course3);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
-        updatedGroups = request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        updatedGroups = request.postWithResponseBody("/api/core/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/core/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -124,9 +124,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepository.save(course1);
 
-        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
-        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).contains(course1);
     }
 
@@ -142,12 +142,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Organization organization = organizationUtilService.createOrganization();
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        Organization originalOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization originalOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(originalOrganization.getCourses()).contains(course1);
 
-        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
+        request.delete("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
 
-        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).isEmpty();
     }
 
@@ -161,8 +161,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testAddUserToOrganization");
 
-        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
-        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
+        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getUsers()).contains(student);
     }
 
@@ -180,8 +180,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(organization.getUsers()).contains(student);
 
-        request.delete("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
-        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        request.delete("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
+        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).doesNotContain(student);
     }
@@ -198,8 +198,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Organization organization = organizationUtilService.createOrganization();
 
-        Organization updatedOrganization = request.postWithResponseBody("/api/admin/organizations", organization, Organization.class, HttpStatus.OK);
-        Organization updatedOrganization2 = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.postWithResponseBody("/api/core/admin/organizations", organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization2 = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization2).isNotNull();
         assertThat(updatedOrganization.getId()).isNotNull();
     }
@@ -213,7 +213,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Organization organization = organizationUtilService.createOrganization();
         organization.setName("UpdatedName");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         assertThat(updatedOrganization.getName()).isEqualTo("UpdatedName");
     }
 
@@ -228,7 +228,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organizationRepo.save(initialOrganization);
         initialOrganization.setId(null);
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
+        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(updatedOrganization).isNull();
     }
@@ -245,7 +245,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization.setName("UpdatedName");
         long wrongId = 1337420;
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + wrongId, organization, Organization.class, HttpStatus.BAD_REQUEST);
+        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + wrongId, organization, Organization.class, HttpStatus.BAD_REQUEST);
         organization.setName(initialName);
         assertThat(updatedOrganization).isNull();
     }
@@ -264,8 +264,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        request.delete("/api/admin/organizations/" + organization.getId(), HttpStatus.OK);
-        request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
+        request.delete("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK);
+        request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
     }
 
     /**
@@ -279,7 +279,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
         organization2 = organizationRepo.save(organization2);
 
-        List<Organization> result = request.getList("/api/admin/organizations", HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization, organization2);
     }
 
@@ -300,7 +300,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        List<OrganizationCountDTO> result = request.getList("/api/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
+        List<OrganizationCountDTO> result = request.getList("/api/core/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
         assertThat(result).isNotEmpty();
 
@@ -325,7 +325,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        OrganizationCountDTO result = request.get("/api/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
+        OrganizationCountDTO result = request.get("/api/core/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
 
         assertThat(result.numberOfUsers()).isEqualTo(1);
         assertThat(result.numberOfCourses()).isEqualTo(1);
@@ -351,8 +351,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.removeOrganizationFromUser(student.getId(), organization);
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        Organization result = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
-        Organization resultWithCoursesAndUsers = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization result = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        Organization resultWithCoursesAndUsers = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(result.getId()).isEqualTo(organization.getId());
         assertThat(result.getName()).isEqualTo(organization.getName());
@@ -376,7 +376,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        List<Organization> result = request.getList("/api/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/core/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization);
     }
 
@@ -392,7 +392,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        List<Organization> result = request.getList("/api/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/core/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
 
         assertThat(result).contains(organization);
     }
@@ -411,8 +411,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        updatedOrganization = request.get("/api/admin/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
+        updatedOrganization = request.get("/api/core/admin/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).hasSize(1);
         assertThat(updatedOrganization.getUsers()).contains(student);
@@ -428,7 +428,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization.setName("Test Organization");
         organization = organizationRepo.save(organization);
 
-        final var title = request.get("/api/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/core/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(organization.getName());
     }
 }

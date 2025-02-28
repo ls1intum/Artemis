@@ -52,7 +52,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class,
+                HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -88,7 +89,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_courseExercise() throws Exception {
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api/programming-exercises/" + programmingExerciseId + "/problem-statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExerciseId + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -108,7 +109,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
 
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -179,7 +180,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
 
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();

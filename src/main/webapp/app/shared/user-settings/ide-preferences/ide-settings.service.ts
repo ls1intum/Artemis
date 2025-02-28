@@ -9,7 +9,7 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 export class IdeSettingsService {
     private http = inject(HttpClient);
 
-    public readonly ideSettingsUrl = 'api/ide-settings';
+    public readonly ideSettingsUrl = 'api/programming/ide-settings';
 
     // cached value of the ide preferences to avoid unnecessary requests to the server
     private idePreferences?: Map<ProgrammingLanguage, Ide>;
