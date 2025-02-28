@@ -20,6 +20,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Lecture } from 'app/entities/lecture.model';
+import { DeepLinkingType } from 'app/lti/lti.constants';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -211,45 +212,51 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 targetLinkUri: string;
             };
 
-            let httpParams;
+            let resourceType: DeepLinkingType;
+            let contentIds: string | null = null;
 
             if (this.selectedExercises?.size) {
-                const exerciseIds = Array.from(this.selectedExercises).join(',');
-                httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken).set('clientRegistrationId', clientRegistrationId);
+                resourceType = DeepLinkingType.EXERCISE;
+                contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {
-                const lectureIds = Array.from(this.selectedLectures).join(',');
-                httpParams = new HttpParams().set('lectureIds', lectureIds).set('ltiIdToken', ltiIdToken).set('clientRegistrationId', clientRegistrationId);
+                resourceType = DeepLinkingType.LECTURE;
+                contentIds = Array.from(this.selectedLectures).join(',');
             } else if (this.isCompetencySelected) {
-                httpParams = new HttpParams().set('competency', 'true').set('ltiIdToken', ltiIdToken).set('clientRegistrationId', clientRegistrationId);
+                resourceType = DeepLinkingType.COMPETENCY;
             } else if (this.isLearningPathSelected) {
-                httpParams = new HttpParams().set('learningPath', 'true').set('ltiIdToken', ltiIdToken).set('clientRegistrationId', clientRegistrationId);
+                resourceType = DeepLinkingType.LEARNING_PATH;
             } else if (this.isIrisSelected) {
-                httpParams = new HttpParams().set('iris', 'true').set('ltiIdToken', ltiIdToken).set('clientRegistrationId', clientRegistrationId);
+                resourceType = DeepLinkingType.IRIS;
+            } else {
+                this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
+                return;
             }
 
-            if (httpParams) {
-                this.http
-                    .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, {
-                        observe: 'response',
-                        params: httpParams,
-                    })
-                    .subscribe({
-                        next: (response) => {
-                            if (response.status === 200 && response.body) {
-                                window.location.replace(response.body.targetLinkUri);
-                            } else {
-                                this.isLinking = false;
-                                this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
-                            }
-                        },
-                        error: (error) => {
+            const httpParams = new HttpParams()
+                .set('resourceType', resourceType)
+                .set('ltiIdToken', ltiIdToken)
+                .set('clientRegistrationId', clientRegistrationId)
+                .set('contentIds', contentIds || ''); // Set contentIds only if it exists
+
+            this.http
+                .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, {
+                    observe: 'response',
+                    params: httpParams,
+                })
+                .subscribe({
+                    next: (response) => {
+                        if (response.status === 200 && response.body) {
+                            window.location.replace(response.body.targetLinkUri);
+                        } else {
                             this.isLinking = false;
-                            onError(this.alertService, error);
-                        },
-                    });
-            } else {
-                this.alertService.error('artemisApp.lti13.deepLinking.parameterError');
-            }
+                            this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
+                        }
+                    },
+                    error: (error) => {
+                        this.isLinking = false;
+                        onError(this.alertService, error);
+                    },
+                });
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }

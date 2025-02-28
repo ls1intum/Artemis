@@ -130,26 +130,24 @@ public class LtiResource {
      * is returned in a JSON object.
      *
      * @param courseId             The identifier of the course for which deep linking is being performed.
-     * @param exerciseIds          A set of exercise identifiers to be included in the deep linking response (optional).
-     * @param lectureIds           A set of lecture identifiers to be included in the deep linking response (optional).
-     * @param competency           A flag indicating whether the deep linking request is for a competency resource.
-     * @param learningPath         A flag indicating whether the deep linking request is for a learning path resource.
-     * @param iris                 A flag indicating whether the deep linking request is for an IRIS integration.
+     * @param resourceType         The type of resource being linked. Valid values are defined in the {@link DeepLinkingType} enum.
+     * @param contentIds           A set of content identifiers (e.g., exercise IDs or lecture IDs) to be included in the deep linking response.
+     *                                 This parameter is required for resource types that support multiple content items (e.g., EXERCISE, LECTURE).
      * @param ltiIdToken           The token containing the deep linking information.
      * @param clientRegistrationId The identifier of the course's online configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      * @throws ParseException           If the LTI ID token cannot be parsed.
-     * @throws BadRequestAlertException If LTI is not configured for the course or if no valid deep linking type is provided.
+     * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
+     *                                      or if content IDs are required but not provided for the specified resource type.
      */
     @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds", required = false) Set<Long> exerciseIds,
-            @RequestParam(name = "lectureIds", required = false) Set<Long> lectureIds, @RequestParam(name = "competency", required = false) boolean competency,
-            @RequestParam(name = "learningPath", required = false) boolean learningPath, @RequestParam(name = "iris", required = false) boolean iris,
-            @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
+            @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
+            @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
 
-        log.info("LTI 1.3 Deep Linking request received for course {} with exercises: {}, lectures: {}, competency: {}, learningPath: {}, iris: {}, registrationId: {}", courseId,
-                exerciseIds, lectureIds, competency, learningPath, iris, clientRegistrationId);
+        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}, registrationId: {}", courseId, resourceType, contentIds,
+                clientRegistrationId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
@@ -159,26 +157,16 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink;
-
-        if (exerciseIds != null) {
-            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds, DeepLinkingType.EXERCISE);
-        }
-        else if (lectureIds != null) {
-            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, lectureIds, DeepLinkingType.LECTURE);
-        }
-        else if (competency) {
-            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.COMPETENCY);
-        }
-        else if (learningPath) {
-            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.LEARNING_PATH);
-        }
-        else if (iris) {
-            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.IRIS);
-        }
-        else {
-            throw new BadRequestAlertException("No valid deep linking type provided", "LTI", "invalidDeepLinkingType");
-        }
+        String targetLink = switch (resourceType) {
+            case EXERCISE, LECTURE -> {
+                if (contentIds == null || contentIds.isEmpty()) {
+                    throw new BadRequestAlertException("Content IDs are required for this resource type", "LTI", "contentIdsRequired");
+                }
+                yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
+            }
+            case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
+            default -> throw new BadRequestAlertException("Invalid resource type provided", "LTI", "invalidResourceType");
+        };
 
         ObjectNode json = new ObjectMapper().createObjectNode();
         json.put("targetLinkUri", targetLink);
