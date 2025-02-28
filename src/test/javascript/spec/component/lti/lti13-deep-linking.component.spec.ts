@@ -139,16 +139,16 @@ describe('Lti13DeepLinkingComponent', () => {
     });
 
     it('should set isDeepLinking to false if the response status is not 200', fakeAsync(() => {
-        const replaceMock = jest.fn();
-        // TODO: change the test to avoid mocking window.location
-        component.selectExercise(exercise1.id);
-        component.selectExercise(exercise2.id);
+        component.selectExercise(1);
         component.courseId = 123;
+
         const nonSuccessResponse = new HttpResponse({
             status: 400,
             body: { message: 'Bad request' },
         });
+
         httpMock.post.mockReturnValue(of(nonSuccessResponse));
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
 
         component.sendDeepLinkRequest();
         tick();
@@ -156,16 +156,17 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.EXERCISE).set('contentIds', '1').set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
-        expect(replaceMock).not.toHaveBeenCalled(); // Verify that we did not navigate
     }));
 
     it('should set isLinking to false if there is an error during the HTTP request', fakeAsync(() => {
-        component.selectExercise(exercise1.id);
+        component.selectExercise(1);
         component.courseId = 123;
+
         const mockError = new Error('Network error');
         httpMock.post.mockReturnValue(throwError(() => mockError));
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
 
         component.sendDeepLinkRequest();
         tick();
@@ -173,12 +174,13 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.EXERCISE).set('contentIds', '1').set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
-    it('should send deep link request and navigate when exercise is selected', () => {
-        // TODO: change the test to avoid mocking window.location
+    it('should send deep link request and navigate when exercise is selected', fakeAsync(() => {
+        // Arrange
+        const exercise1 = { id: 1, shortName: 'git', type: ExerciseType.PROGRAMMING } as Exercise;
         component.selectExercise(exercise1.id);
         component.courseId = 123;
 
@@ -188,13 +190,15 @@ describe('Lti13DeepLinkingComponent', () => {
         });
 
         httpMock.post.mockReturnValue(of(mockResponse));
-        component.sendDeepLinkRequest();
 
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
+        component.sendDeepLinkRequest();
+        tick();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.EXERCISE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1'),
         });
-    });
+    }));
 
     it('should retrieve course lectures on init when user is authenticated', fakeAsync(() => {
         const loggedInUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
@@ -271,12 +275,14 @@ describe('Lti13DeepLinkingComponent', () => {
         });
 
         httpMock.post.mockReturnValue(of(mockResponse));
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
+
         component.sendDeepLinkRequest();
         tick();
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('resourceType', DeepLinkingType.COMPETENCY).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.COMPETENCY).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', ''),
         });
     }));
 
@@ -290,12 +296,14 @@ describe('Lti13DeepLinkingComponent', () => {
         });
 
         httpMock.post.mockReturnValue(of(mockResponse));
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
+
         component.sendDeepLinkRequest();
         tick();
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', ''),
         });
     }));
 
@@ -309,12 +317,15 @@ describe('Lti13DeepLinkingComponent', () => {
         });
 
         httpMock.post.mockReturnValue(of(mockResponse));
+
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
+
         component.sendDeepLinkRequest();
         tick();
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', ''),
         });
     }));
 
@@ -332,6 +343,8 @@ describe('Lti13DeepLinkingComponent', () => {
         });
 
         httpMock.post.mockReturnValue(of(mockResponse));
+        jest.spyOn(component.sessionStorageService, 'retrieve').mockReturnValue('');
+
         component.sendDeepLinkRequest();
         tick();
 
