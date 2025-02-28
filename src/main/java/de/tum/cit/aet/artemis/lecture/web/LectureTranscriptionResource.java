@@ -90,7 +90,7 @@ public class LectureTranscriptionResource {
      * @param transcriptionId the transcriptionId of the transcription to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the transcription, or with status 404 (Not Found)
      */
-    @GetMapping("lectures/{lectureId}/transcription/{transcriptionId}")
+    @GetMapping("lecture/{lectureId}/transcription/{transcriptionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
         log.debug("REST request to get transcription {}", transcriptionId);
