@@ -42,10 +42,10 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
     @Test
     void cleanupTest() {
         final PushNotificationDeviceConfiguration valid = new PushNotificationDeviceConfiguration("token1", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
+                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT, "1.0.0");
 
         final PushNotificationDeviceConfiguration expired = new PushNotificationDeviceConfiguration("token2", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
+                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT, "1.0.0");
 
         deviceConfigurationRepository.save(valid);
         deviceConfigurationRepository.save(expired);

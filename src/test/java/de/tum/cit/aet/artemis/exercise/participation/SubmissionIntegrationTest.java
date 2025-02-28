@@ -159,7 +159,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
 
-        var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
+        var resultPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
@@ -169,7 +169,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
+        request.getSearchResult("/api/exercise/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -182,7 +182,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
+        request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -196,7 +196,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
@@ -214,7 +214,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
         var expected1 = SubmissionVersionDTO.of(submissionVersion1);
         var expected2 = SubmissionVersionDTO.of(submissionVersion2);
-        List<SubmissionVersionDTO> versions = request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersionDTO.class);
+        List<SubmissionVersionDTO> versions = request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersionDTO.class);
         assertThat(versions).usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdDate").containsExactly(expected1, expected2);
     }
 
@@ -222,7 +222,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionId_submissionNotFound() throws Exception {
         long randomSubmissionId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
-        request.getList("/api/submissions/" + randomSubmissionId + "/versions", HttpStatus.NOT_FOUND, Submission.class);
+        request.getList("/api/exercise/submissions/" + randomSubmissionId + "/versions", HttpStatus.NOT_FOUND, Submission.class);
     }
 
 }

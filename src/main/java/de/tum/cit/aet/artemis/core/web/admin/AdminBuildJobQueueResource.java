@@ -37,7 +37,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
@@ -98,10 +98,7 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on build agent {}", agentName);
         Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
                 .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
-        if (buildAgentDetails.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(buildAgentDetails.get());
+        return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

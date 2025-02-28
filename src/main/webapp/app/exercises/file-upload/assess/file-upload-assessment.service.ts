@@ -16,7 +16,7 @@ type FileUploadAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string 
 export class FileUploadAssessmentService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api';
+    private resourceUrl = 'api/fileupload';
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, assessmentNote: string | undefined, submit = false): Observable<Result> {
         let params = new HttpParams();

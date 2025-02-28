@@ -16,6 +16,7 @@
         filter: alpha(opacity = 100);
         transition: 0.15s;
         background-color: var(--background-color-for-hover) !important;
+        color: var(--content-color);
 
         display: flex;
         cursor: pointer;
@@ -77,7 +78,7 @@
                     padding-right: 7px;
 
                     a {
-                        color: white;
+                        color: var(--content-color);
                     }
                 }
             }

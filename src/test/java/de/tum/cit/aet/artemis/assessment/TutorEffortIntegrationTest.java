@@ -74,7 +74,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/assessment/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
                 TutorEffortDTO.class);
 
         TutorEffortDTO effortExpected = createTutorEffortObject(0);
@@ -94,7 +94,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/assessment/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
                 TutorEffortDTO.class);
 
         TutorEffortDTO effortExpected = createTutorEffortObject(25);
@@ -114,7 +114,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/assessment/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
                 TutorEffortDTO.class);
 
         TutorEffortDTO effortExpected = createTutorEffortObject(0);

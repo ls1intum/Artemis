@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/plagiarism/")
 public class PlagiarismCaseResource {
 
     private static final String ENTITY_NAME = "plagiarismCase";
