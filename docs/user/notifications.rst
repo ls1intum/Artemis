@@ -54,9 +54,353 @@ Overview
 
 The following tables gives an overview of all supported notification types:
 
-|supported-notification-types-overview-1|
-|supported-notification-types-overview-2|
-|supported-notification-types-overview-3|
+.. list-table:: Notification Types
+   :widths: 20 10 10 10
+   :header-rows: 1
+
+   * - NotificationType
+     - Push
+     - Web
+     - Email
+
+   * - **Course-Wide Discussion Notifications**
+     -
+     -
+     -
+
+   * - NEW_COURSE_POST
+     - X
+     - X
+     -
+
+   * - NEW_REPLY_FOR_COURSE_POST
+     - X
+     - X
+     -
+
+   * - NEW_ANNOUNCEMENT_POST
+     - X
+     - X
+     - X
+
+   * - **Exercise Notifications**
+     -
+     -
+     -
+
+   * - EXERCISE_RELEASED
+     - X
+     - X
+     - X
+
+   * - EXERCISE_PRACTICE
+     - X
+     - X
+     - X
+
+   * - EXERCISE_SUBMISSION_ASSESSED
+     - X
+     - X
+     - X
+
+   * - FILE_SUBMISSION_SUCCESSFUL
+     - X
+     - X
+     - X
+
+   * - NEW_EXERCISE_POST
+     - X
+     - X
+     -
+
+   * - NEW_REPLY_FOR_EXERCISE_POST
+     - X
+     - X
+     -
+
+   * - **Lecture Notifications**
+     -
+     -
+     -
+
+   * - ATTACHMENT_CHANGE
+     - X
+     - X
+     - X
+
+   * - NEW_LECTURE_POST
+     - X
+     - X
+     -
+
+   * - NEW_REPLY_FOR_LECTURE_POST
+     - X
+     - X
+     -
+
+   * - **New message/replies Notifications**
+     -
+     -
+     -
+
+   * - CONVERSATION_NEW_MESSAGE
+     - X
+     - X
+     -
+
+   * - CONVERSATION_NEW_REPLY_MESSAGE
+     - X
+     - X
+     -
+
+   * - CONVERSATION_USER_MENTIONED
+     - X
+     - X
+     - X
+
+   * - CONVERSATION_CREATE_GROUP_CHAT
+     - X
+     - X
+     -
+
+   * - CONVERSATION_ADD_USER_CHANNEL
+     - X
+     - X
+     -
+
+   * - CONVERSATION_ADD_USER_GROUP_CHAT
+     -
+     - X
+     -
+
+   * - CONVERSATION_REMOVE_USER_GROUP_CHAT
+     -
+     - X
+     -
+
+   * - CONVERSATION_REMOVE_USER_CHANNEL
+     -
+     - X
+     -
+
+   * - CONVERSATION_DELETE_CHANNEL
+     -
+     - X
+     -
+
+   * - **Tutorial Group Notifications**
+     -
+     -
+     -
+
+   * - TUTORIAL_GROUP_REGISTRATION_STUDENT
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_DEREGISTRATION_STUDENT
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_DELETED
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_UPDATED
+     - X
+     - X
+     - X
+
+   * - **Tutor Notifications**
+     -
+     -
+     -
+
+   * - TUTORIAL_GROUP_REGISTRATION_TUTOR
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_DEREGISTRATION_TUTOR
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_ASSIGNED
+     - X
+     - X
+     - X
+
+   * - TUTORIAL_GROUP_UNASSIGNED
+     - X
+     - X
+     - X
+
+   * - **Editor Notifications**
+     -
+     -
+     -
+
+   * - PROGRAMMING_TEST_CASES_CHANGED
+     -
+     - X
+     -
+
+   * - **Instructor Notifications**
+     -
+     -
+     -
+
+   * - COURSE_ARCHIVE_STARTED
+     - X
+     -
+     -
+
+   * - COURSE_ARCHIVE_FINISHED_WITHOUT_ERRORS
+     -
+     - X
+     -
+
+   * - COURSE_ARCHIVE_FINISHED_WITH_ERRORS
+     -
+     - X
+     -
+
+   * - COURSE_ARCHIVE_FAILED
+     -
+     - X
+     -
+
+   * - EXAM_ARCHIVE_STARTED
+     -
+     - X
+     -
+
+   * - EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS
+     -
+     - X
+     -
+
+   * - EXAM_ARCHIVE_FINISHED_WITH_ERRORS
+     -
+     - X
+     -
+
+   * - EXAM_ARCHIVE_FAILED
+     -
+     - X
+     -
+
+   * - **SSH Key Notifications**
+     -
+     -
+     -
+
+   * - SSH_KEY_ADDED
+     - X
+     - X
+     - X
+
+   * - SSH_KEY_EXPIRES_SOON
+     - X
+     - X
+     - X
+
+   * - SSH_KEY_HAS_EXPIRED
+     - X
+     - X
+     - X
+
+   * - **VCS Access Token Notifications**
+     -
+     -
+     -
+
+   * - VCS_ACCESS_TOKEN_ADDED
+     - X
+     - X
+     - X
+
+   * - VCS_ACCESS_TOKEN_EXPIRED
+     - X
+     - X
+     - X
+
+   * - VCS_ACCESS_TOKEN_EXPIRES_SOON
+     - X
+     - X
+     - X
+
+   * - **Unassigned Notifications**
+     -
+     -
+     -
+
+   * - EXERCISE_UPDATED
+     -
+     - X
+     -
+
+   * - QUIZ_EXERCISE_STARTED
+     - X
+     - X
+     -
+
+   * - DUPLICATE_TEST_CASE
+     - X
+     - X
+     - X
+
+   * - ILLEGAL_SUBMISSION
+     -
+     - X
+     -
+
+   * - NEW_PLAGIARISM_CASE_STUDENT
+     - X
+     - X
+     - X
+
+   * - NEW_CPC_PLAGIARISM_CASE_STUDENT
+     - X
+     - X
+     - X
+
+   * - PLAGIARISM_CASE_VERDICT_STUDENT
+     - X
+     - X
+     - X
+
+   * - PLAGIARISM_CASE_REPLY
+     - X
+     - X
+     - X
+
+   * - NEW_MANUAL_FEEDBACK_REQUEST
+     -
+     - X
+     -
+
+   * - DATA_EXPORT_CREATED
+     - X
+     - X
+     - X
+
+   * - DATA_EXPORT_FAILED
+     - X
+     - X
+     - X
+
+
+For the exact contents sent for each notification, please check out the usages of the `NotificationPlaceholderCreator` interface in the code.
+
 
 Settings
 ^^^^^^^^
@@ -80,9 +424,3 @@ The push notification settings can currently only be found in the respective app
     :width: 300
 .. |notification-push| image:: notifications/notification-push.png
     :width: 300
-.. |supported-notification-types-overview-1| image:: notifications/supported-notification-types-overview-1.png
-    :width: 1000
-.. |supported-notification-types-overview-2| image:: notifications/supported-notification-types-overview-2.png
-    :width: 1000
-.. |supported-notification-types-overview-3| image:: notifications/supported-notification-types-overview-3.png
-    :width: 1000
