@@ -3,10 +3,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
@@ -37,7 +36,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizExerciseService = inject(QuizExerciseService);
     private quizStatisticUtil = inject(QuizStatisticUtil);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
 
     @Input() isQuizPointStatistic: boolean;
@@ -52,7 +51,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     quizPointStatistic: QuizPointStatistic;
     questionStatistic: MultipleChoiceQuestionStatistic;
     questionIdParam: number;
-    private sub: Subscription;
     private websocketChannelForData: string;
     // timer
     waitingForQuizStart = false;
@@ -64,7 +62,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     farListAlt = faListAlt;
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
@@ -106,8 +104,8 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
         if (remainingTimeSeconds > 210) {
@@ -121,14 +119,14 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketService.unsubscribe(this.websocketChannelForData);
     }
 
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      * And it loads the new Data if the Websocket has been notified
      *
-     * @param {QuizExercise} quiz: the quizExercise, which this quiz-statistic presents.
+     * @param quiz the quizExercise, which this quiz-statistic presents.
      */
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses

@@ -95,7 +95,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
 
-    trackIdentity(index: number, item: UserPublicInfoDTO) {
+    trackIdentity(_index: number, item: UserPublicInfoDTO) {
         return item.id;
     }
 
@@ -180,8 +180,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         );
 
     // === START CONTROL VALUE ACCESSOR ===
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onChange = (selectedUsers: UserPublicInfoDTO[]) => {};
+    onChange = (_selectedUsers: UserPublicInfoDTO[]) => {};
 
     onTouched = () => {};
 

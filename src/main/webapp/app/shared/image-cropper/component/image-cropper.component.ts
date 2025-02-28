@@ -27,6 +27,7 @@ import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.inter
 import { ImageTransform } from 'app/shared/image-cropper/interfaces/image-transform.interface';
 import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { captureException } from '@sentry/angular';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
 // Note: Partially adapted to fit Artemis needs
@@ -253,8 +254,8 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private loadImageError(error: Error): void {
-        console.error(error);
         this.loadImageFailed.emit();
+        captureException(error);
     }
 
     imageLoadedInView(): void {

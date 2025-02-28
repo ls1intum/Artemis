@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
@@ -46,10 +46,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     exerciseType = ExerciseType.FILE_UPLOAD;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
 
-    @Input() studentSubmission: FileUploadSubmission;
-    @Input() exercise: FileUploadExercise;
+    studentSubmission = model.required<FileUploadSubmission>();
+    exercise = input.required<FileUploadExercise>();
     problemStatementHtml: string;
 
     submittedFileName: string;
@@ -71,7 +71,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -93,14 +93,14 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             const submissionFile = fileList[0];
-            const allowedFileExtensions = this.exercise.filePattern!.split(',');
+            const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
-                this.studentSubmission.isSynced = false;
+                this.studentSubmission().isSynced = false;
             }
         }
     }
@@ -113,22 +113,22 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
+        return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
     getExerciseId(): number | undefined {
-        return this.exercise.id;
+        return this.exercise().id;
     }
     getExercise(): Exercise {
-        return this.exercise;
+        return this.exercise();
     }
 
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     getSubmission(): Submission {
-        return this.studentSubmission;
+        return this.studentSubmission();
     }
 
     updateSubmissionFromView(): void {
@@ -139,10 +139,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.examTimeline && this.studentSubmission.filePath)) {
+        if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission!.filePath!.split('/');
+            const filePath = this.studentSubmission()!.filePath!.split('/');
             this.submittedFileName = filePath.last()!;
             const fileName = this.submittedFileName.split('.');
             this.submittedFileExtension = fileName.last()!;
@@ -157,12 +157,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
-                this.studentSubmission.filePath = submissionFromServer.filePath;
-                this.studentSubmission.isSynced = true;
-                this.studentSubmission.submitted = true;
+                this.studentSubmission().filePath = submissionFromServer.filePath;
+                this.studentSubmission().isSynced = true;
+                this.studentSubmission().submitted = true;
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),

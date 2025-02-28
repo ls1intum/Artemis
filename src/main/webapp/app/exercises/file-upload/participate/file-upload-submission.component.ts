@@ -1,6 +1,5 @@
 import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { Location, UpperCasePipe } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
+import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,7 +8,6 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
@@ -17,7 +15,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -64,11 +61,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
-    private fileUploaderService = inject(FileUploaderService);
-    private resultService = inject(ResultService);
     private alertService = inject(AlertService);
-    private location = inject(Location);
-    private translateService = inject(TranslateService);
     private fileService = inject(FileService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -108,16 +101,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     faDownload = faDownload;
     readonly ButtonType = ButtonType;
 
-    private submissionConfirmationText: string;
-
     // Icons
     farListAlt = faListAlt;
-
-    constructor() {
-        const translateService = this.translateService;
-
-        translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe((text) => (this.submissionConfirmationText = text));
-    }
 
     /**
      * Initializes data for file upload editor

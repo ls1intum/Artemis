@@ -301,7 +301,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
-     * @return list of exercises
+     * @return set of exercises
      */
     @Query("""
             SELECT e
@@ -423,7 +423,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      *
      * @param courseId the course to get the exercises for
      * @param now      the current date time
-     * @return a set of exercises
+     * @return a list of exercises
      */
     @Query("""
             SELECT DISTINCT e
@@ -568,7 +568,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN FETCH f.testCase
             WHERE p.student.id = :userId
                 OR students.id = :userId
-             """)
+            """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
@@ -609,7 +609,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
-     * @return a list of exercises with potential plagiarism
+     * @return a set of exercises with potential plagiarism
      */
     @Query("""
             SELECT e

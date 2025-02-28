@@ -52,6 +52,9 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     @Input()
     mode: ChatServiceMode;
 
+    @Input()
+    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
+
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     isOverflowing = false;
@@ -77,10 +80,10 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params['exerciseId'], 10);
-            this.chatService.switchTo(this.mode, exerciseId);
+            const rawId = this.mode == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
+            const id = parseInt(rawId, 10);
+            this.chatService.switchTo(this.mode, id);
         });
-
         // Subscribes to check for new messages
         this.numNewMessagesSubscription = this.chatService.numNewMessages.subscribe((num) => {
             this.hasNewMessages = num > 0;
@@ -153,6 +156,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
+            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }

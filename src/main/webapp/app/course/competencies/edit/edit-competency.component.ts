@@ -6,14 +6,15 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest, forkJoin } from 'rxjs';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { EditCourseCompetencyComponent } from 'app/course/competencies/edit/edit-course-competency.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-competency',
     templateUrl: './edit-competency.component.html',
-    imports: [ArtemisSharedModule, CompetencyFormComponent],
+    imports: [CompetencyFormComponent, TranslateDirective],
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
     private competencyService = inject(CompetencyService);

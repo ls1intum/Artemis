@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -64,7 +64,6 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
-import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -94,6 +93,8 @@ import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -121,7 +122,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -129,7 +130,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
@@ -166,9 +167,7 @@ public class CourseResource {
 
     private final FileService fileService;
 
-    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
-
-    private final GradingScaleService gradingScaleService;
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
@@ -178,12 +177,12 @@ public class CourseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final LearningPathApi learningPathApi;
+    private final Optional<LearningPathApi> learningPathApi;
 
     private final ExamRepository examRepository;
 
@@ -195,10 +194,10 @@ public class CourseResource {
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
-            TeamRepository teamRepository, LearnerProfileApi learnerProfileApi) {
+            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+            GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
+            Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -212,8 +211,7 @@ public class CourseResource {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
-        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
-        this.gradingScaleService = gradingScaleService;
+        this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathApi = learningPathApi;
@@ -276,17 +274,6 @@ public class CourseResource {
             }
         }
 
-        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
-            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
-            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
-                throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
-                        "gradedPresentationAlreadySet", true);
-            }
-            if (courseUpdate.getPresentationScore() < 0) {
-                throw new BadRequestAlertException("The presentation score cannot be negative", Course.ENTITY_NAME, "negativePresentationScore", true);
-            }
-        }
-
         // Make sure to preserve associations in updated entity
         courseUpdate.setId(courseId);
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
@@ -337,11 +324,11 @@ public class CourseResource {
         Course result = courseRepository.save(courseUpdate);
 
         // if learning paths got enabled, generate learning paths for students
-        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
+        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
-            learnerProfileApi.createCourseLearnerProfiles(courseWithCompetencies, students);
-            learningPathApi.generateLearningPaths(courseWithCompetencies);
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
+            learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
@@ -360,8 +347,8 @@ public class CourseResource {
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
-        if (timeZoneChanged) {
-            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
+            tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
         return ResponseEntity.ok(result);
     }
@@ -590,6 +577,7 @@ public class CourseResource {
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
@@ -654,6 +642,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -925,7 +914,7 @@ public class CourseResource {
      */
     @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/download-archive")
-    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
+    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws IOException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -935,9 +924,8 @@ public class CourseResource {
 
         // The path is stored in the course table
         Path archive = Path.of(courseArchivesDirPath, course.getCourseArchivePath());
-
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(archive));
         File zipFile = archive.toFile();
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(contentDisposition);
@@ -1134,7 +1122,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /api/courses/:courseId/members/search: Searches for members of a course
+     * GET /courses/:courseId/members/search: Searches for members of a course
      *
      * @param courseId    id of the course
      * @param loginOrName the search term to search login and names by
@@ -1349,7 +1337,7 @@ public class CourseResource {
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(courseId).orElse(null);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
         CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course, gradingScale);
         return ResponseEntity.ok(managementDetailViewDTO);
     }

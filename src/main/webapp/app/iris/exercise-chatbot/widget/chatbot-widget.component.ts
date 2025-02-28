@@ -6,6 +6,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -17,6 +18,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private dialog = inject(MatDialog);
+
+    dialogData = inject<{ isChatGptWrapper: boolean }>(MAT_DIALOG_DATA);
 
     // User preferences
     initialWidth = 400;

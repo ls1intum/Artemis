@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationMemberRowComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -21,10 +21,10 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
-import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 
 const memberTemplate = {
     id: 1,
@@ -58,10 +58,11 @@ examples.forEach((activeConversation) => {
         const canGrantChannelModeratorRole = jest.fn();
         const canRevokeChannelModeratorRole = jest.fn();
         const canRemoveUsersFromConversation = jest.fn();
+        let translateService: TranslateService;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbTooltipModule, NgbDropdownMocksModule],
+                imports: [NgbTooltipModule],
                 declarations: [
                     ConversationMemberRowComponent,
                     MockPipe(ArtemisTranslatePipe),
@@ -102,6 +103,8 @@ examples.forEach((activeConversation) => {
             component.canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
             component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
+            translateService = TestBed.inject(TranslateService) as TranslateService;
+            jest.spyOn(translateService, 'instant').mockImplementation((key: string) => key);
         });
 
         afterEach(() => {
@@ -276,6 +279,71 @@ examples.forEach((activeConversation) => {
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();
             }
         }));
+
+        it('should emit userId when another user clicks the name', fakeAsync(() => {
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            component.idOfLoggedInUser = loggedInUser.id!;
+            const userNameClickedSpy = jest.spyOn(component.onUserNameClicked, 'emit');
+            component.userNameClicked();
+
+            expect(userNameClickedSpy).toHaveBeenCalledWith(conversationMember.id);
+        }));
+
+        it('should set isCurrentUser to true if conversation member is the logged-in user', fakeAsync(() => {
+            loggedInUser.id = conversationMember.id!;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.isCurrentUser).toBeTrue();
+        }));
+
+        it('should set isCurrentUser to false if conversation member is NOT the logged-in user', fakeAsync(() => {
+            loggedInUser.id = 999;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.isCurrentUser).toBeFalse();
+        }));
+
+        it('should prevent removal action if the user is the current user', fakeAsync(() => {
+            loggedInUser.id = conversationMember.id!;
+
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            expect(component.canBeRemovedFromConversation).toBeFalse();
+        }));
+
+        it.each`
+            role                           | isInstructor | isEditor | isTeachingAssistant | expectedIcon      | expectedTooltip
+            ${'instructor'}                | ${true}      | ${false} | ${false}            | ${faUserGraduate} | ${'artemisApp.metis.userAuthorityTooltips.instructor'}
+            ${'editor (tutor)'}            | ${false}     | ${true}  | ${false}            | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
+            ${'teachingAssistant (tutor)'} | ${false}     | ${false} | ${true}             | ${faUserCheck}    | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
+            ${'regular student (default)'} | ${false}     | ${false} | ${false}            | ${faUser}         | ${'artemisApp.metis.userAuthorityTooltips.student'}
+        `('should set correct icon and tooltip when role = $role', ({ isInstructor, isEditor, isTeachingAssistant, expectedIcon, expectedTooltip }) => {
+            const updatedMember: ConversationUserDTO = {
+                id: 123,
+                isInstructor,
+                isEditor,
+                isTeachingAssistant,
+            } as ConversationUserDTO;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.conversationMember = input<ConversationUserDTO>(updatedMember);
+                component.setUserAuthorityIconAndTooltip();
+                expect(component.userIcon).toBe(expectedIcon);
+                expect(component.userTooltip).toBe(expectedTooltip);
+            });
+        });
+
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {

@@ -12,8 +12,10 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.lang.ConditionEvent.createMessage;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
@@ -34,21 +36,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
@@ -59,7 +63,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
+import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
+import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
@@ -200,25 +206,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .check(allClasses);
     }
 
-    @Disabled // TODO: Enable this test once the restructuring is done
-    @Test
-    void testDTOImplementations() {
-        var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").and().areNotInterfaces().should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
-                .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
-        var result = dtoRecordRule.evaluate(allClasses);
-        log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
-        log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
-        assertThat(result.getFailureReport().getDetails()).hasSize(26);
-
-        var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
-        result = dtoPackageRule.evaluate(allClasses);
-        log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
-        log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
-        assertThat(result.getFailureReport().getDetails()).hasSize(32);
-    }
-
     @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
@@ -301,7 +288,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -390,4 +377,63 @@ class ArchitectureTest extends AbstractArchitectureTest {
         }
         return false;
     }
+
+    @Test
+    void testAsyncTestShouldWait() {
+        ArchRule rule = methods().that(areInIntegrationTests()).and(callAnAsyncMethod()).should(callAWaitMethod()).because("tests should wait for async effects");
+        rule.check(testClasses);
+    }
+
+    private static DescribedPredicate<JavaMethod> callAnAsyncMethod() {
+        return new DescribedPredicate<>("call a method annotated with async") {
+
+            @Override
+            public boolean test(JavaMethod javaMethod) {
+                var asyncCalls = javaMethod.getMethodCallsFromSelf().stream().filter(call -> call.getTarget().isAnnotatedWith(Async.class));
+
+                var firstVerifyLineNumberOptional = javaMethod.getMethodCallsFromSelf().stream()
+                        .filter(call -> call.getTarget().getName().equals("verify") && call.getTargetOwner().getFullName().equals("org.mockito.Mockito"))
+                        .mapToInt(JavaAccess::getLineNumber).min();
+
+                if (firstVerifyLineNumberOptional.isEmpty()) {
+                    return asyncCalls.findAny().isPresent();
+                }
+
+                // method calls on and after a verify() line are usually not calls on the actual object
+                var firstVerifyLineNumber = firstVerifyLineNumberOptional.getAsInt();
+                return asyncCalls.anyMatch(call -> call.getLineNumber() < firstVerifyLineNumber);
+            }
+        };
+    }
+
+    private static DescribedPredicate<JavaMethod> areInIntegrationTests() {
+
+        return new DescribedPredicate<>("are in integration tests") {
+
+            @Override
+            public boolean test(JavaMethod javaMethod) {
+                return javaMethod.getOwner().isAssignableTo(AbstractArtemisIntegrationTest.class);
+            }
+        };
+    }
+
+    private static ArchCondition<JavaMethod> callAWaitMethod() {
+        var isWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+
+        return new ArchCondition<>("call a wait method") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean doesNotWait = item.getMethodCallsFromSelf().stream().noneMatch(isWaiting);
+                if (doesNotWait) {
+                    events.add(violated(item, createMessage(item, "does not call a wait method")));
+                }
+            }
+        };
+    }
+
+    private static DescribedPredicate<JavaCall<?>> callMethod(Class<?> owner, String methodName) {
+        return JavaCall.Predicates.target(owner(type(owner))).and(JavaCall.Predicates.target(name(methodName)));
+    }
+
 }

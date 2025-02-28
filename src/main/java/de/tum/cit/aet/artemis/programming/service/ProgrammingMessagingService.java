@@ -214,7 +214,7 @@ public class ProgrammingMessagingService {
         if (studentParticipation.getParticipant() instanceof User user) {
             pyrisEventService.ifPresent(eventService -> {
                 final var exercise = studentParticipation.getExercise();
-                if (user.hasAcceptedIris() && !exercise.isExamExercise() && irisExerciseSettingsRepository.get().isExerciseChatEnabled(exercise.getId())) {
+                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise() && irisExerciseSettingsRepository.get().isExerciseChatEnabled(exercise.getId())) {
                     // Inform event service about the new result
                     try {
                         // This is done asynchronously to prevent blocking the current thread

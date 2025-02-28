@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -21,17 +20,17 @@ import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/en
 import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
+import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
 
     let defaultProgrammingExercise: ProgrammingExercise;
-    const resourceUrl = 'api/programming-exercises';
+    const resourceUrl = 'api/programming/programming-exercises';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -292,7 +291,7 @@ describe('ProgrammingExercise Service', () => {
         expected.zipFileForImport = dummyFile;
         request.zipFileForImport = dummyFile;
         service.importFromFile(request, course.id).subscribe((resp) => expect(resp.body).toEqual(expected));
-        const url = `api/courses/1/programming-exercises/import-from-file`;
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
         tick();
@@ -383,7 +382,7 @@ describe('ProgrammingExercise Service', () => {
 
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
-        service.exportInstructorRepository(exerciseId, 'AUXILIARY', undefined).subscribe();
+        service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
@@ -436,7 +435,14 @@ describe('ProgrammingExercise Service', () => {
             }
             functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
-            const req = httpMock.expectOne({ method: 'GET', url });
+
+            // Custom matcher function
+            const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+
+            const req = httpMock.expectOne((request) => {
+                return request.method === 'GET' && urlMatcher(request.url);
+            });
+
             req.flush({});
             tick();
         })(),

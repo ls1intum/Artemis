@@ -9,11 +9,9 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ArtemisTestModule } from '../../../test.module';
 
 @Component({
     template: `
@@ -49,16 +47,7 @@ describe('CourseUsersSelectorComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                CommonModule,
-                FormsModule,
-                ReactiveFormsModule,
-                NgbTypeaheadModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                TranslateModule.forRoot(),
-            ],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, TranslateModule.forRoot()],
             providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }],
         }).compileComponents();
         fixture = TestBed.createComponent(WrapperComponent);

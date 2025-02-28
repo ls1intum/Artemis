@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.gitlab;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS;
+
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +30,8 @@ public class GitlabInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
     private Optional<String> gitlabSshKeysUrlPath;
 
-    @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
-    private Boolean useVersionControlAccessToken;
-
-    @Value("${artemis.version-control.show-clone-url-without-token:true}")
-    private boolean showCloneUrlWithoutToken;
+    @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
+    private List<String> orderedAuthenticationMechanisms;
 
     @Override
     public void contribute(Info.Builder builder) {
@@ -54,8 +54,6 @@ public class GitlabInfoContributor implements InfoContributor {
                 builder.withDetail(Constants.INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
             }
         }
-
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVersionControlAccessToken);
-        builder.withDetail(Constants.INFO_SHOW_CLONE_URL_WITHOUT_TOKEN, showCloneUrlWithoutToken);
+        builder.withDetail(INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
     }
 }

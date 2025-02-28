@@ -205,6 +205,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.teams.length;
             case ImportStrategy.CREATE_ONLY:
                 return 0;
+            default:
+                return 0;
         }
     }
 
@@ -214,6 +216,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.numberOfConflictFreeSourceTeams;
+            default:
+                return 0;
         }
     }
 
@@ -223,6 +227,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.teams.length + this.numberOfConflictFreeSourceTeams;
+            default:
+                return 0;
         }
     }
 

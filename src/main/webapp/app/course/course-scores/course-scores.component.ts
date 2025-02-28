@@ -29,7 +29,6 @@ import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import {
     BONUS_KEY,
     COURSE_OVERALL_POINTS_KEY,
@@ -91,7 +90,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private localeConversionService = inject(LocaleConversionService);
     private participantScoresService = inject(ParticipantScoresService);
     private gradingSystemService = inject(GradingSystemService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
     private paramSub: Subscription;
@@ -484,7 +482,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             participation.results?.forEach((result) => (result.participation = participation));
 
             // find all students by iterating through the participations
-            const participationStudents = participation.student ? [participation.student] : participation.team!.students!;
+            const participationStudents = participation.student ? [participation.student] : participation.team!.students;
+            if (!participationStudents) {
+                continue;
+            }
             for (const participationStudent of participationStudents) {
                 let student = studentsMap.get(participationStudent.id!);
                 if (!student) {
@@ -512,7 +513,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // we found a result, there should only be one
             const result = participation.results[0];
             if (participation.results.length > 1) {
-                console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
+                captureException('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
             }
 
             // Note: It is important that we round on the individual exercise level first and then sum up.

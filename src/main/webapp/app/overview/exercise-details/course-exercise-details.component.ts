@@ -36,7 +36,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgClass } from '@angular/common';
@@ -59,6 +59,7 @@ import { DiscussionSectionComponent } from '../discussion-section/discussion-sec
 import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -112,6 +113,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private quizExerciseService = inject(QuizExerciseService);
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+    private accountService = inject(AccountService); // TODO TW: This "feature" is only temporary for a paper.
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -129,6 +131,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
+    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
     public learningPathMode = false;
     public exerciseId: number;
     public courseId: number;
@@ -221,6 +224,13 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
+
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
+            this.accountService.identity().then((user) => {
+                this.isChatGptWrapper = user && user.id ? user.id % 3 == 0 : false;
+            });
+        }
 
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();

@@ -1,8 +1,8 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { MockService } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { User } from 'app/core/user/user.model';
@@ -25,8 +25,8 @@ describe('AccountService', () => {
     let getStub: jest.SpyInstance;
     let httpMock: HttpTestingController;
 
-    const getUserUrl = 'api/public/account';
-    const updateLanguageUrl = 'api/public/account/change-language';
+    const getUserUrl = 'api/core/public/account';
+    const updateLanguageUrl = 'api/core/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
@@ -46,7 +46,7 @@ describe('AccountService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: JhiWebsocketService, useValue: MockService(JhiWebsocketService) },
+                { provide: WebsocketService, useValue: MockService(WebsocketService) },
                 { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -582,7 +582,7 @@ describe('AccountService', () => {
         it('should delete user VCS access token', () => {
             accountService.deleteUserVcsAccessToken().subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/core/account/user-vcs-access-token' });
             req.flush(null);
         });
 
@@ -593,7 +593,7 @@ describe('AccountService', () => {
                 expect(response.status).toBe(200);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/user-vcs-access-token?expiryDate=${expiryDate}` });
             req.flush({ status: 200 });
         });
 
@@ -605,7 +605,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(token);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush({ body: token });
         });
 
@@ -615,8 +615,41 @@ describe('AccountService', () => {
 
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush({ body: token });
+        });
+    });
+
+    describe('test external LLM usage acceptance', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            // Set a fixed date for consistent testing
+            jest.setSystemTime(new Date('2024-02-06'));
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should set externalLLMUsageAccepted when user identity exists', () => {
+            // Setup user identity
+            accountService.userIdentity = { id: 1, groups: ['USER'] } as User;
+
+            // Call the function
+            accountService.setUserAcceptedExternalLLMUsage();
+
+            // Check if the date was set correctly
+            const acceptedDate = accountService.userIdentity.externalLLMUsageAccepted;
+            expect(acceptedDate).toBeDefined();
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            // Ensure userIdentity is undefined
+            accountService.userIdentity = undefined;
+
+            // Verify that calling the function doesn't throw an error
+            expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();
         });
     });
 });

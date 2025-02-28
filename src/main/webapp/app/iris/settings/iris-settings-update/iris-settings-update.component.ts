@@ -12,6 +12,8 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
+    IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -20,6 +22,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -42,6 +45,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     originalIrisSettings?: IrisSettings;
 
     public autoLectureIngestion = false;
+    public autoFaqIngestion = false;
 
     // Status bools
     isLoading = false;
@@ -94,6 +98,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
+            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? false;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -114,6 +119,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisTextExerciseChatSettings) {
             this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
         }
+        if (!this.irisSettings.irisLectureChatSettings) {
+            this.irisSettings.irisLectureChatSettings = new IrisLectureChatSubSettings();
+        }
         if (!this.irisSettings.irisCourseChatSettings) {
             this.irisSettings.irisCourseChatSettings = new IrisCourseChatSubSettings();
         }
@@ -123,12 +131,18 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
         }
+        if (!this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+        }
     }
 
     saveIrisSettings(): void {
         this.isSaving = true;
         if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion;
+        }
+        if (this.irisSettings && this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings.autoIngestOnFaqCreation = this.autoFaqIngestion;
         }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
@@ -141,7 +155,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             },
             (error) => {
                 this.isSaving = false;
-                console.error('Error saving iris settings', error);
+                captureException('Error saving iris settings', error);
                 if (error.status === 400 && error.error && error.error.message) {
                     this.alertService.error(error.error.message);
                 } else {

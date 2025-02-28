@@ -12,6 +12,7 @@
         "removeComments": true,
         "strict": false,
         "noImplicitReturns": false,
+        "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "strictNullChecks": true,

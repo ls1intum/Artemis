@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -21,7 +21,6 @@ import { of } from 'rxjs';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
@@ -137,7 +136,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(QuizExerciseService)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
@@ -151,7 +150,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {
@@ -369,7 +368,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -415,7 +414,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(confirmSpy).toHaveBeenCalledOnce();
@@ -505,7 +504,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('preview mode', () => {
         beforeEach(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -518,7 +517,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {
@@ -574,7 +573,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submission: { submissionDate: now, submitted: true } as QuizSubmission } as Result);
-            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/preview`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/preview`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -591,7 +590,7 @@ describe('QuizParticipationComponent', () => {
                 .keep(AlertService)
                 .keep(ArtemisServerDateService)
                 .keep(QuizExerciseService)
-                .mock(JhiWebsocketService)
+                .mock(WebsocketService)
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
@@ -658,7 +657,7 @@ describe('QuizParticipationComponent', () => {
                 submission: quizSubmission,
                 participation: { exercise: quizExerciseForPractice } as StudentParticipation,
             } as Result);
-            expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/exercise/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -667,7 +666,7 @@ describe('QuizParticipationComponent', () => {
 
     describe('solution mode', () => {
         beforeEach(() => {
-            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+            MockBuilder(QuizParticipationComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -680,7 +679,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {

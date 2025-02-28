@@ -11,6 +11,7 @@ import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
@@ -38,7 +39,7 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
 
     initialize() {
         if (!this.course || !this.tutorialGroup) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
         }

@@ -3,7 +3,6 @@ import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
@@ -31,7 +30,6 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, TeamOwnerSearchComponent, TeamStudentSearchComponent, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamUpdateDialogComponent implements OnInit {
-    private participationService = inject(ParticipationService);
     private teamService = inject(TeamService);
     private activeModal = inject(NgbActiveModal);
 
@@ -125,7 +123,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private get recommendedTeamSize(): boolean {
-        const pendingTeamSize = this.pendingTeam.students!.length;
+        const pendingTeamSize = this.pendingTeam.students?.length || 0;
         return pendingTeamSize >= this.config.minTeamSize! && pendingTeamSize <= this.config.maxTeamSize!;
     }
 
@@ -164,6 +162,9 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
+            if (!this.pendingTeam.students) {
+                this.pendingTeam.students = [];
+            }
             this.pendingTeam.students!.push(student);
         }
     }

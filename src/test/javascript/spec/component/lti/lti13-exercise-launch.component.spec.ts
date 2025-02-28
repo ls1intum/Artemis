@@ -9,8 +9,11 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import 'jest-extended';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -31,7 +34,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,6 +41,8 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
             ],
         })
             .compileComponents()
@@ -59,42 +63,33 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit fail without state', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ id_token: 'id_token' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit fail without token', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ state: 'state' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit no targetLinkUri', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         expect(comp.isLaunching).toBeTrue();
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
 

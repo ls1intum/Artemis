@@ -119,7 +119,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.profileInfoSubscription?.unsubscribe();
     }
 
-    trackId(index: number, item: Lecture) {
+    trackId(_index: number, item: Lecture) {
         return item.id;
     }
 
@@ -169,7 +169,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     /**
      * Toggles some filters for the lectures
-     * @param filters: The filters which should be toggled (activated if not already activated, and vice versa)
+     * @param filters The filters which should be toggled (activated if not already activated, and vice versa)
      */
     toggleFilters(filters: LectureDateFilter[]) {
         filters.forEach((f) => (this.activeFilters.has(f) ? this.activeFilters.delete(f) : this.activeFilters.add(f)));
@@ -248,9 +248,8 @@ export class LectureComponent implements OnInit, OnDestroy {
         if (this.lectures.first()) {
             this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allLecturesSuccess'),
-                error: (error) => {
+                error: () => {
                     this.alertService.error('artemisApp.iris.ingestionAlert.allLecturesError');
-                    console.error('Failed to send Lectures Ingestion request', error);
                 },
             });
         }
@@ -274,8 +273,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     });
                 }
             },
-            error: (err: HttpErrorResponse) => {
-                console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err);
+            error: () => {
                 this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
             },
         });

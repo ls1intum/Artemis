@@ -75,8 +75,8 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      * Call this method to load long feedback if needed
      */
     public async loadLongFeedback() {
-        if (this.feedback.hasLongFeedbackText) {
-            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.resultId, this.feedback.id!);
+        if (this.feedback.id && this.feedback.hasLongFeedbackText) {
+            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.feedback.id);
             this.onFeedbackChange.emit(this.feedback);
         }
     }
@@ -101,6 +101,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     }
 
     updateFeedbackOnDrop(event: Event) {
+        event.stopPropagation();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         this.onFeedbackChange.emit(this.feedback);
     }

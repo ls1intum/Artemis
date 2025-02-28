@@ -3,7 +3,6 @@ import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { MockCacheableImageService } from '../../helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
@@ -33,7 +32,6 @@ describe('SecuredImageComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [SecuredImageComponent, UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [
                 { provide: CacheableImageService, useClass: MockCacheableImageService },

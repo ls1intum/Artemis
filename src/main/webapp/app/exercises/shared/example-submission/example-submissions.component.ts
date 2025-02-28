@@ -4,7 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/entities/submission.model';
@@ -24,7 +23,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private activatedRoute = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
     private modalService = inject(NgbModal);
     private accountService = inject(AccountService);
 

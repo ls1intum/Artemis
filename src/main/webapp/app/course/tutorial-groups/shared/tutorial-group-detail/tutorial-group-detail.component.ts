@@ -45,14 +45,10 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
 
-    @Input()
-    timeZone?: string = undefined;
+    @Input() timeZone?: string = undefined;
+    @Input() tutorialGroup: TutorialGroup;
+    @Input() course: Course;
 
-    @Input()
-    tutorialGroup: TutorialGroup;
-
-    @Input()
-    course: Course;
     formattedAdditionalInformation?: SafeHtml;
 
     readonly Math = Math;

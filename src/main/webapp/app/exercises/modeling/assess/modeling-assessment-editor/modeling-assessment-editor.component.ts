@@ -161,7 +161,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionId = params.get('submissionId');
-            this.resultId = Number(params.get('resultId')) ?? 0;
+            this.resultId = Number(params.get('resultId')) || 0;
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -546,9 +546,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;
-
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
 
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);

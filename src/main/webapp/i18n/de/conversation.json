@@ -15,26 +15,29 @@
             "onlyYou": "Nur du",
             "archived": "Archiviert",
             "sendMessage": "Senden",
+            "saveMessage": "Speichern",
             "goToExercise": "Zur Aufgabe gehen",
             "goToLecture": "Zur Vorlesung gehen",
             "goToExam": "Zur Klausur gehen",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",
-                "searchBarPlaceholder": "Suche in der aktuellen Konversation nach Nachrichten",
-                "searchResultsMultiple": "{{ count }} Nachrichten gefunden ",
-                "searchResultsSingle": "1 Nachricht gefunden",
-                "searchResultsNone": "Keine Nachrichten gefunden"
+                "searchBarPlaceholder": "Suche im aktuellen Kanal",
+                "searchResultsMultiple": "{{ count }} Ergebnisse",
+                "searchResultsSingle": "1 Ergebnis",
+                "searchResultsNone": "Keine Ergebnisse"
             },
             "threadSideBar": {
                 "label": "Thread",
                 "close": "Thread schließen",
-                "reply": "Antworten im Thread"
+                "reply": "Antworten im Thread",
+                "expand": "Thread erweitern",
+                "collapse": "Thread einklappen"
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
-                "show": "Konversationen zeigen",
-                "hide": "Konversationen ausblenden",
+                "show": "Wiederherstellen",
+                "hide": "Archivieren",
                 "notFound": "Keine Konversation gefunden",
                 "favoriteChannels": "Favoriten",
                 "hiddenChannels": "Ausgeblendet",
@@ -108,12 +111,27 @@
                 "warning": "Der/Die Nutzer:in wird nicht mehr in der Lage sein, auf diesen Gruppenchat zugreifen zu können, es sei denn, er/sie wird erneut eingeladen.",
                 "remove": "Nutzer:in entfernen"
             },
+            "publicChannel": {
+                "title": "Zu einem öffentlichen Kanal wechseln?",
+                "question": "Möchtest du diesen Kanal wirklich öffentlich machen?",
+                "description": "Beachte, dass das Öffnen eines Kanals bedeutet, dass jeder im Kurs beitreten kann und neue Mitglieder die bisherigen Nachrichten sehen können.",
+                "confirmButton": "Öffentlich machen"
+            },
+            "privateChannel": {
+                "title": "Zu einem privaten Kanal wechseln?",
+                "question": "Möchtest du diesen Kanal wirklich privat machen?",
+                "description": "Beachte, dass beim Wechsel zu einem privaten Kanal die Historie und Mitglieder unverändert bleiben und bisher gesendete Nachrichten weiterhin für bestehende Mitglieder sichtbar sind.",
+                "confirmButton": "Privat machen"
+            },
             "conversationSettings": {
                 "settingsUnavailable": "Keine Einstellungen möglich",
                 "actions": {
                     "leave": "Konversation verlassen",
-                    "archiveChannel": "Kanal archivieren",
-                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen"
+                    "archiveChannel": "Kanal für alle archivieren",
+                    "unarchiveChannel": "Kanal für alle dearchivieren",
+                    "publicChannel": "In einen öffentlichen Kanal umwandeln",
+                    "privateChannel": "In einen privaten Kanal umwandeln",
+                    "deleteChannel": "Kanal löschen"
                 }
             },
             "conversationDetail": {
@@ -208,6 +226,7 @@
             "createChannel": {
                 "titlePublicChannel": "Erstelle einen öffentlichen",
                 "titlePrivateChannel": "Erstelle einen privaten",
+                "titleCourseWideChannel": "kursweit",
                 "titleAnnouncementChannel": "Ankündigungskanal",
                 "titleRegularChannel": "Kanal",
                 "description": "Ein Kanal ist eine Möglichkeit, Menschen für ein Projekt, ein Thema oder nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest. Du wirst der / die erste Kanalmoderator:in werden. Du wirst den Kanal nicht verlassen können.",
@@ -235,6 +254,12 @@
                         "explanation": "Nur Lehrende und Kanalmoderator:innen können neue Nachrichten in einem Ankündigungskanal erstellen. Studierende können die Nachrichten nur lesen und darauf antworten.",
                         "true": "Ankündigungskanal",
                         "false": "Uneingeschränkter Kanal"
+                    },
+                    "isCourseWideChannelInput": {
+                        "label": "Kanalbereich",
+                        "explanation": "In einem kursweiten Kanal werden alle Benutzer des Kurses automatisch hinzugefügt. In einem ausgewählten Kanal kannst du die hinzuzufügenden Benutzer manuell auswählen.",
+                        "true": "Kursweiter Kanal",
+                        "false": "Ausgewählter Kanal"
                     },
                     "createButton": "Kanal erstellen"
                 }

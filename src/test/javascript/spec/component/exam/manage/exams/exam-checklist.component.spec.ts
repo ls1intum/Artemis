@@ -7,13 +7,18 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -56,7 +61,6 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ExamChecklistComponent,
                 MockPipe(ArtemisDatePipe),
@@ -67,7 +71,11 @@ describe('ExamChecklistComponent', () => {
             ],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

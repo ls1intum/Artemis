@@ -318,8 +318,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     });
                 }
             },
-            error: (err: HttpErrorResponse) => {
-                console.error(`Error fetching ingestion states for lecture ${this.lecture.id}`, err);
+            error: () => {
                 this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
             },
         });
@@ -342,7 +341,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 } else {
                     this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
                 }
-                console.error('Failed to send lecture unit ingestion request', error);
             },
         });
     }

@@ -3,7 +3,6 @@ import isMobile from 'ismobilejs-es5';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
-import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -28,7 +27,6 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
     private http = inject(HttpClient);
-    private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -36,7 +34,7 @@ export class GuidedTourService {
     private tutorParticipationService = inject(TutorParticipationService);
     private courseService = inject(CourseManagementService);
 
-    public resourceUrl = 'api/guided-tour-settings';
+    public resourceUrl = 'api/core/guided-tour-settings';
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour?: GuidedTour;
 
@@ -241,7 +239,7 @@ export class GuidedTourService {
 
     /**
      * Check if the provided tour step is the currently active one
-     * @param tourStep: current tour step of the guided tour
+     * @param tourStep current tour step of the guided tour
      */
     public isCurrentStep(tourStep: TourStep): boolean {
         if (this.currentTour && this.currentTour.steps) {

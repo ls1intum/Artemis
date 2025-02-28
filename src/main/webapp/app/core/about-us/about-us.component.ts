@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
@@ -15,7 +14,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class AboutUsComponent implements OnInit {
-    private route = inject(ActivatedRoute);
     private profileService = inject(ProfileService);
     private staticContentService = inject(StaticContentService);
 

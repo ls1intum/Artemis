@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -23,7 +22,7 @@ import { Result } from 'app/entities/result.model';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -38,11 +37,14 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseMode } from 'app/entities/exercise.model';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -64,7 +66,7 @@ describe('ModelingSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]])],
             declarations: [
                 ModelingSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
@@ -89,6 +91,12 @@ describe('ModelingSubmissionComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
             ],
         })
             .compileComponents()
@@ -322,7 +330,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should update submission when new submission comes in from websocket', () => {
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = debugElement.injector.get(JhiWebsocketService);
+        const websocketService = debugElement.injector.get(WebsocketService);
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,

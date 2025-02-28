@@ -183,13 +183,18 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     /**
-     * check if students are allowed to see this exercise
+     * Check if students are allowed to see this course exercise
+     * IMPORTANT: this method won't work for exam exercises: they have a different visibility logic! We return false for exam exercises to avoid confusion!
+     * For exam exercises, instead use ExamAccessService and/or ExamDateService
      *
      * @return true, if students are allowed to see this exercise, otherwise false
      */
     @JsonView(QuizView.Before.class)
     public boolean isVisibleToStudents() {
-        if (releaseDate == null) {  // no release date means the exercise is visible to students
+        if (isExamExercise()) {
+            return false;
+        }
+        if (releaseDate == null) {  // no release date means the exercise is visible to students for course exercises
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());

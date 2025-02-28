@@ -134,7 +134,6 @@ export class KnowledgeAreaEditComponent {
     private createNoCircularDependencyValidator() {
         // if the knowledgeArea is new, no validator is needed.
         if (this.knowledgeArea.id === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             return (_parentIdControl: FormControl<number | undefined>) => null;
         }
         return (parentIdControl: FormControl<number | undefined>) => {

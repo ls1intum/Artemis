@@ -12,7 +12,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -223,7 +223,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
-                        this.localRepositoryLink = getLocalRepositoryLink(this.courseId, this.exerciseId, this.participation.id!, this.exerciseGroupId, this.examId);
+                        this.localRepositoryLink = getLocalRepositoryLink(
+                            this.courseId,
+                            this.exerciseId,
+                            RepositoryType.USER,
+                            this.participation.id!,
+                            this.exerciseGroupId,
+                            this.examId,
+                        );
                         return observable;
                     }),
                     tap((templateFilesObj) => {
@@ -458,8 +465,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     return;
                 }
 
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
                     this.courseId,

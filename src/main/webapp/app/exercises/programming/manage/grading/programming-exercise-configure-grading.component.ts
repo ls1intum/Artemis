@@ -3,7 +3,6 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
@@ -106,7 +105,6 @@ export type Table = 'testCases' | 'codeAnalysis';
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private accountService = inject(AccountService);
     private gradingService = inject(ProgrammingExerciseGradingService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);

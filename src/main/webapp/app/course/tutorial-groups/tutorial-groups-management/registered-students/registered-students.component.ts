@@ -7,13 +7,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-registered-students',
@@ -25,15 +25,11 @@ export class RegisteredStudentsComponent implements OnDestroy {
     private activeModal = inject(NgbActiveModal);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
 
-    @Input()
-    course: Course;
-
-    @Input()
-    tutorialGroupId: number;
+    @Input() course: Course;
+    @Input() tutorialGroupId: number;
 
     tutorialGroup: TutorialGroup;
     isLoading = false;
@@ -66,7 +62,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
             this.loadAll();

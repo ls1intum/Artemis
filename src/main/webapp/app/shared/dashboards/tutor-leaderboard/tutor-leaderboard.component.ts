@@ -2,7 +2,6 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -20,7 +19,6 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     imports: [SortDirective, SortByDirective, TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisTranslatePipe],
 })
 export class TutorLeaderboardComponent implements OnInit {
-    private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
     @Input() public tutorsData: TutorLeaderboardElement[] = [];

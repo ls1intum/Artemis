@@ -39,7 +39,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
     initialize() {
         if (!this.tutorialGroupConfigurationId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
         }

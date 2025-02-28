@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 
 describe('TableEditableFieldComponent', () => {
@@ -12,9 +11,7 @@ describe('TableEditableFieldComponent', () => {
     const tableInputValue = '.table-editable-field__input';
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-        })
+        return TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TableEditableFieldComponent);

@@ -3,14 +3,13 @@ import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { UserService } from 'app/core/user/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
 import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-course-group-membership',
@@ -20,8 +19,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class CourseGroupMembershipComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private eventManager = inject(EventManager);
     private courseService = inject(CourseManagementService);
     private userService = inject(UserService);
     private accountService = inject(AccountService);
@@ -88,6 +85,9 @@ export class CourseGroupMembershipComponent implements OnInit {
                 return this.course.editorGroupName;
             case CourseGroup.INSTRUCTORS:
                 return this.course.instructorGroupName;
+            default:
+                captureException('Unknown course group: ' + this.courseGroup);
+                return undefined;
         }
     }
 

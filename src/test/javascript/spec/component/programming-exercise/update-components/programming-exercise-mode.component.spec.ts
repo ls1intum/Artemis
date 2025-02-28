@@ -5,7 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseModeComponent } from 'app/exercises/programming/manage/update/update-components/mode/programming-exercise-mode.component';
-import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
@@ -13,9 +12,10 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseModeComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;
@@ -24,15 +24,9 @@ describe('ProgrammingExerciseModeComponent', () => {
     let profileService: ProfileService;
     let getProfileInfoSub: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedComponentModule],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
-                CheckboxControlValueAccessor,
-                DefaultValueAccessor,
-                SelectControlValueAccessor,
-                NumberValueAccessor,
-                NgModel,
                 ProgrammingExerciseModeComponent,
                 MockComponent(DifficultyPickerComponent),
                 MockComponent(TeamConfigFormGroupComponent),
@@ -44,33 +38,37 @@ describe('ProgrammingExerciseModeComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
                 },
+                {
+                    provide: ProfileService,
+                    useClass: MockProfileService,
+                },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseModeComponent);
-                comp = fixture.componentInstance;
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        }).compileComponents();
+        // .then(() => {
+        fixture = TestBed.createComponent(ProgrammingExerciseModeComponent);
+        comp = fixture.componentInstance;
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
-                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-                    difficulty: true,
-                    participationMode: true,
-                    allowOfflineIde: true,
-                    allowOnlineIde: true,
-                });
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            difficulty: true,
+            participationMode: true,
+            allowOfflineIde: true,
+            allowOnlineIde: true,
+        });
 
-                debugElement = fixture.debugElement;
-                profileService = debugElement.injector.get(ProfileService);
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(
-                    of({
-                        inProduction: false,
-                        sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
-                    } as ProfileInfo),
-                );
-            });
+        debugElement = fixture.debugElement;
+        profileService = debugElement.injector.get(ProfileService);
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                inProduction: false,
+                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            } as ProfileInfo),
+        );
+        // });
     });
 
     afterEach(() => {

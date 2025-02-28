@@ -55,7 +55,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement
         // we need the parent URL, because the imprint and privacy statement are children of the admin component and their path is specified there because they are lazy loaded
-        this.route.parent?.url
+        this.route.url
             .pipe(
                 tap((segments) => {
                     this.legalDocumentType = segments.some((segment) => segment.path === 'imprint') ? LegalDocumentType.IMPRINT : LegalDocumentType.PRIVACY_STATEMENT;

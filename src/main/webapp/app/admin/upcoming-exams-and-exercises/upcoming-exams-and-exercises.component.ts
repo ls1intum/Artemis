@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -18,7 +17,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
-    private sortService = inject(SortService);
 
     upcomingExercises: Exercise[] = [];
     upcomingExams: Exam[] = [];
@@ -36,11 +34,11 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
         });
     }
 
-    trackByExercise(index: number, item: Exercise) {
+    trackByExercise(_index: number, item: Exercise) {
         return `${item.course?.id}_${item.id}`;
     }
 
-    trackByExam(index: number, item: Exam) {
+    trackByExam(_index: number, item: Exam) {
         return `${item.course?.id}_${item.id}`;
     }
 }

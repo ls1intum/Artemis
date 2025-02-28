@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.quiz;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
@@ -11,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -160,9 +161,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             log.debug(pointCounter.toString());
@@ -207,8 +208,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = setupQuizExerciseParameters();
         // force getting partial points
         quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
-        quizExercise.getQuizQuestions().get(1).score(1);
-        quizExercise.getQuizQuestions().get(2).score(1);
+        quizExercise.getQuizQuestions().get(1).score(1d);
+        quizExercise.getQuizQuestions().get(2).score(1d);
         quizExercise = quizExerciseService.save(quizExercise);
 
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -296,7 +297,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -313,7 +314,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
         // submit quiz more times than the allowed number of attempts
-        request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -334,7 +335,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             userUtilService.changeUser(TEST_PREFIX + "student" + i);
 
-            Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
+            Result receivedResult = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class,
+                    HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
 
@@ -350,9 +352,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
@@ -411,7 +413,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
         quizSubmission.setSubmitted(true);
         // quiz not open for practice --> bad request expected
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
+        Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
         verifyNoWebsocketMessageForExercise(quizExerciseServer);
@@ -419,7 +421,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmitPractice_badRequest_exam() throws Exception {
+    void testQuizSubmitPractice_accessForbidden_exam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
@@ -428,8 +430,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
+        Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
+                HttpStatus.FORBIDDEN);
         assertThat(result).isNull();
         verifyNoWebsocketMessageForExercise(quizExerciseServer);
     }
@@ -439,7 +441,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     void testQuizSubmitPreview_forbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -450,7 +452,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
         verifyNoWebsocketMessageForExercise(quizExercise);
     }
 
@@ -462,19 +464,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -483,7 +485,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -492,7 +494,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -509,7 +511,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             for (var question : quizExercise.getQuizQuestions()) {
                 quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
-            Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
+            Result receivedResult = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class,
+                    HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
 
@@ -525,9 +528,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             assertThat(pointCounter.getRatedCounter()).isZero();
             assertThat(pointCounter.getUnRatedCounter()).isZero();
@@ -548,7 +551,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = courseUtilService.createCourse();
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
-        var initialReleaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
+        var initialReleaseDate = ZonedDateTime.now().plusSeconds(2);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(initialReleaseDate));
         quizExercise.duration(60);
@@ -558,11 +561,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise = quizExerciseService.save(quizExercise);
         checkQuizNotStarted(publishQuizPath);
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
         // check that submission fails
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
         // reschedule
@@ -590,7 +593,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
 
         // ...delete the quiz
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
 
         QuizExercise finalQuizExercise = quizExercise;
         await().until(() -> exerciseRepository.findById(finalQuizExercise.getId()).isEmpty());
@@ -708,9 +711,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(submittedAnswer);
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class,
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class,
                 tooLarge ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
     }
 
@@ -779,18 +782,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
             assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
-            request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
-                request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
+                request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class,
+                        HttpStatus.OK);
 
                 // quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
             }
 
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
             // check whether submission flag was updated
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -808,18 +812,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             quizExercise.setDuration(10);
             quizExercise = quizExerciseService.save(quizExercise);
 
-            request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
-                request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
+                request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class,
+                        HttpStatus.OK);
             }
 
             // create a submission for the first time
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
             // submit quiz for the second time, expected status = BAD_REQUEST
-            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.OK);
-            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         }
     }
 }

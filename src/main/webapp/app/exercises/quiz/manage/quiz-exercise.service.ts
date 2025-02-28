@@ -20,7 +20,7 @@ export class QuizExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
-    private resourceUrl = 'api/quiz-exercises';
+    private resourceUrl = 'api/quiz/quiz-exercises';
 
     /**
      * Create the given quiz exercise
@@ -117,7 +117,7 @@ export class QuizExerciseService {
      */
     findForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/quiz/courses/${courseId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
@@ -129,7 +129,7 @@ export class QuizExerciseService {
      */
     findForExam(examId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/exams/${examId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/exam/exams/${examId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
@@ -301,7 +301,7 @@ export class QuizExerciseService {
                 zip.file(fileName, fileResult);
             })
             .catch((error) => {
-                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched`, error);
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched` + error);
             });
     }
 

@@ -8,7 +8,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import dayjs from 'dayjs/esm';
@@ -35,7 +34,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
-    private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private modalService = inject(NgbModal);
@@ -90,7 +88,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * unsubscribe on component destruction
      */
     ngOnDestroy() {
-        if (!this.eventSubscriber === undefined) {
+        if (this.eventSubscriber !== undefined) {
             this.eventManager.destroy(this.eventSubscriber);
         }
         this.dialogErrorSource.unsubscribe();
@@ -127,11 +125,11 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Track the items on the Exams Table
-     * @param index {number}
-     * @param item {Exam}
+     * @param _index the index in the table
+     * @param exam the exam object to track
      */
-    trackId(index: number, item: Exam): number | undefined {
-        return item.id;
+    trackId(_index: number, exam: Exam): number | undefined {
+        return exam.id;
     }
 
     sortRows() {
@@ -154,7 +152,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             backdrop: 'static',
         });
         // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.subsequentExerciseGroupSelection = false;
+        examImportModalRef.componentInstance.subsequentExerciseGroupSelection.set(false);
 
         const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
 

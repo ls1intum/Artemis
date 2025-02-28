@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -104,7 +105,7 @@ export class QuizExamSummaryComponent implements OnChanges {
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                     }
                 } else {
-                    console.error('Unknown question type: ' + question);
+                    captureException('Unknown question type: ' + question);
                 }
             }, this);
         }

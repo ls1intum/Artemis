@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
@@ -10,7 +10,6 @@ import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
@@ -34,7 +33,10 @@ import { SubmissionVersionService } from 'app/exercises/shared/submission-versio
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
-import { ArtemisFormsModule } from '../../../../../../../main/webapp/app/forms/artemis-forms.module';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
@@ -45,24 +47,67 @@ describe('Student Exam Timeline Component', () => {
     const courseValue = { id: 1 } as Course;
     const examValue = { course: courseValue, id: 2 } as Exam;
     const participation = { id: 1, exercise: { id: 1 } } as unknown as StudentParticipation;
-    let programmingSubmission1 = { id: 1, submissionDate: dayjs('2023-02-07'), participation } as unknown as ProgrammingSubmission;
-    const programmingSubmission2 = { id: 2, submissionDate: dayjs('2023-03-07'), participation } as unknown as ProgrammingSubmission;
-    const programmingSubmission3 = { id: 3, submissionDate: dayjs('2023-04-07'), participation } as unknown as ProgrammingSubmission;
-    let fileUploadSubmission1 = { id: 5, submissionDate: dayjs('2023-05-07'), filePath: 'abc' } as unknown as FileUploadSubmission;
+    let programmingSubmission1 = {
+        id: 1,
+        submissionDate: dayjs('2023-02-07'),
+        participation,
+    } as unknown as ProgrammingSubmission;
+    const programmingSubmission2 = {
+        id: 2,
+        submissionDate: dayjs('2023-03-07'),
+        participation,
+    } as unknown as ProgrammingSubmission;
+    const programmingSubmission3 = {
+        id: 3,
+        submissionDate: dayjs('2023-04-07'),
+        participation,
+    } as unknown as ProgrammingSubmission;
+    let fileUploadSubmission1 = {
+        id: 5,
+        submissionDate: dayjs('2023-05-07'),
+        filePath: 'abc',
+    } as unknown as FileUploadSubmission;
 
     let textSubmission = { id: 2, submissionDate: dayjs('2023-01-07'), text: 'abc' } as unknown as TextSubmission;
-    const programmingExercise = { id: 1, type: 'programming', studentParticipations: [{ id: 1, submissions: [programmingSubmission1] }] } as ProgrammingExercise;
-    const textExercise = { id: 2, type: 'text', studentParticipations: [{ id: 2, submissions: [textSubmission] }] } as TextExercise;
-    const fileUploadExercise = { id: 3, type: 'file-upload', studentParticipations: [{ id: 3, submissions: [fileUploadSubmission1] }] } as FileUploadExercise;
-    const studentExamValue = { exam: examValue, id: 3, exercises: [textExercise, programmingExercise, fileUploadExercise], user: { login: 'abc' } } as unknown as StudentExam;
-    programmingSubmission1 = { ...programmingSubmission1, participation: { exercise: programmingExercise } } as unknown as ProgrammingSubmission;
-    fileUploadSubmission1 = { ...fileUploadSubmission1, participation: { exercise: fileUploadExercise } } as unknown as FileUploadSubmission;
+    const programmingExercise = {
+        id: 1,
+        type: 'programming',
+        studentParticipations: [{ id: 1, submissions: [programmingSubmission1] }],
+    } as ProgrammingExercise;
+    const textExercise = {
+        id: 2,
+        type: 'text',
+        studentParticipations: [{ id: 2, submissions: [textSubmission] }],
+    } as TextExercise;
+    const fileUploadExercise = {
+        id: 3,
+        type: 'file-upload',
+        studentParticipations: [{ id: 3, submissions: [fileUploadSubmission1] }],
+    } as FileUploadExercise;
+    const studentExamValue = {
+        exam: examValue,
+        id: 3,
+        exercises: [textExercise, programmingExercise, fileUploadExercise],
+        user: { login: 'abc' },
+    } as unknown as StudentExam;
+    programmingSubmission1 = {
+        ...programmingSubmission1,
+        participation: { exercise: programmingExercise },
+    } as unknown as ProgrammingSubmission;
+    fileUploadSubmission1 = {
+        ...fileUploadSubmission1,
+        participation: { exercise: fileUploadExercise },
+    } as unknown as FileUploadSubmission;
     textSubmission = { ...textSubmission, participation: { exercise: textExercise } } as unknown as TextSubmission;
-    const submissionVersion = { id: 1, createdDate: dayjs('2023-01-07'), content: 'abc', submission: textSubmission } as unknown as SubmissionVersion;
+    const submissionVersion = {
+        id: 1,
+        createdDate: dayjs('2023-01-07'),
+        content: 'abc',
+        submission: textSubmission,
+    } as unknown as SubmissionVersion;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisFormsModule],
             declarations: [
                 StudentExamTimelineComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),
@@ -83,6 +128,9 @@ describe('Student Exam Timeline Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, MockLocalStorageService },
                 ArtemisDatePipe,
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -165,6 +213,9 @@ describe('Student Exam Timeline Component', () => {
             exerciseIdSubject: {
                 next() {},
             },
+            studentSubmission: {
+                update() {},
+            },
         } as unknown as ExamSubmissionComponent);
         let expectedSubmission = submission;
         // set the current timestamp needed to find the closest submission if no submission is set
@@ -192,7 +243,7 @@ describe('Student Exam Timeline Component', () => {
             exercise: exercise,
             submission: submission,
         });
-        fixture.detectChanges();
+
         expect(component.currentSubmission).toEqual(expectedSubmission);
         expect(component.currentExercise).toEqual(exercise);
         // text exercise has the submission version

@@ -20,11 +20,8 @@ export class ProblemStatementComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
 
-    @Input()
-    public exercise?: Exercise;
-
-    @Input()
-    participation?: StudentParticipation;
+    @Input() public exercise?: Exercise;
+    @Input() participation?: StudentParticipation;
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

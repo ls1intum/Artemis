@@ -12,8 +12,7 @@
                     [authorName]="authorOfPosting.name"
                     [imageUrl]="authorOfPosting.imageUrl"
                     [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
-                >
-                </jhi-profile-picture>
+                />
                 <span class="fs-small d-inline-flex flex-column align-items-start">
                     <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting()?.authorRole }" (click)="userNameClicked()">{{ authorOfPosting.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">

@@ -7,7 +7,7 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 
 @Injectable({ providedIn: 'root' })
 export class OneToOneChatService {
-    public resourceUrl = '/api/courses/';
+    public resourceUrl = '/api/communication/courses/';
 
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);

@@ -1,6 +1,5 @@
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 describe('ColorSelectorComponent', () => {
@@ -8,9 +7,7 @@ describe('ColorSelectorComponent', () => {
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ColorSelectorComponent);

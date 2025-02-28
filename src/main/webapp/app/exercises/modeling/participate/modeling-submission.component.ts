@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -15,7 +15,6 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
@@ -56,6 +55,9 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { captureException } from '@sentry/angular';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -86,7 +88,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
@@ -94,6 +96,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
@@ -238,30 +241,44 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             }),
             tap((submissions: ModelingSubmission[]) => {
                 this.sortedSubmissionHistory = submissions.sort((a, b) => {
-                    // Get the latest result for each submission (sorted by completionDate descending)
                     const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
                     const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
 
                     // Use the latest result's completionDate for comparison
-                    const dateA = latestResultA?.completionDate ? latestResultA.completionDate.valueOf() : 0;
-                    const dateB = latestResultB?.completionDate ? latestResultB.completionDate.valueOf() : 0;
+                    const dateA = latestResultA?.completionDate ? dayjs(latestResultA.completionDate).valueOf() : 0;
+                    const dateB = latestResultB?.completionDate ? dayjs(latestResultB.completionDate).valueOf() : 0;
 
-                    return dateB - dateA; // Sort submissions by latest result's completionDate in descending order
+                    return dateA - dateB;
                 });
-                this.sortedResultHistory = this.sortedSubmissionHistory.map((submission) => {
-                    const result = getLatestSubmissionResult(submission)!;
-                    result.participation = submission.participation;
-                    return result;
-                });
+                this.sortedResultHistory = this.sortedSubmissionHistory
+                    .map((submission) => {
+                        let latestResult: Result | undefined; // Initialize latestResult
+
+                        if (submission?.results && submission.results.length > 0) {
+                            // Sort results inline to find the latest one
+                            const sortedResults = [...submission.results].sort((a, b) => {
+                                const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
+                                const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
+                                return dateB - dateA; // Descending order (latest date first)
+                            });
+                            latestResult = sortedResults[0]; // Get the first element after sorting
+                        }
+
+                        if (latestResult) {
+                            latestResult.participation = submission.participation; // Attach participation if result exists
+                        }
+                        return latestResult; // Return the latest result (or undefined if no results)
+                    })
+                    .filter((result): result is Result => !!result);
             }),
         );
     }
 
     private sortResultsByCompletionDate(results: Result[]): Result[] {
         return results.sort((a, b) => {
-            const dateA = a.completionDate ? a.completionDate.valueOf() : 0;
-            const dateB = b.completionDate ? b.completionDate.valueOf() : 0;
-            return dateB - dateA; // Descending
+            const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
+            const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
+            return dateB - dateA;
         });
     }
 
@@ -311,7 +328,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (matchingSubmission) {
                 modelingSubmission = matchingSubmission;
             } else {
-                console.warn(`Submission with ID ${this.submissionId} not found in sorted history results.`);
+                captureException(`Submission with ID ${this.submissionId} not found in sorted history results.`);
             }
         }
 
@@ -400,15 +417,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.automaticSubmissionWebsocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
-        this.jhiWebsocketService.subscribe(this.automaticSubmissionWebsocketChannel);
-        this.jhiWebsocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
+        this.websocketService.subscribe(this.automaticSubmissionWebsocketChannel);
+        this.websocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.model) {
                     this.umlModel = JSON.parse(this.submission.model);
                     this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
                 }
-                if (getLatestSubmissionResult(this.submission) && getLatestSubmissionResult(this.submission)!.completionDate && this.isAfterAssessmentDueDate) {
+                const latestResult = getLatestSubmissionResult(this.submission);
+                if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
                     this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
@@ -456,7 +474,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!result.completionDate) {
             return;
         }
-
         this.assessmentResult = this.modelingAssessmentService.convertResult(result);
         this.prepareAssessmentData();
         this.alertService.info('artemisApp.modelingEditor.newAssessment');
@@ -561,7 +578,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = getLatestSubmissionResult(this.submission);
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
@@ -571,7 +588,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         }
     }
@@ -616,11 +633,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
                     this.subscribeToWebsockets();
                     if (this.automaticSubmissionWebsocketChannel) {
-                        this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+                        this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
                     }
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
@@ -639,7 +656,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         }
     }
@@ -649,10 +666,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isChanged = !this.canDeactivate();
     }
 
-    private onSaveError(error?: HttpErrorResponse) {
-        if (error) {
-            console.error(error.message);
-        }
+    private onSaveError() {
         this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
     }
@@ -682,7 +696,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         clearInterval(this.autoSaveInterval);
 
         if (this.automaticSubmissionWebsocketChannel) {
-            this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+            this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }
         if (this.manualResultUpdateListener) {
             this.manualResultUpdateListener.unsubscribe();
@@ -815,6 +829,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const model: UMLModel = this.modelingEditor.getCurrentModel();
         const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
     }
 
     /**

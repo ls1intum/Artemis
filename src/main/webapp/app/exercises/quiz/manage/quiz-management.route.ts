@@ -7,11 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 export const quizManagementRoute: Routes = [
     {
-        path: ':courseId/quiz-exercises',
-        redirectTo: ':courseId/exercises',
-    },
-    {
-        path: ':courseId/quiz-exercises/new',
+        path: 'quiz-exercises/new',
         loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -21,7 +17,7 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: ':courseId/quiz-exercises/export',
+        path: 'quiz-exercises/export',
         loadComponent: () => import('./quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -30,16 +26,11 @@ export const quizManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId',
-        loadComponent: () => import('app/exercises/quiz/manage/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        path: 'quiz-exercises/:exerciseId',
+        loadChildren: () => import('./quiz-management-detail.route').then((m) => m.quizManagementDetailRoute),
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/re-evaluate',
+        path: 'quiz-exercises/:exerciseId/re-evaluate',
         loadComponent: () => import('app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component').then((m) => m.QuizReEvaluateComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -48,7 +39,7 @@ export const quizManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/edit',
+        path: 'quiz-exercises/:exerciseId/edit',
         loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -58,7 +49,7 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/import',
+        path: 'quiz-exercises/:exerciseId/import',
         loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -68,7 +59,7 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/preview',
+        path: 'quiz-exercises/:exerciseId/preview',
         loadComponent: () => import('app/exercises/quiz/participate/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -78,7 +69,7 @@ export const quizManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/solution',
+        path: 'quiz-exercises/:exerciseId/solution',
         loadComponent: () => import('app/exercises/quiz/participate/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],

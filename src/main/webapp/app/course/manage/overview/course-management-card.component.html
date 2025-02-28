@@ -1,5 +1,5 @@
 <div class="card mb-4 hover-effect" id="course-{{ course.id }}">
-    <div id="course-card-header" class="text-white card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor }">
+    <div id="course-card-header" class="card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor, '--content-color': contentColor }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             @if (course.courseIcon) {
@@ -291,7 +291,7 @@
                 <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
             </a>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (atlasEnabled && course.isAtLeastInstructor) {
             <a
                 [routerLink]="['/course-management', course.id, 'competency-management']"
                 class="btn btn-primary me-1 mb-1 hidden-if-mobile"
@@ -302,7 +302,7 @@
                 <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
             </a>
         }
-        @if (course.isAtLeastInstructor) {
+        @if (atlasEnabled && course.isAtLeastInstructor) {
             <a
                 [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
                 [routerLink]="['/course-management', course.id, 'learning-path-management']"

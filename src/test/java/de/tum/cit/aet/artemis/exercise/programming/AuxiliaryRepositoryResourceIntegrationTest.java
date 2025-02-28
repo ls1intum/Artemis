@@ -65,7 +65,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final String testRepoBaseUrl = "/api/auxiliary-repository/";
+    private final String testRepoBaseUrl = "/api/programming/auxiliary-repository/";
 
     private ProgrammingExercise programmingExercise;
 

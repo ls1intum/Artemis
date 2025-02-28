@@ -13,6 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { DetailOverviewListComponent } from '../detail-overview-list/detail-overview-list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { captureException } from '@sentry/angular';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
@@ -100,7 +101,7 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
             next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureSuccess'),
             error: (error) => {
                 this.alertService.error('artemisApp.iris.ingestionAlert.lectureError');
-                console.error('Failed to send Ingestion request', error);
+                captureException('Failed to send Ingestion request', error);
             },
         });
     }

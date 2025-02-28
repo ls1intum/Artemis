@@ -15,15 +15,14 @@ import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { CourseChatbotComponent } from '../../iris/course-chatbot/course-chatbot.component';
+import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
-import { CompetencyAccordionComponent } from '../../course/competencies/competency-accordion/competency-accordion.component';
+import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({
@@ -48,7 +47,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private courseDashboardService = inject(CourseDashboardService);
     private irisSettingsService = inject(IrisSettingsService);
     private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
 
     courseId: number;
     exerciseId: number;
@@ -61,6 +59,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
     irisEnabled = false;
+    atlasEnabled = false;
     studentMetrics?: StudentMetrics;
 
     private paramSubscription?: Subscription;
@@ -94,6 +93,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.setCourse(course);
         });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS)));
     }
 
     ngOnDestroy(): void {
@@ -173,8 +174,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     /**
      * This method sets the overall performance, i.e. the points and max points.
      *
-     * @param {number[]} exerciseIds - An array of relevant exercise IDs
-     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     * @param exerciseIds - An array of relevant exercise IDs
+     * @param exerciseMetrics - An object containing metrics related to exercises.
      */
     private setOverallPerformance(exerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         const relevantExercises = Object.values(exerciseMetrics?.exerciseInformation ?? {}).filter((exercise) => exerciseIds.includes(exercise.id));
@@ -189,8 +190,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     /**
      * This method sets the exercise performance data for the course dashboard from the given exercise metrics.
      *
-     * @param {number[]} sortedExerciseIds - An array of exercise IDs sorted in a specific order.
-     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     * @param sortedExerciseIds - An array of exercise IDs sorted in a specific order.
+     * @param exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExercisePerformance(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         this.exercisePerformance = sortedExerciseIds.flatMap((exerciseId) => {
@@ -212,8 +213,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     /**
      * This method sets the exercise lateness data for the course dashboard from the given exercise metrics.
      *
-     * @param {number[]} sortedExerciseIds - An array of exercise IDs sorted in a specific order.
-     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     * @param sortedExerciseIds - An array of exercise IDs sorted in a specific order.
+     * @param exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExerciseLateness(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         this.exerciseLateness = sortedExerciseIds.flatMap((exerciseId) => {

@@ -6,7 +6,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
@@ -15,21 +15,20 @@ import { Course } from 'app/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { TextareaModule } from 'app/shared/textarea/textarea.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisSharedCommonModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, ArtemisDatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     private alertService = inject(AlertService);
     private complaintResponseService = inject(ComplaintResponseService);
-    private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private location = inject(Location);
 

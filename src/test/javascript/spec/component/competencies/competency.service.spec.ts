@@ -45,7 +45,6 @@ describe('CompetencyService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

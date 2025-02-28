@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -24,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import {
     ProgrammingLanguageFeature,
@@ -34,6 +33,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -108,7 +108,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot()],
+            imports: [TranslateModule.forRoot()],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -120,6 +120,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);

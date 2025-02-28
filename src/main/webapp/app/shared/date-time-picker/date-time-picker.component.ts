@@ -73,7 +73,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     });
 
     updateSignals(): void {
-        this.isInputValid.set(!Boolean(this.dateInput?.invalid));
+        this.isInputValid.set(!this.dateInput?.invalid);
         this.dateInputValue.set(this.dateInput?.value);
     }
 
@@ -103,10 +103,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * Registers a callback function is called by the forms API on initialization to update the form model on blur.
-     * @param fn
+     * @param _fn
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    registerOnTouched(fn: any) {}
+    registerOnTouched(_fn: any) {}
 
     /**
      *

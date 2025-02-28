@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule } from '@angular/common';
+
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-learning-path-nav-overview',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
+    imports: [FontAwesomeModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })

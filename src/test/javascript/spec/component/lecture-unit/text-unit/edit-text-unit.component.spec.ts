@@ -8,12 +8,18 @@ import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-managemen
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('EditTextUnitComponent', () => {
     let fixture: ComponentFixture<EditTextUnitComponent>;
@@ -21,7 +27,7 @@ describe('EditTextUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
@@ -47,6 +53,11 @@ describe('EditTextUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         }).compileComponents();
@@ -69,7 +80,7 @@ describe('EditTextUnitComponent', () => {
     }));
 
     it('should set form data correctly', async () => {
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
         const textUnitService = TestBed.inject(TextUnitService);
 
         const originalTextUnit: TextUnit = new TextUnit();
@@ -94,7 +105,6 @@ describe('EditTextUnitComponent', () => {
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
             expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
             expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
-            warnSpy.mockRestore();
         });
     });
 

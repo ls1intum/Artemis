@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
+
 import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 
@@ -8,7 +8,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
     selector: 'jhi-sort-icon',
     templateUrl: './sort-icon.component.html',
     styleUrls: ['./sort-icon.component.scss'],
-    imports: [FontAwesomeModule, CommonModule],
+    imports: [FontAwesomeModule],
 })
 export class SortIconComponent {
     direction = input.required<SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none'>();

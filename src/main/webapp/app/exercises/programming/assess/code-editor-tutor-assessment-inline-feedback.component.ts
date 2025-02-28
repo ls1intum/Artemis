@@ -3,7 +3,6 @@ import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
-import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
@@ -38,11 +37,11 @@ import { QuotePipe } from 'app/shared/pipes/quote.pipe';
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
-    private translateService = inject(TranslateService);
-    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    // Needed for the outer editor to access the DOM node of this component
+    public elementRef = inject(ElementRef);
 
-    @Input()
-    get feedback(): Feedback {
+    @Input() get feedback(): Feedback {
         return this._feedback;
     }
     set feedback(feedback: Feedback | undefined) {
@@ -51,34 +50,24 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.viewOnly = !!feedback;
     }
     private _feedback: Feedback;
-    @Input()
-    selectedFile: string;
-    @Input()
-    codeLine: number;
-    @Input()
-    readOnly: boolean;
-    @Input()
-    highlightDifferences: boolean;
-    @Input()
-    course?: Course;
+
+    @Input() selectedFile: string;
+    @Input() codeLine: number;
+    @Input() readOnly: boolean;
+    @Input() highlightDifferences: boolean;
+    @Input() course?: Course;
     @ViewChild('detailText') textareaRef: ElementRef;
 
-    @Output()
-    onUpdateFeedback = new EventEmitter<Feedback>();
-    @Output()
-    onCancelFeedback = new EventEmitter<number>();
-    @Output()
-    onDeleteFeedback = new EventEmitter<Feedback>();
-    @Output()
-    onEditFeedback = new EventEmitter<number>();
+    @Output() onUpdateFeedback = new EventEmitter<Feedback>();
+    @Output() onCancelFeedback = new EventEmitter<number>();
+    @Output() onDeleteFeedback = new EventEmitter<Feedback>();
+    @Output() onEditFeedback = new EventEmitter<number>();
 
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     protected readonly Feedback = Feedback;
     readonly ButtonSize = ButtonSize;
     readonly MANUAL = FeedbackType.MANUAL;
-
-    public elementRef: ElementRef;
 
     viewOnly: boolean;
     oldFeedback: Feedback;
@@ -92,12 +81,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faPencilAlt = faPencilAlt;
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor() {
-        const elementRef = inject(ElementRef);
-
-        this.elementRef = elementRef;
-    }
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component

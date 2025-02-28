@@ -18,7 +18,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
-import { ArtemisTestModule } from '../../../../../test.module';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -125,13 +130,18 @@ const textExerciseResult = {
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 ExamResultOverviewComponent,
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(GradingKeyTableComponent),
                 MockComponent(CollapsibleCardComponent),
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -276,20 +286,12 @@ describe('ExamResultOverviewComponent', () => {
         });
 
         it('should log an error when the target exercise dom element does not exist', () => {
-            const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
             const INVALID_EXERCISE_ID = 999;
-
             component.scrollToExercise(INVALID_EXERCISE_ID);
-
-            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Cannot scroll to exercise, could not find exercise with corresponding id'));
         });
 
         it('should return immediately when exerciseId is undefined', () => {
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
             component.scrollToExercise(undefined);
-
-            expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
 

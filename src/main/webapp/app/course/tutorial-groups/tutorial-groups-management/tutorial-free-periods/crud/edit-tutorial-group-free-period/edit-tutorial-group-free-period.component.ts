@@ -15,6 +15,7 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
@@ -51,7 +52,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
      */
     initialize() {
         if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
             return;
         }
 

@@ -1,10 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
@@ -15,16 +14,21 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { generateCsv } from 'export-to-csv';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -96,10 +100,13 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
@@ -116,7 +123,7 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should register to topic and fetch latest results on init', fakeAsync(() => {
-        const websocketService = TestBed.inject(JhiWebsocketService);
+        const websocketService = TestBed.inject(WebsocketService);
         const websocketServiceSpy = jest.spyOn(websocketService, 'subscribe');
         jest.spyOn(websocketService, 'receive').mockReturnValue(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
         jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResultDTO));

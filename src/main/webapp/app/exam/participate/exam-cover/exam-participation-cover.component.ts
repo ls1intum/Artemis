@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
@@ -30,7 +29,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
-    private courseService = inject(CourseManagementService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
@@ -194,8 +192,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number): string {
         if (remainingTimeSeconds > 210) {

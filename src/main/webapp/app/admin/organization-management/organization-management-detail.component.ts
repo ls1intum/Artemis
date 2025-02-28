@@ -3,7 +3,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -30,7 +29,6 @@ const cssClasses = {
 export class OrganizationManagementDetailComponent implements OnInit {
     private organizationService = inject(OrganizationManagementService);
     private userService = inject(UserService);
-    private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
 
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
@@ -70,10 +68,10 @@ export class OrganizationManagementDetailComponent implements OnInit {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a user in the collection
+     * @param _index of a user in the collection
      * @param item current user
      */
-    trackIdentity(index: number, item: User) {
+    trackIdentity(_index: number, item: User) {
         return item.id ?? -1;
     }
 
