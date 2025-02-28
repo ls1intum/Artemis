@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
@@ -84,7 +83,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
         doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
-        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
+        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), eq(Set.copyOf(dataExportsAfterCreation)));
 
     }
 
