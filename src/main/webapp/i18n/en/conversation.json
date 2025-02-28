@@ -55,8 +55,8 @@
                 "sideBarSection": {
                     "shown": "shown",
                     "hidden": "hidden",
-                    "show": "Show",
-                    "hide": "Hide",
+                    "show": "Unarchive",
+                    "hide": "Archive",
                     "favorite": "Favorite",
                     "unfavorite": "Unfavorite",
                     "mute": "Mute",
