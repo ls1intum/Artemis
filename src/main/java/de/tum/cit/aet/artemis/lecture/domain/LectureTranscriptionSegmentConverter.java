@@ -40,7 +40,6 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
 
             if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
                 jsonData = objectMapper.readValue(jsonData, String.class);
-                System.out.println("Decoded JSON: " + jsonData);
             }
 
             return objectMapper.readValue(jsonData, type);
