@@ -70,7 +70,11 @@
                     />
                 } @else {
                     @if (selectedSavedPostStatus === null) {
-                        <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
+                        <jhi-course-wide-search
+                            (openThread)="postInThread = $event"
+                            [courseWideSearchConfig]="courseWideSearchConfig"
+                            (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                        />
                     } @else {
                         <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)" />
                     }

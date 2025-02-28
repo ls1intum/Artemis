@@ -99,7 +99,7 @@
                         <!-- list of all top level posts -->
                         <!-- answers are opened in the thread sidebar -->
                         @for (post of posts; track postsTrackByFn($index, post)) {
-                            <div class="pt-2">
+                            <div class="pt-2" style="cursor: pointer">
                                 <jhi-posting-thread
                                     #postingThread
                                     [lastReadDate]="post.conversation?.lastMessageDate"
@@ -111,6 +111,7 @@
                                     [isCommunicationPage]="true"
                                     [showChannelReference]="true"
                                     (openThread)="setPostForThread($event)"
+                                    (click)="onTriggerNavigateToPost(post)"
                                 />
                             </div>
                         }
