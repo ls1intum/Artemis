@@ -6,7 +6,9 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -56,7 +58,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    // have to handle the file input as a special case at is not part of the reactive form
+    // have to handle the file input as a special case, as it is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
@@ -65,6 +67,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
+    private readonly translateService = inject(TranslateService);
     private readonly formBuilder = inject(FormBuilder);
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
@@ -75,9 +78,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-
+    private readonly name = toSignal(this.nameControl?.valueChanges ?? of(''));
     isFormValid = computed(() => {
-        return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig() && this.datePickerComponent()?.isValid();
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.fileName() && this.datePickerComponent()?.isValid();
     });
 
     ngOnChanges() {
@@ -86,6 +89,12 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
     }
 
+    private readonly nameAndFileRequiredValidationErrorTranslation = toSignal(
+        this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError'),
+    );
+    private readonly fileRequiredValidationErrorTranslation = toSignal(this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError'));
+    private readonly nameRequiredValidationErrorTranslation = toSignal(this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError'));
+
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) {
@@ -93,8 +102,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
         this.file = input.files[0];
         this.fileName.set(this.file.name);
+
         // automatically set the name in case it is not yet specified
-        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+        if (this.form && !this.name()) {
             this.form.patchValue({
                 // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
@@ -102,6 +112,19 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
         this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
+
+    tooltipText = computed(() => {
+        if (!this.fileName() && !this.name()) {
+            return this.nameAndFileRequiredValidationErrorTranslation();
+        }
+        if (!this.fileName()) {
+            return this.fileRequiredValidationErrorTranslation();
+        }
+        if (!this.name()) {
+            return this.nameRequiredValidationErrorTranslation();
+        }
+        return undefined;
+    });
 
     get nameControl() {
         return this.form.get('name');
