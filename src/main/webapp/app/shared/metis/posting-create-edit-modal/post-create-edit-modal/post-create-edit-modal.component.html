@@ -6,7 +6,7 @@
         </div>
         <div class="modal-body">
             <!-- info if announcement is created-->
-            @if (this.editType === EditType.CREATE && isCommunicationPage && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
+            @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
                 <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
             }
             <!-- title -->
@@ -20,7 +20,7 @@
                 </div>
             </div>
             <!-- tags -->
-            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage && !posting.conversation) {
+            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage() && !posting.conversation) {
                 <div class="position-relative mb-3">
                     <div>
                         <label jhiTranslate="artemisApp.metis.post.tags"></label>
@@ -37,20 +37,30 @@
                     <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
                 </div>
                 <div class="row mb-2">
-                    <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [suppressNewlineOnEnter]="false" />
+                    <jhi-posting-markdown-editor
+                        formControlName="content"
+                        [editorHeight]="editorHeight"
+                        [maxContentLength]="maxContentLength"
+                        [suppressNewlineOnEnter]="false"
+                        [isButtonLoading]="isLoading"
+                        [isFormGroupValid]="formGroup.valid"
+                        [editType]="editType"
+                    />
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="isLoading || !formGroup.valid"
-                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-                id="save"
-                class="btn btn-sm btn-outline-secondary"
-                type="submit"
-            ></button>
-        </div>
+        @if (editType === EditType.UPDATE) {
+            <div class="modal-footer">
+                <button
+                    jhi-posting-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                    class="btn btn-sm btn-outline-primary"
+                    id="save"
+                    type="submit"
+                ></button>
+            </div>
+        }
     </form>
 </ng-template>

@@ -3,14 +3,9 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -101,13 +96,13 @@ public class FileService implements DisposableBean {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
+    public static final String MARKDOWN_FILE_SUBPATH = "/api/core/files/markdown/";
 
-    public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
+    public static final String DEFAULT_FILE_SUBPATH = "/api/core/files/temp/";
 
-    public static final String BACKGROUND_FILE_SUBPATH = "/api/files/drag-and-drop/backgrounds/";
+    public static final String BACKGROUND_FILE_SUBPATH = "/api/core/files/drag-and-drop/backgrounds/";
 
-    public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
+    public static final String PICTURE_FILE_SUBPATH = "/api/core/files/drag-and-drop/drag-items/";
 
     /**
      * These directories get falsely marked as files and should be ignored during copying.
@@ -210,7 +205,7 @@ public class FileService implements DisposableBean {
         copyFile(file, filePath);
 
         String currentFilename = filePath.getFileName().toString();
-        return new FilePathInformation(filePath, URI.create("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
+        return new FilePathInformation(filePath, URI.create("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
                 sanitizedOriginalFilename);
     }
 
@@ -501,12 +496,11 @@ public class FileService implements DisposableBean {
      * @throws IOException if the directory could not be renamed.
      */
     public void renameDirectory(Path oldDirectoryPath, Path targetDirectoryPath) throws IOException {
-        File oldDirectory = oldDirectoryPath.toFile();
-        if (!oldDirectory.exists()) {
-            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
-        }
 
+        if (!Files.exists(oldDirectoryPath)) {
+            throw new FilePathParsingException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
+        }
+        File oldDirectory = oldDirectoryPath.toFile();
         File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
@@ -521,12 +515,12 @@ public class FileService implements DisposableBean {
     public void replacePlaceholderSections(Path filePath, Map<String, Boolean> sections) {
         Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
         File file = filePath.toFile();
-        File tempFile = new File(filePath + "_temp");
+        File tempFile = Path.of(filePath + "_temp").toFile();
         if (!file.exists()) {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = new BufferedReader(new FileReader(file, UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, UTF_8))) {
+        try (var reader = Files.newBufferedReader(file.toPath(), UTF_8); var writer = Files.newBufferedWriter(tempFile.toPath(), UTF_8)) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -599,12 +593,13 @@ public class FileService implements DisposableBean {
         if (pathString.contains(targetString)) {
             log.debug("Target String found, replacing..");
             String targetPath = pathString.replace(targetString, replacementString);
-            renameDirectory(startPath, Path.of(targetPath));
-            directory = new File(targetPath);
+            final var path = Path.of(targetPath);
+            renameDirectory(startPath, path);
+            directory = path.toFile();
         }
 
         // Get all subdirectories
-        final var subDirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+        final var subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
 
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
@@ -634,7 +629,7 @@ public class FileService implements DisposableBean {
                 try {
                     // We expect the strings to be clean already, so the filename shouldn't change. If it does, we are on the safe side with the sanitation.
                     String cleanFileName = sanitizeFilename(filePath.toString().replace(targetString, replacementString));
-                    FileUtils.moveFile(filePath.toFile(), new File(cleanFileName));
+                    FileUtils.moveFile(filePath.toFile(), Path.of(cleanFileName).toFile());
                 }
                 catch (IOException e) {
                     throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
@@ -672,7 +667,7 @@ public class FileService implements DisposableBean {
         }
 
         // Get all files in directory
-        String[] files = directory.list((current, name) -> new File(current, name).isFile());
+        String[] files = directory.list((current, name) -> current.toPath().resolve(name).toFile().isFile());
         if (files != null) {
             // filter out files that should be ignored
             files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
@@ -682,7 +677,7 @@ public class FileService implements DisposableBean {
         }
 
         // Recursive call: get all subdirectories
-        String[] subDirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+        String[] subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
                 if (subDirectory.equalsIgnoreCase(".git")) {
@@ -1040,7 +1035,7 @@ public class FileService implements DisposableBean {
             FileItem fileItem = new DiskFileItem(cleanFilename, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
                     outputFile.getParentFile());
 
-            try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+            try (InputStream input = Files.newInputStream(outputFile.toPath()); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);
             }
             return new CommonsMultipartFile(fileItem);

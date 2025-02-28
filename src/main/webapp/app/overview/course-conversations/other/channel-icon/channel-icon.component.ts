@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { faBoxArchive, faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { Component, input } from '@angular/core';
+import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -8,17 +8,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FaIconComponent],
 })
 export class ChannelIconComponent {
-    @Input()
-    isPublic = true;
+    isPublic = input<boolean>(true);
+    isAnnouncementChannel = input<boolean>(false);
 
-    @Input()
-    isArchived = false;
-
-    @Input()
-    isAnnouncementChannel = false;
     // icons
-    faHashtag = faHashtag;
-    faLock = faLock;
-    faBoxArchive = faBoxArchive;
-    faBullhorn = faBullhorn;
+    readonly faHashtag = faHashtag;
+    readonly faLock = faLock;
+    readonly faBullhorn = faBullhorn;
+
+    getIcon() {
+        if (this.isAnnouncementChannel()) {
+            return this.faBullhorn;
+        }
+        return this.isPublic() ? this.faHashtag : this.faLock;
+    }
 }

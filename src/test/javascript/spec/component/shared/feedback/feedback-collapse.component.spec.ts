@@ -53,6 +53,13 @@ describe('FeedbackCollapseComponent', () => {
         expect(component.previewText).toBe('Truncated text [...]');
     });
 
+    it('should toggle properly', () => {
+        component.toggleCollapse();
+        expect(component.isCollapsed).toBe(false);
+        component.toggleCollapse();
+        expect(component.isCollapsed).toBe(true);
+    });
+
     const getFeedbackItem = (text: string, hasLongFeedbackText = false): FeedbackItem => {
         return {
             credits: undefined,

@@ -1,11 +1,11 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -18,10 +18,10 @@ import {
     MetisWebsocketChannelPrefix,
     PageType,
     PostContextFilter,
+    PostSortCriterion,
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
@@ -33,20 +33,24 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { cloneDeep } from 'lodash-es';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
+import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
-    protected postService = inject(PostService);
-    protected answerPostService = inject(AnswerPostService);
-    protected reactionService = inject(ReactionService);
-    protected accountService = inject(AccountService);
-    protected exerciseService = inject(ExerciseService);
-    private jhiWebsocketService = inject(WebsocketService);
+    private postService = inject(PostService);
+    private answerPostService = inject(AnswerPostService);
+    private reactionService = inject(ReactionService);
+    private accountService = inject(AccountService);
+    private websocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
+    private forwardedMessageService = inject(ForwardedMessageService);
+    private savedPostService = inject(SavedPostService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
+    private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
@@ -56,9 +60,7 @@ export class MetisService implements OnDestroy {
     private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
-
     private courseWideTopicSubscription: Subscription;
-    private savedPostService: SavedPostService = inject(SavedPostService);
 
     course: Course;
 
@@ -82,6 +84,10 @@ export class MetisService implements OnDestroy {
 
     get totalNumberOfPosts(): Observable<number> {
         return this.totalNumberOfPosts$.asObservable();
+    }
+
+    getPinnedPosts(): Observable<Post[]> {
+        return this.pinnedPosts$.asObservable();
     }
 
     getCurrentConversation(): ConversationDTO | undefined {
@@ -118,7 +124,7 @@ export class MetisService implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
         }
         this.courseWideTopicSubscription.unsubscribe();
     }
@@ -257,6 +263,7 @@ export class MetisService implements OnDestroy {
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
                 if (indexToUpdate > -1) {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
+                    updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
                     this.cachedPosts[indexToUpdate] = updatedPost;
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -291,12 +298,34 @@ export class MetisService implements OnDestroy {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param {number} postId id of the post for which the displayPriority is changed
-     * @param {DisplayPriority} displayPriority new displayPriority
-     * @return {Observable<Post>} updated post
+     * @param postId id of the post for which the displayPriority is changed
+     * @param displayPriority new displayPriority
+     * @return updated post
      */
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
+    }
+
+    public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
+        const pinnedFilter: PostContextFilter = {
+            courseId: this.courseId,
+            conversationId: conversationId,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
+            pinnedOnly: true,
+            pagingEnabled: false,
+        };
+
+        return this.postService.getPosts(this.courseId, pinnedFilter).pipe(
+            map((res: HttpResponse<Post[]>) => res.body ?? []),
+            tap((pinnedPosts: Post[]) => {
+                this.pinnedPosts$.next(pinnedPosts);
+            }),
+            catchError((err) => {
+                this.pinnedPosts$.next([]);
+                return of([]);
+            }),
+        );
     }
 
     /**
@@ -550,14 +579,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.websocketService.unsubscribe(this.subscriptionChannel);
             this.subscriptionChannel = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.websocketService.subscribe(this.subscriptionChannel);
+        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -668,12 +697,30 @@ export class MetisService implements OnDestroy {
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
+                if (postDTO.post.displayPriority === DisplayPriority.PINNED) {
+                    const currentPinnedPosts = this.pinnedPosts$.getValue();
+                    const indexPinned = currentPinnedPosts.findIndex((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                    if (indexPinned > -1) {
+                        currentPinnedPosts[indexPinned] = postDTO.post;
+                        this.pinnedPosts$.next([...currentPinnedPosts]);
+                    } else {
+                        this.pinnedPosts$.next([postDTO.post, ...currentPinnedPosts]);
+                    }
+                } else {
+                    this.removeFromPinnedPosts(postDTO.post.id!);
+                }
                 this.addTags(postDTO.post.tags);
                 break;
             case MetisPostAction.DELETE:
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
+                }
+                const currentPinnedPosts = this.pinnedPosts$.getValue();
+                const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                if (isPinned) {
+                    const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postDTO.post.id);
+                    this.pinnedPosts$.next(updatedPinnedPosts);
                 }
                 break;
             default:
@@ -707,11 +754,118 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+                this.websocketService.unsubscribe(this.subscriptionChannel);
                 this.subscriptionChannel = undefined;
             }
             return;
         }
+    }
+
+    /**
+     * Retrieves forwarded messages for a given set of IDs and message type.
+     *
+     * @param postingIds - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param type - The type of messages to retrieve ('post' or 'answer').
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages (as DTOs), wrapped in an HttpResponse, or undefined if the IDs are invalid.
+     */
+    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<{ id: number; messages: ForwardedMessageDTO[] }[]>> | undefined {
+        if (postingIds && postingIds.length > 0) {
+            return this.forwardedMessageService.getForwardedMessages(postingIds, type, this.courseId);
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * Retrieves the source posts for a given set of post IDs.
+     *
+     * @param postIds - An array of numeric post IDs to retrieve source posts for.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     */
+    getSourcePostsByIds(postIds: number[]) {
+        if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
+        else return;
+    }
+
+    /**
+     * Retrieves the source answer posts for a given set of answer post IDs.
+     *
+     * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     */
+    getSourceAnswerPostsByIds(answerPostIds: number[]) {
+        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
+        else return;
+    }
+
+    /**
+     * Creates forwarded messages by associating original posts with a target conversation.
+     *
+     * @param originalPosts - An array of original posts to be forwarded.
+     * @param targetConversation - The target conversation where the posts will be forwarded.
+     * @param isAnswer - A boolean indicating if the forwarded posts are answers.
+     * @param newContent - Optional new content for the forwarded posts.
+     * @returns An observable containing an array of created ForwardedMessage objects.
+     *
+     * @throws Error if the course ID is not set.
+     */
+    createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
+        if (!this.courseId) {
+            return throwError(() => new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.'));
+        }
+
+        const newPost: Post = {
+            content: newContent || '',
+            conversation: targetConversation,
+            hasForwardedMessages: true,
+        };
+
+        let sourceType = PostingType.POST;
+        if (isAnswer) {
+            sourceType = PostingType.ANSWER;
+        }
+
+        return this.postService.create(this.courseId, newPost).pipe(
+            switchMap((createdPost: HttpResponse<Post>) => {
+                const createdPostBody = createdPost.body!;
+                const forwardedMessages: ForwardedMessage[] = originalPosts.map(
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                );
+
+                const createForwardedMessageObservables = forwardedMessages.map((fm) =>
+                    this.forwardedMessageService.createForwardedMessage(fm, this.courseId).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                );
+
+                return forkJoin(createForwardedMessageObservables).pipe(
+                    tap((createdForwardedMessages: ForwardedMessage[]) => {
+                        if (targetConversation.id === this.currentConversation?.id) {
+                            const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
+                            if (existingPostIndex === -1) {
+                                this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                            }
+
+                            createdForwardedMessages.forEach((fm) => {
+                                const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
+                                if (postIndex > -1) {
+                                    const post = this.cachedPosts[postIndex];
+                                    const updatedPost = { ...post, hasForwardedMessages: true };
+                                    this.cachedPosts[postIndex] = updatedPost;
+                                }
+                            });
+                            this.posts$.next(this.cachedPosts);
+                            this.cachedTotalNumberOfPosts += 1;
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                        }
+                    }),
+                    catchError((error) => {
+                        return throwError(() => error);
+                    }),
+                );
+            }),
+            catchError((error) => {
+                return throwError(() => error);
+            }),
+        );
     }
 
     /**
@@ -729,5 +883,18 @@ export class MetisService implements OnDestroy {
         other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+    }
+
+    /**
+     * Removes a post from the pinnedPosts$ if it exists.
+     * @param postId The ID of the post to remove.
+     */
+    private removeFromPinnedPosts(postId: number): void {
+        const currentPinnedPosts = this.pinnedPosts$.getValue();
+        const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postId);
+        if (isPinned) {
+            const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
+            this.pinnedPosts$.next(updatedPinnedPosts);
+        }
     }
 }

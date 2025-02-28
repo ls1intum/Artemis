@@ -4,7 +4,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TestExamWorkingTimeComponent } from '../../../../../../main/webapp/app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import { round } from 'app/shared/util/utils';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('TestExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<TestExamWorkingTimeComponent>;
@@ -16,7 +15,6 @@ describe('TestExamWorkingTimeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [],
         })
             .compileComponents()

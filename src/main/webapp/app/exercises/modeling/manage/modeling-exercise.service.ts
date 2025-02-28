@@ -18,8 +18,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
 
-    public resourceUrl = 'api/modeling-exercises';
-    public adminResourceUrl = 'api/admin/modeling-exercises';
+    public resourceUrl = 'api/modeling/modeling-exercises';
+    public adminResourceUrl = 'api/modeling/admin/modeling-exercises';
 
     constructor() {
         const exerciseService = this.exerciseService;
@@ -85,7 +85,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post('api/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
+            .post('api/modeling/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 

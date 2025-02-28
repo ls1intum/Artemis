@@ -8,9 +8,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
@@ -26,11 +27,12 @@ describe('SystemNotificationManagementDetailComponent', () => {
         router.setUrl('');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(RouterModule)],
+            imports: [FormsModule, MockModule(RouterModule)],
             declarations: [MockRouterLinkDirective, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

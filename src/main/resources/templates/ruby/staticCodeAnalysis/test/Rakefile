@@ -1,0 +1,34 @@
+# frozen_string_literal: true
+
+require_relative "assignment_path"
+
+require "minitest/test_task"
+
+Minitest::TestTask.create :test
+
+namespace :ci do
+  Minitest::TestTask.create :test do |task|
+    task.extra_args = ["--verbose", "--junit", "--junit-jenkins", "--junit-filename=report.xml"]
+  end
+end
+
+require "rubocop/rake_task"
+
+RuboCop::RakeTask.new :rubocop do |task|
+  task.patterns = [ASSIGNMENT_PATH]
+  task.fail_on_error = false
+  task.options = ["--config=.rubocop.yml"]
+end
+
+namespace :ci do
+  RuboCop::RakeTask.new :rubocop do |task|
+    task.patterns = [ASSIGNMENT_PATH]
+    task.fail_on_error = false
+    task.requires = ["code_scanning"]
+    task.formatters = ["CodeScanning::SarifFormatter"]
+    task.options = ["--config=.rubocop.yml", "--out=rubocop.sarif"]
+  end
+end
+
+task default: %i[test rubocop]
+task ci: %i[ci:test ci:rubocop]

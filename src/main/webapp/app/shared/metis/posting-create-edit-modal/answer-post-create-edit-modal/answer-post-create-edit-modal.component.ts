@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewContainerRef, ViewEncapsulation } from '@angular/core';
+import { Component, ViewContainerRef, ViewEncapsulation, input, output } from '@angular/core';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
-    @Input() createEditAnswerPostContainerRef: ViewContainerRef;
-    @Output() postingUpdated = new EventEmitter<Posting>();
+    createEditAnswerPostContainerRef = input<ViewContainerRef>();
+    postingUpdated = output<Posting>();
     isInputOpen = false;
 
     /**
@@ -25,7 +25,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     open(): void {
         this.close();
-        this.createEditAnswerPostContainerRef.createEmbeddedView(this.postingEditor);
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor);
         this.isInputOpen = true;
     }
 
@@ -33,7 +33,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * clears the container to remove the input field when the user clicks cancel
      */
     close(): void {
-        this.createEditAnswerPostContainerRef.clear();
+        this.createEditAnswerPostContainerRef()?.clear();
         this.resetFormGroup();
         this.isInputOpen = false;
     }
@@ -60,7 +60,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
-                this.createEditAnswerPostContainerRef?.clear();
+                this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
                 this.isLoading = false;
@@ -79,7 +79,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;
                 this.isInputOpen = false;
-                this.createEditAnswerPostContainerRef?.clear();
+                this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
                 this.isLoading = false;

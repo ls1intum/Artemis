@@ -21,7 +21,8 @@
                         id="field_description"
                         class="markdown-editor"
                         [domainActions]="domainActionsDescription"
-                        [markdown]="faq.questionAnswer"
+                        [artemisIntelligenceActions]="artemisIntelligenceActions()"
+                        [markdown]="faq.questionAnswer || ''"
                         (markdownChange)="handleMarkdownChange($event)"
                     />
                 </div>

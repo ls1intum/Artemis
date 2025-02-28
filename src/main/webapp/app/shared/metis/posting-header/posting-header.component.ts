@@ -1,6 +1,5 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewChild, computed, inject, input, output } from '@angular/core';
+import { Component, OnChanges, OnInit, computed, inject, input, output } from '@angular/core';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -28,9 +27,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     styleUrls: ['../metis.component.scss'],
     imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
 })
-export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-
+export class PostingHeaderComponent implements OnInit, OnChanges {
     lastReadDate = input<dayjs.Dayjs>();
     posting = input<Posting>();
     readOnlyMode = input<boolean>(false);
@@ -57,8 +54,8 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
 
-    protected metisService: MetisService = inject(MetisService);
-    protected accountService: AccountService = inject(AccountService);
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
 
     isPostResolved = computed<boolean>(() => {
         const posting = this.posting();
@@ -111,13 +108,6 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
 
     get creationDate(): dayjs.Dayjs | undefined {
         return this.posting()?.creationDate;
-    }
-
-    /**
-     * on leaving the page, the modal should be closed
-     */
-    ngOnDestroy(): void {
-        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**

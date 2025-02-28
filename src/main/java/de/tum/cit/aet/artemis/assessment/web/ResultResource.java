@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
-import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -69,7 +67,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
+// TODO: verify unused endpoints in client
 public class ResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -150,6 +149,8 @@ public class ResultResource {
     @GetMapping("participations/{participationId}/results/{resultId}")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
+        // TODO: verify unused endpoints in client
+
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         return new ResponseEntity<>(result, HttpStatus.OK);
@@ -167,7 +168,6 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
@@ -213,6 +213,8 @@ public class ResultResource {
     @DeleteMapping("participations/{participationId}/results/{resultId}")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
+        // TODO: verify unused endpoints in client
+
         log.debug("REST request to delete Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         resultService.deleteResult(result, true);
@@ -377,7 +379,6 @@ public class ResultResource {
             @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
             @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
             @RequestParam(value = "feedbackId5", required = false) Long feedbackId5) {
-
         List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
 
         List<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds);

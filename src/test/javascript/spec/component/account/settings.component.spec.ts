@@ -1,7 +1,6 @@
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/account/settings/settings.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -11,6 +10,8 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { HttpResponse } from '@angular/common/http';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;
@@ -31,13 +32,14 @@ describe('SettingsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, SettingsComponent],
+            imports: [SettingsComponent],
             providers: [
                 FormBuilder,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideTemplate(SettingsComponent, '')

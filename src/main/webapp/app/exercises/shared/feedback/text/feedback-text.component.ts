@@ -30,19 +30,20 @@ export class FeedbackTextComponent implements OnInit {
     }
 
     private loadLongFeedback() {
-        const resultId = this.feedback.feedbackReference.result!.id!;
-        const feedbackId = this.feedback.feedbackReference.id!;
+        if (this.feedback.feedbackReference.id) {
+            const feedbackId = this.feedback.feedbackReference.id;
 
-        this.longFeedbackService.find(resultId, feedbackId).subscribe((longFeedbackResponse) => {
-            const longFeedback = longFeedbackResponse.body!;
-            const textLength = longFeedback.length ?? 0;
+            this.longFeedbackService.find(feedbackId).subscribe((longFeedbackResponse) => {
+                const longFeedback = longFeedbackResponse.body!;
+                const textLength = longFeedback.length ?? 0;
 
-            if (textLength > this.MAX_DISPLAYABLE_LENGTH) {
-                this.setDownloadInfo(longFeedback);
-            } else {
-                this.text = longFeedback;
-            }
-        });
+                if (textLength > this.MAX_DISPLAYABLE_LENGTH) {
+                    this.setDownloadInfo(longFeedback);
+                } else {
+                    this.text = longFeedback;
+                }
+            });
+        }
     }
 
     private setDownloadInfo(longFeedback: string) {

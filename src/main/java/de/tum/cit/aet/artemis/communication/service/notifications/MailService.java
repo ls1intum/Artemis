@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.TimeService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 
 /**
  * Service for preparing and sending emails.
@@ -55,8 +57,13 @@ public class MailService implements InstantNotificationService {
 
     private static final String REASON = "reason";
 
+    private static final String CONTACT_EMAIL = "contactEmail";
+
     @Value("${server.url}")
     private URL artemisServerUrl;
+
+    @Value("${info.contact}")
+    private String contactEmailAddress;
 
     private final MessageSource messageSource;
 
@@ -85,6 +92,10 @@ public class MailService implements InstantNotificationService {
     private static final String RELATIVE_SCORE = "relativeScore";
 
     private static final String NOTIFICATION_TYPE = "notificationType";
+
+    private static final String SSH_KEY = "sshKey";
+
+    private static final String SSH_KEY_EXPIRY_DATE = "expiryDate";
 
     // time related variables
     private static final String TIME_SERVICE = "timeService";
@@ -131,7 +142,7 @@ public class MailService implements InstantNotificationService {
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
         Context context = createBaseContext(admin, locale);
         context.setVariable(DATA_EXPORT, dataExport);
-        context.setVariable(REASON, reason);
+        context.setVariable(REASON, reason.getMessage());
         prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
     }
 
@@ -252,7 +263,7 @@ public class MailService implements InstantNotificationService {
         context.setVariable(USER, user);
         context.setVariable(NOTIFICATION, notification);
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
-
+        context.setVariable(CONTACT_EMAIL, contactEmailAddress);
         context.setVariable(TIME_SERVICE, this.timeService);
         String subject = messageSource.getMessage(notification.getTitle(), null, context.getLocale());
 
@@ -263,7 +274,12 @@ public class MailService implements InstantNotificationService {
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
             subject = setPlagiarismContextAndSubject(context, notificationType, notification, plagiarismCase);
         }
-
+        if (notificationSubject instanceof UserSshPublicKey userSshPublicKey) {
+            context.setVariable(SSH_KEY, userSshPublicKey);
+            if (userSshPublicKey.getExpiryDate() != null) {
+                context.setVariable(SSH_KEY_EXPIRY_DATE, userSshPublicKey.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+            }
+        }
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
             setContextForTutorialGroupNotifications(context, notificationType, tutorialGroupNotificationSubject);
         }
@@ -334,6 +350,13 @@ public class MailService implements InstantNotificationService {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
             return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent", new Object[] {}, context.getLocale());
         }
+        if (notificationType == NotificationType.PLAGIARISM_CASE_REPLY) {
+            notification.getTargetTransient().setMainPage("course-management");
+            Exercise exercise = plagiarismCase.getExercise();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseReply", new Object[] { exercise.getTitle(), course.getTitle() },
+                    context.getLocale());
+        }
         return notification.getTitle();
     }
 
@@ -386,6 +409,7 @@ public class MailService implements InstantNotificationService {
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
+            case PLAGIARISM_CASE_REPLY -> templateEngine.process("mail/notification/plagiarismCaseReplyEmail", context);
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
                     TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
                 templateEngine.process("mail/notification/tutorialGroupBasicEmail", context);
@@ -393,6 +417,13 @@ public class MailService implements InstantNotificationService {
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);
             case DATA_EXPORT_FAILED -> templateEngine.process("mail/notification/dataExportFailedEmail", context);
+            case SSH_KEY_ADDED -> templateEngine.process("mail/notification/sshKeyAddedEmail", context);
+            case SSH_KEY_EXPIRES_SOON -> templateEngine.process("mail/notification/sshKeyExpiresSoonEmail", context);
+            case SSH_KEY_HAS_EXPIRED -> templateEngine.process("mail/notification/sshKeyHasExpiredEmail", context);
+            case VCS_ACCESS_TOKEN_ADDED -> templateEngine.process("mail/notification/vcsAccessTokenAddedEmail", context);
+            case VCS_ACCESS_TOKEN_EXPIRED -> templateEngine.process("mail/notification/vcsAccessTokenExpiredEmail", context);
+            case VCS_ACCESS_TOKEN_EXPIRES_SOON -> templateEngine.process("mail/notification/vcsAccessTokenExpiresSoonEmail", context);
+
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

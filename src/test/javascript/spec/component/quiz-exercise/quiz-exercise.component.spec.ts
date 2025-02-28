@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -14,6 +13,9 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
@@ -31,7 +33,6 @@ describe('QuizExercise Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -39,6 +40,9 @@ describe('QuizExercise Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(EventManager),
             ],
         })
             .overrideTemplate(QuizExerciseComponent, '')
@@ -89,6 +93,7 @@ describe('QuizExercise Management Component', () => {
         );
 
         comp.ngOnInit();
+        // @ts-ignore
         comp.deleteMultipleExercises([{ id: 1 }, { id: 2 }, { id: 3 }] as QuizExercise[], comp.quizExerciseService);
         expect(quizExerciseService.delete).toHaveBeenCalledTimes(3);
     });

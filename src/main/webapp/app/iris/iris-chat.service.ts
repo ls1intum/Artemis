@@ -19,6 +19,7 @@ export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
     EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
+    LECTURE = 'lecture-chat',
 }
 
 /**
@@ -42,10 +43,11 @@ export class IrisChatService implements OnDestroy {
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
+    private acceptSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedIris = false;
+    hasJustAcceptedExternalLLMUsage = false;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -53,10 +55,11 @@ export class IrisChatService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
+        this.acceptSubscription?.unsubscribe();
     }
 
     protected start() {
-        if (this.accountService.userIdentity?.irisAccepted || this.hasJustAcceptedIris) {
+        if (this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
         }
     }
@@ -152,8 +155,10 @@ export class IrisChatService implements OnDestroy {
     }
 
     public setUserAccepted(): void {
-        this.userService.acceptIris().subscribe(() => {
-            this.hasJustAcceptedIris = true;
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
+            this.hasJustAcceptedExternalLLMUsage = true;
+            this.accountService.setUserAcceptedExternalLLMUsage();
             this.closeAndStart();
         });
     }
@@ -248,6 +253,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
+
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
