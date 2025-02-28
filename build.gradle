@@ -24,6 +24,7 @@ plugins {
     id "nebula.lint" version "20.5.6"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.0"
+    id "org.sonarqube" version "6.0.1.5171"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
@@ -45,6 +46,15 @@ node {
     version = "${node_version}"
     npmVersion = "${npm_version}"
 }
+
+sonar {
+    properties {
+        property "sonar.projectKey", "ls1intum_Artemis"
+        property "sonar.organization", "ls1intum"
+        property "sonar.host.url", "https://sonarcloud.io"
+    }
+}
+
 
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
