@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @RestController
-@RequestMapping("api/standardized-competencies/")
+@RequestMapping("api/atlas/standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);

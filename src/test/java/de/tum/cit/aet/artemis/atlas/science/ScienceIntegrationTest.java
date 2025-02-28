@@ -28,7 +28,7 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     private void sendPutRequest(ScienceEventDTO event) throws Exception {
-        request.put("/api/science", event, HttpStatus.OK);
+        request.put("/api/atlas/science", event, HttpStatus.OK);
     }
 
     @ParameterizedTest
