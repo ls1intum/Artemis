@@ -1,7 +1,7 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { KnowledgeArea, KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 import { take } from 'rxjs';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
@@ -10,7 +10,6 @@ describe('StandardizedCompetencyService', () => {
     let standardizedCompetencyService: StandardizedCompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultStandardizedCompetency: StandardizedCompetency;
-    let defaultKnowledgeArea: KnowledgeArea;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,10 +23,6 @@ describe('StandardizedCompetencyService', () => {
             id: 1,
             title: 'Standardized Competency1',
             taxonomy: CompetencyTaxonomy.ANALYZE,
-        };
-        defaultKnowledgeArea = {
-            id: 1,
-            title: 'Knowledge Area1',
         };
     });
 
