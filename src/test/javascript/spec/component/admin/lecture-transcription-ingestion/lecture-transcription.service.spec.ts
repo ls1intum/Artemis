@@ -27,18 +27,17 @@ describe('LectureTranscriptionService', () => {
         const lectureUnitId = 1;
         service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/courses/${courseId}/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/lecture/courses/${courseId}/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
         req.flush({});
     });
 
     it('should send POST request to create transcription', () => {
         const transcription = { transcription: [] };
-        const courseId = 1;
         const lectureId = 1;
         const lectureUnitId = 1;
-        service.createTranscription(courseId, lectureId, lectureUnitId, transcription).subscribe(() => {});
+        service.createTranscription(lectureId, lectureUnitId, transcription).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/courses/${courseId}/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions` });
 
         expect(req.request.body).toBe(transcription);
         req.flush({});

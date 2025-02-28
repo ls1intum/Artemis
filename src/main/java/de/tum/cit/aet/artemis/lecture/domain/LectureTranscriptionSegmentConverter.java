@@ -34,12 +34,20 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
         if (jsonData == null || jsonData.isEmpty()) {
             return Collections.emptyList();
         }
+
         try {
             JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, LectureTranscriptionSegment.class);
+
+            if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
+                jsonData = objectMapper.readValue(jsonData, String.class);
+                System.out.println("Decoded JSON: " + jsonData);
+            }
+
             return objectMapper.readValue(jsonData, type);
         }
         catch (IOException e) {
             throw new IllegalArgumentException("Could not convert JSON to list of transcription segments", e);
         }
     }
+
 }

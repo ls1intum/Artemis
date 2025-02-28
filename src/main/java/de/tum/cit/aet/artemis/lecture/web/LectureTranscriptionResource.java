@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture")
 public class LectureTranscriptionResource {
 
     private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionResource.class);
@@ -61,7 +61,7 @@ public class LectureTranscriptionResource {
      * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
+    @PostMapping(value = "/{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
     @EnforceAtLeastInstructor
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
             @PathVariable Long lectureUnitId) throws URISyntaxException {
@@ -90,7 +90,7 @@ public class LectureTranscriptionResource {
      * @param transcriptionId the transcriptionId of the transcription to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the transcription, or with status 404 (Not Found)
      */
-    @GetMapping("lecture/{lectureId}/transcription/{transcriptionId}")
+    @GetMapping("/{lectureId}/transcription/{transcriptionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
         log.debug("REST request to get transcription {}", transcriptionId);

@@ -13,14 +13,13 @@ import { ButtonComponent } from 'app/shared/components/button.component';
     imports: [FormsModule, ButtonComponent],
 })
 export class LectureTranscriptionIngestionComponent {
-    private lectureTranscriptionService = inject(LectureTranscriptionService);
-    private alertService = inject(AlertService);
+    lectureTranscriptionService = inject(LectureTranscriptionService);
+    alertService = inject(AlertService);
 
     ingestCourseIdInput = '';
     ingestLectureIdInput = '';
     ingestLectureUnitIdInput = '';
 
-    createCourseIdInput = '';
     createLectureIdInput = '';
     createLectureUnitIdInput = '';
 
@@ -45,7 +44,7 @@ export class LectureTranscriptionIngestionComponent {
 
     createTranscription(): void {
         this.lectureTranscriptionService
-            .createTranscription(Number(this.createCourseIdInput), Number(this.createLectureIdInput), Number(this.createLectureUnitIdInput), JSON.parse(this.transcriptionInput))
+            .createTranscription(Number(this.createLectureIdInput), Number(this.createLectureUnitIdInput), JSON.parse(this.transcriptionInput))
             .subscribe((successful) => {
                 if (successful) {
                     this.alertService.success('Created transcription');
@@ -53,7 +52,6 @@ export class LectureTranscriptionIngestionComponent {
                     this.alertService.error('Unknown error while creating transcription');
                 }
                 this.transcriptionInput = '';
-                this.createCourseIdInput = '';
                 this.createLectureIdInput = '';
                 this.createLectureUnitIdInput = '';
             });
