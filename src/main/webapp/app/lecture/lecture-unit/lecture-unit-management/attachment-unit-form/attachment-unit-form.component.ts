@@ -89,7 +89,11 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
     }
 
-    private readonly translationUpdateSignal = toSignal(this.translateService.stream(['']));
+    private readonly nameAndFileRequiredValidationErrorTranslation = toSignal(
+        this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError'),
+    );
+    private readonly fileRequiredValidationErrorTranslation = toSignal(this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError'));
+    private readonly nameRequiredValidationErrorTranslation = toSignal(this.translateService.stream('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError'));
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -110,15 +114,14 @@ export class AttachmentUnitFormComponent implements OnChanges {
     }
 
     tooltipText = computed(() => {
-        this.translationUpdateSignal();
         if (!this.fileName() && !this.name()) {
-            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError');
+            return this.nameAndFileRequiredValidationErrorTranslation();
         }
         if (!this.fileName()) {
-            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError');
+            return this.fileRequiredValidationErrorTranslation();
         }
         if (!this.name()) {
-            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError');
+            return this.nameRequiredValidationErrorTranslation();
         }
         return undefined;
     });
