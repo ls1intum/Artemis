@@ -21,7 +21,7 @@ export class LectureTranscriptionService {
 
     createTranscription(courseId: number, lectureId: number, lectureUnitId: number, transcription: any): Observable<boolean> {
         return this.httpClient
-            .post(`api/courses/${courseId}/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions`, transcription, {
+            .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions`, transcription, {
                 observe: 'response',
             })
             .pipe(map((response) => response.status == 201));

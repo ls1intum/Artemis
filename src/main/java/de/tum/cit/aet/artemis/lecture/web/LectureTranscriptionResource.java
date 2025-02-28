@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -55,23 +55,19 @@ public class LectureTranscriptionResource {
     /**
      * POST /transcription : Create a new transcription.
      *
-     * @param courseId         The id of the course
      * @param lectureId        The id of the lecture
      * @param lectureUnitId    The id of the lecture unit
      * @param transcriptionDTO The transcription object to create
      * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
-            @PathVariable Long lectureId, @PathVariable Long lectureUnitId) throws URISyntaxException {
+    @PostMapping(value = "lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
+            @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Lecture unit does not belong to the specified lecture", "lectureTranscription", "lectureUnitDoesNotMatchLecture");
-        }
-        if (!lectureUnit.getLecture().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("Lecture does not belong to the specified course", "lectureTranscription", "lectureDoesNotMatchCourse");
         }
 
         if (lectureUnit.getLectureTranscription() != null) {
