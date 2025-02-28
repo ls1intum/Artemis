@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/exercise/admin/")
 public class AdminExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);

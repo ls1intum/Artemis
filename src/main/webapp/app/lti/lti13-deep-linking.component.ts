@@ -160,7 +160,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
             type DeepLinkingResponse = {
                 targetLinkUri: string;
             };
-            this.http.post<DeepLinkingResponse>(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
+            this.http.post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
                 next: (response) => {
                     if (response.status === 200) {
                         if (response.body) {

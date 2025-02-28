@@ -8,7 +8,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
-    public resourceUrl = '/api/courses/';
+    public resourceUrl = '/api/communication/courses/';
 
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
