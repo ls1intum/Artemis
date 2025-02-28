@@ -154,16 +154,13 @@ describe('Lti13DeepLinkingComponent', () => {
         tick();
 
         expect(component.isLinking).toBeFalse();
-
-        const expectedParams = new HttpParams()
-            .set('resourceType', DeepLinkingType.EXERCISE)
-            .set('contentIds', Array.from(component.selectedExercises!).join(','))
-            .set('ltiIdToken', '')
-            .set('clientRegistrationId', '');
-
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: expectedParams,
+            params: new HttpParams()
+                .set('resourceType', DeepLinkingType.EXERCISE)
+                .set('ltiIdToken', '')
+                .set('clientRegistrationId', '')
+                .set('contentIds', Array.from(component.selectedExercises!).join(',')),
         });
         expect(replaceMock).not.toHaveBeenCalled(); // Verify that we did not navigate
     }));
@@ -181,9 +178,9 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams()
             .set('resourceType', DeepLinkingType.EXERCISE)
-            .set('contentIds', Array.from(component.selectedExercises!).join(','))
             .set('ltiIdToken', '')
-            .set('clientRegistrationId', '');
+            .set('clientRegistrationId', '')
+            .set('contentIds', Array.from(component.selectedExercises!).join(','));
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
@@ -294,18 +291,25 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
+        const expectedParams = new HttpParams()
+            .set('resourceType', DeepLinkingType.COMPETENCY)
+            .set('ltiIdToken', '')
+            .set('clientRegistrationId', '')
+            .set('contentIds', '')
+            .toString();
+
         expect(httpMock.post).toHaveBeenCalledWith(
             `api/lti/lti13/deep-linking/${component.courseId}`,
             null,
             expect.objectContaining({
                 observe: 'response',
                 params: expect.objectContaining({
-                    resourceType: DeepLinkingType.COMPETENCY,
-                    ltiIdToken: '',
-                    clientRegistrationId: '',
+                    toString: expect.any(Function),
                 }),
             }),
         );
+
+        expect(httpMock.post.mock.calls[0][2].params.toString()).toBe(expectedParams);
     }));
 
     it('should send deep link request when learning path is selected', fakeAsync(() => {
@@ -321,7 +325,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', '');
+        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
@@ -342,7 +346,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', '');
+        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
@@ -367,7 +371,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LECTURE).set('contentIds', '1,2').set('ltiIdToken', '').set('clientRegistrationId', '');
+        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LECTURE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1,2');
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
