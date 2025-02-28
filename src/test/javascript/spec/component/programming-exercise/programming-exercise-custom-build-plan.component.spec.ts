@@ -3,7 +3,6 @@ import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programm
 import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +16,12 @@ import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/progr
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
@@ -57,9 +62,15 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExercise.buildConfig!.windfile = windfile;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(MonacoEditorComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, Renderer2],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                Renderer2,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

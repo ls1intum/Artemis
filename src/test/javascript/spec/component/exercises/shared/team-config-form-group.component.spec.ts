@@ -6,7 +6,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { Subject } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Config Form Group Component', () => {
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
@@ -16,7 +17,7 @@ describe('Team Config Form Group Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

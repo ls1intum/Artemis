@@ -15,16 +15,17 @@
             "onlyYou": "Nur du",
             "archived": "Archiviert",
             "sendMessage": "Senden",
+            "saveMessage": "Speichern",
             "goToExercise": "Zur Aufgabe gehen",
             "goToLecture": "Zur Vorlesung gehen",
             "goToExam": "Zur Klausur gehen",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",
-                "searchBarPlaceholder": "Suche in der aktuellen Konversation nach Nachrichten",
-                "searchResultsMultiple": "{{ count }} Nachrichten gefunden ",
-                "searchResultsSingle": "1 Nachricht gefunden",
-                "searchResultsNone": "Keine Nachrichten gefunden"
+                "searchBarPlaceholder": "Suche im aktuellen Kanal",
+                "searchResultsMultiple": "{{ count }} Ergebnisse",
+                "searchResultsSingle": "1 Ergebnis",
+                "searchResultsNone": "Keine Ergebnisse"
             },
             "threadSideBar": {
                 "label": "Thread",
@@ -35,8 +36,8 @@
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
-                "show": "Konversationen zeigen",
-                "hide": "Konversationen ausblenden",
+                "show": "Wiederherstellen",
+                "hide": "Archivieren",
                 "notFound": "Keine Konversation gefunden",
                 "favoriteChannels": "Favoriten",
                 "hiddenChannels": "Ausgeblendet",

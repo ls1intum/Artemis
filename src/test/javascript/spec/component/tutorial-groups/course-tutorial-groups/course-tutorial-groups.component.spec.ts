@@ -5,21 +5,27 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
@@ -35,7 +41,7 @@ describe('CourseTutorialGroupsComponent', () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(SearchFilterPipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
@@ -56,6 +62,11 @@ describe('CourseTutorialGroupsComponent', () => {
                         params: of({ tutorialGroupId: 5 }),
                     },
                 },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

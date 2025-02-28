@@ -64,6 +64,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testESLintParser() throws IOException {
+        testParserWithFile("eslint.sarif", "eslint.json");
+    }
+
+    @Test
     void testPMDCPDParser() throws IOException {
         testParserWithFile("cpd.xml", "pmd_cpd.txt");
     }

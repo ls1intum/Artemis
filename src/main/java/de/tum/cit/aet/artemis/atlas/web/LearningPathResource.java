@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 @Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.LearningPaths)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class LearningPathResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);

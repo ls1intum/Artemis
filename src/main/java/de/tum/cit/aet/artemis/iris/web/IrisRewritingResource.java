@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextReques
  */
 @Profile(PROFILE_IRIS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/iris/")
 public class IrisRewritingResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisRewritingResource.class);
