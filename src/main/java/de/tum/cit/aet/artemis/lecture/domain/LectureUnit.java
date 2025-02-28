@@ -17,6 +17,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -78,6 +79,10 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
+    @OneToOne(mappedBy = "lectureUnit")
+    @JsonIgnore
+    protected LectureTranscription lectureTranscription;
+
     public String getName() {
         return name;
     }
@@ -109,6 +114,14 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
         this.competencyLinks = competencyLinks;
+    }
+
+    public LectureTranscription getLectureTranscription() {
+        return lectureTranscription;
+    }
+
+    public void setLectureTranscription(LectureTranscription lectureTranscription) {
+        this.lectureTranscription = lectureTranscription;
     }
 
     @JsonIgnore(false)

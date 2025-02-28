@@ -1,0 +1,21 @@
+<div>
+    <h1>Lecture Transcription</h1>
+    <div>
+        <h2>Ingest</h2>
+        <p>Ingest transcription into Pyris Weaviate DB</p>
+        <input placeholder="Course Id" [(ngModel)]="ingestCourseIdInput" />
+        <input placeholder="Lecture Id" [(ngModel)]="ingestLectureIdInput" />
+        <input placeholder="Lecture Unit Id" [(ngModel)]="ingestLectureUnitIdInput" />
+        <jhi-button id="ingest-transcription-button" [icon]="faCheck" (onClick)="ingestTranscription()" />
+    </div>
+    <div class="insert-db-container">
+        <h2>Create</h2>
+        <p>Create transcription into Artemis DB</p>
+        <input placeholder="Lecture Id" [(ngModel)]="createLectureIdInput" />
+        <input placeholder="Lecture Unit Id" [(ngModel)]="createLectureUnitIdInput" />
+        <div class="insert-transcription-row">
+            <textarea placeholder="Transcription as JSON" class="insert-transcription-area" [(ngModel)]="transcriptionInput"></textarea>
+            <jhi-button id="create-transcription-button" [icon]="faCheck" (onClick)="createTranscription()" />
+        </div>
+    </div>
+</div>
