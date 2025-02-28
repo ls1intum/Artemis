@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, EventEmitter } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -9,7 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject } from 'rxjs';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -24,9 +23,9 @@ describe('DeleteDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
             declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), ConfirmEntityNameComponent],
-            providers: [JhiLanguageHelper, AlertService],
+            providers: [JhiLanguageHelper, AlertService, MockProvider(NgbActiveModal)],
         }).compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);
         comp = fixture.componentInstance;

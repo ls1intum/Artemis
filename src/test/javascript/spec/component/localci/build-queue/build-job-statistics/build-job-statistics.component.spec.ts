@@ -2,10 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuildJobStatisticsComponent } from '../../../../../../../main/webapp/app/localci/build-queue/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from '../../../../../../../main/webapp/app/entities/programming/build-job.model';
-import { ArtemisTestModule } from '../../../../test.module';
 import { BuildQueueService } from '../../../../../../../main/webapp/app/localci/build-queue/build-queue.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('BuildJobStatisticsComponent', () => {
     let component: BuildJobStatisticsComponent;
@@ -30,10 +33,12 @@ describe('BuildJobStatisticsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BuildJobStatisticsComponent],
+            imports: [BuildJobStatisticsComponent],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

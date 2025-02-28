@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupCommunicationApi;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -43,16 +43,16 @@ public class ConversationDTOService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    private final TutorialGroupRepository tutorialGroupRepository;
+    private final Optional<TutorialGroupCommunicationApi> tutorialGroupCommunicationApi;
 
     private final CourseRepository courseRepository;
 
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository) {
+            ChannelAuthorizationService channelAuthorizationService, Optional<TutorialGroupCommunicationApi> tutorialGroupCommunicationApi, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
-        this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupCommunicationApi = tutorialGroupCommunicationApi;
         this.courseRepository = courseRepository;
     }
 
@@ -135,11 +135,13 @@ public class ConversationDTOService {
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
         channelDTO.setNumberOfMembers(channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
                 : conversationParticipantRepository.countByConversationId(channel.getId()));
-        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
-        tutorialGroup.ifPresent(tg -> {
-            channelDTO.setTutorialGroupId(tg.getId());
-            channelDTO.setTutorialGroupTitle(tg.getTitle());
-        });
+        if (tutorialGroupCommunicationApi.isPresent()) {
+            var tutorialGroupCommunicationDetails = tutorialGroupCommunicationApi.get().getTutorialGroupCommunicationDetails(channel.getId());
+            if (tutorialGroupCommunicationDetails != null) {
+                channelDTO.setTutorialGroupId(tutorialGroupCommunicationDetails.getFirst());
+                channelDTO.setTutorialGroupTitle(tutorialGroupCommunicationDetails.getSecond());
+            }
+        }
         return channelDTO;
     }
 
@@ -163,11 +165,13 @@ public class ConversationDTOService {
         channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, requestingUser, participantOptional));
 
-        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
-        tutorialGroup.ifPresent(tg -> {
-            channelDTO.setTutorialGroupId(tg.getId());
-            channelDTO.setTutorialGroupTitle(tg.getTitle());
-        });
+        if (tutorialGroupCommunicationApi.isPresent()) {
+            var tutorialGroupCommunicationDetails = tutorialGroupCommunicationApi.get().getTutorialGroupCommunicationDetails(channel.getId());
+            if (tutorialGroupCommunicationDetails != null) {
+                channelDTO.setTutorialGroupId(tutorialGroupCommunicationDetails.getFirst());
+                channelDTO.setTutorialGroupTitle(tutorialGroupCommunicationDetails.getSecond());
+            }
+        }
 
         return channelDTO;
     }

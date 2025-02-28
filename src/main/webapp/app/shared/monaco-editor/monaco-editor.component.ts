@@ -157,43 +157,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.onBlurEditor.emit();
         });
 
-        this.customBackspaceCommandId =
-            this._editor.addCommand(monaco.KeyCode.Backspace, () => {
-                const model = this._editor.getModel();
-                const selection = this._editor.getSelection();
-                if (!model || !selection) return;
+        this._editor.onDidFocusEditorText(() => {
+            this.registerCustomBackspaceAction(this._editor);
+        });
 
-                if (!selection.isEmpty()) {
-                    this._editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
-
-                const lineNumber = selection.startLineNumber;
-                const column = selection.startColumn;
-                const lineContent = model.getLineContent(lineNumber);
-
-                const textBeforeCursor = lineContent.substring(0, column - 1);
-                const splitter = new Graphemer();
-                const graphemes = splitter.splitGraphemes(textBeforeCursor);
-
-                if (graphemes.length === 0) return;
-
-                graphemes.pop();
-                const newTextBeforeCursor = graphemes.join('');
-                const textAfterCursor = lineContent.substring(column - 1);
-
-                const newLineContent = newTextBeforeCursor + textAfterCursor;
-                model.pushEditOperations(
-                    [],
-                    [
-                        {
-                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                            text: newLineContent,
-                        },
-                    ],
-                    () => null,
-                );
-            }) || undefined;
+        this.registerCustomBackspaceAction(this._editor);
     }
 
     ngOnDestroy() {
@@ -487,5 +455,56 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     public getCustomBackspaceCommandId(): string | undefined {
         return this.customBackspaceCommandId;
+    }
+
+    /**
+     * Registers a custom backspace command that deletes the last grapheme cluster when pressing backspace.
+     * @param editor The editor to register the command for.
+     */
+    private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
+        this.customBackspaceCommandId =
+            editor.addCommand(monaco.KeyCode.Backspace, () => {
+                const model = editor.getModel();
+                const selection = editor.getSelection();
+                if (!model || !selection) return;
+
+                if (!selection.isEmpty()) {
+                    editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
+
+                const lineNumber = selection.startLineNumber;
+                const column = selection.startColumn;
+                const lineContent = model.getLineContent(lineNumber);
+
+                const textBeforeCursor = lineContent.substring(0, column - 1);
+                const splitter = new Graphemer();
+                const graphemes = splitter.splitGraphemes(textBeforeCursor);
+
+                if (textBeforeCursor.length === 0) {
+                    editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
+
+                const lastGrapheme = graphemes.pop();
+                const deletedLength = lastGrapheme?.length ?? 1;
+                const newTextBeforeCursor = graphemes.join('');
+                const textAfterCursor = lineContent.substring(column - 1);
+
+                const newLineContent = newTextBeforeCursor + textAfterCursor;
+
+                model.pushEditOperations(
+                    [],
+                    [
+                        {
+                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                            text: newLineContent,
+                        },
+                    ],
+                    () => null,
+                );
+                const newCursorPosition = column - deletedLength;
+                editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
+            }) || undefined;
     }
 }

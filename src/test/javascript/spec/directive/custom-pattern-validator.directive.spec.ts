@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 
 @Component({
@@ -19,7 +18,7 @@ describe('CustomPatternValidatorDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, CommonModule, FormsModule],
+            imports: [CommonModule, FormsModule],
         }).compileComponents();
         fixture = TestBed.createComponent(CustomPatternComponent);
         component = fixture.componentInstance;

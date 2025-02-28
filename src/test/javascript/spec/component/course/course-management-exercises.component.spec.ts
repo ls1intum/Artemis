@@ -12,12 +12,15 @@ import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/t
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { of } from 'rxjs';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -30,7 +33,6 @@ describe('Course Management Exercises Component', () => {
     const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementExercisesComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -52,6 +54,9 @@ describe('Course Management Exercises Component', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);

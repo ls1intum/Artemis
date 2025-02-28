@@ -16,7 +16,7 @@ export class ModelingAssessmentService {
 
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
-    private resourceUrl = 'api';
+    private resourceUrl = 'api/modeling';
 
     saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, assessmentNote?: string, submit = false): Observable<Result> {
         let params = new HttpParams();

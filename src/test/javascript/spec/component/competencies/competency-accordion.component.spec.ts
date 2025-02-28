@@ -15,7 +15,6 @@ describe('CompetencyAccordionComponent', () => {
     let component: CompetencyAccordionComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
             providers: [MockProvider(TranslateService)],
             schemas: [],

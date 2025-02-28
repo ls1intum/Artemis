@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -28,11 +27,10 @@ describe('ProgrammingExercise Service', () => {
     let httpMock: HttpTestingController;
 
     let defaultProgrammingExercise: ProgrammingExercise;
-    const resourceUrl = 'api/programming-exercises';
+    const resourceUrl = 'api/programming/programming-exercises';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -293,7 +291,7 @@ describe('ProgrammingExercise Service', () => {
         expected.zipFileForImport = dummyFile;
         request.zipFileForImport = dummyFile;
         service.importFromFile(request, course.id).subscribe((resp) => expect(resp.body).toEqual(expected));
-        const url = `api/courses/1/programming-exercises/import-from-file`;
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
         tick();

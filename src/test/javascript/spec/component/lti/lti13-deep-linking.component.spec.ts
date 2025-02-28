@@ -153,7 +153,7 @@ describe('Lti13DeepLinkingComponent', () => {
         tick();
 
         expect(component.isLinking).toBeFalse();
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
             params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
@@ -170,7 +170,7 @@ describe('Lti13DeepLinkingComponent', () => {
         tick();
 
         expect(component.isLinking).toBeFalse();
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
             params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
@@ -189,7 +189,7 @@ describe('Lti13DeepLinkingComponent', () => {
         httpMock.post.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
             params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });

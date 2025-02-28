@@ -55,7 +55,6 @@ describe('BuildQueueService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

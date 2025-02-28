@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture/")
 public class LectureResource {
 
     private static final Logger log = LoggerFactory.getLogger(LectureResource.class);
@@ -125,7 +125,7 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
-        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+        return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -264,7 +264,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
-        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+        return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**

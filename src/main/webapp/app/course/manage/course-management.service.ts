@@ -45,7 +45,7 @@ export class CourseManagementService {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
 
-    private resourceUrl = 'api/courses';
+    private resourceUrl = 'api/core/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -79,7 +79,7 @@ export class CourseManagementService {
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
     updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
+        return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
@@ -229,7 +229,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
-        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
+        return this.http.get<StudentParticipation[]>(`api/exercise/courses/${courseId}/participations`);
     }
 
     /**

@@ -23,7 +23,7 @@ export class QuizPoolService {
      */
     update(courseId: number, examId: number, quizPool: QuizPool, req?: any): Observable<HttpResponse<QuizPool>> {
         const options = createRequestOption(req);
-        return this.http.put<QuizPool>(`api/courses/${courseId}/exams/${examId}/quiz-pools`, quizPool, { params: options, observe: 'response' });
+        return this.http.put<QuizPool>(`api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`, quizPool, { params: options, observe: 'response' });
     }
 
     /**
@@ -34,6 +34,6 @@ export class QuizPoolService {
      * @return the quiz pool that belongs to the given course id and exam id
      */
     find(courseId: number, examId: number): Observable<HttpResponse<QuizPool>> {
-        return this.http.get<QuizPool>(`api/courses/${courseId}/exams/${examId}/quiz-pools`, { observe: 'response' });
+        return this.http.get<QuizPool>(`api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`, { observe: 'response' });
     }
 }

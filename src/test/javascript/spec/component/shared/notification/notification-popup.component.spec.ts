@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,13 +6,13 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReplaySubject } from 'rxjs';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
@@ -52,14 +52,14 @@ describe('Notification Popup Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [NotificationPopupComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                provideHttpClient(),
             ],
         })
             .compileComponents()
