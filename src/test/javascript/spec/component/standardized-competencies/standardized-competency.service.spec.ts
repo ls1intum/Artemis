@@ -52,23 +52,6 @@ describe('StandardizedCompetencyService', () => {
         expect(actualCompetency.body).toEqual(expectedCompetency);
     }));
 
-    it('should get a knowledge area', fakeAsync(() => {
-        let actualKnowledgeArea = new HttpResponse<KnowledgeArea>();
-        const expectedKnowledgeArea = defaultKnowledgeArea;
-        const returnedFromService: KnowledgeArea = { ...expectedKnowledgeArea };
-
-        standardizedCompetencyService
-            .getKnowledgeArea(1)
-            .pipe(take(1))
-            .subscribe((resp) => (actualKnowledgeArea = resp));
-
-        const req = httpTestingController.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-
-        expect(actualKnowledgeArea.body).toEqual(expectedKnowledgeArea);
-    }));
-
     it('should get all for tree view', fakeAsync(() => {
         let actualResult = new HttpResponse<KnowledgeAreaDTO[]>();
         const expectedResult: KnowledgeAreaDTO[] = [
