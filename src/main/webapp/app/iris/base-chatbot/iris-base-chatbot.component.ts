@@ -25,6 +25,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -100,6 +101,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
+    protected route = inject(ActivatedRoute);
 
     // Icons
     faTrash = faTrash;
@@ -122,6 +124,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     rateLimitSubscription: Subscription;
     activeStatusSubscription: Subscription;
     suggestionsSubscription: Subscription;
+    routeSubscription: Subscription;
 
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
@@ -164,6 +167,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     ngOnInit() {
+        this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
+            if (params?.irisQuestion) {
+                this.newMessageTextContent = params.irisQuestion;
+            }
+        });
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
@@ -232,6 +240,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
         this.suggestionsSubscription.unsubscribe();
+        this.routeSubscription?.unsubscribe();
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {

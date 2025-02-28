@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 
 export enum IrisLogoSize {
     FLUID = 'fluid',
+    TEXT = 'text',
     SMALL = 'small',
     MEDIUM = 'medium',
     BIG = 'big',
@@ -30,6 +31,8 @@ export class IrisLogoComponent {
 
     classList = computed(() => {
         switch (this.size()) {
+            case IrisLogoSize.TEXT:
+                return 'text';
             case IrisLogoSize.SMALL:
                 return 'small';
             case IrisLogoSize.MEDIUM:

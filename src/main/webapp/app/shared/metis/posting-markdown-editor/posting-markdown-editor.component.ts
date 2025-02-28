@@ -84,6 +84,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     isFormGroupValid = input<boolean>(false);
     editType = input<PostingEditType>();
 
+    channelSubTypeReferenceRouterLink = input<string>('');
+
     readonly EditType = PostingEditType.CREATE;
     /**
      * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).

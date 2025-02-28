@@ -614,4 +614,26 @@ describe('IrisBaseChatbotComponent', () => {
             expect(button).toBeNull();
         });
     });
+
+    it('should set irisQuestion onInit when provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe(mockQueryParams.irisQuestion);
+    });
+
+    it('should leave irisQuestion empty onInit when no question provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe('');
+    });
 });
