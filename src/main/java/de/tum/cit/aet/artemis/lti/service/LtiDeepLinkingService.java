@@ -125,7 +125,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with competencies.
      */
-    private List<LtiContentItem> populateCompetencyContentItems(String courseId) {
+    List<LtiContentItem> populateCompetencyContentItems(String courseId) {
         Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(Long.parseLong(courseId))
                 .flatMap(course -> course.getCompetencies().stream().findFirst());
         String launchUrl = buildContentUrl(courseId, "competencies");
@@ -136,7 +136,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with Iris.
      */
-    private List<LtiContentItem> populateIrisContentItems(String courseId) {
+    List<LtiContentItem> populateIrisContentItems(String courseId) {
         Optional<Course> courseOpt = courseRepository.findById(Long.parseLong(courseId));
         if (courseOpt.isPresent() && courseOpt.get().getStudentCourseAnalyticsDashboardEnabled()) {
             String launchUrl = buildContentUrl(courseId, "dashboard");
@@ -150,7 +150,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with learning paths.
      */
-    private List<LtiContentItem> populateLearningPathsContentItems(String courseId) {
+    List<LtiContentItem> populateLearningPathsContentItems(String courseId) {
         boolean hasLearningPaths = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(Long.parseLong(courseId)).getLearningPathsEnabled();
         if (hasLearningPaths) {
             String launchUrl = buildContentUrl(courseId, "learning-path");
@@ -184,7 +184,7 @@ public class LtiDeepLinkingService {
     /**
      * Create a content item for an exercise.
      */
-    private LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
+    LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
         LineItem lineItem = exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED ? new LineItem(DEFAULT_SCORE_MAXIMUM) : null;
         return new LtiContentItem("ltiResourceLink", exercise.getTitle(), url, lineItem);
     }
