@@ -5,7 +5,7 @@
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
-                            <fa-icon class="hidden-icon" [icon]="faEyeSlash"></fa-icon>
+                            <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
                         </span>
                     </div>
                 </ng-container>
@@ -22,7 +22,7 @@
                     [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
                 >
-                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash"></fa-icon>
+                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash" />
                 </button>
             }
         </div>

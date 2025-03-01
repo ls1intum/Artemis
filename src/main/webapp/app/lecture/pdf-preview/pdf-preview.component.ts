@@ -104,12 +104,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     constructor() {
-        effect(
-            () => {
-                this.hiddenPagesChanged();
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.hiddenPagesChanged();
+        });
     }
 
     /**
