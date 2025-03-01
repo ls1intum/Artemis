@@ -2,12 +2,14 @@
     [lectureUnit]="lectureUnit()"
     [icon]="getAttachmentIcon()"
     [showViewIsolatedButton]="true"
+    [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
     [viewIsolatedButtonLabel]="'artemisApp.attachmentUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleDownload()"
+    (onShowOriginalVersion)="handleOriginalVersion()"
 >
     @if (lectureUnit().attachment?.uploadDate) {
         <div>

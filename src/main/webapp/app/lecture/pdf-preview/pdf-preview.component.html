@@ -43,9 +43,12 @@
             <jhi-pdf-preview-thumbnail-grid-component
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
+                [hiddenPages]="hiddenPages()"
+                [isAttachmentUnit]="!!attachmentUnit()"
                 (isPdfLoading)="isPdfLoading.set($event)"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
+                (newHiddenPagesOutput)="hiddenPages.set($event)"
             />
         } @else {
             <div class="empty-pdf-container"></div>
@@ -67,7 +70,12 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0 || !isFileChanged()">
+                <button
+                    type="submit"
+                    (click)="updateAttachmentWithFile()"
+                    class="btn btn-primary"
+                    [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
+                >
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

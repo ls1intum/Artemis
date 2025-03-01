@@ -20,4 +20,5 @@ export class Attachment implements BaseEntity {
     lecture?: Lecture;
     exercise?: Exercise;
     attachmentUnit?: AttachmentUnit;
+    studentVersion?: string;
 }

@@ -212,7 +212,7 @@ describe('AttachmentUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/lecture/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

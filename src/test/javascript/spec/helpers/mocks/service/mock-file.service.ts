@@ -22,4 +22,6 @@ export class MockFileService {
 
     replaceLectureAttachmentPrefixAndUnderscores = (link: string) => link;
     replaceAttachmentPrefixAndUnderscores = (link: string) => link;
+
+    createStudentLink = (link: string) => link;
 }
