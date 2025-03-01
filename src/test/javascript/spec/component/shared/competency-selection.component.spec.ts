@@ -2,7 +2,7 @@ import { CompetencySelectionComponent } from 'app/shared/competency-selection/co
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink } from 'app/entities/competency.model';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -15,12 +15,19 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { PROFILE_ATLAS } from '../../../../../main/webapp/app/app.constants';
+import { ProfileInfo } from '../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
+    let profileService: ProfileService;
+
+    let getProfileInfoMock: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,6 +42,7 @@ describe('CompetencySelection', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -46,6 +54,13 @@ describe('CompetencySelection', () => {
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
+                profileService = TestBed.inject(ProfileService);
+
+                const profileInfo = { activeProfiles: [PROFILE_ATLAS] } as ProfileInfo;
+                const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
+                profileService = fixture.debugElement.injector.get(ProfileService);
+                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoMock.mockReturnValue(profileInfoSubject);
             });
     });
 
