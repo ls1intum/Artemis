@@ -72,7 +72,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         // it's an explicit design decision to don't clutter every component that uses this component with the need to check if the atlas profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
-            if (atlasEnabled === true) {
+            if (atlasEnabled) {
                 this.initialize();
             }
         });
