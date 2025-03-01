@@ -25,7 +25,7 @@ export class LectureCreationPage {
      * @returns A promise that resolves with the response of the lecture creation API call.
      */
     async save() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/lectures`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/lecture/lectures`);
         await this.page.click('#save-entity');
         return await responsePromise;
     }

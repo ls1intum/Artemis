@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(".well-known/")
+@RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AppleAppSiteAssociationResource {
 
     @Value("${artemis.iosAppId: #{null}}")

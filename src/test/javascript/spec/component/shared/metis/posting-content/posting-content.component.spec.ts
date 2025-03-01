@@ -539,7 +539,7 @@ describe('PostingContentComponent', () => {
                 const matches = component.getPatternMatches();
                 component.computePostingContentParts(matches);
                 // the attachment directory that is removed when showing the text in edit mode
-                const attachmentDirectory = 'api/files/attachments/';
+                const attachmentDirectory = 'api/core/files/attachments/';
                 expect(component.postingContentParts()).toEqual([
                     {
                         contentBeforeReference: 'I want to reference ',
@@ -558,7 +558,7 @@ describe('PostingContentComponent', () => {
                 const matches = component.getPatternMatches();
                 component.computePostingContentParts(matches);
                 // the attachment directory that is removed when showing the text in edit mode
-                const attachmentDirectory = 'api/files/attachments/';
+                const attachmentDirectory = 'api/core/files/attachments/';
                 expect(component.postingContentParts()).toEqual([
                     {
                         contentBeforeReference: 'I want to reference ',
@@ -577,7 +577,7 @@ describe('PostingContentComponent', () => {
                 const matches = component.getPatternMatches();
                 component.computePostingContentParts(matches);
                 // the attachment directory that is removed when showing the text in edit mode
-                const attachmentDirectory = 'api/files/attachments/';
+                const attachmentDirectory = 'api/core/files/attachments/';
                 expect(component.postingContentParts()).toEqual([
                     {
                         contentBeforeReference: 'I want to reference ',

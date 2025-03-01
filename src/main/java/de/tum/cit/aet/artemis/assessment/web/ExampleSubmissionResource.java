@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class ExampleSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);

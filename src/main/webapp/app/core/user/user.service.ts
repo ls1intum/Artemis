@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 export class UserService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/users';
+    public resourceUrl = 'api/core/users';
 
     /**
      * Search for a user on the server by login or name.

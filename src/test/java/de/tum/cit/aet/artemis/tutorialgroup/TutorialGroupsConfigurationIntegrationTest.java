@@ -182,7 +182,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
         textExercise.setChannelName("testchannelname");
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
