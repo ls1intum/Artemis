@@ -215,18 +215,18 @@ public class LtiDeepLinkingService {
     /**
      * Build a content URL for deep linking.
      */
-    private String buildContentUrl(String courseId, String resourceType, String resourceId) {
+    String buildContentUrl(String courseId, String resourceType, String resourceId) {
         return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
     }
 
-    private String buildContentUrl(String courseId, String resourceType) {
+    String buildContentUrl(String courseId, String resourceType) {
         return String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
     }
 
     /**
      * Validate deep linking response settings.
      */
-    private void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {
+    void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {
         if (isEmptyString(jwt)) {
             throw new BadRequestAlertException("Deep linking response cannot be created", "LTI", "deepLinkingResponseFailed");
         }

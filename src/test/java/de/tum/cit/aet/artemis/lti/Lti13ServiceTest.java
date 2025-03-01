@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -63,6 +64,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
+import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
@@ -551,6 +553,30 @@ class Lti13ServiceTest {
         assertThat(course).isPresent();
         assertThat(course.get().getId()).isEqualTo(456L);
         verify(courseRepository).findById(456L);
+    }
+
+    @Test
+    void getTargetLinkType_competencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/competencies";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.COMPETENCY);
+    }
+
+    @Test
+    void getLectureFromTargetLink_validLecturePath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/lectures/456";
+        Lecture mockLecture = new Lecture();
+        mockLecture.setId(456L);
+
+        when(lectureRepository.findById(456L)).thenReturn(Optional.of(mockLecture));
+
+        Optional<Lecture> lecture = lti13Service.getLectureFromTargetLink(targetLinkUrl);
+
+        assertThat(lecture).isPresent();
+        assertThat(lecture.get().getId()).isEqualTo(456L);
+        verify(lectureRepository).findById(456L);
     }
 
     private State getValidStateForNewResult(Result result) {

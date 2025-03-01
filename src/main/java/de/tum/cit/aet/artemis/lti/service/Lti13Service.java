@@ -344,7 +344,7 @@ public class Lti13Service {
      * @param targetLinkUrl to retrieve a Lecture
      * @return the Lecture or nothing otherwise
      */
-    private Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
+    public Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;
@@ -416,7 +416,7 @@ public class Lti13Service {
      * @param targetLinkUrl the target link URL to check
      * @return the type of content referenced by the URL (e.g., COMPETENCY, LEARNING_PATH, IRIS, or UNKNOWN)
      */
-    private DeepLinkingType getTargetLinkType(String targetLinkUrl) {
+    public DeepLinkingType getTargetLinkType(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
         String targetLinkPath;
 
