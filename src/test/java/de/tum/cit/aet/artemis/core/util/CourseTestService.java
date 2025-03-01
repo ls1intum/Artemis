@@ -1174,6 +1174,21 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
+        Course course = courseUtilService.createCourseWithExercisesAndLecturesAndCompetencies();
+        Course receivedCourse = request.get("/api/core/courses/" + course.getId() + "/with-exercises-lectures-competencies", HttpStatus.OK, Course.class);
+
+        assertThat(receivedCourse.getExercises()).isNotEmpty();
+        assertThat(receivedCourse.getExercises()).isEqualTo(course.getExercises());
+
+        assertThat(receivedCourse.getLectures()).isNotEmpty();
+        assertThat(receivedCourse.getLectures()).isEqualTo(course.getLectures());
+
+        assertThat(receivedCourse.getCompetencies()).isNotEmpty();
+        assertThat(receivedCourse.getCompetencies()).isEqualTo(course.getCompetencies());
+    }
+
+    // Test
     public void testGetCourseWithOrganizations() throws Exception {
         Course courseWithOrganization = courseUtilService.createCourseWithOrganizations();
         Course course = request.get("/api/core/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
