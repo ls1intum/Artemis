@@ -30,6 +30,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
+import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import io.jsonwebtoken.Jwts;
 
 class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
@@ -53,15 +54,37 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deepLinkingFailsAsStudent() throws Exception {
-        var params = getDeepLinkingRequestParams();
+        var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deepLinkingFailsWithoutExerciseId() throws Exception {
+    void deepLinkingFailsWithoutContentIdAndType() throws Exception {
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsWithoutContentIdForExercise() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resourceType", DeepLinkingType.EXERCISE.toString());
+        params.add("ltiIdToken", createJwtForTest());
+        params.add("clientRegistrationId", "registration-id");
+
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsWithoutContentIdForLecture() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resourceType", DeepLinkingType.LECTURE.toString());
+        params.add("ltiIdToken", createJwtForTest());
+        params.add("clientRegistrationId", "registration-id");
+
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -71,7 +94,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
-        var params = getDeepLinkingRequestParams();
+        var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
@@ -91,7 +114,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
                 }
                 """;
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
-        var params = getDeepLinkingRequestParams();
+        var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
@@ -106,12 +129,12 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         RSAKey mockRsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).privateKey((RSAPrivateKey) keyPair.getPrivate()).build();
 
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(mockRsaKey);
-        var params = getDeepLinkingRequestParams();
+        var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
     }
 
-    private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
+    private LinkedMultiValueMap<String, String> getDeepLinkingRequestParamsForExercise() {
         var params = new LinkedMultiValueMap<String, String>();
         Set<Long> exerciseIds = new HashSet<>();
         var exercise = course.getExercises().stream().findFirst().orElseThrow();
@@ -119,7 +142,8 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
 
         String exerciseIdsParam = exerciseIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
-        params.add("exerciseIds", exerciseIdsParam);
+        params.add("resourceType", DeepLinkingType.EXERCISE.toString());
+        params.add("contentIds", exerciseIdsParam);
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
         return params;
