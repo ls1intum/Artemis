@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIInfoContributor;
 
 class LocalCIInfoContributorTest {
@@ -13,7 +14,7 @@ class LocalCIInfoContributorTest {
     @Test
     void testContribute() {
         Info.Builder builder = new Info.Builder();
-        LocalCIInfoContributor localCIInfoContributor = new LocalCIInfoContributor();
+        LocalCIInfoContributor localCIInfoContributor = new LocalCIInfoContributor(new ProgrammingLanguageConfiguration());
         ReflectionTestUtils.setField(localCIInfoContributor, "minInstructorBuildTimeoutOption", 10);
         ReflectionTestUtils.setField(localCIInfoContributor, "maxInstructorBuildTimeoutOption", 240);
         ReflectionTestUtils.setField(localCIInfoContributor, "defaultInstructorBuildTimeoutOption", 120);

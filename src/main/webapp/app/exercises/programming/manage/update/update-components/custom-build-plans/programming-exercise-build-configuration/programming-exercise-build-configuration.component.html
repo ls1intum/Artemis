@@ -91,5 +91,29 @@
                 <span class="slider-value">{{ timeout() }} s</span>
             </span>
         </div>
+
+        <div class="mb-2">
+            <label>
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
+            <input type="text" class="form-control" name="cpuCount" id="field_dockerCpuCount" [value]="cpuCount" (input)="onCpuCountChange($event)" />
+        </div>
+
+        <div class="mb-2">
+            <label>
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
+            <input type="text" class="form-control" name="memory" id="field_memory" [value]="memory" (input)="onMemoryChange($event)" />
+        </div>
+
+        <div class="mb-2">
+            <label>
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
+            <input type="text" class="form-control" name="memorySwap" id="field_memorySwap" [value]="memorySwap" (input)="onMemorySwapChange($event)" />
+        </div>
     }
 </div>

@@ -98,7 +98,9 @@
         "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
         "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file.",
         "envVariablesTooLong": "The environment variables are too long. Please make sure that each key or value does not exceed 1000 characters.",
-        "networkAccessNotSupported": "Disabling network access is not supported for the selected programming language.",
+        "memoryLimitInvalid": "The memory limit is invalid. Please make sure it is a positive integer and larger than 6MB.",
+        "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
+        "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags."
     }
 }

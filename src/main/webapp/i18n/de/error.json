@@ -98,7 +98,9 @@
         "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
         "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch.",
         "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass jeder Schlüssel oder Wert nicht länger als 1000 Zeichen ist.",
-        "networkAccessNotSupported": "Die gewählte Programmiersprache unterstützt die Deaktivierung der Netzzugangsfunktion nicht.",
+        "memoryLimitInvalid": "Die Speicherbegrenzung ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt und größer als 6MB ist.",
+        "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
+        "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags."
     }
 }
