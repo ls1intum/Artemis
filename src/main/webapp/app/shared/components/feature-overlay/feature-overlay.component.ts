@@ -1,13 +1,11 @@
 import { Component, input } from '@angular/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feature-overlay',
     template: `
-        <div
-            ngbTooltip="{{ enabled() ? null : 'This feature is not enabled. Ask your Artemis administrator or consult the documentation for more information.' }}"
-            placement="left"
-        >
+        <div ngbTooltip="{{ enabled() ? null : ('artemisApp.featureOverlay.title' | artemisTranslate) }}" placement="left">
             <div [class.disabled]="!enabled()">
                 <ng-content></ng-content>
             </div>
@@ -21,7 +19,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
             }
         `,
     ],
-    imports: [NgbTooltip],
+    imports: [NgbTooltip, ArtemisTranslatePipe],
 })
 export class FeatureOverlayComponent {
     enabled = input<boolean>(true);
