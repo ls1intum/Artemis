@@ -565,6 +565,33 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void getTargetLinkType_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.IRIS);
+    }
+
+    @Test
+    void getTargetLinkType_learningPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/learning-path";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.LEARNING_PATH);
+    }
+
+    @Test
+    void getTargetLinkType_unknownPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/invalid-path";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.UNKNOWN);
+    }
+
+    @Test
     void getLectureFromTargetLink_validLecturePath() {
         String targetLinkUrl = "https://some-artemis-domain.org/courses/123/lectures/456";
         Lecture mockLecture = new Lecture();
