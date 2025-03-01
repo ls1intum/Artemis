@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class TutorEffortResource {
 
     private static final Logger log = LoggerFactory.getLogger(TutorEffortResource.class);

@@ -90,7 +90,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
@@ -216,7 +216,7 @@ public class FileResource {
 
         var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        var fileUpload = fileUploadService.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var fileUpload = fileUploadService.findByPath("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
             return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);

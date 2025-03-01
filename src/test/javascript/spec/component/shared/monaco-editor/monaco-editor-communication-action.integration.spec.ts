@@ -332,7 +332,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const newAttachment = {
                 id: 53,
                 name: attachmentNameWithBrackets,
-                link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
                 version: 1,
                 uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                 attachmentType: 'FILE',

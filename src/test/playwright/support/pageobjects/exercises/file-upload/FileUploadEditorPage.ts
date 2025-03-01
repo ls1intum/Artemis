@@ -21,13 +21,13 @@ export class FileUploadEditorPage {
 
     async saveAndContinue() {
         // For network requests, Playwright recommends using `waitForResponse` method.
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/exercises/*/file-upload-submissions`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/exercises/*/file-upload-submissions`);
         await this.page.click('#save');
         await responsePromise;
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/exercises/*/file-upload-submissions`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/exercises/*/file-upload-submissions`);
         await this.page.click('#submit');
         return await responsePromise;
     }

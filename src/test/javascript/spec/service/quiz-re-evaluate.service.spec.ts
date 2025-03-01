@@ -28,7 +28,7 @@ describe('QuizReEvaluateService', () => {
             expect(res.body).toEqual(quizExercise);
         });
 
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz-exercises/1/re-evaluate' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1/re-evaluate' });
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.getAll('exercise')).toBeArrayOfSize(1);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
