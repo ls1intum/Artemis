@@ -10,9 +10,11 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
-import { ArtemisTestModule } from '../../../../../test.module';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -27,8 +29,14 @@ describe('TutorialGroupRowButtonsComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(NgbModal), { provide: Router, useValue: router }],
+            imports: [MockModule(RouterModule)],
+            providers: [
+                MockProvider(TutorialGroupsService),
+                MockProvider(NgbModal),
+                { provide: Router, useValue: router },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);

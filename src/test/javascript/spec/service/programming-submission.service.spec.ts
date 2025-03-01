@@ -84,7 +84,6 @@ describe('ProgrammingSubmissionService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -336,7 +335,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // This load the submissions for participation 1 and 2, but not for 3.
         lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
-        const request = httpMock.expectOne('api/programming-exercises/3/latest-pending-submissions');
+        const request = httpMock.expectOne('api/programming/programming-exercises/3/latest-pending-submissions');
 
         // When retrieving the status of participation 1 we should wait until a result of the exercise request is present
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
@@ -377,7 +376,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(submissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
     it('should correctly return the submission state based on the servers response', () => {
@@ -397,7 +396,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
     it('should recalculate the result eta based on the number of open submissions', () => {
@@ -421,7 +420,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
 
         let resultEta = -1;
         submissionService.getResultEtaInMs().subscribe((eta) => (resultEta = eta));

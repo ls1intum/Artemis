@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class FaqResource {
 
     private static final Logger log = LoggerFactory.getLogger(FaqResource.class);
@@ -94,7 +94,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
     /**

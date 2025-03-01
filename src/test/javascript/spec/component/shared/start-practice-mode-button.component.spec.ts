@@ -1,11 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -17,8 +14,10 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
     let comp: StartPracticeModeButtonComponent;
@@ -32,13 +31,9 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbPopover)],
+            imports: [MockDirective(NgbPopover)],
             declarations: [StartPracticeModeButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
-            providers: [
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: AccountService, useClass: MockAccountService }, provideHttpClient()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(StartPracticeModeButtonComponent);

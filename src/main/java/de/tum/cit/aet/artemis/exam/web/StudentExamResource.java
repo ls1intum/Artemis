@@ -81,7 +81,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exam/")
 public class StudentExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
@@ -123,8 +123,6 @@ public class StudentExamResource {
     private final ExamLiveEventsService examLiveEventsService;
 
     private final ExamLiveEventRepository examLiveEventRepository;
-
-    private static final boolean IS_TEST_RUN = false;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -251,7 +249,7 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
             }
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
                 // potentially re-schedule clustering of modeling submissions (in case Compass is active)
@@ -279,7 +277,7 @@ public class StudentExamResource {
 
         var student = userRepository.getUserByLoginElseThrow(studentLogin);
 
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, IS_TEST_RUN).orElseThrow();
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, false).orElseThrow();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
 
@@ -288,8 +286,7 @@ public class StudentExamResource {
             throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
         }
 
-        User currentUser = userRepository.getUser();
-        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser);
+        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message);
 
         return ResponseEntity.ok(event.asDTO());
     }
@@ -364,7 +361,7 @@ public class StudentExamResource {
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
+        log.debug("REST request to get the student exam of user {} for exam {} for conduction", currentUser.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 

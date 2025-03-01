@@ -1,7 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { isEmpty, take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -20,7 +19,6 @@ describe('Rating Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TutorParticipationService);

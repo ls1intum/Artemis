@@ -111,7 +111,7 @@ describe('CleanupOperationModalComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons', // Mock URL
+            url: 'https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons', // Mock URL
         });
 
         jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
@@ -133,7 +133,7 @@ describe('CleanupOperationModalComponent', () => {
         comp.executeCleanupOperation();
 
         expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
-        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons: 500 Internal Server Error');
+        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons: 500 Internal Server Error');
     });
 
     it('should close the modal', () => {

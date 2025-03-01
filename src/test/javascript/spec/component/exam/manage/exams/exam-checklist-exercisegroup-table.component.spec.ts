@@ -58,7 +58,6 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -9,7 +9,7 @@ describe('LearningPathApiService', () => {
     let httpClient: HttpTestingController;
     let learningPathApiService: LearningPathApiService;
 
-    const baseUrl = 'api';
+    const baseUrl = 'api/atlas';
 
     const learningPathId = 1;
     const courseId = 2;

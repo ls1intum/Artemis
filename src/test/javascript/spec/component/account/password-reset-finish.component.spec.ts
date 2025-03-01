@@ -1,10 +1,9 @@
 import { ElementRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -12,6 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {
     describe('PasswordResetFinishComponent', () => {
@@ -20,7 +20,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, PasswordResetFinishComponent],
+                imports: [PasswordResetFinishComponent],
                 providers: [
                     FormBuilder,
                     {
@@ -30,6 +30,7 @@ describe('Component Tests', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
+                    provideHttpClient(),
                 ],
             })
                 .overrideTemplate(PasswordResetFinishComponent, '')
