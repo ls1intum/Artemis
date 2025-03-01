@@ -21,6 +21,6 @@ export class SuspiciousSessionsService {
         if (options.ipSubnet) {
             params = params.set('ipSubnet', options.ipSubnet);
         }
-        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
+        return this.http.get<SuspiciousExamSessions[]>(`api/exam/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
     }
 }

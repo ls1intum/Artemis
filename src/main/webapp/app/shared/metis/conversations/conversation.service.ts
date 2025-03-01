@@ -31,7 +31,7 @@ export enum ConversationMemberSearchFilter {
 }
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
-    public resourceUrl = '/api/courses/';
+    public resourceUrl = '/api/communication/courses/';
 
     private http = inject(HttpClient);
     private translationService = inject(TranslateService);

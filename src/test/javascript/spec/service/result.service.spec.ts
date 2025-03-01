@@ -182,7 +182,7 @@ describe('ResultService', () => {
         tick();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(`api/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     }));
 
     it('should convert Result Response from Server', () => {

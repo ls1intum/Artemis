@@ -185,6 +185,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            if (this._activeConversation && getAsChannelDTO(conversation)?.isArchived !== getAsChannelDTO(this._activeConversation)?.isArchived) {
+                this._activeConversation = conversation;
+            }
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation?.id === conversation.id) {
                 return;

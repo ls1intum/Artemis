@@ -12,8 +12,8 @@ import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.comp
 export class BuildQueueService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api';
-    public adminResourceUrl = 'api/admin';
+    public resourceUrl = 'api/programming';
+    public adminResourceUrl = 'api/core/admin';
     nestedDtoKey = 'pageable';
 
     /**

@@ -11,7 +11,7 @@ export class AuditsService {
     query(req: any): Observable<HttpResponse<Audit[]>> {
         const params: HttpParams = createRequestOption(req);
 
-        const requestURL = 'api/admin/audits';
+        const requestURL = 'api/core/admin/audits';
 
         return this.http.get<Audit[]>(requestURL, {
             params,

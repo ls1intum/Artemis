@@ -16,7 +16,7 @@ export interface ISubmissionPolicyService {
 export class SubmissionPolicyService implements ISubmissionPolicyService {
     private http = inject(HttpClient);
 
-    public baseResourceUrl = 'api/programming-exercises/{exerciseId}/submission-policy';
+    public baseResourceUrl = 'api/programming/programming-exercises/{exerciseId}/submission-policy';
 
     /**
      * Returns the observable of the submission policy of the programming exercise with the id that
@@ -90,7 +90,7 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
     }
 
     getParticipationSubmissionCount(participationId: number): Observable<number> {
-        return this.http.get<number>(`api/participations/${participationId}/submission-count`);
+        return this.http.get<number>(`api/programming/participations/${participationId}/submission-count`);
     }
 
     /**

@@ -20,7 +20,7 @@ export class LectureService {
     private lectureUnitService = inject(LectureUnitService);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/lectures';
+    public resourceUrl = 'api/lecture/lectures';
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
@@ -88,7 +88,7 @@ export class LectureService {
     findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
         const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
                 params,
                 observe: 'response',
             })
@@ -101,7 +101,7 @@ export class LectureService {
 
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures-with-slides`, {
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {
                 observe: 'response',
             })
             .pipe(
@@ -122,7 +122,7 @@ export class LectureService {
         if (lectureId !== undefined) {
             params = params.set('lectureId', lectureId.toString());
         }
-        return this.http.post<void>(`api/courses/${courseId}/ingest`, null, {
+        return this.http.post<void>(`api/lecture/courses/${courseId}/ingest`, null, {
             params: params,
             observe: 'response',
         });
