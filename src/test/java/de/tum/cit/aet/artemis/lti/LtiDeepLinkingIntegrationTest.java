@@ -134,6 +134,17 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsWithInvalidResourceType() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resourceType", "INVALID_RESOURCE_TYPE");
+        params.add("ltiIdToken", createJwtForTest());
+        params.add("clientRegistrationId", "registration-id");
+
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+    }
+
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParamsForExercise() {
         var params = new LinkedMultiValueMap<String, String>();
         Set<Long> exerciseIds = new HashSet<>();
