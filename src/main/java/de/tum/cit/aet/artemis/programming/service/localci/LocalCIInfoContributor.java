@@ -50,14 +50,14 @@ public class LocalCIInfoContributor implements InfoContributor {
 
             switch (flag) {
                 case "--cpus" -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, Long.parseLong(value.replaceAll("[^0-9]", "")));
-                case "--memory" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY, parseMemoryString(value));
-                case "--memory-swap" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP, parseMemoryString(value));
+                case "--memory" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_MB, parseMemoryStringToMB(value));
+                case "--memory-swap" -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, parseMemoryStringToMB(value));
             }
         }
 
     }
 
-    private static long parseMemoryString(String memoryString) {
+    private static long parseMemoryStringToMB(String memoryString) {
         if (memoryString.endsWith("g\"")) {
             return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L;
         }

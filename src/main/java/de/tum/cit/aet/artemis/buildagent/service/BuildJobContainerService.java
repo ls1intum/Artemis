@@ -118,7 +118,7 @@ public class BuildJobContainerService {
         HostConfig customHostConfig;
         if (cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
-            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : hostConfig.getCpuCount();
+            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : (hostConfig.getCpuQuota() / hostConfig.getCpuPeriod());
 
             long adjustedMemory = (memory > 0)
                     ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))

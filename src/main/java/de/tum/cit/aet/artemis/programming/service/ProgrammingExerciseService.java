@@ -133,7 +133,7 @@ public class ProgrammingExerciseService {
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_DART = Pattern.compile(PACKAGE_NAME_REGEX_FOR_DART);
 
     // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
-    private static final int MIN_DOCKER_MEMORY = 6;
+    private static final int MIN_DOCKER_MEMORY_MB = 6;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -1116,8 +1116,8 @@ public class ProgrammingExerciseService {
             }
         }
 
-        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY) {
-            throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY + "MB", "Exercise", "memoryLimitInvalid");
+        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY_MB) {
+            throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY_MB + "MB", "Exercise", "memoryLimitInvalid");
         }
 
         if (dockerFlagsDTO.cpuCount() <= 0) {

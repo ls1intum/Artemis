@@ -100,7 +100,7 @@
         "envVariablesTooLong": "The environment variables are too long. Please make sure that each key or value does not exceed 1000 characters.",
         "memoryLimitInvalid": "The memory limit is invalid. Please make sure it is a positive integer and larger than 6MB.",
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
-        "memorySwapLimitInvalid": "The memory swap is invalid. Please make sure it is larger or equal to 0.",
+        "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags."
     }
 }

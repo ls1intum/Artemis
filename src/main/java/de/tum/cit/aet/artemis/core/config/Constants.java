@@ -289,9 +289,9 @@ public final class Constants {
 
     public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
 
-    public static final String DOCKER_FLAG_MEMORY = "defaultContainerMemoryLimitInMB";
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
 
-    public static final String DOCKER_FLAG_MEMORY_SWAP = "defaultContainerMemorySwapLimitInMB";
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
 
     public static final String USE_EXTERNAL = "useExternal";
 

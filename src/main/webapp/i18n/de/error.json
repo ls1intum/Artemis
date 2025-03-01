@@ -100,7 +100,7 @@
         "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass jeder Schlüssel oder Wert nicht länger als 1000 Zeichen ist.",
         "memoryLimitInvalid": "Die Speicherbegrenzung ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt und größer als 6MB ist.",
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
-        "memorySwapLimitInvalid": "Der Speicheraustausch ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
+        "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags."
     }
 }
