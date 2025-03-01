@@ -43,7 +43,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Notification Service', () => {
-    const resourceUrl = 'api/notifications';
+    const resourceUrl = 'api/communication/notifications';
 
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
@@ -212,11 +212,11 @@ describe('Notification Service', () => {
         notificationService = TestBed.inject(NotificationService);
         jest.advanceTimersByTime(20 * 1000); // simulate setInterval time passing
 
-        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/muted-conversations' });
+        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/communication/muted-conversations' });
     });
 
     afterEach(() => {
-        httpMock.expectOne({ method: 'GET', url: 'api/notification-settings' });
+        httpMock.expectOne({ method: 'GET', url: 'api/communication/notification-settings' });
         httpMock.verify();
         jest.restoreAllMocks();
         jest.clearAllTimers();
@@ -226,7 +226,7 @@ describe('Notification Service', () => {
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
             notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
-            const url = 'api/notifications';
+            const url = 'api/communication/notifications';
             expect(req.request.url).toBe(url);
         });
 

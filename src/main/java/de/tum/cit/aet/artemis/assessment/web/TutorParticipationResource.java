@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class TutorParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
@@ -93,7 +93,7 @@ public class TutorParticipationResource {
         }
 
         TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
-        return ResponseEntity.created(new URI("/api/exercises/" + exerciseId + "tutor-participations/" + tutorParticipation.getId())).body(tutorParticipation);
+        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "tutor-participations/" + tutorParticipation.getId())).body(tutorParticipation);
     }
 
     /**

@@ -30,7 +30,7 @@ describe('Quiz Participation Service', () => {
             expect(res.body!.score).toBe(10);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/practice` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/submissions/practice` });
         req.flush(mockResult);
         tick();
     }));
@@ -45,7 +45,7 @@ describe('Quiz Participation Service', () => {
             expect(res.body!.score).toBe(10);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/preview` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/quiz/exercises/${exerciseId}/submissions/preview` });
         req.flush(mockResult);
         tick();
     }));
@@ -61,7 +61,7 @@ describe('Quiz Participation Service', () => {
                 expect(res.body!.scoreInPoints).toBe(10);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/live?submit=${submit}` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/quiz/exercises/${exerciseId}/submissions/live?submit=${submit}` });
             req.flush(mockSubmission);
             tick();
         }),

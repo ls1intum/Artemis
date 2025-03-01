@@ -16,7 +16,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 export class PostService extends PostingService<Post> {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses/';
+    public resourceUrl = 'api/communication/courses/';
 
     constructor() {
         super();

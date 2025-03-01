@@ -11,8 +11,8 @@ export class OrganizationManagementService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/organizations';
-    public adminResourceUrl = 'api/admin/organizations';
+    public resourceUrl = 'api/core/organizations';
+    public adminResourceUrl = 'api/core/admin/organizations';
 
     /**
      * Send GET request to retrieve all organizations

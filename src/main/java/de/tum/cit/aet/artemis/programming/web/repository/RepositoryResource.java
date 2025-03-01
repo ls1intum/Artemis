@@ -330,11 +330,11 @@ public abstract class RepositoryResource {
             // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
             // Retrieving the default branch is not necessary if the repository is already cached.
             if (gitService.isRepositoryCached(repositoryUri)) {
-                isClean = repositoryService.isClean(repositoryUri);
+                isClean = repositoryService.isWorkingCopyClean(repositoryUri);
             }
             else {
                 String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isClean(repositoryUri, branch);
+                isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
             }
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }
