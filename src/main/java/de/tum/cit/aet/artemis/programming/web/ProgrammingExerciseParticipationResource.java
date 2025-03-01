@@ -287,7 +287,8 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Resets the specified repository to either the exercise template or graded participation
+     * Resets the specified repository to either the exercise template or graded participation. Also triggers a build
+     * for the repository that was reset.
      *
      * @param participationId       the id of the programming participation that should be reset
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
