@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -55,10 +56,12 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -97,12 +100,16 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
 
+    private final Optional<LocalVCServletService> localVCServletService;
+
+    private final GitService gitService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<LocalVCServletService> localVCServletService, GitService gitService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -117,6 +124,8 @@ public class ProgrammingExerciseParticipationResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.localVCServletService = localVCServletService;
+        this.gitService = gitService;
     }
 
     /**
@@ -312,7 +321,14 @@ public class ProgrammingExerciseParticipationResource {
             sourceURL = exercise.getVcsTemplateRepositoryUri();
         }
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL, true);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
+
+        // ToDo: Circular dependencies currently make it impossible to put this into the ProgrammingExerciseParticipationService
+        // ToDo: Major refactoring would be required
+        if (localVCServletService.isPresent()) {
+            Repository targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
+            localVCServletService.get().processNewPush(null, targetRepo);
+        }
 
         return ResponseEntity.ok().build();
     }
