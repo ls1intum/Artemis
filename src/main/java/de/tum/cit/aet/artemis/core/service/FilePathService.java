@@ -249,7 +249,7 @@ public class FilePathService {
 
     private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
         if (path.toString().contains("/student")) {
-            return URI.create("/api/files/attachments/attachment-unit/" + id + "/student/" + filename);
+            return URI.create("/api/core/files/attachments/attachment-unit/" + id + "/student/" + filename);
         }
         if (!path.toString().contains("/slide")) {
             return URI.create("/api/core/files/attachments/attachment-unit/" + id + "/" + filename);
