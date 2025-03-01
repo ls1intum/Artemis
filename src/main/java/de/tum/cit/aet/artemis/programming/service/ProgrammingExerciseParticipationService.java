@@ -343,7 +343,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Replaces all files except the .git folder of the target repository with the files from the source repository
+     * Replaces all files except the .git folder of the target repository with the files from the source repository.
      *
      * @param targetURL the repository where all files should be replaced
      * @param sourceURL the repository that should be used as source for all files
@@ -371,7 +371,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
+     * Get the participation for a given repository url and a repository type or username. This method is used by the local VC system to get the
      * participation for logging operations on the repository.
      *
      * @param repositoryTypeOrUserName the name of the user or the type of the repository
