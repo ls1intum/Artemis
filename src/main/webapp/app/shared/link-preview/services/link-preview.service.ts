@@ -16,7 +16,7 @@ export interface LinkPreview {
 export class LinkPreviewService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/link-preview';
+    public resourceUrl = 'api/communication/link-preview';
 
     // object used to store the link preview data as observables, with the URL of the link as the key
     private cache: { [url: string]: Observable<LinkPreview> } = {};

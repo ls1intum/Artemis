@@ -12,7 +12,7 @@ export class TextEditorService {
 
     get(participationId: number): Observable<StudentParticipation> {
         return this.http
-            .get(`api/text-editor/${participationId}`, { responseType: 'json' })
+            .get(`api/text/text-editor/${participationId}`, { responseType: 'json' })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 
