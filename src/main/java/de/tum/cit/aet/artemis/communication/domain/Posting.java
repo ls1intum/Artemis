@@ -60,6 +60,9 @@ public abstract class Posting extends DomainObject {
     @Transient
     private UserRole authorRoleTransient;
 
+    @Column(name = "has_forwarded_messages")
+    private boolean hasForwardedMessages;
+
     public String getTokenizedContent() {
         return tokenizedContent;
     }
@@ -121,4 +124,12 @@ public abstract class Posting extends DomainObject {
     public abstract Course getCoursePostingBelongsTo();
 
     public abstract Conversation getConversation();
+
+    public boolean getHasForwardedMessages() {
+        return hasForwardedMessages;
+    }
+
+    public void setHasForwardedMessages(boolean hasForwardedMessages) {
+        this.hasForwardedMessages = hasForwardedMessages;
+    }
 }

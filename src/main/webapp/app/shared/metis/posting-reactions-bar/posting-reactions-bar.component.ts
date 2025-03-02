@@ -487,7 +487,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
             .subscribe({
                 next: (conversations) => {
                     conversations.forEach((conversation) => {
-                        if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
+                        if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel && !(conversation as ChannelDTO).isArchived) {
                             this.channels.push(conversation as ChannelDTO);
                         }
                     });
