@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,

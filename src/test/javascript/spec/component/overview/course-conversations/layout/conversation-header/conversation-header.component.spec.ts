@@ -59,7 +59,6 @@ examples.forEach((activeConversation) => {
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
                 ],
-                imports: [],
                 providers: [
                     provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },

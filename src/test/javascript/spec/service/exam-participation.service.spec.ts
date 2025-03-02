@@ -10,7 +10,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../test.module';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -31,7 +30,6 @@ describe('ExamParticipationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

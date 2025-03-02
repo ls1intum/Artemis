@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -23,8 +23,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
     private examParticipationService = inject(ExamParticipationService);
 
-    @Input() studentExam: StudentExam;
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
+    studentExam = input.required<StudentExam>();
+    onPageChanged = output<{
+        overViewChange: boolean;
+        exercise: Exercise;
+        forceSave: boolean;
+    }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
     showResultWidth = 10;
@@ -32,7 +36,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
     ngOnInit() {
-        this.studentExam.exercises?.forEach((exercise) => {
+        this.studentExam().exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.icon = faHourglassHalf;

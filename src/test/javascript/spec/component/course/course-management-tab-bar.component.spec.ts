@@ -10,7 +10,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisTestModule } from '../../test.module';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -18,6 +17,10 @@ import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -50,7 +53,7 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [RouterModule, ArtemisTestModule],
+            imports: [RouterModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -65,6 +68,9 @@ describe('Course Management Tab Bar Component', () => {
                 { provide: Router, useValue: router },
                 MockProvider(CourseManagementService),
                 MockProvider(CourseAccessStorageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(EventManager),
             ],
         })
             .compileComponents()

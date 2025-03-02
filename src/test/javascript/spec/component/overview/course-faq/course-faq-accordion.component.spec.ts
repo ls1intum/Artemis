@@ -11,7 +11,6 @@ describe('CourseFaqAccordionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [CourseFaqAccordionComponent, MockDirective(TranslateDirective), MockComponent(CustomExerciseCategoryBadgeComponent)],
         })
             .compileComponents()

@@ -34,7 +34,7 @@ export class GuidedTourService {
     private tutorParticipationService = inject(TutorParticipationService);
     private courseService = inject(CourseManagementService);
 
-    public resourceUrl = 'api/guided-tour-settings';
+    public resourceUrl = 'api/core/guided-tour-settings';
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour?: GuidedTour;
 

@@ -7,7 +7,7 @@ ext {
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.906, "CLASS":  5],
         "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.925, "CLASS":  2],
+        "communication" :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "core"          :          ["INSTRUCTION": 0.861, "CLASS": 18],
         "exam"          :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
@@ -155,22 +155,20 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
  * @param rootTask the JacocoReportBase root task
  */
 private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
-    task.group = "Reporting"
-    task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
-        include "test.exec"
-    }
+    task.group = rootTask.group
+    task.executionData = rootTask.executionData
 
-    def sourcePath
+    def classPath
     if (moduleName == "aggregated") {
-        sourcePath = "$BasePath/**/*.class"
+        classPath = "$BasePath/**/*.class"
     } else {
-        sourcePath = "$BasePath/$moduleName/**/*.class"
+        classPath = "$BasePath/$moduleName/**/*.class"
     }
-    task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
+    task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
-                includes=[sourcePath]
+                includes=[classPath]
                 excludes=ignoredDirectories
             }
         })

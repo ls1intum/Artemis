@@ -4,7 +4,6 @@ import { map, take } from 'rxjs/operators';
 
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ArtemisTestModule } from '../test.module';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -26,7 +25,6 @@ describe('FileUploadExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

@@ -38,7 +38,6 @@ describe('ExamStartInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ExamStartInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),

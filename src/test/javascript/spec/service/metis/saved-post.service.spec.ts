@@ -12,11 +12,10 @@ import Dayjs from 'dayjs/esm';
 describe('SavedPostService', () => {
     let service: SavedPostService;
     let httpMock: HttpTestingController;
-    const resourceUrl = 'api/saved-posts/';
+    const resourceUrl = 'api/communication/saved-posts/';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [SavedPostService, provideHttpClient(), provideHttpClientTesting()],
         });
 

@@ -1,6 +1,5 @@
 import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -11,6 +10,10 @@ import { NotificationSetting, notificationSettingsStructure } from 'app/shared/u
 import { AlertService } from 'app/core/util/alert.service';
 import { UrlSerializer } from '@angular/router';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -27,21 +30,19 @@ describe('NotificationSettingsComponent', () => {
         changed: false,
     };
 
-    const imports = [ArtemisTestModule];
-    const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
-    const providers = [
-        MockProvider(AlertService),
-        MockProvider(NotificationSettingsService),
-        MockProvider(UrlSerializer),
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
-    ];
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports,
-            declarations,
-            providers,
+            declarations: [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(NotificationSettingsService),
+                MockProvider(UrlSerializer),
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

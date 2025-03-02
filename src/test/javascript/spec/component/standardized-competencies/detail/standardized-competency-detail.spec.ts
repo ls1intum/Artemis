@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -23,7 +22,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyDetailComponent, ArtemisTestModule],
+            imports: [StandardizedCompetencyDetailComponent],
             declarations: [MockPipe(HtmlForMarkdownPipe), MockDirective(TranslateDirective)],
             providers: [],
         })

@@ -51,10 +51,10 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateMultipleOneToOneChatsWhenDifferentLoginsAreProvided() throws Exception {
         // when
-        var chat1 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
 
-        var chat2 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student3"), OneToOneChatDTO.class,
+        var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student3"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         // then
         assertThat(chat1).isNotNull();
@@ -68,11 +68,11 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldUseExistingOneToOneChatWhenChatAlreadyExists() throws Exception {
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        var sameChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student1"), OneToOneChatDTO.class,
+        var sameChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
 
         assertThat(chat.getId()).isNotNull();
@@ -89,9 +89,9 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenSupplyingInsufficientAmountOfLogins() throws Exception {
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2", testPrefix + "student3"), OneToOneChatDTO.class,
-                HttpStatus.BAD_REQUEST);
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
+                OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
         verifyNoParticipantTopicWebsocketSent();
 
     }
@@ -106,7 +106,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     void startOneToOneChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.FORBIDDEN);
 
         // active messaging again
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -115,15 +116,16 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void shouldReturnBadRequestWhenStudentIsNotAllowedInCourse() throws Exception {
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnExistingChatWhenChatAlreadyExists() throws Exception {
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
-        var chat2 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         assertThat(chat).isNotNull();
         assertThat(chat2).isNotNull();
@@ -137,7 +139,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotifyChatPartnerAboutNewConversationWhenChatIsStarted() throws Exception {
         // when
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         var post = this.postInConversation(chat.getId(), "student1");
         // then
@@ -155,7 +157,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     void shouldCreateOneToOneChatWhenRequestedWithUserId() throws Exception {
         Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
 
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class,
+                HttpStatus.CREATED);
 
         assertThat(chat).isNotNull();
         assertParticipants(chat.getId(), 2, "student1", "student2");
@@ -167,9 +170,11 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     void shouldReturnExistingChatWhenRequestedWithUserIdAndChatExists() throws Exception {
         Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
 
-        var chat1 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.CREATED);
+        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class,
+                HttpStatus.CREATED);
 
-        var chat2 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.CREATED);
+        var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class,
+                HttpStatus.CREATED);
 
         assertThat(chat1).isNotNull();
         assertThat(chat2).isNotNull();
@@ -181,7 +186,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundWhenUnknownUserIdIsPassed() throws Exception {
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/99999", null, OneToOneChatDTO.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/99999", null, OneToOneChatDTO.class, HttpStatus.NOT_FOUND);
     }
 
     @ParameterizedTest
@@ -192,7 +197,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
 
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
@@ -202,6 +207,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     void shouldReturnForbiddenWhenStudentIsNotInCourse() throws Exception {
         Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
 
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
     }
 }

@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockModule } from 'ng-mocks';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardLargeComponent', () => {
     let component: SidebarCardLargeComponent;
@@ -15,9 +15,12 @@ describe('SidebarCardLargeComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
+            imports: [MockModule(RouterModule)],
             declarations: [SidebarCardLargeComponent, SidebarCardItemComponent, MockRouterLinkDirective],
-            providers: [{ provide: Router, useValue: router }],
+            providers: [
+                { provide: Router, useValue: router },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         }).compileComponents();
     });
 

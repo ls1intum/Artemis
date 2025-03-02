@@ -80,21 +80,21 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExams_testExam() throws Exception {
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams_testExam() throws Exception {
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.BAD_REQUEST);
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-missing-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEvaluateQuizExercises_testExam() throws Exception {
-        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -102,7 +102,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor() throws Exception {
         // Test the creation of a test exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        URI examUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
@@ -116,7 +116,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test the creation of a test exam, where visibleDate equals StartDate
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
@@ -127,7 +127,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
         Exam examC = ExamFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
-        request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -136,7 +136,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request, if the working time is 0
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -145,7 +145,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request if the attendance check is turned on
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setExamWithAttendanceCheck(true);
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -153,7 +153,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor_testExam_CorrectionRoundViolation() throws Exception {
         Exam exam = ExamFactory.generateTestExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(1);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -161,10 +161,10 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor_realExam_CorrectionRoundViolation() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(0);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
 
         exam.setNumberOfCorrectionRoundsInExam(3);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -173,20 +173,20 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
         // Case 1: test exam should be updated to real exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        Exam createdExamA = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
-        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
         // Case 2: real exam should be updated to test exam
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
         examB.setChannelName("examB");
-        Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
+        Exam createdExamB = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
         createdExamB.setTestExam(true);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
-        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -198,14 +198,14 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam);
 
         // Remove student1 from the exam
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.BAD_REQUEST);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.BAD_REQUEST);
     }
 
     // ExamResource - getStudentExamForTestExamForStart
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -214,7 +214,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam1.setVisibleDate(now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -224,7 +224,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam.setStartDate(now().plusMinutes(10));
         testExam = examRepository.save(testExam);
         // the request fails because the exam start is 10 min in the future
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -233,7 +233,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Exam testExam = examUtilService.addTestExam(course2);
         testExam.setStartDate(now().plusMinutes(4));
         testExam = examRepository.save(testExam);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.CONFLICT, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.CONFLICT, StudentExam.class);
     }
 
     @Test
@@ -248,7 +248,8 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam.addExamUser(examUser);
         examRepository.save(testExam);
         var studentExam5 = examUtilService.addStudentExamForTestExam(testExam, student1);
-        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamReceived = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
     }
 

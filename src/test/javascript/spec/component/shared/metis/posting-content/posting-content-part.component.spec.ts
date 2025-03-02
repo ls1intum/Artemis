@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
@@ -12,7 +12,7 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
+import { MockActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -29,7 +29,6 @@ describe('PostingContentPartComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
@@ -39,6 +38,10 @@ describe('PostingContentPartComponent', () => {
                 {
                     provide: Router,
                     useClass: MockRouter,
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute(),
                 },
                 MockProvider(AccountService),
             ],
@@ -152,7 +155,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to attachment with icon', () => {
             const referenceStr = 'Lecture 1 - Slide';
-            const attachmentURL = '/api/files/attachments/lecture/1/Lecture-1.pdf';
+            const attachmentURL = '/api/core/files/attachments/lecture/1/Lecture-1.pdf';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference,
@@ -182,7 +185,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to lecture unit', () => {
             const referenceStr = 'Lecture Unit 1';
-            const attachmentURL = '/api/files/attachments/attachment-unit/1/LectureUnit1.pdf';
+            const attachmentURL = '/api/core/files/attachments/attachment-unit/1/LectureUnit1.pdf';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference,
@@ -207,7 +210,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should contain a reference to lecture unit slide image', () => {
             const referenceStr = 'Lecture Unit1_SLIDE_1';
-            const imageURL = '/api/files/attachments/slides/attachment-unit/1/AttachmentUnitSlide_2023-04-03T02-21-44-124_9ffe48ee.png';
+            const imageURL = '/api/core/files/attachments/slides/attachment-unit/1/AttachmentUnitSlide_2023-04-03T02-21-44-124_9ffe48ee.png';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     referenceStr,
