@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250302174100" author="ole-ve">
+        <update tableName="attachment">
+            <column name="jhi_link" valueComputed="REPLACE(jhi_link, '/api/files', '/api/core/files')"/>
+        </update>
+        <update tableName="quiz_question">
+            <column name="background_file_path" valueComputed="REPLACE(background_file_path, '/api/files', '/api/core/files')"/>
+            <where>discriminator = 'DD'</where>
+        </update>
+        <update tableName="drag_item">
+            <column name="picture_file_path" valueComputed="REPLACE(picture_file_path, '/api/files', '/api/core/files')"/>
+        </update>
+        <update tableName="course">
+            <column name="course_icon" valueComputed="REPLACE(course_icon, '/api/files', '/api/core/files')"/>
+        </update>
+        <update tableName="jhi_user">
+            <column name="image_url" valueComputed="REPLACE(image_url, '/api/files', '/api/core/files')"/>
+        </update>
+        <update tableName="exam_user">
+            <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files', '/api/core/files')"/>
+            <column name="student_image_path" valueComputed="REPLACE(student_image_path, '/api/files', '/api/core/files')"/>
+        </update>
+        <update tableName="submission">
+            <column name="file_path" valueComputed="REPLACE(file_path, '/api/files', '/api/core/files')"/>
+            <where>discriminator = 'F'</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
