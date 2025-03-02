@@ -37,7 +37,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationGit
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("secret", exercise.getBuildConfig().getBuildPlanAccessSecret());
 
-        String actualBuildPlan = request.get("/api/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.OK, String.class, params);
+        String actualBuildPlan = request.get("/api/programming/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.OK, String.class, params);
 
         assertThat(actualBuildPlan).isEqualTo(BUILD_PLAN);
     }
@@ -49,11 +49,11 @@ class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationGit
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("secret", "invalid-secret");
 
-        request.get("/api/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.FORBIDDEN, String.class, params);
+        request.get("/api/programming/public/programming-exercises/" + exercise.getId() + "/build-plan", HttpStatus.FORBIDDEN, String.class, params);
     }
 
     @Test
     void testGetBuildPlanInvalidExerciseId() throws Exception {
-        request.get("/api/public/programming-exercises/" + -1 + "/build-plan", HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/programming/public/programming-exercises/" + -1 + "/build-plan", HttpStatus.BAD_REQUEST, String.class);
     }
 }

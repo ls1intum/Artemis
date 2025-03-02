@@ -38,7 +38,7 @@ export class ExamParticipationService {
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
-        return `api/courses/${courseId}/exams/${examId}`;
+        return `api/exam/courses/${courseId}/exams/${examId}`;
     }
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
@@ -154,7 +154,7 @@ export class ExamParticipationService {
      * @returns a List of all StudentExams without Exercises per User and Course
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
-        const url = `api/courses/${courseId}/test-exams-per-user`;
+        const url = `api/exam/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
             .get<StudentExam[]>(url, { observe: 'response' })
             .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
@@ -254,7 +254,7 @@ export class ExamParticipationService {
      * @param quizSubmission
      */
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `api/exercises/${exerciseId}/submissions/exam`;
+        const url = `api/quiz/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 

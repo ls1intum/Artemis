@@ -26,8 +26,8 @@
                         : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute' | artemisTranslate)
                 }}
             </button>
-            <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
-                <fa-icon [icon]="conversation.isHidden ? faEye : faEyeSlash" size="sm" class="me-1" />
+            <button class="hide" ngbDropdownItem (click)="onArchiveClicked($event)">
+                <fa-icon [icon]="conversation.isHidden ? faBoxOpen : faBoxArchive" size="sm" class="me-1" />
                 {{
                     conversation.isHidden
                         ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)

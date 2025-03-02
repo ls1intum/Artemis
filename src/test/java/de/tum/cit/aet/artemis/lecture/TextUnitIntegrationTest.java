@@ -66,9 +66,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.put("/api/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
-        request.post("/api/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
-        request.get("/api/lectures/" + lecture.getId() + "/text-units/0", HttpStatus.FORBIDDEN, TextUnit.class);
+        request.put("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.post("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/0", HttpStatus.FORBIDDEN, TextUnit.class);
     }
 
     @Test
@@ -87,7 +87,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
-        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
+        var persistedTextUnit = request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
         assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(persistedTextUnit));
@@ -96,12 +96,12 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
-        request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
         textUnit.setLecture(new Lecture());
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
         textUnit.setId(21312321L);
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -110,7 +110,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
         textUnit.setContent("Changed");
-        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
+        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
     }
@@ -128,7 +128,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
-        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
@@ -138,18 +138,18 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        TextUnit textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setId(null);
-        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
 
-        request.get("/api/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.BAD_REQUEST, TextUnit.class);
+        request.get("/api/lecture/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.BAD_REQUEST, TextUnit.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        TextUnit textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         assertThat(this.textUnit.getId()).isEqualTo(textUnitFromRequest.getId());
     }
 
@@ -159,8 +159,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
-        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+        request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 

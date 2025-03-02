@@ -13,7 +13,7 @@ export class ApollonDiagramService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);
 
-    private resourceUrl = 'api';
+    private resourceUrl = 'api/modeling';
 
     /**
      * Creates diagram.

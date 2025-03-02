@@ -214,7 +214,7 @@ describe('UserManagementComponent', () => {
         comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne('api/admin/users/test');
+        const reqD = httpMock.expectOne('api/core/admin/users/test');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {

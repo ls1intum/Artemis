@@ -93,7 +93,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private String getUrl(final long feedbackId) {
-        return String.format("/api/feedbacks/%d/long-feedback", feedbackId);
+        return String.format("/api/assessment/feedbacks/%d/long-feedback", feedbackId);
     }
 
     private Feedback addLongFeedbackToResult(final Result result) {
