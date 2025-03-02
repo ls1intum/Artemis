@@ -408,15 +408,36 @@ examples.forEach((activeConversation) => {
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
 
+            const forwardedPosts = component.posts[0].forwardedPosts;
+            const forwardedAnswerPosts = component.posts[0].forwardedAnswerPosts;
+
             expect(component.posts).toHaveLength(1);
-            expect(component.posts[0].forwardedPosts).toBeDefined();
-            expect(component.posts[0].forwardedAnswerPosts).toBeDefined();
+            expect(forwardedPosts).toBeDefined();
+            expect(forwardedAnswerPosts).toBeDefined();
 
-            expect(component.posts[0].forwardedPosts!).toHaveLength(mockSourcePosts.length);
-            expect(component.posts[0].forwardedAnswerPosts!).toHaveLength(mockSourceAnswerPosts.length);
+            if (forwardedPosts) {
+                expect(forwardedPosts).toHaveLength(mockSourcePosts.length);
+                forwardedPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(10);
+                    } else {
+                        expect(post).toBeNull();
+                    }
+                });
+            }
 
-            expect(component.posts[0].forwardedPosts![0].id).toBe(10);
-            expect(component.posts[0].forwardedAnswerPosts![0].id).toBe(11);
+            if (forwardedAnswerPosts) {
+                expect(forwardedAnswerPosts).toHaveLength(mockSourceAnswerPosts.length);
+                forwardedAnswerPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(11);
+                    } else {
+                        expect(post).toBeNull();
+                    }
+                });
+            }
         }));
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
