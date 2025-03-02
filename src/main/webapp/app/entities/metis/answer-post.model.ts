@@ -4,8 +4,8 @@ import { Posting } from 'app/entities/metis/posting.model';
 export class AnswerPost extends Posting {
     public resolvesPost?: boolean;
     public post?: Post;
-    public forwardedPosts?: Post[] = [];
-    public forwardedAnswerPosts?: AnswerPost[] = [];
+    public forwardedPosts?: (Post | null)[] = [];
+    public forwardedAnswerPosts?: (AnswerPost | null)[] = [];
 
     constructor() {
         super();

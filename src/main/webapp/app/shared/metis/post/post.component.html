@@ -89,7 +89,7 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
-                        @if (originalPostDetails) {
+                        @if (originalPostDetails !== undefined) {
                             <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
                         }
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">

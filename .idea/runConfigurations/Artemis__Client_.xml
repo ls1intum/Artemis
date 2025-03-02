@@ -2,14 +2,14 @@
   <configuration default="false" name="Artemis (Client)" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="start" />
-    <node-interpreter value="project" />
+    <node-interpreter value="$APPLICATION_CONFIG_DIR$/node/versions/22.14.0/bin/node" />
     <package-manager value="npm" />
     <envs />
     <method v="2">
       <option name="NpmBeforeRunTask" enabled="true">
         <package-json value="$PROJECT_DIR$/package.json" />
         <command value="install" />
-        <node-interpreter value="project" />
+        <node-interpreter value="$APPLICATION_CONFIG_DIR$/node/versions/22.14.0/bin/node" />
         <envs />
       </option>
     </method>

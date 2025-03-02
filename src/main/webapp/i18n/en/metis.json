@@ -176,6 +176,8 @@
                 "searchBar": "Search by name or channel",
                 "viewConversation": "View conversation",
                 "forwardedFrom": "Forwarded from",
+                "forwardedFromUnknown": "Forwarded from a conversation",
+                "forwardedMessageDeleted": "This message has been deleted",
                 "showLess": "Show less",
                 "showMore": "Show more"
             }

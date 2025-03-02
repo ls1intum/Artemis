@@ -22,8 +22,8 @@ export class PostingThreadComponent {
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
-    forwardedPosts = input<Post[]>([]);
-    forwardedAnswerPosts = input<AnswerPost[]>([]);
+    forwardedPosts = input<(Post | null)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | null)[]>([]);
     readonly onNavigateToPost = output<Posting>();
 
     elementRef = inject(ElementRef);
