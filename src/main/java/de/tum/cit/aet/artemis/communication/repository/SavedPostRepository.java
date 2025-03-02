@@ -80,8 +80,14 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return List of saved posts of the given user, filtered by the given status.
      */
-    @Query("SELECT new SavedPost(" + "sp.user, sp.postId, sp.postType, MAX(sp.status), MAX(sp.completedAt)) " + "FROM SavedPost sp "
-            + "WHERE sp.user.id = :userId AND sp.status = :status " + "GROUP BY sp.user, sp.postId, sp.postType " + "ORDER BY MAX(sp.completedAt) DESC, MAX(sp.id) DESC")
+    @Query("""
+            SELECT new SavedPost(sp.user, sp.postId, sp.postType, MAX(sp.status), MAX(sp.completedAt))
+            FROM SavedPost sp
+            WHERE sp.user.id = :userId
+                AND sp.status = :status
+            GROUP BY sp.user, sp.postId, sp.postType
+            ORDER BY MAX(sp.completedAt) DESC, MAX(sp.id) DESC
+            """)
     @Cacheable(key = "'saved_post_status_' + #status.getDatabaseKey() + '_' + #userId")
     List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") Long userId, @Param("status") SavedPostStatus status);
 
