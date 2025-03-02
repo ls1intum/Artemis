@@ -123,8 +123,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-                Result.class, HttpStatus.OK);
+        Result updatedResult = request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint",
+                assessmentUpdate, Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(updatedResult.getScore()).isEqualTo(80);
@@ -151,7 +151,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
 
-        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+        request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -169,7 +169,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
 
-        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+        request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -188,7 +188,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         final var assessmentUpdate = new AssessmentUpdateDTO(List.of(new Feedback()), complaintResponse, null);
 
-        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+        request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -241,8 +241,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void programmingExerciseManualResult_noManualReviewsAllowed_forbidden() throws Exception {
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.FORBIDDEN);
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, HttpStatus.FORBIDDEN);
+        request.put("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.FORBIDDEN);
+        request.put("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -250,7 +250,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     void programmingExerciseManualResult_submissionNotModified() throws Exception {
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
+        request.put("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
         var submission = programmingSubmissionRepository
                 .findByIdWithResultsFeedbacksAssessorTestCases(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
         String commitHash = submission.getCommitHash();
@@ -264,8 +264,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_save() throws Exception {
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
-                HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
+                Result.class, HttpStatus.OK);
 
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
@@ -274,8 +274,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_submit() throws Exception {
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
-                Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
 
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
@@ -284,7 +284,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var now = ZonedDateTime.now();
         assertThat(response.getCompletionDate()).isBetween(now.minusSeconds(1), now.plusSeconds(1));
 
-        Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
+        Course course = request.get("/api/core/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
@@ -373,8 +373,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
         manualResult.score(score);
         manualResult.rated(true);
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
-                Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
     }
 
@@ -391,8 +391,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.score(points);
         manualResult.rated(true);
 
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
-                Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(105);
 
@@ -401,8 +401,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
 
-        response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, Result.class,
-                HttpStatus.OK);
+        response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
+                Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
@@ -422,8 +422,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
 
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
-                Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
         assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
@@ -438,7 +438,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
         manualResult.setParticipation(participation);
 
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -448,25 +449,30 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Feedback feedback = new Feedback();
 
         // Result rated is missing
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.BAD_REQUEST);
         result.rated(true);
 
         // Check that not automatically created feedbacks must have a detail text
         // Manual feedback
         result.addFeedback(feedback.type(FeedbackType.MANUAL));
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.BAD_REQUEST);
         // Unreferenced feedback
         result.removeFeedback(feedback);
         result.addFeedback(feedback.type(FeedbackType.MANUAL_UNREFERENCED));
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.BAD_REQUEST);
         // General feedback
         result.removeFeedback(feedback);
         result.addFeedback(feedback.type(null));
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.BAD_REQUEST);
 
         // A feedback has no points
         result.addFeedback(feedback.credits(null));
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -493,7 +499,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
 
-        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
@@ -518,8 +524,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setScore(77D);
         manualResult.rated(true);
 
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
-                HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
+                Result.class, HttpStatus.OK);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
@@ -538,8 +544,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
-                HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
+                Result.class, HttpStatus.OK);
 
         Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
 
@@ -565,8 +571,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", String.valueOf(submit));
-        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK, params);
+        result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
+                Result.class, HttpStatus.OK, params);
 
         var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
         assertThat(longFeedbackText).isPresent();
@@ -593,8 +599,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", String.valueOf(submit));
-        result = request.putWithResponseBodyAndParams("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK, params);
+        result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
+                Result.class, HttpStatus.OK, params);
 
         var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
         assertThat(longFeedbackText).isPresent();
@@ -619,8 +625,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
-                HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
+                Result.class, HttpStatus.OK);
 
         Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
 
@@ -691,7 +697,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         User user = userTestRepository.getUser();
         manualResult.setAssessor(user);
 
-        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        manualResult = request.putWithResponseBody("/api/programming/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
         manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
         assessmentNote = manualResult.getAssessmentNote();
         assertThat(assessmentNote.getCreatedDate()).isNotNull();
@@ -713,7 +720,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
-        request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, httpStatus);
+        request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results", result, Result.class, httpStatus);
     }
 
     private ProgrammingExerciseStudentParticipation setParticipationForProgrammingExercise(AssessmentType assessmentType) {
@@ -728,7 +735,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
         submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 AssessmentType.AUTOMATIC, true);
-        request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
+        request.put("/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
     @Test
@@ -774,8 +781,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
-                ProgrammingSubmission.class, params);
+        ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment",
+                HttpStatus.OK, ProgrammingSubmission.class, params);
         // verify that a new submission was created
         // We want to get the third Submission, as it is the latest one, and contains an automatic result;
         assertThat(submissionWithoutFirstAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission).isEqualTo(thirdSubmission);
@@ -788,7 +795,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        var assessedSubmissionList = request.getList("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -807,11 +814,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         params.add("submit", "true");
         params.add("correction-round", "0");
 
-        Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
+        Result firstSubmittedManualResult = request.putWithResponseBodyAndParams("/api/programming/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -853,7 +860,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+        final var submissionWithoutSecondAssessment = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
                 ProgrammingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
@@ -891,7 +898,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         paramsSecondCorrection.add("lock", "true");
 
-        var secondSubmittedManualResult = request.putWithResponseBodyAndParams("/api/participations/" + studentParticipation.getId() + "/manual-results",
+        var secondSubmittedManualResult = request.putWithResponseBodyAndParams("/api/programming/participations/" + studentParticipation.getId() + "/manual-results",
                 manualResultLockedSecondRound, Result.class, HttpStatus.OK, paramsSecondCorrection);
         assertThat(secondSubmittedManualResult).isNotNull();
 
@@ -899,7 +906,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -910,7 +917,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
@@ -965,8 +972,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         final var assessmentUpdate = new AssessmentUpdateDTO(complaintFeedback, complaintResponse, null);
 
         // update assessment after Complaint, now 100%
-        Result resultAfterComplaint = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-                Result.class, HttpStatus.OK);
+        Result resultAfterComplaint = request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint",
+                assessmentUpdate, Result.class, HttpStatus.OK);
         Double resultAfterComplaintScore = resultAfterComplaint.getScore();
 
         // Now, override the complaint response with another assessment -> now 10%
@@ -979,7 +986,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        Result overwrittenResult = request.putWithResponseBodyAndParams("/api/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
+        Result overwrittenResult = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
                 resultAfterComplaint, Result.class, HttpStatus.OK, params);
         initialResult = resultRepository.findById(initialResult.getId()).orElseThrow();
 
@@ -1016,7 +1023,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
-        var response = request.putWithResponseBodyAndParams("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK, params);
+        var response = request.putWithResponseBodyAndParams("/api/programming/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK,
+                params);
 
         var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
@@ -1045,7 +1053,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         Result lastResult = submission.getLatestResult();
         // we will only delete the middle automatic result at index 2
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
+        request.delete(
+                "/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);

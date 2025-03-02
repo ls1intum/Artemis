@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class TeamResource {
 
     private static final Logger log = LoggerFactory.getLogger(TeamResource.class);

@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("api/assessment/public/")
 public class PublicResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicResultResource.class);

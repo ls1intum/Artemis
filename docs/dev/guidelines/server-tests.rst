@@ -115,7 +115,7 @@ The test below tracks how many database accesses a REST call performs. The custo
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         void testQueryCount() throws Exception {
-            Course course = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
+            Course course = assertThatDb(() -> request.get("/api/core/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
             assertThat(course).isNotNull();
         }
     }

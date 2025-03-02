@@ -58,15 +58,15 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
-                HttpStatus.CREATED);
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
         assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
         LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
-        var vcsAccessToken = request.get("/api/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);
+        var vcsAccessToken = request.get("/api/core/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);
         assertThat(vcsAccessToken).isNotNull();
         assertThat(vcsAccessToken).startsWith("vcpat");
 
@@ -79,7 +79,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
         var user = userTestRepository.getUser();
         vcsAccessLogRepository.save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.READ, AuthenticationMechanism.SSH, "", ""));
-        var li = request.getList("/api/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+        var li = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
         assertThat(li.size()).isEqualTo(1);
         assertThat(li.getFirst().userId()).isEqualTo(user.getId());
     }
@@ -90,7 +90,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         var user = userTestRepository.getUser();
         vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,
                 AuthenticationMechanism.SSH, "", ""));
-        var li = request.getList("/api/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
+        var li = request.getList("/api/programming/programming-exercise/" + programmingExercise.getId() + "/vcs-access-log/TEMPLATE", HttpStatus.OK, VcsAccessLogDTO.class);
         assertThat(li.size()).isEqualTo(1);
         assertThat(li.getFirst().userId()).isEqualTo(user.getId());
     }

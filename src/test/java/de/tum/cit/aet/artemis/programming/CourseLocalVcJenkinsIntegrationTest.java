@@ -545,7 +545,7 @@ class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
         User tutor = optionalTutor.get();
 
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/core/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

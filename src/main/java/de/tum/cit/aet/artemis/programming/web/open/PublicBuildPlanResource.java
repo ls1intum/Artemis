@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 @Profile("jenkins")
 @RestController
 // TODO: should we adapt the mapping based on the profile?
-@RequestMapping("api/public/")
+@RequestMapping("api/programming/public/")
 public class PublicBuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicBuildPlanResource.class);

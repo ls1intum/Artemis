@@ -47,7 +47,7 @@ export class ProgrammingExerciseService {
     private exerciseService = inject(ExerciseService);
     private sortService = inject(SortService);
 
-    public resourceUrl = 'api/programming-exercises';
+    public resourceUrl = 'api/programming/programming-exercises';
 
     /**
      * Sets a new programming exercise up
@@ -611,7 +611,7 @@ export class ProgrammingExerciseService {
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
-        const url = `api/courses/${courseId}/programming-exercises/import-from-file`;
+        const url = `api/programming/courses/${courseId}/programming-exercises/import-from-file`;
         return this.http
             .post<ProgrammingExercise>(url, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));

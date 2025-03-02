@@ -55,13 +55,13 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     void deepLinkingFailsAsStudent() throws Exception {
         var params = getDeepLinkingRequestParams();
 
-        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingFailsWithoutExerciseId() throws Exception {
-        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
@@ -73,7 +73,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
 
         var params = getDeepLinkingRequestParams();
 
-        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -93,7 +93,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
         var params = getDeepLinkingRequestParams();
 
-        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -108,7 +108,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(mockRsaKey);
         var params = getDeepLinkingRequestParams();
 
-        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
     }
 
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {

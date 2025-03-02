@@ -123,7 +123,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     viewBuildLogs(resultId: number): void {
-        const url = `/api/build-log/${resultId}`;
+        const url = `/api/programming/build-log/${resultId}`;
         window.open(url, '_blank');
     }
 

@@ -315,7 +315,7 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
 
         userUtilService.changeUser(userLogin);
         // Assert that the build logs can be retrieved from the REST API from the database
-        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.get("/api/programming/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         return result;
@@ -334,7 +334,7 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
+        request.postWithoutLocation("/api/assessment/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
     }
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,

@@ -229,7 +229,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        var counts = request.get("/api/admin/cleanup/orphans/count", HttpStatus.OK, OrphanCleanupCountDTO.class);
+        var counts = request.get("/api/core/admin/cleanup/orphans/count", HttpStatus.OK, OrphanCleanupCountDTO.class);
 
         assertThat(counts).isNotNull();
         assertThat(counts.orphanFeedback()).isEqualTo(0);
@@ -243,7 +243,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         assertThat(counts.orphanRating()).isEqualTo(1);
         assertThat(counts.orphanResultsWithoutParticipation()).isEqualTo(1);
 
-        var responseBody = request.delete("/api/admin/cleanup/orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/core/admin/cleanup/orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -298,7 +298,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/admin/cleanup/plagiarism-comparisons/count", HttpStatus.OK, PlagiarismComparisonCleanupCountDTO.class, params);
+        var counts = request.get("/api/core/admin/cleanup/plagiarism-comparisons/count", HttpStatus.OK, PlagiarismComparisonCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.plagiarismComparison()).isEqualTo(1);
@@ -306,7 +306,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         assertThat(counts.plagiarismMatches()).isEqualTo(1);
         assertThat(counts.plagiarismSubmissions()).isEqualTo(2);
 
-        var responseBody = request.delete("/api/admin/cleanup/plagiarism-comparisons", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/core/admin/cleanup/plagiarism-comparisons", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -424,14 +424,14 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/admin/cleanup/non-rated-results/count", HttpStatus.OK, NonLatestNonRatedResultsCleanupCountDTO.class, params);
+        var counts = request.get("/api/core/admin/cleanup/non-rated-results/count", HttpStatus.OK, NonLatestNonRatedResultsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.longFeedbackText()).isEqualTo(1);
         assertThat(counts.textBlock()).isEqualTo(1);
         assertThat(counts.feedback()).isEqualTo(1);
 
-        var responseBody = request.delete("/api/admin/cleanup/non-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/core/admin/cleanup/non-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteNonRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -522,14 +522,14 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
 
-        var counts = request.get("/api/admin/cleanup/old-rated-results/count", HttpStatus.OK, NonLatestRatedResultsCleanupCountDTO.class, params);
+        var counts = request.get("/api/core/admin/cleanup/old-rated-results/count", HttpStatus.OK, NonLatestRatedResultsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.longFeedbackText()).isEqualTo(1);
         assertThat(counts.textBlock()).isEqualTo(1);
         assertThat(counts.feedback()).isEqualTo(1);
 
-        var responseBody = request.delete("/api/admin/cleanup/old-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/core/admin/cleanup/old-rated-results", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -572,12 +572,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         params.add("deleteFrom", ZonedDateTime.now().minusMonths(1).toString());
         params.add("deleteTo", ZonedDateTime.now().plusMonths(1).toString());
 
-        var counts = request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params);
+        var counts = request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class, params);
 
         assertThat(counts).isNotNull();
         assertThat(counts.submissionVersions()).isEqualTo(3);
 
-        var responseBody = request.delete("/api/admin/cleanup/old-submission-versions", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/core/admin/cleanup/old-submission-versions", params, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteSubmissionVersions");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -598,7 +598,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         jobExecution.setDeletionTimestamp(now);
         cleanupJobExecutionRepository.save(jobExecution);
 
-        var response = request.getList("/api/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
+        var response = request.getList("/api/core/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
         List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
@@ -614,18 +614,18 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
     @Test
     @WithMockUser(roles = "USER")
     void testUnauthorizedAccess() throws Exception {
-        request.delete("/api/admin/cleanup/orphans", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/admin/cleanup/orphans/count", HttpStatus.FORBIDDEN, OrphanCleanupCountDTO.class);
-        request.delete("/api/admin/cleanup/plagiarism-comparisons", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/admin/cleanup/plagiarism-comparisons/count", HttpStatus.FORBIDDEN, PlagiarismComparisonCleanupCountDTO.class);
-        request.delete("/api/admin/cleanup/non-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/admin/cleanup/non-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
-        request.delete("/api/admin/cleanup/old-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/admin/cleanup/old-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
-        request.delete("/api/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
-        request.get("/api/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/orphans", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/orphans/count", HttpStatus.FORBIDDEN, OrphanCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/plagiarism-comparisons", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/plagiarism-comparisons/count", HttpStatus.FORBIDDEN, PlagiarismComparisonCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/non-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/non-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-rated-results", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-rated-results/count", HttpStatus.FORBIDDEN, NonLatestRatedResultsCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
 
-        request.get("/api/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/core/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {

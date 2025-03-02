@@ -89,13 +89,13 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
-        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/core/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
-        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/core/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -350,7 +350,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
         newUser.setGroups(Set.of("tutor", "instructor"));
 
         jenkinsRequestMockProvider.mockCreateUser(newUser, false, false, false);
-        request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
     }
 
     @Test
@@ -365,7 +365,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
-        request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -396,7 +396,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
         user.setLogin("new-login");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/core/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -410,7 +410,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
         // Register the user
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword("password");
-        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
 
         Optional<User> registeredUser = userTestService.getUserTestRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
@@ -421,7 +421,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
         user.setLogin("some-new-login");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/core/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -437,7 +437,7 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
 
-        request.put("/api/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
+        request.put("/api/core/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserTestRepository();
         final var userInDB = userRepository.findById(user.getId());

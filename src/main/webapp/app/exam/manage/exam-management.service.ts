@@ -32,8 +32,8 @@ export class ExamManagementService {
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/courses';
-    public adminResourceUrl = 'api/admin/courses';
+    public resourceUrl = 'api/exam/courses';
+    public adminResourceUrl = 'api/exam/admin/courses';
 
     /**
      * Create an exam on the server using a POST request.
@@ -122,7 +122,7 @@ export class ExamManagementService {
      * @param examId The id of the exam to get.
      */
     findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
-        return this.http.get<Exam>(`api/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        return this.http.get<Exam>(`api/exam/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**
