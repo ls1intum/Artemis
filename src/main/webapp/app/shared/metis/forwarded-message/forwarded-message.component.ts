@@ -26,13 +26,14 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     sourceName: string | undefined = '';
     todayFlag?: string;
-    originalPostDetails = input<Posting>();
+    originalPostDetails = input<Posting | null>();
     messageContent = viewChild<ElementRef>('messageContent');
     isContentLong = false;
     showFullForwardedMessage = false;
     postingIsOfToday = false;
 
     protected viewButtonVisible = false;
+    protected hasOriginalPostBeenDeleted = false;
 
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
@@ -50,6 +51,9 @@ export class ForwardedMessageComponent implements AfterViewInit {
                     this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
                     this.todayFlag = this.getTodayFlag();
                 } else {
+                    if (post === null) {
+                        this.hasOriginalPostBeenDeleted = true;
+                    }
                     this.sourceName = '';
                     this.conversation = undefined;
                     this.viewButtonVisible = false;
@@ -100,7 +104,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
     }
 
     onTriggerNavigateToPost() {
-        if (this.originalPostDetails() === undefined) {
+        if (!this.originalPostDetails()) {
             return;
         }
         this.onNavigateToPost.emit(this.originalPostDetails()!);

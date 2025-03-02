@@ -176,6 +176,8 @@
                 "searchBar": "Nach Name oder Kanal suchen",
                 "viewConversation": "Unterhaltung anzeigen",
                 "forwardedFrom": "Weitergeleitet von",
+                "forwardedFromUnknown": "Weitergeleitet von einer Konversation",
+                "forwardedMessageDeleted": "Diese Nachricht wurde gelöscht",
                 "showLess": "Weniger anzeigen",
                 "showMore": "Mehr anzeigen"
             }
