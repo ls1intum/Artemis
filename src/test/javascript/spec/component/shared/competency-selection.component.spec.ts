@@ -25,9 +25,6 @@ describe('CompetencySelection', () => {
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
-    let profileService: ProfileService;
-
-    let getProfileInfoMock: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -54,12 +51,11 @@ describe('CompetencySelection', () => {
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                profileService = TestBed.inject(ProfileService);
+                const profileService = TestBed.inject(ProfileService);
 
                 const profileInfo = { activeProfiles: [PROFILE_ATLAS] } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-                profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+                const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoMock.mockReturnValue(profileInfoSubject);
             });
     });
