@@ -124,7 +124,6 @@ export class ExamManagementPage {
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
         await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
         await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
-        await expect(announcementDialog.locator('.author').getByText(authorUsername)).toBeVisible();
     }
 
     async sendAnnouncement() {

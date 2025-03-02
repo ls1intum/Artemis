@@ -23,7 +23,5 @@ public interface ExamLiveEventBaseDTO {
 
     Long id();
 
-    String createdBy();
-
     Instant createdDate();
 }

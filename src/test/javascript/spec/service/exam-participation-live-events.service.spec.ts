@@ -77,7 +77,6 @@ describe('ExamParticipationLiveEventsService', () => {
             const mockEvents: ExamLiveEvent[] = [
                 {
                     id: 1,
-                    createdBy: 'user',
                     createdDate: dayjs(),
                     eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
                 },
@@ -201,7 +200,6 @@ describe('ExamParticipationLiveEventsService', () => {
         const nowUnix = dayjs().unix();
         const mockEvent: ExamLiveEvent = {
             id: 1,
-            createdBy: 'user',
             createdDate: dayjs(),
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
         };

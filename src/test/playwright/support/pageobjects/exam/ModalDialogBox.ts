@@ -28,10 +28,6 @@ export class ModalDialogBox {
         await expect(this.getModalDialogContent().locator('.type').getByText(type)).toBeVisible();
     }
 
-    async checkDialogAuthor(authorUsername: string) {
-        await expect(this.getModalDialogContent().locator('.author').getByText(authorUsername)).toBeVisible();
-    }
-
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string) {
         const timeChangeDialog = this.getModalDialogContent();
         await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();

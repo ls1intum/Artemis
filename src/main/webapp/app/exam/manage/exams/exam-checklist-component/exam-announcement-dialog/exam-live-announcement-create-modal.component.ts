@@ -4,7 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { AccountService } from 'app/core/auth/account.service';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import dayjs from 'dayjs/esm';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
@@ -27,7 +26,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class ExamLiveAnnouncementCreateModalComponent {
     private activeModal = inject(NgbActiveModal);
     private examManagementService = inject(ExamManagementService);
-    private accountService = inject(AccountService);
 
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
 
@@ -62,7 +60,6 @@ export class ExamLiveAnnouncementCreateModalComponent {
         this.textContent = textContent;
         this.announcement = {
             id: 0,
-            createdBy: this.accountService.userIdentity?.name ?? 'John Doe',
             createdDate: dayjs(),
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: textContent,
