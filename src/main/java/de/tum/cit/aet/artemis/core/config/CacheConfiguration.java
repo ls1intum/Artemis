@@ -38,12 +38,6 @@ public class CacheConfiguration {
 
     private final RedissonClient redissonClient;
 
-    /**
-     * We need this, because the redissonClient (either directly or through redisConnectionFactory) does not support the client list command yet,
-     * also see RedissonConnection.getClientList() throws UnsupportedOperationException
-     */
-    // private RedisClient redisClient; // lazy init // testing removing it
-
     @Value("${spring.data.redis.host}")
     private String redisHost;
 
@@ -71,7 +65,6 @@ public class CacheConfiguration {
     public void destroy() {
         log.info("Closing Cache Manager");
         redissonClient.shutdown();
-        // redisClient.shutdown();
     }
 
     @Bean
@@ -79,17 +72,6 @@ public class CacheConfiguration {
         log.debug("Starting RedisCacheManager");
         return new RedissonSpringCacheManager(redissonClient);
     }
-
-    // @Bean
-    // public RedisClient redisClient() {
-    // RedisClientConfig config = new RedisClientConfig();
-    // config.setAddress("redis://" + redisHost + ":" + redisPort);
-    // config.setUsername(redisUsername);
-    // config.setPassword(redisPassword);
-    // config.setClientName(redisClientName);
-    // this.redisClient = RedisClient.create(config);
-    // return this.redisClient;
-    // }
 
     @Bean
     public KeyGenerator keyGenerator() {
