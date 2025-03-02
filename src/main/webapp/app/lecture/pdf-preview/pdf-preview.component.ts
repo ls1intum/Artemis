@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -24,6 +24,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ButtonType } from 'app/shared/components/button.component';
 
 type VisibilityAction = 'hide' | 'show';
 
@@ -31,13 +33,23 @@ type VisibilityAction = 'hide' | 'show';
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
-    imports: [PdfPreviewThumbnailGridComponent, ArtemisTranslatePipe, FontAwesomeModule, NgbTooltipModule, RouterModule, DeleteButtonDirective, TranslateDirective],
+    imports: [
+        PdfPreviewThumbnailGridComponent,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        NgbTooltipModule,
+        RouterModule,
+        DeleteButtonDirective,
+        TranslateDirective,
+        ConfirmAutofocusButtonComponent,
+    ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
+    protected readonly ButtonType = ButtonType;
 
     // Signals
     course = signal<Course | undefined>(undefined);
@@ -67,6 +79,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    protected readonly faCancel = faCancel;
     protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly faFileImport = faFileImport;
     protected readonly faEye = faEye;
@@ -377,5 +390,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Navigates to the appropriate course management page based on context.
+     */
+    navigateToCourseManagement(): void {
+        if (this.attachment()) {
+            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+        } else {
+            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+        }
     }
 }
