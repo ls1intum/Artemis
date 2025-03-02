@@ -7,8 +7,6 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 
 import org.redisson.api.RedissonClient;
-import org.redisson.client.RedisClient;
-import org.redisson.client.RedisClientConfig;
 import org.redisson.spring.cache.RedissonSpringCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +42,7 @@ public class CacheConfiguration {
      * We need this, because the redissonClient (either directly or through redisConnectionFactory) does not support the client list command yet,
      * also see RedissonConnection.getClientList() throws UnsupportedOperationException
      */
-    private RedisClient redisClient;    // lazy init
+    // private RedisClient redisClient; // lazy init // testing removing it
 
     @Value("${spring.data.redis.host}")
     private String redisHost;
@@ -73,7 +71,7 @@ public class CacheConfiguration {
     public void destroy() {
         log.info("Closing Cache Manager");
         redissonClient.shutdown();
-        redisClient.shutdown();
+        // redisClient.shutdown();
     }
 
     @Bean
@@ -82,16 +80,16 @@ public class CacheConfiguration {
         return new RedissonSpringCacheManager(redissonClient);
     }
 
-    @Bean
-    public RedisClient redisClient() {
-        RedisClientConfig config = new RedisClientConfig();
-        config.setAddress("redis://" + redisHost + ":" + redisPort);
-        config.setUsername(redisUsername);
-        config.setPassword(redisPassword);
-        config.setClientName(redisClientName);
-        this.redisClient = RedisClient.create(config);
-        return this.redisClient;
-    }
+    // @Bean
+    // public RedisClient redisClient() {
+    // RedisClientConfig config = new RedisClientConfig();
+    // config.setAddress("redis://" + redisHost + ":" + redisPort);
+    // config.setUsername(redisUsername);
+    // config.setPassword(redisPassword);
+    // config.setClientName(redisClientName);
+    // this.redisClient = RedisClient.create(config);
+    // return this.redisClient;
+    // }
 
     @Bean
     public KeyGenerator keyGenerator() {

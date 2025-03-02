@@ -263,9 +263,9 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
     // Hazelcast replacement to enable caching and communication between server nodes
-    implementation "org.redisson:redisson:3.34.1"
-    implementation "org.redisson:redisson-spring-boot-starter:3.34.1"
-    implementation "org.redisson:redisson-hibernate-6:3.34.1"
+    implementation "org.redisson:redisson:3.44.0"
+    implementation "org.redisson:redisson-spring-boot-starter:3.44.0"
+    implementation "org.redisson:redisson-hibernate-6:3.44.0"
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }
