@@ -276,7 +276,7 @@ describe('ExamParticipationService', () => {
             .subscribe((resp) => expect(resp).toBeUndefined());
 
         const req = httpMock.expectOne({ method: 'POST' });
-        expect(req.request.url).toBe('api/courses/1/exams/1/student-exams/submit');
+        expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
     });
 
