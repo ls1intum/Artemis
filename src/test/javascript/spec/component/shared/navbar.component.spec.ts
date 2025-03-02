@@ -694,6 +694,39 @@ describe('NavbarComponent', () => {
         });
     });
 
+    describe('Special repository route breadcrumb cases', () => {
+        const baseRoute = '/course-management/1/programming-exercises/2/repository/';
+
+        it.each([
+            {
+                url: baseRoute + 'USER/5',
+                label: 'artemisApp.repository.userRepository.title',
+            },
+            {
+                url: baseRoute + 'TEMPLATE',
+                label: 'artemisApp.repository.templateRepository.title',
+            },
+            {
+                url: baseRoute + 'SOLUTION',
+                label: 'artemisApp.repository.solutionRepository.title',
+            },
+            {
+                url: baseRoute + 'TESTS',
+                label: 'artemisApp.repository.testsRepository.title',
+            },
+            {
+                url: baseRoute + 'AUXILIARY/5',
+                label: 'artemisApp.repository.auxiliaryRepository.title',
+            },
+        ])('should calculated correct repository  breadcrumbs', ({ url, label }) => {
+            router.setUrl(url);
+
+            fixture.detectChanges();
+            expect(component.breadcrumbs).toHaveLength(5);
+            expect(component.breadcrumbs[4]).toMatchObject({ uri: url + '/', label: label });
+        });
+    });
+
     describe('Special student route breadcrumb cases', () => {
         it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
             const testUrl = `/courses/1/exercises/${exType}/2`;
