@@ -361,8 +361,5 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
-        setTimeout(() => {
-            document.querySelectorAll('input[type="checkbox"]').forEach((checkbox: HTMLInputElement) => (checkbox.checked = false));
-        }, 0);
     }
 }

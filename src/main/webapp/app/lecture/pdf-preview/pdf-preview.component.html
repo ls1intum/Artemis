@@ -65,6 +65,7 @@
                 [appendFile]="appendFile()"
                 [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
+                [updatedSelectedPages]="selectedPages()"
                 (isPdfLoading)="isPdfLoading.set($event)"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
