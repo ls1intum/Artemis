@@ -30,7 +30,9 @@
                 "authMechanism": "Access Type",
                 "commitHash": "Commit Hash",
                 "timeStamp": "Timestamp",
-                "error": "VCS Access log could not be retrieved"
+                "error": "VCS Access log could not be retrieved",
+                "numberOfPages": "There are {{ count }} pages",
+                "onePage": "There is only one page"
             }
         }
     }

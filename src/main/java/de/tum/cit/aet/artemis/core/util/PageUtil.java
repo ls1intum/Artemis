@@ -82,6 +82,15 @@ public class PageUtil {
                     JOIN t.testCases tct
                     WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                 ), '')"""
+        )),
+        VCS_ACCESS_LOG(Map.of(
+            "id", "id",
+            "userId", "user.id",
+            "author", "name",
+            "participationId", "participation.id",
+            "authenticationMechanism", "authenticationMechanism",
+            "repositoryActionType", "repositoryActionType",
+            "timestamp", "timestamp"
         ));
         // @formatter:on
 

@@ -1,61 +1,92 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Observable, lastValueFrom } from 'rxjs';
+import { NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
+import { CommonModule } from '@angular/common';
+import { VcsRepositoryAccessLogService } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, NgbModule, NgbPagination, SortIconComponent, CommonModule],
 })
 export class VcsRepositoryAccessLogViewComponent {
     private readonly route = inject(ActivatedRoute);
-    private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private readonly alertService = inject(AlertService);
-
-    protected readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
+    private readonly vcsAccessLogService = inject(VcsRepositoryAccessLogService);
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
-    private readonly participationId = computed(() => {
-        const participationId = this.params().repositoryId;
-        if (participationId) {
-            return Number(participationId);
-        }
-        return undefined;
+
+    readonly page = signal<number>(1);
+    readonly pageSize = signal<number>(25);
+    readonly searchTerm = signal<string>('');
+    readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
+    readonly sortedColumn = signal<string>('id');
+    readonly isLoading = signal<boolean>(false);
+
+    readonly content = signal<SearchResult<VcsAccessLogDTO>>({ resultsOnPage: [], numberOfPages: 0 });
+    readonly totalItems = signal<number>(0);
+    readonly collectionsSize = computed(() => this.content().numberOfPages * this.pageSize());
+
+    readonly TRANSLATION_BASE = 'artemisApp.repository.vcsAccessLog';
+
+    private readonly repositoryId = computed(() => {
+        const repositoryId = this.params().repositoryId;
+        return repositoryId ? Number(repositoryId) : undefined;
     });
-    private readonly exerciseId = computed(() => Number(this.params().exerciseId));
-    private readonly repositoryType = computed(() => String(this.params().repositoryType));
+    private readonly exerciseId = computed(() => {
+        const exerciseId = this.params().exerciseId;
+        return exerciseId ? Number(exerciseId) : 0;
+    });
+    private readonly repositoryType = computed(() => this.params().repositoryType);
 
     constructor() {
         effect(async () => {
-            if (this.participationId()) {
-                await this.loadVcsAccessLogForParticipation(this.participationId()!);
-            } else {
-                await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
-            }
+            await this.loadData();
         });
     }
 
-    public async loadVcsAccessLogForParticipation(participationId: number) {
-        await this.extractEntries(() => this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(participationId));
-    }
-
-    public async loadVcsAccessLog(exerciseId: number, repositoryType: string) {
-        await this.extractEntries(() => this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType));
-    }
-
-    private async extractEntries(fetchVcsAccessLogs: () => Observable<VcsAccessLogDTO[] | undefined>) {
+    async loadData() {
+        const state = {
+            page: this.page(),
+            pageSize: this.pageSize(),
+            searchTerm: this.searchTerm() || '',
+            sortingOrder: this.sortingOrder(),
+            sortedColumn: this.sortedColumn(),
+        };
+        this.isLoading.set(true);
         try {
-            const accessLogEntries = await lastValueFrom(fetchVcsAccessLogs());
-            if (accessLogEntries) {
-                this.vcsAccessLogEntries.set(accessLogEntries);
-            }
+            const response = await this.vcsAccessLogService.search(state, {
+                repositoryId: this.repositoryId() ?? 0,
+                exerciseId: this.exerciseId() ?? 0,
+                repositoryType: this.repositoryType(),
+            });
+            this.content.set(response);
         } catch (error) {
-            this.alertService.error('artemisApp.repository.vcsAccessLog.error');
+            this.alertService.error(this.TRANSLATION_BASE + '.error');
+        } finally {
+            this.isLoading.set(false);
         }
+    }
+
+    async setSortedColumn(column: string) {
+        if (this.sortedColumn() === column) {
+            this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
+        } else {
+            this.sortedColumn.set(column);
+            this.sortingOrder.set(SortingOrder.ASCENDING);
+        }
+    }
+
+    getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
+        if (this.sortedColumn() === column) {
+            return this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
+        }
+        return 'none';
     }
 }

@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -85,4 +88,6 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             WHERE vcsAccessLog.timestamp < :date
             """)
     List<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
+
+    Page<VcsAccessLog> findAll(Specification<VcsAccessLog> spec, Pageable pageable);
 }
