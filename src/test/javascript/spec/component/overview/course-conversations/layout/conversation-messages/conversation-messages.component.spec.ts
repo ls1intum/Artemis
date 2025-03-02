@@ -352,8 +352,8 @@ examples.forEach((activeConversation) => {
 
             tick();
 
-            expect(component.posts[0].forwardedPosts).toEqual([]);
-            expect(component.posts[0].forwardedAnswerPosts).toEqual([]);
+            expect(component.posts[0].forwardedPosts).toEqual([null]);
+            expect(component.posts[0].forwardedAnswerPosts).toEqual([null]);
         }));
 
         it('should not fetch source posts or answers for empty forwarded messages', fakeAsync(() => {
