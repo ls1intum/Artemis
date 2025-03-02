@@ -30,7 +30,7 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -51,6 +51,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MockConversationService } from '../../../../helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockResizeObserver } from '../../../../helpers/mocks/service/mock-resize-observer';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -81,6 +83,8 @@ describe('PostComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             declarations: [
                 PostComponent,
@@ -114,6 +118,9 @@ describe('PostComponent', () => {
                     },
                 } as RouterState;
                 router.setRouterState(mockRouterState);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 

@@ -635,7 +635,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.focusPostId = (post as AnswerPost)?.post?.id;
         }
 
-        this.metisConversationService.setActiveConversation(id);
-        this.changeDetector.detectChanges();
+        if (this.activeConversation && this.activeConversation.id === id) {
+            this.metisConversationService.setActiveConversation(undefined);
+            setTimeout(() => {
+                this.metisConversationService.setActiveConversation(id);
+                this.changeDetector.detectChanges();
+            }, 0);
+        } else {
+            this.metisConversationService.setActiveConversation(id);
+            this.changeDetector.detectChanges();
+        }
     }
 }

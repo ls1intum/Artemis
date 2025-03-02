@@ -19,6 +19,7 @@
             "goToExercise": "Zur Aufgabe gehen",
             "goToLecture": "Zur Vorlesung gehen",
             "goToExam": "Zur Klausur gehen",
+            "sendAsDirectMessage": "Auch als Direktnachricht senden",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,6 +9,7 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Post } from 'app/entities/metis/post.model';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -25,6 +26,8 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     readonly activeConversation = input<ConversationDTO>();
 
     @Output() valueChange = new EventEmitter<void>();
+
+    sendAsDirectMessage = signal<boolean>(false);
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -43,6 +46,10 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         }
 
         super.ngOnChanges();
+    }
+
+    toggleSendAsDirectMessage(): void {
+        this.sendAsDirectMessage.set(!this.sendAsDirectMessage());
     }
 
     /**
@@ -65,16 +72,38 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      */
     createPosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
-            next: (answerPost: AnswerPost) => {
-                this.resetFormGroup('');
-                this.isLoading = false;
-                this.onCreate.emit(answerPost);
+        this.isLoading = true;
+
+        const createAnswerPost$ = this.metisService.createAnswerPost(this.posting);
+
+        createAnswerPost$.subscribe({
+            next: (createdAnswerPost: AnswerPost) => {
+                if (this.sendAsDirectMessage()) {
+                    const newPost = this.mapAnswerPostToPost(createdAnswerPost);
+                    this.metisService.createPost(newPost).subscribe({
+                        next: () => this.finalizeCreation(createdAnswerPost),
+                        error: () => (this.isLoading = false),
+                    });
+                } else {
+                    this.finalizeCreation(createdAnswerPost);
+                }
             },
-            error: () => {
-                this.isLoading = false;
-            },
+            error: () => (this.isLoading = false),
         });
+    }
+
+    private finalizeCreation(answerPost: AnswerPost): void {
+        this.resetFormGroup('');
+        this.isLoading = false;
+        this.onCreate.emit(answerPost);
+    }
+
+    private mapAnswerPostToPost(answerPost: AnswerPost): Post {
+        return {
+            content: answerPost.content,
+            conversation: this.activeConversation(),
+            originalAnswerId: answerPost.id,
+        } as Post;
     }
 
     /**

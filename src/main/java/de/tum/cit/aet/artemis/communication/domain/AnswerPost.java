@@ -39,7 +39,7 @@ public class AnswerPost extends Posting {
     private Set<Reaction> reactions = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author" })
+    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author", "content" })
     private Post post;
 
     @Transient
@@ -48,17 +48,6 @@ public class AnswerPost extends Posting {
     @JsonProperty("resolvesPost")
     public Boolean doesResolvePost() {
         return resolvesPost;
-    }
-
-    @Column(name = "has_forwarded_messages")
-    private boolean hasForwardedMessages;
-
-    public boolean getHasForwardedMessages() {
-        return hasForwardedMessages;
-    }
-
-    public void setHasForwardedMessages(boolean hasForwardedMessages) {
-        this.hasForwardedMessages = hasForwardedMessages;
     }
 
     public void setResolvesPost(Boolean resolvesPost) {
