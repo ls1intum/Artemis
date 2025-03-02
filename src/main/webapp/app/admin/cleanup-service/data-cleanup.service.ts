@@ -51,7 +51,7 @@ export interface SubmissionVersionsCleanupCountDTO extends CleanupCount {
 
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
-    private readonly adminResourceUrl = 'api/admin/cleanup';
+    private readonly adminResourceUrl = 'api/core/admin/cleanup';
     private http = inject(HttpClient);
 
     /**

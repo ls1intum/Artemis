@@ -269,11 +269,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (optionalStudentWithGroups.isEmpty()) {
             return;
         }
-        User student = optionalStudentWithGroups.get();
+        User user = optionalStudentWithGroups.get();
 
-        if (!isAllowedToSubmit(studentParticipation, student, programmingSubmission)) {
+        if (authCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise(), user)) {
+            return;
+        }
+
+        if (!isAllowedToSubmit(studentParticipation, user, programmingSubmission)) {
             final String message = ("The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the "
-                    + "programming exercise \"%s\"").formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
+                    + "programming exercise \"%s\"").formatted(user.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
             programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);
@@ -283,7 +287,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // we include submission policies here: if the student (for whatever reason) has more submission than allowed attempts, the submission would be illegal
         if (exceedsSubmissionPolicy(studentParticipation, submissionPolicy)) {
             final String message = "The student %s illegally submitted code after the submission policy lock limit %d in the participation %d for the programming exercise \"%s\""
-                    .formatted(student.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
+                    .formatted(user.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
             programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);

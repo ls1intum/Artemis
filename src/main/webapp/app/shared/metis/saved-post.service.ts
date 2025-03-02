@@ -12,7 +12,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     providedIn: 'root',
 })
 export class SavedPostService {
-    private resourceUrl = 'api/saved-posts/';
+    private resourceUrl = 'api/communication/saved-posts/';
 
     private readonly http: HttpClient = inject(HttpClient);
 

@@ -5,7 +5,7 @@ import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-pagi
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePagingService extends ExercisePagingService<ProgrammingExercise> {
-    public static readonly RESOURCE_URL = 'api/programming-exercises';
+    public static readonly RESOURCE_URL = 'api/programming/programming-exercises';
 
     constructor() {
         const http = inject(HttpClient);

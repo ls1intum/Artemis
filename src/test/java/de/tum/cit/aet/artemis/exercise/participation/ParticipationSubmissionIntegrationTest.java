@@ -52,7 +52,7 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
         // There should be a submission found by participation.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
 
-        request.delete("/api/submissions/" + submissionId, HttpStatus.OK);
+        request.delete("/api/exercise/submissions/" + submissionId, HttpStatus.OK);
         Optional<Submission> submission = submissionRepository.findById(submissionId);
 
         // Submission should now be gone.
@@ -66,18 +66,18 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteParticipation_forbidden_student() throws Exception {
-        request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
+        request.delete("/api/exercise/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteParticipation_forbidden_tutor() throws Exception {
-        request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
+        request.delete("/api/exercise/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/submissions/" + -1, HttpStatus.NOT_FOUND);
+        request.delete("/api/exercise/submissions/" + -1, HttpStatus.NOT_FOUND);
     }
 }

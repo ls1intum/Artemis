@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/fileupload/")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
