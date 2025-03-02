@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { NgbTooltipModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('Feature Overlay Component Tests', () => {
     let fixture: ComponentFixture<FeatureOverlayComponent>;
@@ -9,10 +11,14 @@ describe('Feature Overlay Component Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FeatureOverlayComponent);
+            })
+            .catch((error) => {
+                console.log(error);
             });
     });
 
@@ -24,7 +30,7 @@ describe('Feature Overlay Component Tests', () => {
         expect(tooltipDebugEl).not.toBeNull();
 
         const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
-        const expectedTooltip = 'This feature is not enabled. Ask your Artemis administrator or consult the documentation for more information.';
+        const expectedTooltip = 'artemisApp.featureOverlay.title';
         expect(tooltipInstance.ngbTooltip).toEqual(expectedTooltip);
 
         const innerDivDebugEl = fixture.debugElement.query(By.css('div.disabled'));
