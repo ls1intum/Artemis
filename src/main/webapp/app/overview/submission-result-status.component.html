@@ -29,8 +29,10 @@
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort"></span>
             } @else if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userSubmittedShort"></span>
-            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ) {
+            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ && !submitted) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
+            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ && submitted) {
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userWaitingForDueDateShort"></span>
             } @else if (quizNotStarted) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
             } @else {

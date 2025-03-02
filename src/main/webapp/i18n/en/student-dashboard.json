@@ -169,6 +169,7 @@
                 "quizNotStartedShort": "Not yet started",
                 "userNotParticipatedShort": "Not participated",
                 "userParticipatingShort": "Currently participating",
+                "userWaitingForDueDateShort": "Submitted, waiting for due date",
                 "userSubmittedShort": "Already submitted",
                 "noDateAssociated": "No date associated",
                 "details": {

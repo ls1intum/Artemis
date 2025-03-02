@@ -25,7 +25,7 @@
                 <div>
                     @if (!showingResult) {
                         <div class="d-flex gap-2 align-items-center">
-                            @if (!waitingForQuizStart) {
+                            @if (!waitingForQuizStart && !submission.submitted) {
                                 <div class="align-content-center">
                                     <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                                     <span
@@ -36,6 +36,13 @@
                                         }"
                                     >
                                         {{ remainingTimeText }}
+                                    </span>
+                                </div>
+                            } @else if (submission.submitted && quizExercise.dueDate && !quizExercise.quizEnded) {
+                                <div class="align-content-center">
+                                    <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
+                                    <span id="results-available-value">
+                                        {{ quizExercise.dueDate | artemisDate }}
                                     </span>
                                 </div>
                             }
