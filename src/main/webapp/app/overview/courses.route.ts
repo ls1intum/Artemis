@@ -307,7 +307,7 @@ export const routes: Routes = [
                     ),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
+                    pageTitle: 'overview.plagiarismCases',
                 },
                 canActivate: [UserRouteAccessService],
             },
