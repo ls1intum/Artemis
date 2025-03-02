@@ -1,5 +1,8 @@
 {
     "featureToggles": {
         "title": "Feature Toggles"
+    },
+    "featureOverlay": {
+        "title": "Diese Funktion ist nicht aktiviert. Fragen Sie Ihren Artemis-Administrator oder konsultieren Sie die Dokumentation für weitere Informationen."
     }
 }
