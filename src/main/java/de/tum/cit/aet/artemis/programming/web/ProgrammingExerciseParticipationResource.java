@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementS
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);

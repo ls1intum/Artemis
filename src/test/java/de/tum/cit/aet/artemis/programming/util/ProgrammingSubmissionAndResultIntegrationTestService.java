@@ -99,7 +99,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         Object obj = mapper.readValue(jsonRequest, Object.class);
 
         // Api should return ok.
-        request.postWithoutLocation("/api/public/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
+        request.postWithoutLocation("/api/programming/public/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
 

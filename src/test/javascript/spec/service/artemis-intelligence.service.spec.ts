@@ -48,7 +48,7 @@ describe('ArtemisIntelligenceService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rewrite-text`,
+                url: `api/iris/courses/${courseId}/rewrite-text`,
                 method: 'POST',
             });
 
@@ -70,7 +70,7 @@ describe('ArtemisIntelligenceService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rewrite-text`,
+                url: `api/iris/courses/${courseId}/rewrite-text`,
                 method: 'POST',
             });
 

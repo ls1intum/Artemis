@@ -53,7 +53,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.SWIFT, VsCode));
         userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.JAVA, IntelliJ));
 
-        List<IdeMappingDTO> idePreferences = request.getList("/api/ide-settings", HttpStatus.OK, IdeMappingDTO.class);
+        List<IdeMappingDTO> idePreferences = request.getList("/api/programming/ide-settings", HttpStatus.OK, IdeMappingDTO.class);
 
         assertThat(idePreferences).as("deeplink for no programming Language is intellij")
                 .anyMatch(ideMappingDTO -> ideMappingDTO.programmingLanguage().equals(ProgrammingLanguage.EMPTY) && ideMappingDTO.ide().deepLink().equals(IntelliJ.getDeepLink()));
@@ -71,7 +71,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("programmingLanguage", ProgrammingLanguage.SWIFT.toString());
 
-        IdeMappingDTO idePreference = request.putWithResponseBodyAndParams("/api/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.OK, params);
+        IdeMappingDTO idePreference = request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.OK, params);
 
         assertThat(idePreference.programmingLanguage()).as("new ide preference for Swift").isEqualTo(ProgrammingLanguage.SWIFT);
         assertThat(idePreference.ide().deepLink()).as("new preference for Swift is intelliJ").isEqualTo(IntelliJ.getDeepLink());
@@ -85,7 +85,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("programmingLanguage", ProgrammingLanguage.SWIFT.toString());
 
-        IdeMappingDTO idePreference = request.putWithResponseBodyAndParams("/api/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.OK, params);
+        IdeMappingDTO idePreference = request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.OK, params);
         assertThat(idePreference.programmingLanguage()).as("deeplink for Swift changed").isEqualTo(ProgrammingLanguage.SWIFT);
         assertThat(idePreference.ide().deepLink()).as("deeplink for Swift is now intelliJ").isEqualTo(IntelliJ.getDeepLink());
     }
@@ -98,7 +98,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("programmingLanguage", ProgrammingLanguage.SWIFT.toString());
-        request.delete("/api/ide-settings", HttpStatus.OK, params);
+        request.delete("/api/programming/ide-settings", HttpStatus.OK, params);
         assertThat(userIdeMappingRepository.findAllByUserId(student1.getId())).as("ide preference got deleted").isEmpty();
     }
 

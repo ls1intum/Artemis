@@ -57,17 +57,17 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
 
-    private static final URI VALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+    private static final URI VALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
 
-    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/", FilePathService.getDragAndDropBackgroundFilePath());
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/core/", FilePathService.getDragAndDropBackgroundFilePath());
 
-    private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+    private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
 
-    private static final URI VALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
+    private static final URI VALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
 
-    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/", FilePathService.getDragItemFilePath());
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/core/", FilePathService.getDragItemFilePath());
 
-    private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
+    private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
     private static final Path lineEndingsUnixPath = Path.of(".", "exportTest", "LineEndingsUnix.java");
 

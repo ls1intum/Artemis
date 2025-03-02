@@ -8,7 +8,7 @@ import { map } from 'rxjs/operators';
 export class RepositoryService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/repository';
+    private resourceUrl = 'api/programming/repository';
 
     /**
      * Checks whether the participation data is clean or not.
@@ -49,7 +49,7 @@ export interface IRepositoryFileService {
 export class RepositoryFileService implements IRepositoryFileService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/repository';
+    private resourceUrl = 'api/programming/repository';
 
     /**
      * Get files of a specific participation.
