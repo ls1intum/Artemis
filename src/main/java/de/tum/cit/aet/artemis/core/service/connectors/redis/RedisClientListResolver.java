@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 import org.springframework.stereotype.Component;
@@ -15,17 +16,15 @@ public class RedisClientListResolver {
 
     private static final Logger log = LoggerFactory.getLogger(RedisClientListResolver.class);
 
-    // When https://github.com/redisson/redisson/issues/6108 is resolved, this is also possible with the following code
-    private final RedisConnectionFactory redisConnectionFactory;
+    // https://github.com/redisson/redisson/issues/6108 is resolved
+    private final ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
 
-    // redisConnectionFactory.getConnection().serverCommands().getClientList()
-
-    public RedisClientListResolver(RedisConnectionFactory redisConnectionFactory) {
-        this.redisConnectionFactory = redisConnectionFactory;
+    public RedisClientListResolver(RedisConnectionFactory redisConnectionFactory, ReactiveRedisConnectionFactory reactiveRedisConnectionFactory) {
+        this.reactiveRedisConnectionFactory = reactiveRedisConnectionFactory;
     }
 
     public Set<String> getUniqueClients() {
-        List<RedisClientInfo> clients = redisConnectionFactory.getConnection().serverCommands().getClientList();
+        List<RedisClientInfo> clients = reactiveRedisConnectionFactory.getReactiveConnection().serverCommands().getClientList().collectList().block();
 
         // Parse the Redis client list to extract names and filter duplicates
         Set<String> uniqueClients = new HashSet<>();
@@ -33,9 +32,9 @@ public class RedisClientListResolver {
             log.error("Redis client list is null");
             return uniqueClients;
         }
-
-        for (RedisClientInfo clientInfo : clients) {
-            String clientName = clientInfo.getName();
+        // reactiveRedisConnectionFactory because when using redisConnectionFactory the client list comomand returns just a list of strings
+        for (Object clientInfo : clients) {
+            String clientName = RedisClientInfo.RedisClientInfoBuilder.fromString((String) clientInfo).getName();
             if (clientName.toLowerCase().startsWith("artemis")) {
                 // Optional: Apply more complex logic here to choose the most relevant connection
                 uniqueClients.add(clientName);
