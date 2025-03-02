@@ -417,21 +417,21 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void testGetExamInCourseElseThrow_testExamEnded() {
-    // testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
-    // examRepository.save(testExam1);
-    // assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void testGetExamInCourseElseThrow_multipleUnfinishedStudentExams() {
-    // User user = studentExamForTestExam1.getUser();
-    // examUtilService.addStudentExamForTestExam(testExam1, user);
-    // assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(IllegalStateException.class);
-    // }
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_testExamEnded() {
+        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_multipleUnfinishedStudentExams() {
+        User user = studentExamForTestExam1.getUser();
+        examUtilService.addStudentExamForTestExam(testExam1, user);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

@@ -93,7 +93,7 @@ public class ExamAccessService {
             studentExam = getOrCreateTestExam(exam, course, currentUser);
         }
         else {
-            studentExam = getOrCreateNormalExam(examId, currentUser);
+            studentExam = getOrCreateNormalExam(exam, currentUser);
         }
 
         if (!examId.equals(studentExam.getExam().getId())) {
@@ -103,9 +103,9 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateNormalExam(Long examId, User currentUser) {
+    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser) {
         // Check that the student exam exists
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
 
         StudentExam studentExam;
         // If an studentExam can be found, we can immediately proceed
@@ -113,13 +113,13 @@ public class ExamAccessService {
             studentExam = optionalStudentExam.get();
         }
         else {
-            Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
             ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
             boolean canExamBeStarted = now.isAfter(unlockDate);
-            boolean isUserRegistered = examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId());
+            boolean isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), currentUser.getId());
             boolean isExamEnded = ZonedDateTime.now().isAfter(exam.getEndDate());
             // Generate a student exam if the following conditions are met:
             // 1. The exam has not ended.
@@ -156,6 +156,15 @@ public class ExamAccessService {
                 .filter(attempt -> !attempt.isFinished()).toList();
 
         if (unfinishedStudentExams.isEmpty()) {
+            ZonedDateTime now = ZonedDateTime.now();
+            ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
+
+            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
+            boolean canExamBeStarted = now.isAfter(unlockDate);
+            if (!canExamBeStarted) {
+                throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
+            }
+
             studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
             studentExam.setExercises(null);
