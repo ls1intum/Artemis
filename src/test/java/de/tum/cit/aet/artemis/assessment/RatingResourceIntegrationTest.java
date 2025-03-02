@@ -67,7 +67,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateRating_asUser() throws Exception {
-        int response = request.postWithResponseBody("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, Integer.class, HttpStatus.CREATED);
+        int response = request.postWithResponseBody("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, Integer.class, HttpStatus.CREATED);
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).orElseThrow();
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(response).isEqualTo(2);
@@ -79,7 +79,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateInvalidRating_asUser(int value) throws Exception {
         rating.setRating(value);
-        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.BAD_REQUEST);
         final Optional<Rating> optionalRating = ratingService.findRatingByResultId(result.getId());
         assertThat(optionalRating).isEmpty();
     }
@@ -87,14 +87,14 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateRating_asTutor_FORBIDDEN() throws Exception {
-        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
+        request.post("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        int response = request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Integer.class);
+        int response = request.get("/api/assessment/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Integer.class);
         assertThat(response).isEqualTo(2);
     }
 
@@ -102,13 +102,13 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRating_asUser_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Integer.class);
+        request.get("/api/assessment/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Integer.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser_Null() throws Exception {
-        Integer savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Integer.class);
+        Integer savedRating = request.get("/api/assessment/results/" + result.getId() + "/rating", HttpStatus.OK, Integer.class);
         assertThat(savedRating).isNull();
     }
 
@@ -116,7 +116,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
+        request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isEqualTo(5);
     }
@@ -125,7 +125,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateInvalidRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isNotEqualTo(7);
         assertThat(updatedRating.getRating()).isEqualTo(2);
@@ -135,7 +135,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
+        request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
 
         // check that rating is not updated
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
@@ -146,7 +146,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
+        final var ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
 
         assertThat(ratings).hasSize(1);
         assertThat(ratings.getFirst().getId()).isEqualTo(savedRating.getId());
@@ -155,18 +155,18 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
-        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
-        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
-        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 }

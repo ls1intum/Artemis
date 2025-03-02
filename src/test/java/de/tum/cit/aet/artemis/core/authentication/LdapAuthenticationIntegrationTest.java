@@ -102,7 +102,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
     }
 
@@ -111,7 +111,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testImportUsers() throws Exception {
         StudentDTO existingUser = new StudentDTO(new User((long) 1, LOGIN, "", "", "de", ""));
         StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_LOGIN, "", "", "de", ""));
-        var output = request.postListWithResponseBody("/api/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
+        var output = request.postListWithResponseBody("/api/core/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
         assertThat(output.getFirst().login()).isEqualTo(NON_EXISTING_LOGIN);
     }
@@ -127,7 +127,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 
@@ -142,7 +142,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 
@@ -158,7 +158,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         // validation fails due to empty password is validated against min size
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 }

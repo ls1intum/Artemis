@@ -15,7 +15,7 @@ export class TutorParticipationService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/exercises';
+    public resourceUrl = 'api/assessment/exercises';
 
     /**
      * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned
@@ -52,7 +52,7 @@ export class TutorParticipationService {
      */
     deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise): Observable<void> {
         if (course && this.accountService.isAtLeastTutorInCourse(course)) {
-            return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/example-submission`);
+            return this.http.delete<void>(`api/exercise/guided-tour/exercises/${exercise.id}/example-submission`);
         }
         return new Observable();
     }

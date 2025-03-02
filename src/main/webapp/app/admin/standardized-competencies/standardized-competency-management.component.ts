@@ -117,7 +117,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     exportStandardizedCompetencyCatalog() {
-        const url = `/api/admin/standardized-competencies/export`;
+        const url = `/api/atlas/admin/standardized-competencies/export`;
         window.open(url, '_blank');
     }
 
