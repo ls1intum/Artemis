@@ -26,12 +26,12 @@ public class ExamPrepareExercisesTestUtil {
      * @throws Exception potentially an exception from the request util service
      */
     public static int prepareExerciseStart(RequestUtilService requestUtilService, Exam exam, Course course) throws Exception {
-        requestUtilService.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", null, HttpStatus.OK, null);
+        requestUtilService.postWithoutLocation("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", null, HttpStatus.OK, null);
 
         // Wait for it to complete
         long start = System.currentTimeMillis();
         do {
-            var status = requestUtilService.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises/status", HttpStatus.OK,
+            var status = requestUtilService.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises/status", HttpStatus.OK,
                     ExamExerciseStartPreparationStatus.class);
             if (status != null && status.finished() + status.failed() == status.overall()) {
                 return status.participationCount();

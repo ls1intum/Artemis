@@ -68,7 +68,7 @@ describe('LtiConfigurationService', () => {
                 expect(platforms).toEqual(dummyLtiPlatforms);
             });
 
-        const req = httpMock.expectOne('api/lti-platforms?page=0&size=50&sort=id&sort=desc');
+        const req = httpMock.expectOne('api/lti/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
         req.flush(dummyLtiPlatforms);
     });
@@ -88,7 +88,7 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/admin/lti-platform`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platform`);
         expect(req.request.method).toBe('PUT');
         req.flush(dummyResponse);
     });
@@ -101,7 +101,7 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/admin/lti-platform/${platformId}`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platform/${platformId}`);
         expect(req.request.method).toBe('DELETE');
         req.flush(dummyResponse);
     });
@@ -120,14 +120,14 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/admin/lti-platform`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platform`);
         expect(req.request.method).toBe('POST');
         req.flush(dummyResponse);
     });
 
     it('should query with different sorting parameters', () => {
         service.query({ sort: ['name,asc', 'id,desc'] }).subscribe();
-        const req = httpMock.expectOne('api/lti-platforms?sort=name,asc&sort=id,desc');
+        const req = httpMock.expectOne('api/lti/lti-platforms?sort=name,asc&sort=id,desc');
         expect(req.request.method).toBe('GET');
         req.flush([]);
     });
@@ -147,7 +147,7 @@ describe('LtiConfigurationService', () => {
             },
         });
 
-        const req = httpMock.expectOne('api/lti-platforms?page=0&size=50&sort=id&sort=desc');
+        const req = httpMock.expectOne('api/lti/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
         req.flush(null, errorResponse);
     });
