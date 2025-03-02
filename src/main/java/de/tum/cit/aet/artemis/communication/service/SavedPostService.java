@@ -39,7 +39,7 @@ public class SavedPostService {
     public void savePostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost != null) {
+        if (!existingSavedPost.isEmpty()) {
             return;
         }
 
@@ -56,13 +56,16 @@ public class SavedPostService {
      * @return false if the saved post was not found, true if post was found and deleted
      */
     public boolean removeSavedPostForCurrentUser(Posting post) {
-        var existingSavedPost = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = this.getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost == null) {
+        if (existingSavedPosts.isEmpty()) {
             return false;
         }
 
-        savedPostRepository.delete(existingSavedPost);
+        // Deleting one by one will clear cache keys
+        for (var existingSavedPost : existingSavedPosts) {
+            savedPostRepository.delete(existingSavedPost);
+        }
 
         return true;
     }
@@ -74,15 +77,18 @@ public class SavedPostService {
      * @param status status to change towards
      */
     public void updateStatusOfSavedPostForCurrentUser(Posting post, SavedPostStatus status) {
-        var existingSavedPost = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = this.getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost == null) {
+        if (existingSavedPosts.isEmpty()) {
             return;
         }
 
-        existingSavedPost.setStatus(status);
-        existingSavedPost.setCompletedAt(status == SavedPostStatus.IN_PROGRESS ? null : ZonedDateTime.now());
-        savedPostRepository.save(existingSavedPost);
+        // Updating one by one will clear cache keys
+        for (var existingSavedPost : existingSavedPosts) {
+            existingSavedPost.setStatus(status);
+            existingSavedPost.setCompletedAt(status == SavedPostStatus.IN_PROGRESS ? null : ZonedDateTime.now());
+            savedPostRepository.save(existingSavedPost);
+        }
     }
 
     /**
@@ -109,15 +115,16 @@ public class SavedPostService {
     }
 
     /**
-     * Helper method to retrieve a bookmark for the current user
+     * Helper method to retrieve a bookmark for the current user. May be multiple rows for same posting in some edge
+     * cases.
      *
      * @param post post to search bookmark for
      * @return The saved post for the given posting if present
      */
-    private SavedPost getSavedPostForCurrentUser(Posting post) {
+    private List<SavedPost> getSavedPostForCurrentUser(Posting post) {
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUser();
 
-        return savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
+        return savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
     }
 }
