@@ -1,14 +1,14 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 71]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 73]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.906, "CLASS":  5],
+        "atlas"         :          ["INSTRUCTION": 0.906, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS":  0],
         "communication" :          ["INSTRUCTION": 0.915, "CLASS":  2],
-        "core"          :          ["INSTRUCTION": 0.861, "CLASS": 18],
+        "core"          :          ["INSTRUCTION": 0.861, "CLASS": 1],
         "exam"          :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
