@@ -80,33 +80,29 @@
                 <span jhiTranslate="artemisApp.attachment.pdfPreview.noPDFAvailable"></span>
             </div>
         }
-        <div class="d-flex justify-content-between">
-            <div>
-                <a
-                    type="button"
-                    class="btn btn-secondary"
-                    [routerLink]="
-                        attachment()
-                            ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture!.id, 'attachments']
-                            : ['/course-management', course()!.id, 'lectures', attachmentUnit()!.lecture!.id, 'unit-management']
-                    "
-                    [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="entity.action.cancel"></span>
-                </a>
-            </div>
-            <div>
-                <button
-                    type="submit"
-                    (click)="updateAttachmentWithFile()"
-                    class="btn btn-primary"
-                    [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
-                >
-                    <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate" />
-                    <span jhiTranslate="entity.action.save"></span>
-                </button>
-            </div>
+        <div class="d-flex justify-content-end">
+            <a
+                type="button"
+                class="btn btn-secondary me-2"
+                [routerLink]="
+                    attachment()
+                        ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture!.id, 'attachments']
+                        : ['/course-management', course()!.id, 'lectures', attachmentUnit()!.lecture!.id, 'unit-management']
+                "
+                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+            >
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </a>
+            <button
+                type="submit"
+                (click)="updateAttachmentWithFile()"
+                class="btn btn-primary"
+                [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
+            >
+                <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate" />
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
         </div>
     </div>
 </div>
