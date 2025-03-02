@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -17,12 +17,10 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
-    private resourceUrl = 'api/quiz-exercises';
-
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {}
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
+    private resourceUrl = 'api/quiz/quiz-exercises';
 
     /**
      * Create the given quiz exercise
@@ -119,7 +117,7 @@ export class QuizExerciseService {
      */
     findForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/quiz/courses/${courseId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
@@ -131,7 +129,7 @@ export class QuizExerciseService {
      */
     findForExam(examId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/exams/${examId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/exam/exams/${examId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
@@ -297,14 +295,13 @@ export class QuizExerciseService {
      * @param filePath the internal path of the file to be fetched
      */
     async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
-        const fileService = new FileService(this.http);
-        return fileService
+        return this.fileService
             .getFile(filePath)
             .then((fileResult) => {
                 zip.file(fileName, fileResult);
             })
             .catch((error) => {
-                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched`, error);
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched` + error);
             });
     }
 

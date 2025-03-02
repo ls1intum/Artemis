@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -10,10 +10,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { TutorialGroupFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { LoadingIndicatorContainerComponent } from '../../../../../../../../main/webapp/app/shared/loading-indicator-container/loading-indicator-container.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;
@@ -25,17 +27,25 @@ describe('CreateTutorialGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [CreateTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), { provide: Router, useValue: router }, mockedActivatedRoute({}, {}, { course }, {})],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CreateTutorialGroupComponent);
-                component = fixture.componentInstance;
-                tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                fixture.detectChanges();
-            });
+            declarations: [
+                CreateTutorialGroupComponent,
+                MockComponent(LoadingIndicatorContainerComponent),
+                MockComponent(TutorialGroupFormComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                MockProvider(TutorialGroupsService),
+                MockProvider(AlertService),
+                { provide: Router, useValue: router },
+                mockedActivatedRoute({}, {}, { course }, {}),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CreateTutorialGroupComponent);
+        component = fixture.componentInstance;
+        tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -67,7 +77,7 @@ describe('CreateTutorialGroupComponent', () => {
         const createStub = jest.spyOn(tutorialGroupService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const tutorialGroupForm: TutorialGroupFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFormStubComponent)).componentInstance;
+        const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 
         const formData = tutorialGroupToTutorialGroupFormData(exampleTutorialGroup);
 

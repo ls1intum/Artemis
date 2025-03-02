@@ -3,13 +3,13 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from '../helpers/mocks/service/mock-participation.service';
 
 describe('ParticipationWebsocketService', () => {
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let receiveParticipationSubject: Subject<Participation>;
     let receiveParticipation2Subject: Subject<Participation>;
     let receiveResultForParticipationSubject: Subject<Result>;
@@ -42,14 +42,14 @@ describe('ParticipationWebsocketService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationService, useClass: MockParticipationService },
             ],
         })
             .compileComponents()
             .then(() => {
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                websocketService = TestBed.inject(JhiWebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
 
                 subscribeSpy = jest.spyOn(websocketService, 'subscribe');
                 unsubscribeSpy = jest.spyOn(websocketService, 'unsubscribe');

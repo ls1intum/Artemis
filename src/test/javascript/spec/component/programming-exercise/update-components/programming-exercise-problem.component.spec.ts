@@ -1,51 +1,48 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { NgModel } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
     let comp: ProgrammingExerciseProblemComponent;
 
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+        queryParams: of({}),
+    } as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                ProgrammingExerciseProblemComponent,
-                MockComponent(FaIconComponent),
-                MockComponent(CompetencySelectionComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgModel),
-            ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: { queryParams: of({}) },
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-                    problemStatement: true,
-                    linkedCompetencies: true,
-                });
+        fixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
+        comp = fixture.componentInstance;
 
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-            });
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            problemStatement: true,
+            linkedCompetencies: true,
+        });
+
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
     });
 
     afterEach(() => {

@@ -1,7 +1,6 @@
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;
@@ -9,11 +8,15 @@ describe('Exercise Group Service', () => {
     let service: ExerciseGroupService;
 
     beforeEach(() => {
-        httpClient = {
-            delete: jest.fn(),
-        };
-        httpClientDeleteSpy = jest.spyOn(httpClient, 'delete');
-        service = new ExerciseGroupService(new MockRouter() as any as Router, httpClient as HttpClient);
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient()],
+        });
+
+        service = TestBed.inject(ExerciseGroupService);
+        httpClient = TestBed.inject(HttpClient);
+        httpClientDeleteSpy = jest.spyOn(httpClient, 'delete').mockImplementation(() => {
+            return {};
+        });
     });
 
     it('should set additional parameters correctly in delete', () => {

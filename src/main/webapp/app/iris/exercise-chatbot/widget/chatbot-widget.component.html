@@ -1,7 +1,13 @@
 <div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
     <!-- chat box -->
     <div class="chat-widget">
-        <jhi-iris-base-chatbot [fullSize]="fullSize" [showCloseButton]="true" (fullSizeToggle)="toggleFullSize()" (closeClicked)="closeChat()" />
+        <jhi-iris-base-chatbot
+            [fullSize]="fullSize"
+            [showCloseButton]="true"
+            (fullSizeToggle)="toggleFullSize()"
+            (closeClicked)="closeChat()"
+            [isChatGptWrapper]="dialogData?.isChatGptWrapper || false"
+        />
         <div class="chat-widget-top-resize-area"></div>
     </div>
 </div>

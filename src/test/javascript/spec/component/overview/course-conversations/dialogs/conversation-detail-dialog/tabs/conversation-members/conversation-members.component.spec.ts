@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import '@angular/localize/init';
 import { ConversationMembersComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, EventEmitter, Input, Output, input, signal } from '@angular/core';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { input, signal } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
@@ -11,30 +12,20 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ChannelDTO } from '../../../../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { NgbPaginationMocksModule } from '../../../../../../../helpers/mocks/directive/ngbPaginationMocks.module';
+import { MockTranslateService } from '../../../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockSyncStorage } from '../../../../../../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-// eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: '[jhi-conversation-member-row]', template: '' })
-class ConversationMemberRowStubComponent {
-    @Input()
-    activeConversation: ConversationDTO;
-
-    @Input()
-    course: Course;
-
-    @Output()
-    changePerformed = new EventEmitter<void>();
-
-    @Input()
-    conversationMember: ConversationUserDTO;
-}
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
@@ -47,15 +38,23 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule, NgbPaginationMocksModule],
+                imports: [FormsModule, ReactiveFormsModule],
                 declarations: [
                     ConversationMembersComponent,
-                    ConversationMemberRowStubComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(FaIconComponent),
                     MockComponent(ItemCountComponent),
+                    MockDirective(TranslateDirective),
                 ],
-                providers: [MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal)],
+                providers: [
+                    MockProvider(ConversationService),
+                    MockProvider(AlertService),
+                    MockProvider(NgbModal),
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                ],
             }).compileComponents();
         }));
 

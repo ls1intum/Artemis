@@ -1,16 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Health } from 'app/admin/health/health.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
-    separator: string;
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {
-        this.separator = '.';
-    }
-
-    checkHealth(): Observable<any> {
-        return this.http.get('management/health');
+    checkHealth(): Observable<Health> {
+        return this.http.get<Health>('management/health');
     }
 }

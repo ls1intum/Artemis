@@ -29,7 +29,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @Test
@@ -559,7 +559,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
 
         gitlabRequestMockProvider.mockUpdateBasicUserInformation(tutor.getLogin(), false);
         gitlabRequestMockProvider.mockRemoveUserFromGroup(1L, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
-        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/core/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -702,6 +702,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
         courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 

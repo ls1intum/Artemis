@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -9,12 +9,10 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {
-    constructor(
-        private loginService: LoginService,
-        private stateStorageService: StateStorageService,
-        private router: Router,
-        private accountService: AccountService,
-    ) {}
+    private loginService = inject(LoginService);
+    private stateStorageService = inject(StateStorageService);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is 401, the current user will be logged out.

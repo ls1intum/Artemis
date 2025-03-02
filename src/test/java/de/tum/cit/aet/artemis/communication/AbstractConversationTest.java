@@ -100,7 +100,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         assertThat(createdPost.getConversation().getId()).isEqualTo(conversationId);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;
@@ -180,8 +180,9 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();
         return chat;
     }
@@ -194,14 +195,14 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("course wide channel");
 
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();
         return chat;
     }
 
     GroupChatDTO createGroupChat(String... userLoginsWithoutPrefix) throws Exception {
         var loginsWithPrefix = Arrays.stream(userLoginsWithoutPrefix).map(login -> testPrefix + login).toArray(String[]::new);
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
                 HttpStatus.CREATED);
         this.resetWebsocketMock();
         return chat;

@@ -14,8 +14,6 @@ describe('Component Tests', () => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [],
-                declarations: [ConfigurationComponent],
                 providers: [provideHttpClient(), provideHttpClientTesting(), ConfigurationService],
             })
                 .overrideTemplate(ConfigurationComponent, '')

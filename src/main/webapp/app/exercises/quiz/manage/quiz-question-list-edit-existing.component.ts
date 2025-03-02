@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -17,6 +17,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
+import { KeyValuePipe, NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 export enum State {
     COURSE = 'Course',
@@ -30,8 +33,17 @@ export enum State {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe],
 })
 export class QuizQuestionListEditExistingComponent implements OnChanges {
+    private modalService = inject(NgbModal);
+    private fileService = inject(FileService);
+    private courseManagementService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @Input() show: boolean;
     @Input() courseId: number;
     @Input() filePool: Map<string, { path?: string; file: File }>;
@@ -59,17 +71,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     importFile?: File;
     importFileName: string;
 
-    constructor(
-        private modalService: NgbModal,
-        private fileService: FileService,
-        private courseManagementService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-        private quizExerciseService: QuizExerciseService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
-
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.show) {
             this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;

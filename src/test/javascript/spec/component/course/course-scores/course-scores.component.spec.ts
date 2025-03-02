@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,6 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -46,6 +45,9 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -288,7 +290,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
@@ -320,6 +322,9 @@ describe('CourseScoresComponent', () => {
                         );
                     },
                 }),
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

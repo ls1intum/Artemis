@@ -1,31 +1,7 @@
-import { Page } from 'playwright';
 import { UPLOAD_EXERCISE_BASE } from '../../../constants';
-import { Dayjs } from 'dayjs';
-import { enterDate } from '../../../utils';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-export class FileUploadExerciseCreationPage {
-    private readonly page: Page;
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async typeTitle(title: string) {
-        await this.page.locator('#field_title').fill(title);
-    }
-
-    async setReleaseDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-releaseDate', date);
-    }
-
-    async setDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-dueDate', date);
-    }
-
-    async setAssessmentDueDate(date: Dayjs) {
-        await enterDate(this.page, '#pick-assessmentDueDate', date);
-    }
-
+export class FileUploadExerciseCreationPage extends AbstractExerciseCreationPage {
     async typeMaxPoints(maxPoints: number) {
         await this.page.locator('#field_points').fill(maxPoints.toString());
     }

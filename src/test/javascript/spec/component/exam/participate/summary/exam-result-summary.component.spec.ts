@@ -1,12 +1,8 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { User } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -23,39 +19,27 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
 import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
-import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
-import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
+import { MockComponent } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { NgbCollapseMocksModule } from '../../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
-import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { Course } from 'app/entities/course.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
-import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -172,34 +156,14 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [NgbCollapseMocksModule],
             declarations: [
                 ExamResultSummaryComponent,
-                MockComponent(TestRunRibbonComponent),
                 MockComponent(ExamResultOverviewComponent),
-                MockComponent(ExamGeneralInformationComponent),
-                MockComponent(ResultComponent),
-                MockComponent(UpdatingResultComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(ProgrammingExamSummaryComponent),
-                MockComponent(QuizExamSummaryComponent),
                 MockComponent(ModelingExamSummaryComponent),
                 MockComponent(TextExamSummaryComponent),
-                MockComponent(FileUploadExamSummaryComponent),
-                MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(FaIconComponent),
-                MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
-                MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
-                MockComponent(CollapsibleCardComponent),
             ],
             providers: [
-                provideRouter([]),
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -217,15 +181,19 @@ function sharedSetup(url: string[]) {
                         },
                     },
                 },
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
-                    },
-                }),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
-                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                {
+                    provide: SessionStorageService,
+                    useClass: MockSyncStorage,
+                },
             ],
         })
             .compileComponents()

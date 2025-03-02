@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
@@ -12,6 +12,8 @@ import {
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/course/competencies/components/import-course-competencies-settings/import-course-competencies-settings.component';
 import { CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -35,8 +37,7 @@ export interface ImportAllCourseCompetenciesResult {
 
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, ImportTableComponent, ImportCourseCompetenciesSettingsComponent],
+    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent, FaIconComponent, TranslateDirective],
     providers: [
         {
             provide: PagingService,
@@ -55,7 +56,7 @@ export class ImportAllCourseCompetenciesModalComponent {
     readonly courseId = input.required<number>();
     readonly disabledIds = computed(() => [+this.courseId()]);
 
-    readonly importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
+    importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
 
     public selectCourse(course: Course): void {
         const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{

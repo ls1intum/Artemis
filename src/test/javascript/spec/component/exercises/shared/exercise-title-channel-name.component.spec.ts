@@ -1,18 +1,18 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgForm } from '@angular/forms';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { HttpClient } from '@angular/common/http';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from '../../../../../../main/webapp/app/entities/exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseTitleChannelNameComponent', () => {
     let component: ExerciseTitleChannelNameComponent;
@@ -21,13 +21,12 @@ describe('ExerciseTitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExerciseTitleChannelNameComponent],
-            imports: [TitleChannelNameModule],
             providers: [
-                NgForm,
-                { provide: HttpClient, useClass: MockHttpService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
     });

@@ -1,6 +1,4 @@
 import { Component, OnInit, inject, input } from '@angular/core';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
@@ -13,21 +11,18 @@ import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type NameToValueMap = { [name: string]: any };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    standalone: true,
-    imports: [TranslateDirective, BarChartModule, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private activatedRoute = inject(ActivatedRoute);
-    private service = inject(StatisticsService);
-    private translateService = inject(TranslateService);
     private localeConversionService = inject(LocaleConversionService);
 
     averageScores = input.required<AggregatedExerciseGroupResult>();

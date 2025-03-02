@@ -14,7 +14,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-grade-key-overview',
     templateUrl: './grading-key-overview.component.html',
     styleUrls: ['./grading-key-overview.scss'],
-    standalone: true,
     imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class GradingKeyOverviewComponent implements OnInit {

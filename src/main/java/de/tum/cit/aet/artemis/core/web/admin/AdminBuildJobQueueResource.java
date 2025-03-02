@@ -37,7 +37,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
@@ -98,10 +98,7 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on build agent {}", agentName);
         Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
                 .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
-        if (buildAgentDetails.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(buildAgentDetails.get());
+        return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -269,6 +266,24 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<Void> resumeAllBuildAgents() {
         log.debug("REST request to resume all agents");
         localCIBuildJobQueueService.resumeAllBuildAgents();
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/clear-distributed-data} : Clear all distributed data.
+     * This endpoint allows administrators to clear all distributed data. See {@link SharedQueueManagementService#clearDistributedData()}.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @return {@link ResponseEntity} with status code 200 (OK) if the distributed data was successfully cleared
+     *         or an appropriate error response if something went wrong
+     */
+    @DeleteMapping("clear-distributed-data")
+    public ResponseEntity<Void> clearDistributedData() {
+        log.debug("REST request to clear distributed data");
+        localCIBuildJobQueueService.clearDistributedData();
         return ResponseEntity.noContent().build();
     }
 }

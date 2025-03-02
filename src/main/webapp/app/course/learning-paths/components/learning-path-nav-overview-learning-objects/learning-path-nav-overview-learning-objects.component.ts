@@ -6,14 +6,14 @@ import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learnin
 import { faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule } from '@angular/common';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview-learning-objects',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbAccordionModule, FontAwesomeModule, CommonModule, TranslateDirective],
+    imports: [NgbAccordionModule, FontAwesomeModule, TranslateDirective, NgClass],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
@@ -41,12 +41,9 @@ export class LearningPathNavOverviewLearningObjectsComponent {
     readonly onLearningObjectSelected = output<void>();
 
     constructor() {
-        effect(
-            () => {
-                untracked(() => this.loadLearningObjects());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            untracked(() => this.loadLearningObjects());
+        });
     }
 
     async loadLearningObjects(): Promise<void> {

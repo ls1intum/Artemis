@@ -8,8 +8,6 @@ export class Bonus implements BaseEntity {
     public weight?: number;
     public sourceGradingScale?: GradingScale;
     public bonusToGradingScale?: GradingScale;
-
-    constructor() {}
 }
 
 export enum BonusStrategy {
@@ -41,6 +39,4 @@ export class BonusResult {
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
     public achievedPresentationScore?: number;
     public presentationScoreThreshold?: number;
-
-    constructor() {}
 }

@@ -2,9 +2,9 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.0.9'
+    id 'com.github.spotbugs' version '6.1.0'
     // %static-code-analysis-stop%
-    id 'com.teamscale' version '33.1.2'
+    id 'com.teamscale' version '34.2.1'
 }
 
 apply plugin: 'java'
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
-    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
 
     // testImplementation(':${exerciseNamePomXml}')
     // testImplementation(':${exerciseNamePomXml}-Solution')

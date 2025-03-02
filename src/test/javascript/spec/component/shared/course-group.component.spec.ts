@@ -1,32 +1,18 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent, GroupUserInformationRow } from 'app/shared/course-group/course-group.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/core/util/alert.service';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
@@ -43,28 +29,13 @@ describe('CourseGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
-            declarations: [
-                CourseGroupComponent,
-                MockComponent(DataTableComponent),
-                MockComponent(UsersImportButtonComponent),
-                MockRouterLinkDirective,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(DeleteButtonDirective),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
-                MockComponent(CourseExamArchiveButtonComponent),
-                MockDirective(HasAnyAuthorityDirective),
-            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(AlertService),
-                MockProvider(NgbModal),
-                MockProvider(CourseManagementService),
-                MockProvider(UserService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

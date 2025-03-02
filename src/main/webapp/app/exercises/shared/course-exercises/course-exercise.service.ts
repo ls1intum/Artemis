@@ -9,20 +9,14 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
-    private resourceUrl = `api/courses`;
-
-    constructor(
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-    ) {}
+    private http = inject(HttpClient);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private accountService = inject(AccountService);
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -31,7 +25,7 @@ export class CourseExerciseService {
      */
     findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
-            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises`, { observe: 'response' })
+            .get<ProgrammingExercise[]>(`api/programming/courses/${courseId}/programming-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -42,7 +36,7 @@ export class CourseExerciseService {
      */
     findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
-            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises`, { observe: 'response' })
+            .get<ModelingExercise[]>(`api/modeling/courses/${courseId}/modeling-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -53,7 +47,7 @@ export class CourseExerciseService {
      */
     findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
-            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises`, { observe: 'response' })
+            .get<TextExercise[]>(`api/text/courses/${courseId}/text-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -64,7 +58,7 @@ export class CourseExerciseService {
      */
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
-            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises`, { observe: 'response' })
+            .get<FileUploadExercise[]>(`api/fileupload/courses/${courseId}/file-upload-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -86,7 +80,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the exercise
      */
     startExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations`, {}).pipe(
+        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -99,7 +93,7 @@ export class CourseExerciseService {
      * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
      */
     startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
+        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -112,7 +106,7 @@ export class CourseExerciseService {
      * @param participationId - the unique identifier of the participation to continue
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
+        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -120,7 +114,7 @@ export class CourseExerciseService {
     }
 
     requestFeedback(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
+        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**

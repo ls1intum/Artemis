@@ -34,11 +34,15 @@
                     "cancelled": "Cancelled",
                     "failed": "Failed",
                     "error": "Error",
-                    "successful": "Successful"
+                    "successful": "Successful",
+                    "building": "Building",
+                    "queued": "Queued",
+                    "missing": "Missing",
+                    "timeout": "Timed out"
                 },
                 "buildAgentAddress": "Build Agent Address",
-                "buildStartDate": {
-                    "title": "Build Start Date",
+                "buildSubmissionDate": {
+                    "title": "Build Submission Date",
                     "from": "From",
                     "to": "To",
                     "invalidDate": "From date must be before to date"
@@ -71,6 +75,10 @@
                 "failedBuildsPercentage": "Failed Builds %:",
                 "cancelledBuilds": "Cancelled Builds:",
                 "cancelledBuildsPercentage": "Cancelled Builds %:",
+                "missingBuilds": "Missing Builds:",
+                "missingBuildsPercentage": "Missing Builds %:",
+                "timeoutBuilds": "Timed out Builds:",
+                "timeoutBuildsPercentage": "Timed out Builds %:",
                 "daySpan": "1 day",
                 "weekSpan": "7 days",
                 "monthSpan": "30 days"
@@ -79,7 +87,8 @@
                 "title": "Build Logs for Job",
                 "download": "Download",
                 "noLogs": "No logs available",
-                "errorFetchingLogs": "Failed to get build log entries for build job"
+                "errorFetchingLogs": "Failed to get build log entries for build job",
+                "downloadError": "Failed to download the build log of the build job"
             }
         }
     }

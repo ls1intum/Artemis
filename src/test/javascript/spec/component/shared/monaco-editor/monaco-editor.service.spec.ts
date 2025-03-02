@@ -2,11 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import * as monaco from 'monaco-editor';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
 import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorService', () => {
     let monacoEditorService: MonacoEditorService;
@@ -17,7 +17,7 @@ describe('MonacoEditorService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            providers: [{ provide: ThemeService, useClass: MockThemeService }],
         });
         // Avoids an error with the diff editor, which uses a ResizeObserver.
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
@@ -40,6 +40,7 @@ describe('MonacoEditorService', () => {
     });
 
     it('should correctly handle themes', () => {
+        TestBed.flushEffects();
         // Initialization: The editor should be in light mode since that is what we initialized the themeSubject with
         expect(setThemeSpy).toHaveBeenCalledExactlyOnceWith(MONACO_LIGHT_THEME_DEFINITION.id);
         // Switch to dark theme

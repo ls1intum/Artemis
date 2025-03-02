@@ -1,10 +1,9 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
@@ -14,21 +13,15 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -49,25 +42,14 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), FontAwesomeTestingModule, TranslateModule.forRoot(), NgbTooltipMocksModule],
-
-            declarations: [
-                TestRunManagementComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDurationFromSecondsPipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(SortDirective),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(TranslateDirective),
-            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
@@ -76,12 +58,12 @@ describe('Test Run Management Component', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                modalService = modalService = TestBed.inject(NgbModal);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of());
+                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse<void>()));
             });
     });
 
@@ -99,11 +81,11 @@ describe('Test Run Management Component', () => {
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(userSpy).toHaveBeenCalledOnce();
 
-            expect(component.exam).toEqual(exam);
-            expect(component.isExamStarted).toEqual(exam.started!);
-            expect(component.course).toEqual(course);
-            expect(component.testRuns).toEqual(studentExams);
-            expect(component.instructor).toEqual(user);
+            expect(component.exam()).toEqual(exam);
+            expect(component.isExamStarted()).toEqual(exam.started!);
+            expect(component.course()).toEqual(course);
+            expect(component.testRuns()).toEqual(studentExams);
+            expect(component.instructor()).toEqual(user);
         }));
     });
     describe('Delete', () => {
@@ -118,10 +100,10 @@ describe('Test Run Management Component', () => {
     describe('Create test runs', () => {
         it('should not create test run if the exam contains no exercises', () => {
             fixture.detectChanges();
-            expect(component.examContainsExercises).toBeFalsy();
+            expect(component.examContainsExercises()).toBeFalsy();
         });
 
-        it('should create test run', () => {
+        it('should create test run', fakeAsync(() => {
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
@@ -132,13 +114,16 @@ describe('Test Run Management Component', () => {
             jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
-            expect(component.examContainsExercises).toBeTruthy();
+            expect(component.examContainsExercises()).toBeTruthy();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
-            expect(component.testRuns).toHaveLength(3);
-        });
+
+            tick();
+
+            expect(component.testRuns()).toHaveLength(3);
+        }));
 
         it('should correctly catch error after creating test run', () => {
             const alertService = TestBed.inject(AlertService);
@@ -154,7 +139,7 @@ describe('Test Run Management Component', () => {
             jest.spyOn(alertService, 'error');
             fixture.detectChanges();
 
-            expect(component.examContainsExercises).toBeTruthy();
+            expect(component.examContainsExercises()).toBeTruthy();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
@@ -167,7 +152,7 @@ describe('Test Run Management Component', () => {
         it('should not be able to assess test run because the logged-in user does not have a test run which is submitted', () => {
             studentExams[0].submitted = false;
             fixture.detectChanges();
-            expect(component.testRunCanBeAssessed).toBeFalsy();
+            expect(component.testRunCanBeAssessed()).toBeFalsy();
         });
 
         it('should be able to assess test run', fakeAsync(() => {

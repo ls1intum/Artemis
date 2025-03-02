@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +20,10 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * REST controller providing the science related endpoints.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.Science)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class ScienceResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceResource.class);

@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.domain.Authority.TA_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.domain.Authority.USER_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,9 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +44,8 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
@@ -57,6 +64,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private TokenProvider tokenProvider;
+
+    @Autowired
+    private JWTCookieService jwtCookieService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -91,7 +101,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -137,7 +147,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         course1 = courseRepository.save(course1);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
-        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
@@ -158,7 +168,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(exercises).isEmpty();
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
-        final var user = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var user = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(user).isNotNull();
         return user;
     }
@@ -229,12 +239,31 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
 
         var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testScorpioTokenGeneration() throws Exception {
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+
+        Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
+        cookie.setMaxAge((int) responseCookie.getMaxAge().toMillis());
+
+        var initialLifetime = tokenProvider.getExpirationDate(cookie.getValue()).getTime() - System.currentTimeMillis();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("tool", ToolTokenType.SCORPIO.toString());
+
+        var responseBody = request.performMvcRequest(post("/api/core/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+
+        AuthenticationIntegrationTestHelper.toolTokenAssertions(tokenProvider, responseBody, initialLifetime, ToolTokenType.SCORPIO);
     }
 
     @Test
@@ -244,7 +273,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/logout", HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
@@ -255,7 +284,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/logout", HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
@@ -273,7 +302,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
-        final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();

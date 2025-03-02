@@ -1,10 +1,9 @@
-import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
 import {
     CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     DATA_EXPORT_CREATED_TITLE,
@@ -20,7 +19,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -30,7 +29,7 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChangeDetectorRef } from '@angular/core';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
@@ -40,9 +39,11 @@ import { User } from 'app/core/user/user.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Notification Service', () => {
-    const resourceUrl = 'api/notifications';
+    const resourceUrl = 'api/communication/notifications';
 
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
@@ -50,7 +51,7 @@ describe('Notification Service', () => {
     let artemisTranslatePipe: ArtemisTranslatePipe;
     let accountService: MockAccountService;
 
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
     let wsUnsubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
@@ -155,8 +156,6 @@ describe('Notification Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),
                 provideHttpClient(),
@@ -172,8 +171,9 @@ describe('Notification Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                 { provide: ChangeDetectorRef, useValue: {} },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -192,7 +192,7 @@ describe('Notification Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         router = TestBed.inject(Router) as any;
 
-        websocketService = TestBed.inject(JhiWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
         artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
         accountService = TestBed.inject(AccountService) as any;
         wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
@@ -212,11 +212,11 @@ describe('Notification Service', () => {
         notificationService = TestBed.inject(NotificationService);
         jest.advanceTimersByTime(20 * 1000); // simulate setInterval time passing
 
-        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/muted-conversations' });
+        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/communication/muted-conversations' });
     });
 
     afterEach(() => {
-        httpMock.expectOne({ method: 'GET', url: 'api/notification-settings' });
+        httpMock.expectOne({ method: 'GET', url: 'api/communication/notification-settings' });
         httpMock.verify();
         jest.restoreAllMocks();
         jest.clearAllTimers();
@@ -226,7 +226,7 @@ describe('Notification Service', () => {
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
             notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
-            const url = 'api/notifications';
+            const url = 'api/communication/notifications';
             expect(req.request.url).toBe(url);
         });
 

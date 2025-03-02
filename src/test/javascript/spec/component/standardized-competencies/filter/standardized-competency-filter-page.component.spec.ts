@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTestModule } from '../../../test.module';
 import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { Component } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO, convertToKnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
@@ -20,8 +19,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            declarations: [DummyImportComponent],
+            imports: [FormsModule],
             providers: [],
         })
             .compileComponents()

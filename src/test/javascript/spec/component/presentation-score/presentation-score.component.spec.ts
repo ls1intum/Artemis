@@ -38,9 +38,7 @@ describe('PresentationScoreComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [PresentationScoreComponent],
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting(), GradingSystemService],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(PresentationScoreComponent, '')
             .compileComponents()

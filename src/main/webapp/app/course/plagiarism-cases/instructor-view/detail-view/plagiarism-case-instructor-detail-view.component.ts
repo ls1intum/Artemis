@@ -1,7 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
@@ -17,14 +19,66 @@ import { abbreviateString } from 'app/utils/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    NgbDropdown,
+    NgbDropdownItem,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavItemRole,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+} from '@ng-bootstrap/ng-bootstrap';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { FormsModule } from '@angular/forms';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
-    providers: [MetisService],
+    providers: [MetisService, MetisConversationService, LinkPreviewService, LinkifyService],
+    imports: [
+        TranslateDirective,
+        PlagiarismCaseVerdictComponent,
+        FaIconComponent,
+        RouterLink,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        NgbNav,
+        NgbNavItem,
+        NgbNavItemRole,
+        NgbNavLink,
+        NgbNavLinkBase,
+        NgbNavContent,
+        ConfirmAutofocusButtonComponent,
+        FormsModule,
+        NgbNavOutlet,
+        PlagiarismCaseReviewComponent,
+    ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
+    private metisService = inject(MetisService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private themeService = inject(ThemeService);
+    private accountService = inject(AccountService);
+
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
@@ -46,16 +100,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
     private postsSubscription: Subscription;
     posts: Post[];
-
-    constructor(
-        protected metisService: MetisService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private themeService: ThemeService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

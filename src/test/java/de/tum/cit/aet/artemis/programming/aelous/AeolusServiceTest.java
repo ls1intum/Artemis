@@ -48,19 +48,19 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     @Qualifier("aeolusRestTemplate")
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
 
     @Autowired
-    AeolusBuildPlanService aeolusBuildPlanService;
+    private AeolusBuildPlanService aeolusBuildPlanService;
 
     @Autowired
-    AeolusTemplateService aeolusTemplateService;
+    private AeolusTemplateService aeolusTemplateService;
 
     @Autowired
-    AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+    private AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
 
     /**
      * Initializes aeolusRequestMockProvider

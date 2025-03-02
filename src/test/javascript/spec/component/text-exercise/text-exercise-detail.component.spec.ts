@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../test.module';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { Course } from 'app/entities/course.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -10,7 +9,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
@@ -19,6 +18,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -42,8 +45,8 @@ describe('TextExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
+                MockDirective(TranslateDirective),
                 TextExerciseDetailComponent,
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
@@ -52,7 +55,13 @@ describe('TextExercise Management Detail Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(TranslateService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;

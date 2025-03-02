@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { ChannelDTO } from '../../../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO } from '../../../helpers/conversationExampleModels';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ChannelItemComponent', () => {
     let component: ChannelItemComponent;
@@ -14,7 +15,9 @@ describe('ChannelItemComponent', () => {
     const channel = generateExampleChannelDTO({ id: 1 } as ChannelDTO);
 
     beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)] }).compileComponents();
+        TestBed.configureTestingModule({
+            declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
+        }).compileComponents();
     }));
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -10,11 +10,10 @@ import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {
+    private http = inject(HttpClient);
+    private resultService = inject(ResultService);
+
     // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
-    constructor(
-        private http: HttpClient,
-        private resultService: ResultService,
-    ) {}
 
     /**
      * Persist a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
@@ -25,7 +24,7 @@ export class ExternalSubmissionService {
     create(exercise: Exercise, student: User, result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertResultDatesFromClient(result);
         return this.http
-            .post<Result>(`api/exercises/${exercise.id}/external-submission-results?studentLogin=${student.login}`, copy, { observe: 'response' })
+            .post<Result>(`api/assessment/exercises/${exercise.id}/external-submission-results?studentLogin=${student.login}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.resultService.convertResultResponseDatesFromServer(res)));
     }
 

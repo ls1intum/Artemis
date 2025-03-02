@@ -13,6 +13,4 @@ export class ProgrammingExerciseGitDiffReport implements BaseEntity {
     public participationIdForRightCommit?: number;
     public templateRepositoryCommitHash?: string;
     public solutionRepositoryCommitHash?: string;
-
-    constructor() {}
 }

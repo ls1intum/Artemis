@@ -53,10 +53,6 @@ public class AuthorizationCheckService {
     private final ExamDateService examDateService;
 
     // TODO: we should move this into some kind of EnrollmentService
-    @Deprecated(forRemoval = true) // will be removed in 7.0.0
-    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Pattern allowedCourseRegistrationUsernamePattern;
-
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
@@ -66,10 +62,6 @@ public class AuthorizationCheckService {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examDateService = examDateService;
-
-        if (allowedCourseEnrollmentUsernamePattern == null) {
-            allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
-        }
         this.teamRepository = teamRepository;
     }
 
@@ -146,18 +138,6 @@ public class AuthorizationCheckService {
     public boolean isAtLeastEditorInCourse(long courseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastEditorInCourse(s, courseId)).isPresent();
-    }
-
-    /**
-     * Checks if the current user is at least an editor in the given course.
-     * Throws an AccessForbiddenException if the user has no access which returns a 403
-     *
-     * @param courseId the id of the course that needs to be checked
-     */
-    public void isAtLeastEditorInCourseElseThrow(long courseId) {
-        if (!isAtLeastEditorInCourse(courseId)) {
-            throw new AccessForbiddenException("Course", courseId);
-        }
     }
 
     /**
@@ -276,18 +256,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the current user is at least a teaching assistant in the given course.
-     * Throws an AccessForbiddenException if the user has no access which returns a 403
-     *
-     * @param courseId the id of the course that needs to be checked
-     */
-    public void isAtLeastTeachingAssistantInCourseElseThrow(long courseId) {
-        if (!isAtLeastTeachingAssistantInCourse(courseId)) {
-            throw new AccessForbiddenException("Course", courseId);
-        }
-    }
-
-    /**
      * Checks if the passed user is at least a student in the given course.
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
@@ -384,15 +352,14 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to unenroll from the given course.
      * Returns `UnenrollmentAuthorization.ALLOWED` if the user is allowed to unenroll from the course,
      * or the reason why the user is not allowed to unenroll from the course otherwise.
-     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(Course)}
      *
-     * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
      * @return `UnenrollmentAuthorization.ALLOWED` if the user is allowed to self unenroll from the course,
      *         or the reason why the user is not allowed to self unenroll from the course otherwise
      */
     @CheckReturnValue
-    public UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(User user, Course course) {
+    public UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(Course course) {
         if (!course.isUnenrollmentEnabled()) {
             return UnenrollmentAuthorization.UNENROLLMENT_STATUS;
         }
@@ -408,13 +375,12 @@ public class AuthorizationCheckService {
     /**
      * Checks if the user is allowed to unenroll from the given course.
      * Throws an AccessForbiddenException if the user is not allowed to unenroll from the course.
-     * See also: {@link #getUserUnenrollmentAuthorizationForCourse(User, Course)}
+     * See also: {@link #getUserUnenrollmentAuthorizationForCourse(Course)}
      *
-     * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
      */
-    public void checkUserAllowedToUnenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
-        UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(user, course);
+    public void checkUserAllowedToUnenrollFromCourseElseThrow(Course course) throws AccessForbiddenException {
+        UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(course);
         switch (auth) {
             case UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow unenrollment.");
             case ONLINE -> throw new AccessForbiddenException("Online courses cannot be unenrolled from.");
@@ -436,18 +402,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the passed user is at least a student in the given course.
-     *
-     * @param login    the login of the user that needs to be checked
-     * @param courseId the id of the course that needs to be checked
-     * @return true if the user is at least a student in the course, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastStudentInCourse(String login, long courseId) {
-        return userRepository.isAtLeastStudentInCourse(login, courseId);
-    }
-
-    /**
      * Checks if the current user is at least a student in the given course.
      *
      * @param courseId the id of the course that needs to be checked
@@ -457,18 +411,6 @@ public class AuthorizationCheckService {
     public boolean isAtLeastStudentInCourse(long courseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastStudentInCourse(s, courseId)).isPresent();
-    }
-
-    /**
-     * Checks if the current user is at least a student in the given course.
-     * Throws an AccessForbiddenException if the user has no access which returns a 403
-     *
-     * @param courseId the id of the course that needs to be checked
-     */
-    public void isAtLeastStudentInCourseElseThrow(long courseId) {
-        if (!isAtLeastStudentInCourse(courseId)) {
-            throw new AccessForbiddenException("Course", courseId);
-        }
     }
 
     /**
@@ -589,18 +531,6 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(long courseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastInstructorInCourse(s, courseId)).isPresent();
-    }
-
-    /**
-     * Checks if the current user is at least an instructor in the given course.
-     * Throws an AccessForbiddenException if the user has no access which returns a 403
-     *
-     * @param courseId the id of the course that needs to be checked
-     */
-    public void isAtLeastInstructorInCourseElseThrow(long courseId) {
-        if (!isAtLeastInstructorInCourse(courseId)) {
-            throw new AccessForbiddenException("Course", courseId);
-        }
     }
 
     /**
@@ -743,14 +673,18 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is allowed to see the given exercise, i.e. if the passed user is at least a student in the course
+     * Checks if the passed user is allowed to see the given course exercise, i.e. if the passed user is at least a student in the course
+     * NOTE: it MUST be a course exercise, otherwise an AccessForbiddenException will be thrown due to security reasons
      *
-     * @param exercise the exercise that needs to be checked
+     * @param exercise the course exercise that needs to be checked
      * @param user     the user whose permissions should be checked
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     @CheckReturnValue
-    public boolean isAllowedToSeeExercise(@NotNull Exercise exercise, @Nullable User user) {
+    public boolean isAllowedToSeeCourseExercise(@NotNull Exercise exercise, @Nullable User user) {
+        if (exercise.getExerciseGroup() != null) {
+            throw new AccessForbiddenException();
+        }
         user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return true;
@@ -969,18 +903,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the passed user is at least a student in the given exercise.
-     *
-     * @param login      the login of the user that needs to be checked
-     * @param exerciseId the id of the exercise that needs to be checked
-     * @return true if the user is at least a student in the exercise, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastStudentInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastStudentInExercise(login, exerciseId);
-    }
-
-    /**
      * Checks if the current user is at least an instructor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -1014,18 +936,6 @@ public class AuthorizationCheckService {
     public boolean isAtLeastEditorInExercise(long exerciseId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastEditorInExercise(s, exerciseId)).isPresent();
-    }
-
-    /**
-     * Checks if the passed user is at least an editor in the given exercise.
-     *
-     * @param login      the login of the user that needs to be checked
-     * @param exerciseId the id of the exercise that needs to be checked
-     * @return true if the user is at least an editor in the exercise, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
     }
 
     /**

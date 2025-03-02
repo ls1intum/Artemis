@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -64,7 +65,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningPathService {
 
@@ -90,10 +91,13 @@ public class LearningPathService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
             CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -104,6 +108,7 @@ public class LearningPathService {
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
@@ -113,7 +118,9 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
-        generateLearningPaths(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        generateLearningPaths(course, students);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
     }
@@ -124,7 +131,18 @@ public class LearningPathService {
      * @param course course the learning paths are created for
      */
     public void generateLearningPaths(@NotNull Course course) {
-        var students = userRepository.getStudents(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        generateLearningPaths(course, students);
+    }
+
+    /**
+     * Generate learning paths for all students enrolled in the course
+     *
+     * @param course   course the learning paths are created for
+     * @param students students for which the learning paths are generated with eager loaded learner profiles
+     */
+    public void generateLearningPaths(@NotNull Course course, Set<User> students) {
         students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
@@ -384,7 +402,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -400,8 +418,17 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
-        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
+        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        LearningPath learningPath;
+        if (optionalLearningPath.isEmpty()) {
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+        }
+        else {
+            learningPath = optionalLearningPath.get();
+        }
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency

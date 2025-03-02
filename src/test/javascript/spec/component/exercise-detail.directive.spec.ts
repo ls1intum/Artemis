@@ -27,7 +27,8 @@ import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/c
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
-    template: `<div jhiExerciseDetail [detail]="detail"></div>`,
+    template: ` <div jhiExerciseDetail [detail]="detail"></div>`,
+    imports: [ExerciseDetailDirective],
 })
 class TestDetailHostComponent {
     @ViewChild(ExerciseDetailDirective) directive: ExerciseDetailDirective;

@@ -1,5 +1,11 @@
 @if (!!participation()?.exercise) {
-    <jhi-request-feedback-button class="me-3" [exercise]="participation()!.exercise!"></jhi-request-feedback-button>
+    <jhi-request-feedback-button class="me-3" [exercise]="participation()!.exercise!" />
+}
+@if (isInCourseManagement) {
+    <a class="btn btn-secondary navbar-btn me-3 open-repository-button" [routerLink]="repositoryLink" target="_blank" rel="noopener noreferrer">
+        <fa-icon [icon]="faExternalLink" />
+        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+    </a>
 }
 @if (commitState === CommitState.CONFLICT) {
     <div>

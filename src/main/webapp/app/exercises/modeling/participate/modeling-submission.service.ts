@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,12 +12,10 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    public resourceUrl = 'api/modeling';
 
     /**
      * Create a new modeling submission
@@ -27,7 +25,7 @@ export class ModelingSubmissionService {
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(modelingSubmission);
         return this.http
-            .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
+            .post<ModelingSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
@@ -42,7 +40,7 @@ export class ModelingSubmissionService {
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(modelingSubmission);
         return this.http
-            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
+            .put<ModelingSubmission>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
@@ -76,7 +74,7 @@ export class ModelingSubmissionService {
      * @param correctionRound correctionRound for which to get the Submissions
      */
     getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission | undefined> {
-        const url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -101,7 +99,7 @@ export class ModelingSubmissionService {
      * @param resultId
      */
     getSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<ModelingSubmission> {
-        const url = `api/modeling-submissions/${submissionId}`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -117,7 +115,7 @@ export class ModelingSubmissionService {
      * @param {number} submissionId - Id of the submission
      */
     getSubmissionWithoutLock(submissionId: number): Observable<ModelingSubmission> {
-        const url = `api/modeling-submissions/${submissionId}`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}`;
         let params = new HttpParams();
         params = params.set('withoutResults', 'true');
         return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
@@ -129,7 +127,7 @@ export class ModelingSubmissionService {
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
         return this.http
-            .get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
+            .get<ModelingSubmission>(`${this.resourceUrl}/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
             .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
@@ -138,7 +136,7 @@ export class ModelingSubmissionService {
      * @param {number} participationId - Id of the participation
      */
     getSubmissionsWithResultsForParticipation(participationId: number): Observable<ModelingSubmission[]> {
-        const url = `api/participations/${participationId}/submissions-with-results`;
+        const url = `${this.resourceUrl}/participations/${participationId}/submissions-with-results`;
         return this.http.get<ModelingSubmission[]>(url).pipe(
             map((submissions: ModelingSubmission[]) => {
                 return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission) as ModelingSubmission);

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
@@ -41,8 +42,8 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS, PROFILE_THEIA,
-        PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
+        PROFILE_THEIA, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
@@ -211,11 +212,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        log.debug("Called mockDeleteUserInUserManagement with args {}, {}, {}, {}", user, userExistsInUserManagement, failInVcs, failInCi);
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         log.debug("Called mockCreateGroupInUserManagement with args {}", groupName);
     }
@@ -258,6 +254,11 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         log.debug("Called mockGetBuildPlan with args {}, {}, {}, {}, {}, {}", projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        log.debug("Called mockGetBuildPlanConfig with args {}, {}", projectKey, planName);
     }
 
     @Override
@@ -318,5 +319,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockUserExists(String username) {
         log.debug("Called mockUserExists with args {}", username);
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        log.debug("Requested CI project {}", exercise.getProjectKey());
     }
 }

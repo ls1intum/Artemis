@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { round } from 'app/shared/util/utils';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
@@ -15,6 +16,7 @@ import { round } from 'app/shared/util/utils';
         '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; background-color: #28a745 }',
         '.failed-bar { position: absolute; top: 0; height: 10px; background-color: #dc3545 }',
     ],
+    imports: [NgbTooltip],
 })
 export class TestCasePassedBuildsChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
@@ -24,7 +26,7 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
     failedPercent = 0;
     tooltip = '';
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         const totalPassedAndFailed = (this.testCaseStats?.numPassed ?? 0) + (this.testCaseStats?.numFailed ?? 0);
         if (totalPassedAndFailed > this.totalParticipations) {
             this.totalParticipations = totalPassedAndFailed;

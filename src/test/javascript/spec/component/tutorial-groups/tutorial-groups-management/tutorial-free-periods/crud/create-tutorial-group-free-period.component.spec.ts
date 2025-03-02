@@ -1,15 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
-import { TutorialGroupFreePeriodFormStubComponent } from '../../../stubs/tutorial-group-free-period-form-stub.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
@@ -17,6 +15,10 @@ import {
 } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupFreePeriodFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
@@ -28,26 +30,24 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                CreateTutorialGroupFreePeriodComponent,
-                LoadingIndicatorContainerStubComponent,
-                TutorialGroupFreePeriodFormStubComponent,
-                MockPipe(ArtemisTranslatePipe),
+            imports: [OwlNativeDateTimeModule],
+            providers: [
+                MockProvider(TutorialGroupFreePeriodService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
-        })
-            .compileComponents()
-            .then(() => {
-                activeModal = TestBed.inject(NgbActiveModal);
-                fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
-                component = fixture.componentInstance;
-                component.tutorialGroupConfigurationId = configurationId;
-                component.course = course;
-                component.initialize();
-                tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        activeModal = TestBed.inject(NgbActiveModal);
+        fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
+        component = fixture.componentInstance;
+        component.tutorialGroupConfigurationId = configurationId;
+        component.course = course;
+        component.initialize();
+        tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -70,7 +70,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         const createStub = jest.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
         const closeSpy = jest.spyOn(activeModal, 'close');
 
-        const sessionForm: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
         const formData = tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(exampleFreePeriod, 'Europe/Berlin');
 

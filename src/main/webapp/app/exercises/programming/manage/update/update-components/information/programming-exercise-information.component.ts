@@ -15,9 +15,10 @@ import {
     signal,
     viewChild,
 } from '@angular/core';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
@@ -32,6 +33,19 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -39,6 +53,26 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
     styleUrls: ['../../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        ExerciseTitleChannelNameComponent,
+        FormsModule,
+        CustomNotIncludedInValidatorDirective,
+        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        ProgrammingExerciseEditCheckoutDirectoriesComponent,
+        NgxDatatableModule,
+        TableEditableFieldComponent,
+        RemoveAuxiliaryRepositoryButtonComponent,
+        NgbAlert,
+        ButtonComponent,
+        AddAuxiliaryRepositoryButtonComponent,
+        CategorySelectorComponent,
+        ProgrammingExerciseDifficultyComponent,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        RemoveKeysPipe,
+    ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;
@@ -83,23 +117,17 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     exerciseTitle = signal<string | undefined>(undefined);
 
-    editRepositoryCheckoutPath: boolean = false;
+    editRepositoryCheckoutPath = false;
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
     constructor() {
-        effect(
-            () => {
-                this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
+        });
 
-        effect(
-            () => {
-                this.generateShortNameWhenInSimpleMode();
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.generateShortNameWhenInSimpleMode();
+        });
 
         effect(() => {
             this.registerInputFieldsWhenChildComponentsAreReady();

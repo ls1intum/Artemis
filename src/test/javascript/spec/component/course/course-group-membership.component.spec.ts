@@ -4,44 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { CourseGroup } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
-import { ArtemisTestModule } from '../../test.module';
-
-@Component({ selector: 'jhi-course-group', template: '' })
-class CourseGroupStubComponent {
-    @Input()
-    allGroupUsers: User[] = [];
-    @Input()
-    isLoadingAllGroupUsers = false;
-    @Input()
-    isAdmin = false;
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input()
-    courseGroup: CourseGroup;
-    @Input()
-    exportFileName: string;
-    @Input()
-    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
-    @Input()
-    addUserToGroup: (login: string) => Observable<any> = () => of({});
-    @Input()
-    removeUserFromGroup: (login: string) => Observable<any> = () => of({});
-    @Input()
-    handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
-
-    @Output()
-    importFinish: EventEmitter<void> = new EventEmitter();
-}
+import { CourseGroupComponent } from '../../../../../main/webapp/app/shared/course-group/course-group.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('Course Group Membership Component', () => {
     let comp: CourseGroupMembershipComponent;
@@ -57,9 +28,13 @@ describe('Course Group Membership Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseGroupMembershipComponent, CourseGroupStubComponent, MockDirective(TranslateDirective)],
-            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(CourseManagementService), MockProvider(UserService)],
+            declarations: [CourseGroupMembershipComponent, MockComponent(CourseGroupComponent), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                MockProvider(CourseManagementService),
+                MockProvider(UserService),
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -1,17 +1,23 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { faCheckDouble, faFileExport, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-quiz-exercise-create-buttons',
     templateUrl: './quiz-exercise-create-buttons.component.html',
+    imports: [RouterLink, FaIconComponent, TranslateDirective],
 })
 export class QuizExerciseCreateButtonsComponent {
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+
     @Input() course: Course;
 
     @Input() quizExercisesCount: number;
@@ -20,11 +26,6 @@ export class QuizExerciseCreateButtonsComponent {
     faFileImport = faFileImport;
     faFileExport = faFileExport;
     faCheckDouble = faCheckDouble;
-
-    constructor(
-        private router: Router,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Opens the import modal for a quiz exercise

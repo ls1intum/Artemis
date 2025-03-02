@@ -6,6 +6,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 @Component({
     selector: 'jhi-lecture-title-channel-name',
     templateUrl: './lecture-title-channel-name.component.html',
+    imports: [TitleChannelNameComponent],
 })
 export class LectureTitleChannelNameComponent implements OnInit {
     @Input() lecture: Lecture;
@@ -13,6 +14,7 @@ export class LectureTitleChannelNameComponent implements OnInit {
     titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
     hideChannelNameInput = false;
+
     ngOnInit() {
         this.hideChannelNameInput = !this.requiresChannelName(this.lecture);
     }

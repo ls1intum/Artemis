@@ -1,51 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
-import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups-table-stub.component';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
-@Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
-class MockTutorialGroupsCourseInformationComponent {
-    @Input()
-    tutorialGroups: TutorialGroup[] = [];
-}
-@Component({
-    selector: 'jhi-tutorial-groups-import-button',
-    template: '',
-})
-class MockTutorialGroupsImportButtonComponent {
-    @Input() courseId: number;
-    @Output() importFinished: EventEmitter<void> = new EventEmitter();
-}
-
-@Component({
-    selector: 'jhi-tutorial-groups-export-button',
-    template: '',
-})
-class MockTutorialGroupsExportButtonComponent {
-    @Input() courseId: number;
-    @Output() exportFinished: EventEmitter<void> = new EventEmitter();
-}
-
+import { TutorialGroupsImportButtonComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { TutorialGroupsExportButtonComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
@@ -65,18 +38,6 @@ describe('TutorialGroupsManagementComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbDropdownModule, MockDirective(NgbTooltip)],
-            declarations: [
-                TutorialGroupsManagementComponent,
-                MockTutorialGroupsCourseInformationComponent,
-                LoadingIndicatorContainerStubComponent,
-                TutorialGroupsTableStubComponent,
-                TutorialGroupRowButtonsStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockRouterLinkDirective,
-                MockTutorialGroupsImportButtonComponent,
-                MockTutorialGroupsExportButtonComponent,
-            ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(TutorialGroupsService),
@@ -90,28 +51,27 @@ describe('TutorialGroupsManagementComponent', () => {
                     },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
-                component = fixture.componentInstance;
-                tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
-                tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+        }).compileComponents();
 
-                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-                getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [tutorialGroupOne, tutorialGroupTwo],
-                            status: 200,
-                        }),
-                    ),
-                );
-                configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
-                fixture.detectChanges();
-            });
+        fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
+        component = fixture.componentInstance;
+        tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
+        tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+
+        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+        getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [tutorialGroupOne, tutorialGroupTwo],
+                    status: 200,
+                }),
+            ),
+        );
+        configurationService = TestBed.inject(TutorialGroupsConfigurationService);
+        getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -140,8 +100,8 @@ describe('TutorialGroupsManagementComponent', () => {
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
-        const mockTutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsImportButtonComponent)).componentInstance;
-        mockTutorialGroupImportButtonComponent.importFinished.emit();
+        const tutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
+        tutorialGroupImportButtonComponent.importFinished.emit();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
@@ -152,8 +112,8 @@ describe('TutorialGroupsManagementComponent', () => {
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
-        const mockTutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsExportButtonComponent)).componentInstance;
-        mockTutorialGroupExportButtonComponent.exportFinished.emit();
+        const tutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
+        tutorialGroupExportButtonComponent.exportFinished.emit();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();

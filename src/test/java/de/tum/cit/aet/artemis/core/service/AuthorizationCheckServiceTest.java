@@ -233,7 +233,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
         void testIsUserAllowedToUnenrollFromCourseForUnenrollmentEndSetAndAllowed() {
             Course course = getCourseForUnenrollmentAllowedTest();
             courseRepository.save(course);
-            assertThatCode(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course)).doesNotThrowAnyException();
         }
 
         @Test
@@ -242,7 +242,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setUnenrollmentEndDate(null);
             courseRepository.save(course);
-            assertThatCode(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course)).doesNotThrowAnyException();
         }
 
         @Test
@@ -251,7 +251,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setUnenrollmentEnabled(false);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
 
         @Test
@@ -261,7 +261,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             // unenrollment period starts with enrollment period
             course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
 
         @Test
@@ -270,7 +270,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setUnenrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
 
         @Test
@@ -280,7 +280,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             course.setUnenrollmentEndDate(null);
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
 
         @Test
@@ -289,7 +289,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setOnlineCourse(true);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(this.student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
         }
     }
 }

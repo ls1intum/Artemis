@@ -98,7 +98,7 @@ import io.jsonwebtoken.lang.Arrays;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
@@ -258,7 +258,7 @@ public class ProgrammingExerciseResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);
+            return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
@@ -812,13 +812,15 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @param exerciseId   the exercise for which the solution repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -826,7 +828,7 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**
@@ -836,13 +838,15 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @param exerciseId   the exercise for which the template repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -850,7 +854,7 @@ public class ProgrammingExerciseResource {
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**

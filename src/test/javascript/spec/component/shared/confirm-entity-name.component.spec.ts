@@ -2,15 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 import { Component } from '@angular/core';
-import { MockDirective } from 'ng-mocks';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
 
 const expectedEntityName = 'TestEntityName';
 
 @Component({
-    template: '<jhi-confirm-entity-name [entityName]="expectedEntityName" [formControl]="control" />',
+    template: '<jhi-confirm-entity-name [entityName]="expectedEntityName" />',
+    imports: [ConfirmEntityNameComponent],
 })
 class ConfirmEntityNameHostComponent {
     expectedEntityName = expectedEntityName;
@@ -22,40 +23,51 @@ describe('ConfirmEntityNameComponent', () => {
     describe('NgModel', () => {
         let component: ConfirmEntityNameHostComponent;
         let fixture: ComponentFixture<ConfirmEntityNameHostComponent>;
+        let confirmEntityNameComponent: ConfirmEntityNameComponent;
 
         beforeEach(async () => {
             await TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule, TranslateModule.forRoot()],
-                declarations: [ConfirmEntityNameHostComponent, ConfirmEntityNameComponent, MockDirective(TranslateDirective)],
+                imports: [ReactiveFormsModule, ConfirmEntityNameComponent],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             }).compileComponents();
             fixture = TestBed.createComponent(ConfirmEntityNameHostComponent);
+
             component = fixture.componentInstance;
+
+            const confirmEntityNameDebugElement = fixture.debugElement.query(By.directive(ConfirmEntityNameComponent));
+            confirmEntityNameComponent = confirmEntityNameDebugElement.componentInstance;
         });
 
         it('control should be valid with valid input', async () => {
-            component.control.setValue(expectedEntityName);
+            confirmEntityNameComponent.entityName = expectedEntityName;
             fixture.detectChanges();
-            expect(component.control.valid).toBeTrue();
+            confirmEntityNameComponent.control.setValue(expectedEntityName);
+            fixture.detectChanges();
+            expect(confirmEntityNameComponent.control.valid).toBeTrue();
         });
 
         it('control should be invalid with invalid input', async () => {
-            component.control.setValue('');
+            confirmEntityNameComponent.entityName = expectedEntityName;
             fixture.detectChanges();
-            expect(component.control.invalid).toBeTrue();
+            confirmEntityNameComponent.control.setValue('');
+            fixture.detectChanges();
+            expect(confirmEntityNameComponent.control.invalid).toBeTrue();
         });
 
         it('control should be valid for dynamic entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            component.control.setValue('OtherTestEntityName');
             fixture.detectChanges();
-            expect(component.control.valid).toBeTrue();
+            confirmEntityNameComponent.control.setValue('OtherTestEntityName');
+            fixture.detectChanges();
+            expect(confirmEntityNameComponent.control.valid).toBeTrue();
         });
 
         it('control should be invalid for dynamic entity name with previous entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            component.control.setValue('TestEntityName');
             fixture.detectChanges();
-            expect(component.control.invalid).toBeTrue();
+            confirmEntityNameComponent.control.setValue('TestEntityName');
+            fixture.detectChanges();
+            expect(confirmEntityNameComponent.control.invalid).toBeTrue();
         });
     });
 
@@ -66,7 +78,6 @@ describe('ConfirmEntityNameComponent', () => {
         beforeEach(async () => {
             await TestBed.configureTestingModule({
                 imports: [FormsModule, ReactiveFormsModule, TranslateDirective],
-                declarations: [ConfirmEntityNameComponent],
                 providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             }).compileComponents();
             fixture = TestBed.createComponent(ConfirmEntityNameComponent);

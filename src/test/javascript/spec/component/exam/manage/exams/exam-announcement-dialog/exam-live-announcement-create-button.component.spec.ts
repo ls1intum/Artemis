@@ -6,9 +6,9 @@ import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { of } from 'rxjs';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     let component: ExamLiveAnnouncementCreateButtonComponent;
@@ -18,10 +18,10 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveAnnouncementCreateButtonComponent, MockComponent(FaIconComponent)],
             providers: [
                 { provide: NgbModal, useValue: { open: jest.fn() } },
                 { provide: AlertService, useValue: { closeAll: jest.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

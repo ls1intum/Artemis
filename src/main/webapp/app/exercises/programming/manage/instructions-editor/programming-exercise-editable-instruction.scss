@@ -28,18 +28,30 @@
         border-bottom: var(--border-color) 1px solid;
     }
 
+    .markdown-editor-wrapper {
+        // Important needed here to override scoped styling
+        background-color: var(--markdown-preview-editor-background) !important;
+    }
+
+    .markdown-editor-wrapper .nav {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: var(--markdown-preview-editor-background);
+    }
+
     .instructions__content__markdown {
         background-color: var(--markdown-preview-editor-background);
     }
 
     .card-second-header {
         padding: 10px 15px;
-        background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
-        border-bottom: 1px solid var(--programming-exercise-instruction-step-wizard-card-header-border);
+        background-color: var(--markdown-preview-editor-background);
     }
 
     &__save {
         position: absolute;
+        z-index: 2;
         top: 0;
         right: 0;
         padding-top: 0;

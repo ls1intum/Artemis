@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;
@@ -20,9 +20,10 @@ describe('IdeSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
-            declarations: [IdeSettingsComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: IdeSettingsService, useValue: mockIdeSettingsService }],
+            providers: [
+                { provide: IdeSettingsService, useValue: mockIdeSettingsService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
 

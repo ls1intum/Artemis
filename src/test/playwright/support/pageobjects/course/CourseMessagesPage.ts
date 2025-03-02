@@ -2,7 +2,6 @@ import { Page, expect } from '@playwright/test';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
-import { COURSE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -54,7 +53,7 @@ export class CourseMessagesPage {
      * @param channelID - The ID of the channel to join.
      */
     async joinChannel(channelID: number) {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/channels/*/register`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/register`);
         await this.page.locator(`#channel-${channelID} #register${channelID}`).click({ force: true });
         await responsePromise;
     }
@@ -64,7 +63,7 @@ export class CourseMessagesPage {
      * @param channelID - The ID of the channel to leave.
      */
     async leaveChannel(channelID: number) {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/channels/*/deregister`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/deregister`);
         await this.page.locator(`#channel-${channelID} #deregister${channelID}`).click({ force: true });
         await responsePromise;
     }
@@ -113,6 +112,13 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Marks a channel as course-wide in the modal dialog.
+     */
+    async setCourseWideChannel() {
+        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+    }
+
+    /**
      * Marks a channel as an announcement channel in the modal dialog.
      */
     async setAnnouncementChannel() {
@@ -132,7 +138,7 @@ export class CourseMessagesPage {
      * @param isPublic - Specifies if the channel is public.
      */
     async createChannel(isAnnouncementChannel: boolean, isPublic: boolean) {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/channels`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels`);
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
@@ -265,7 +271,7 @@ export class CourseMessagesPage {
         }
         const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
         await editorLocator.fill(message);
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
     }
@@ -275,7 +281,7 @@ export class CourseMessagesPage {
      * @param messageId - The ID of the message to delete.
      */
     async deleteMessage(messageId: number) {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         const postLocator = this.getSinglePost(messageId);
         await postLocator.locator('.message-container').click({ button: 'right' });
         await this.page.waitForSelector('.dropdown-menu.show');
@@ -304,7 +310,7 @@ export class CourseMessagesPage {
      * @returns A promise that resolves with the Post object after saving.
      */
     async save(force = false): Promise<Post> {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
         await this.page.locator('#save').click({ force });
         const response = await responsePromise;
         return response.json();
@@ -323,7 +329,7 @@ export class CourseMessagesPage {
      * @returns A promise that resolves with the GroupChat object after creation.
      */
     async createGroupChat(): Promise<GroupChat> {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/group-chats`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats`);
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
         return response.json();
@@ -333,7 +339,7 @@ export class CourseMessagesPage {
      * Updates a group chat's registration status and waits for the response.
      */
     async updateGroupChat() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/group-chats/*/register`);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats/*/register`);
         await this.page.locator('#submitButton').click();
         await responsePromise;
     }

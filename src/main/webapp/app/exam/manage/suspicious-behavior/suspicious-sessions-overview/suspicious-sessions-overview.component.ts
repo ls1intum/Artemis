@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-suspicious-sessions-overview',
     templateUrl: './suspicious-sessions-overview.component.html',
     styleUrls: ['./suspicious-sessions-overview.component.scss'],
-    standalone: true,
     imports: [SuspiciousSessionsComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SuspiciousSessionsOverviewComponent implements OnInit {

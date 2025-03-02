@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, computed, signal, viewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -21,12 +21,32 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UnitCreationCardComponent } from '../lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { CreateExerciseUnitComponent } from '../lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
+    imports: [
+        TranslateDirective,
+        LectureUnitManagementComponent,
+        UnitCreationCardComponent,
+        TextUnitFormComponent,
+        VideoUnitFormComponent,
+        OnlineUnitFormComponent,
+        AttachmentUnitFormComponent,
+        CreateExerciseUnitComponent,
+    ],
 })
 export class LectureUpdateUnitsComponent implements OnInit {
+    protected activatedRoute = inject(ActivatedRoute);
+    protected alertService = inject(AlertService);
+    protected textUnitService = inject(TextUnitService);
+    protected videoUnitService = inject(VideoUnitService);
+    protected onlineUnitService = inject(OnlineUnitService);
+    protected attachmentUnitService = inject(AttachmentUnitService);
+
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
@@ -60,15 +80,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     onlineUnitFormData: OnlineUnitFormData;
     attachmentUnitFormData: AttachmentUnitFormData;
 
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        protected alertService: AlertService,
-        protected textUnitService: TextUnitService,
-        protected videoUnitService: VideoUnitService,
-        protected onlineUnitService: OnlineUnitService,
-        protected attachmentUnitService: AttachmentUnitService,
-    ) {}
-
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
             // Checks if the exercise unit form should be opened initially, i.e. coming back from the exercise creation
@@ -80,7 +91,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     onCreateLectureUnit(type: LectureUnitType) {
         this.isEditingLectureUnit = false;
-
+        this.onCloseLectureUnitForms();
         switch (type) {
             case LectureUnitType.TEXT:
                 this.isTextUnitFormOpen.set(true);

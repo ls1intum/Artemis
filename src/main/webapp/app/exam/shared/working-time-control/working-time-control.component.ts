@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, Input, inject } from '@angular/core';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-working-time-control',
@@ -18,8 +19,11 @@ import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils
             useExisting: WorkingTimeControlComponent,
         },
     ],
+    imports: [TranslateDirective, FormsModule],
 })
 export class WorkingTimeControlComponent implements ControlValueAccessor {
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     // Control disabled state
     @Input() disabled = false;
     @Input() allowNegative = false;
@@ -55,8 +59,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     private touched = false;
     private onTouched = () => {};
     private onChange: (_: number) => void = () => {};
-
-    constructor(private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
 
     /**
      * Updates the working time duration inputs whenever

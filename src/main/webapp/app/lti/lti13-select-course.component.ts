@@ -9,7 +9,6 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 @Component({
     selector: 'jhi-lti-courses-overview',
     templateUrl: './lti13-select-course.component.html',
-    standalone: true,
     imports: [LtiCourseCardComponent, TranslateDirective],
 })
 export class LtiCoursesComponent implements OnInit {

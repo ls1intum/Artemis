@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { tap } from 'rxjs/operators';
@@ -15,6 +15,10 @@ import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
@@ -27,8 +31,17 @@ export type CourseExamArchiveState = {
     templateUrl: './course-exam-archive-button.component.html',
     styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
+    imports: [TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
+    private courseService = inject(CourseManagementService);
+    private examService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private websocketService = inject(WebsocketService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
+
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
@@ -61,16 +74,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faArchive = faArchive;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private examService: ExamManagementService,
-        private alertService: AlertService,
-        private websocketService: JhiWebsocketService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         if (!this.course && !this.exam) {

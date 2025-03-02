@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,10 +12,8 @@ export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
 
     /**
      * Updates File Upload submission on the server
@@ -30,7 +28,7 @@ export class FileUploadSubmissionService {
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
         return this.http
-            .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
+            .post<FileUploadSubmission>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionResponseFromServer(res)));
@@ -43,7 +41,7 @@ export class FileUploadSubmissionService {
      * @param resultId
      */
     get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<HttpResponse<FileUploadSubmission>> {
-        const url = `api/file-upload-submissions/${fileUploadSubmissionId}`;
+        const url = `api/fileupload/file-upload-submissions/${fileUploadSubmissionId}`;
         let params = new HttpParams();
         if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
@@ -63,7 +61,7 @@ export class FileUploadSubmissionService {
      * @param correctionRound for which to get the Submissions
      */
     getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
-        const url = `api/exercises/${exerciseId}/file-upload-submissions`;
+        const url = `api/fileupload/exercises/${exerciseId}/file-upload-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -83,7 +81,7 @@ export class FileUploadSubmissionService {
      * @param correctionRound for which to get the Submissions
      */
     getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<FileUploadSubmission | undefined> {
-        const url = `api/exercises/${exerciseId}/file-upload-submission-without-assessment`;
+        const url = `api/fileupload/exercises/${exerciseId}/file-upload-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -108,7 +106,7 @@ export class FileUploadSubmissionService {
      */
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
         return this.http
-            .get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
+            .get<FileUploadSubmission>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
             .pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 }

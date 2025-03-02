@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
@@ -47,6 +48,9 @@ public class PyrisJobService {
 
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
+
+    @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
+    private int ingestionJobTimeout; // in seconds
 
     public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -92,19 +96,31 @@ public class PyrisJobService {
     }
 
     /**
-     * Adds a new ingestion webhook job to the job map with a timeout.
+     * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *
      * @param courseId      the ID of the course associated with the webhook job
      * @param lectureId     the ID of the lecture associated with the webhook job
      * @param lectureUnitId the ID of the lecture unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
+    public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        long timeoutWebhookJob = 60;
-        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
-        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        return token;
+    }
+
+    /**
+     * Adds a new faq ingestion webhook job to the job map with a timeout.
+     *
+     * @param courseId the ID of the course associated with the webhook job
+     * @param faqId    the ID of the faq associated with the webhook job
+     * @return a unique token identifying the created webhook job
+     */
+    public String addFaqIngestionWebhookJob(long courseId, long faqId) {
+        var token = generateJobIdToken();
+        var job = new FaqIngestionWebhookJob(token, courseId, faqId);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 

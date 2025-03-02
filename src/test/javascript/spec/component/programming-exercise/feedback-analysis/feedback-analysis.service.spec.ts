@@ -18,6 +18,7 @@ describe('FeedbackAnalysisService', () => {
             relativeCount: 25.0,
             taskName: '1',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
         {
             feedbackIds: [2],
@@ -27,6 +28,7 @@ describe('FeedbackAnalysisService', () => {
             relativeCount: 15.0,
             taskName: '2',
             errorCategory: 'StudentError',
+            hasLongFeedbackText: false,
         },
     ];
 
@@ -64,7 +66,7 @@ describe('FeedbackAnalysisService', () => {
             const responsePromise = service.search(pageable, false, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false',
+                'api/assessment/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);
@@ -78,7 +80,7 @@ describe('FeedbackAnalysisService', () => {
         it('should retrieve the max count for an exercise', async () => {
             const responsePromise = service.getMaxCount(1);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-max-count');
+            const req = httpMock.expectOne('api/assessment/exercises/1/feedback-details-max-count');
             expect(req.request.method).toBe('GET');
             req.flush(10);
 
@@ -109,7 +111,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2&feedbackId3=3&feedbackId4=4&feedbackId5=5');
+            const req = httpMock.expectOne('api/assessment/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2&feedbackId3=3&feedbackId4=4&feedbackId5=5');
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
@@ -133,7 +135,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2');
+            const req = httpMock.expectOne('api/assessment/exercises/1/feedback-details-participation?feedbackId1=1&feedbackId2=2');
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
@@ -171,7 +173,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.createChannel(courseId, exerciseId, feedbackChannelRequestMock);
 
-            const req = httpMock.expectOne(`api/courses/${courseId}/${exerciseId}/feedback-channel`);
+            const req = httpMock.expectOne(`api/communication/courses/${courseId}/${exerciseId}/feedback-channel`);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual(feedbackChannelRequestMock);
 

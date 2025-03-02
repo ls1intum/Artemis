@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -24,8 +23,6 @@ describe('CourseRegistrationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseRegistrationButtonComponent],
             providers: [MockProvider(AccountService), MockProvider(CourseManagementService), MockProvider(ProfileService), MockProvider(AlertService)],
         })
             .overrideTemplate(CourseRegistrationButtonComponent, '')

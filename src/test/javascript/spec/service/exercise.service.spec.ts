@@ -65,7 +65,6 @@ describe('Exercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -411,7 +410,7 @@ describe('Exercise Service', () => {
         });
         const expectedReturnedExercise = { id: exercise.id } as Exercise;
 
-        const expectedUrl = `api/exercises`;
+        const expectedUrl = `api/exercise/exercises`;
         let result$: Observable<EntityResponseType>;
         let method: string;
         if (action === 'create') {
@@ -464,7 +463,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExerciseDetails = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/details`,
+            url: `api/exercise/exercises/${exerciseId}/details`,
             method: 'GET',
         });
 
@@ -491,7 +490,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/example-solution`,
+            url: `api/exercise/exercises/${exerciseId}/example-solution`,
             method: 'GET',
         });
 
@@ -508,7 +507,7 @@ describe('Exercise Service', () => {
         service.reset(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/reset`,
+            url: `api/exercise/exercises/${exerciseId}/reset`,
             method: 'DELETE',
         });
     });
@@ -519,7 +518,7 @@ describe('Exercise Service', () => {
         service.toggleSecondCorrection(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/toggle-second-correction`,
+            url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
         });
     });

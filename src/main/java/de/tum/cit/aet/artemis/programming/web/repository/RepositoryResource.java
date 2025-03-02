@@ -281,12 +281,14 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            repositoryService.commitChanges(repository, user, domainId);
+            repositoryService.commitChanges(repository, user);
+            var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
+
             // Trigger a build, and process the result. Only implemented for local CI.
             // For GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVcsCiActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository);
+                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -328,11 +330,11 @@ public abstract class RepositoryResource {
             // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
             // Retrieving the default branch is not necessary if the repository is already cached.
             if (gitService.isRepositoryCached(repositoryUri)) {
-                isClean = repositoryService.isClean(repositoryUri);
+                isClean = repositoryService.isWorkingCopyClean(repositoryUri);
             }
             else {
                 String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isClean(repositoryUri, branch);
+                isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
             }
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }

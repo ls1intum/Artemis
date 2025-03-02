@@ -4,11 +4,14 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { PlagiarismHeaderComponent } from '../plagiarism-header/plagiarism-header.component';
+import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiarism-split-view.component';
 
 @Component({
     selector: 'jhi-plagiarism-details',
     styleUrls: ['./plagiarism-details.component.scss'],
     templateUrl: './plagiarism-details.component.html',
+    imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })
 export class PlagiarismDetailsComponent {
     @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;

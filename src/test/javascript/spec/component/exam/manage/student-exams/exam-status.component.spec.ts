@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExamConductionState, ExamReviewState, ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockPipe } from 'ng-mocks';
@@ -13,7 +12,7 @@ import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 enum DateOffsetType {
@@ -56,12 +55,11 @@ describe('ExamStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ExamStatusComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()

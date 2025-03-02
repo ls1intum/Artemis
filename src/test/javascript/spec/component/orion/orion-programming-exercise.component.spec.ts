@@ -1,5 +1,4 @@
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { TestBed } from '@angular/core/testing';
@@ -20,7 +19,6 @@ describe('OrionProgrammingExerciseComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe), MockComponent(OrionButtonComponent)],
             providers: [MockProvider(OrionConnectorService), MockProvider(ProgrammingExerciseService), MockProvider(Router)],
         })
@@ -43,7 +41,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });

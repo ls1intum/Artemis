@@ -25,7 +25,7 @@ export class TextAssessmentService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    private readonly RESOURCE_URL = 'api';
+    private readonly RESOURCE_URL = 'api/text';
 
     /**
      * Saves the passed feedback items of the assessment.

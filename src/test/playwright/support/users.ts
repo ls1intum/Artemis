@@ -109,12 +109,12 @@ export class PlaywrightUserManagement {
      * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
      * */
     public async getAccountInfo(request: APIRequestContext): Promise<Account> {
-        const response = await request.get(`${BASE_API}/public/account`);
+        const response = await request.get(`${BASE_API}/core/public/account`);
         return response.json();
     }
 
     public async getUserInfo(username: string, page: Page): Promise<User> {
-        const response = await page.request.get(`${BASE_API}/admin/users/${username}`);
+        const response = await page.request.get(`${BASE_API}/core/admin/users/${username}`);
         return response.json();
     }
 }

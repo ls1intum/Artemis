@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -10,7 +10,7 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizPoolService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     /**
      * Update the given quiz pool that belongs to the given course id and exam id
@@ -23,7 +23,7 @@ export class QuizPoolService {
      */
     update(courseId: number, examId: number, quizPool: QuizPool, req?: any): Observable<HttpResponse<QuizPool>> {
         const options = createRequestOption(req);
-        return this.http.put<QuizPool>(`api/courses/${courseId}/exams/${examId}/quiz-pools`, quizPool, { params: options, observe: 'response' });
+        return this.http.put<QuizPool>(`api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`, quizPool, { params: options, observe: 'response' });
     }
 
     /**
@@ -34,6 +34,6 @@ export class QuizPoolService {
      * @return the quiz pool that belongs to the given course id and exam id
      */
     find(courseId: number, examId: number): Observable<HttpResponse<QuizPool>> {
-        return this.http.get<QuizPool>(`api/courses/${courseId}/exams/${examId}/quiz-pools`, { observe: 'response' });
+        return this.http.get<QuizPool>(`api/quiz/courses/${courseId}/exams/${examId}/quiz-pools`, { observe: 'response' });
     }
 }

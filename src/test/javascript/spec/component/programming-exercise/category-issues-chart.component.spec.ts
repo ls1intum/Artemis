@@ -9,8 +9,6 @@ describe('CategoryIssuesChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [CategoryIssuesChartComponent],
             providers: [],
         })
             .compileComponents()

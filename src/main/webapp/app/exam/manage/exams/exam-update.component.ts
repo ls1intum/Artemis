@@ -1,10 +1,11 @@
+import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -18,12 +19,48 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ExamModePickerComponent } from './exam-mode-picker/exam-mode-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        TitleChannelNameComponent,
+        HelpIconComponent,
+        ExamModePickerComponent,
+        NgbTooltip,
+        FaIconComponent,
+        WorkingTimeChangeComponent,
+        FormDateTimePickerComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
+        ExamExerciseImportComponent,
+        MarkdownEditorMonacoComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
@@ -45,16 +82,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
 
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
-
-    constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private modalService: NgbModal,
-        private router: Router,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])

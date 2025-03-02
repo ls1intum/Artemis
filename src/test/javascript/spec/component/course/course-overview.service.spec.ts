@@ -38,7 +38,6 @@ describe('CourseOverviewService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -454,7 +453,7 @@ describe('CourseOverviewService', () => {
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
     });
 
-    it('should group favorite and hidden conversations correctly', () => {
+    it('should group favorite and archived conversations correctly', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, generalChannel2, favoriteChannel, hiddenChannel];
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
@@ -467,7 +466,7 @@ describe('CourseOverviewService', () => {
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
-        expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['archivedChannels'].entityData).toHaveLength(1);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
         expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
@@ -477,7 +476,7 @@ describe('CourseOverviewService', () => {
         expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
         expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
         expect(getAsChannelDTO(groupedConversations['favoriteChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
-        expect(getAsChannelDTO(groupedConversations['hiddenChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
+        expect(getAsChannelDTO(groupedConversations['archivedChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
     });
 
     it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {
@@ -525,5 +524,31 @@ describe('CourseOverviewService', () => {
 
         expect(sidebarCardWithinRange.isCurrent).toBeTrue();
         expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
+    });
+
+    it('should return faBullhorn for announcement channels', () => {
+        const announcementChannel = new ChannelDTO();
+        announcementChannel.isAnnouncementChannel = true;
+
+        const icon = service.getChannelIcon(announcementChannel);
+        expect(icon).toBe(service.faBullhorn);
+    });
+
+    it('should return faHashtag for public channels', () => {
+        const publicChannel = new ChannelDTO();
+        publicChannel.isAnnouncementChannel = false;
+        publicChannel.isPublic = true;
+
+        const icon = service.getChannelIcon(publicChannel);
+        expect(icon).toBe(service.faHashtag);
+    });
+
+    it('should return faLock for private channels', () => {
+        const privateChannel = new ChannelDTO();
+        privateChannel.isAnnouncementChannel = false;
+        privateChannel.isPublic = false;
+
+        const icon = service.getChannelIcon(privateChannel);
+        expect(icon).toBe(service.faLock);
     });
 });

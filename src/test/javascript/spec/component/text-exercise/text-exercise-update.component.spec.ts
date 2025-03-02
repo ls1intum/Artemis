@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
-import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -14,8 +13,6 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
@@ -24,6 +21,10 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -32,18 +33,17 @@ describe('TextExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-            declarations: [TextExerciseUpdateComponent],
-        })
-            .overrideTemplate(TextExerciseUpdateComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(TextExerciseUpdateComponent);
         comp = fixture.componentInstance;

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -16,6 +16,10 @@ import {
 import { isEqual } from 'lodash-es';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -40,8 +44,14 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTypeahead, MarkdownEditorMonacoComponent, ScheduleFormComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
+    private fb = inject(FormBuilder);
+    private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
     @Input()
     formData: TutorialGroupFormData = {
         title: undefined,
@@ -88,13 +98,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     faSave = faSave;
 
     ngUnsubscribe = new Subject<void>();
-
-    constructor(
-        private fb: FormBuilder,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
 
     get titleControl() {
         return this.form.get('title');
@@ -196,7 +199,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         this.ngUnsubscribe.complete();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

@@ -4,9 +4,20 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
-import { MockComponent } from 'ng-mocks';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
@@ -14,9 +25,15 @@ describe('ModelingExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ModelingExamSummaryComponent, MockComponent(ModelingSubmissionComponent)],
-            schemas: [],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

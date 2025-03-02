@@ -41,13 +41,13 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("openid_configuration", "configurationUrl");
 
-        request.postWithoutResponseBody("/api/admin/lti13/dynamic-registration", HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/lti/admin/lti13/dynamic-registration", HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
-        request.postWithoutResponseBody("/api/admin/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/lti/admin/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
@@ -65,7 +65,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         Page<LtiPlatformConfiguration> expectedPlatforms = ltiPlatformConfigurationRepository.findAll(Pageable.unpaged());
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -78,7 +78,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
     void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
-        request.get("/api/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+        request.get("/api/lti/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test
@@ -91,7 +91,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         doReturn(expectedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         LtiPlatformConfiguration actualPlatform = objectMapper.readValue(jsonContent, LtiPlatformConfiguration.class);
@@ -106,7 +106,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
-        request.performMvcRequest(delete("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
+        request.performMvcRequest(delete("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         verify(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
@@ -119,7 +119,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         platformToUpdate.setId(1L);
         fillLtiPlatformConfig(platformToUpdate);
 
-        request.performMvcRequest(put("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
+        request.performMvcRequest(put("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
@@ -133,7 +133,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         fillLtiPlatformConfig(platformToCreate);
         platformToCreate.setRegistrationId(null);
 
-        request.performMvcRequest(post("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
+        request.performMvcRequest(post("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(any());

@@ -1,11 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
+import { NgClass } from '@angular/common';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -35,8 +38,14 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../course-overview.scss'],
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseOverviewService = inject(CourseOverviewService);
+
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
@@ -50,13 +59,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     isCollapsed = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
-
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private courseOverviewService: CourseOverviewService,
-    ) {}
 
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');

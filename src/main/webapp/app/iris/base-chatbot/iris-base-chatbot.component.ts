@@ -1,6 +1,6 @@
 import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
@@ -15,6 +15,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 import * as _ from 'lodash-es';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AsPipe } from 'app/shared/pipes/as.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -70,8 +80,27 @@ import * as _ from 'lodash-es';
             ]),
         ]),
     ],
+    imports: [
+        IrisLogoComponent,
+        RouterLink,
+        FaIconComponent,
+        NgbTooltip,
+        TranslateDirective,
+        ChatStatusBarComponent,
+        FormsModule,
+        ButtonComponent,
+        ArtemisTranslatePipe,
+        AsPipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
+    protected accountService = inject(AccountService);
+    protected modalService = inject(NgbModal);
+    protected translateService = inject(TranslateService);
+    protected statusService = inject(IrisStatusService);
+    protected chatService = inject(IrisChatService);
+
     // Icons
     faTrash = faTrash;
     faCircle = faCircle;
@@ -100,12 +129,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     error?: IrisErrorMessageKey;
     numNewMessages: number = 0;
     rateLimitInfo: IrisRateLimitInformation;
-    active: boolean = true;
+    active = true;
 
     newMessageTextContent = '';
     isLoading: boolean;
-    shouldAnimate: boolean = false;
-    hasActiveStage: boolean = false;
+    shouldAnimate = false;
+    hasActiveStage = false;
 
     // User preferences
     userAccepted: boolean;
@@ -115,7 +144,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     public ButtonType = ButtonType;
 
     @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton: boolean = false;
+    @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
 
@@ -133,18 +163,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
-    constructor(
-        protected accountService: AccountService,
-        protected modalService: NgbModal,
-        protected translateService: TranslateService,
-        protected statusService: IrisStatusService,
-        protected chatService: IrisChatService,
-    ) {}
-
     ngOnInit() {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
+                setTimeout(() => this.messageTextarea?.nativeElement?.focus(), 10);
             }
             this.messages = _.cloneDeep(messages).reverse();
             this.messages.forEach((message) => {
@@ -178,7 +201,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.suggestions = suggestions;
         });
 
-        this.checkIfUserAcceptedIris();
+        this.checkIfUserAcceptedExternalLLMUsage();
 
         // Focus on message textarea
         setTimeout(() => {
@@ -211,8 +234,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.suggestionsSubscription.unsubscribe();
     }
 
-    checkIfUserAcceptedIris(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.irisAccepted;
+    checkIfUserAcceptedExternalLLMUsage(): void {
+        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 

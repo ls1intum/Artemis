@@ -1,87 +1,63 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
 import { WindFile } from 'app/entities/programming/wind.file';
-import { Subject, of, throwError } from 'rxjs';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { of, Subject, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import '@angular/localize/init';
 import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
-import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
-import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
-import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CheckboxControlValueAccessor, DefaultValueAccessor, NgForm, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
-import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/exercises/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
-import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/problem/programming-exercise-problem.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
-import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
-import { ProgrammingExerciseDifficultyComponent } from '../../../../../main/webapp/app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../../../main/webapp/app/shared/constants/input.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { ProgrammingExerciseInstructionAnalysisService } from '../../../../../main/webapp/app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
-
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: '123' }) },
+        url: {
+            pipe: () => ({
+                subscribe: () => {},
+            }),
+        },
+    } as ActivatedRoute;
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
     let debugElement: DebugElement;
@@ -96,110 +72,53 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgxDatatableModule,
-                OwlDateTimeModule,
-                NgbTooltipMocksModule,
-                NgbAlertsMocksModule,
-                ProgrammingExerciseInformationComponent,
-                TitleChannelNameComponent,
-            ],
-            declarations: [
-                ProgrammingExerciseUpdateComponent,
-                // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
-                // Mocking that interaction defeats the purpose of interacting with the UI in the first place.
-                NgForm,
-                NgModel,
-                CheckboxControlValueAccessor,
-                DefaultValueAccessor,
-                SelectControlValueAccessor,
-                NumberValueAccessor,
-                MockComponent(HelpIconComponent),
-                MockComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent),
-                MockComponent(TableEditableFieldComponent),
-                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
-                MockComponent(CategorySelectorComponent),
-                MockComponent(AddAuxiliaryRepositoryButtonComponent),
-                MockComponent(DifficultyPickerComponent),
-                MockComponent(TeamConfigFormGroupComponent),
-                MockComponent(ProgrammingExerciseLifecycleComponent),
-                MockComponent(IncludedInOverallScorePickerComponent),
-                MockComponent(SubmissionPolicyUpdateComponent),
-                MockComponent(PresentationScoreComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ProgrammingExerciseEditableInstructionComponent),
-                MockComponent(GradingInstructionsDetailsComponent),
-                MockComponent(ButtonComponent),
-                MockComponent(CompetencySelectionComponent),
-                MockComponent(ProgrammingExerciseModeComponent),
-                MockComponent(ProgrammingExerciseLanguageComponent),
-                MockComponent(ProgrammingExerciseGradingComponent),
-                MockComponent(ProgrammingExerciseProblemComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockComponent(FormStatusBarComponent),
-                MockComponent(FormFooterComponent),
-                MockPipe(RemoveKeysPipe),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(CustomMinDirective),
-                MockDirective(CustomMaxDirective),
-                MockDirective(TranslateDirective),
-                MockComponent(ModePickerComponent),
-                MockComponent(ExerciseUpdateNotificationComponent),
-                MockComponent(ExerciseUpdatePlagiarismComponent),
-                MockComponent(SwitchEditModeButtonComponent),
-                MockModule(ExerciseTitleChannelNameModule),
-                MockDirective(CustomNotIncludedInValidatorDirective),
-                MockComponent(ProgrammingExerciseDifficultyComponent),
-            ],
+            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                {
-                    provide: AlertService,
-                    useValue: {
-                        addAlert: () => {},
-                    },
-                },
+                { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-                courseService = debugElement.injector.get(CourseManagementService);
-                exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-                programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
-                alertService = debugElement.injector.get(AlertService);
-                profileService = debugElement.injector.get(ProfileService);
+        }).compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+        courseService = debugElement.injector.get(CourseManagementService);
+        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+        alertService = debugElement.injector.get(AlertService);
+        profileService = debugElement.injector.get(ProfileService);
 
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                const newProfileInfo = new ProfileInfo();
-                newProfileInfo.activeProfiles = [];
-                getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        const newProfileInfo = new ProfileInfo();
+        newProfileInfo.activeProfiles = [];
+        getProfileInfoSub.mockReturnValue(of(newProfileInfo));
 
-                comp.isSimpleMode.set(false);
+        comp.isSimpleMode.set(false);
 
-                const route = TestBed.inject(ActivatedRoute);
-                const programmingExercise = new ProgrammingExercise(undefined, undefined);
-                programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-                route.data = of({ programmingExercise });
-                jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
-                    programmingLanguage: ProgrammingLanguage.JAVA,
-                    sequentialTestRuns: true,
-                    staticCodeAnalysis: true,
-                    plagiarismCheckSupported: true,
-                    packageNameRequired: true,
-                    checkoutSolutionRepositoryAllowed: true,
-                    projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                    auxiliaryRepositoriesSupported: true,
-                } as ProgrammingLanguageFeature);
-            });
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        route.data = of({ programmingExercise });
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            sequentialTestRuns: true,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: true,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: true,
+            projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+            auxiliaryRepositoriesSupported: true,
+        } as ProgrammingLanguageFeature);
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     describe('initializeEditMode', () => {

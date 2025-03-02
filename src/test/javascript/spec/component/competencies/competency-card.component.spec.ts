@@ -2,22 +2,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { By } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { ArtemisTimeAgoPipe } from '../../../../../main/webapp/app/shared/pipes/artemis-time-ago.pipe';
+import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('CompetencyCardComponent', () => {
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule],
             declarations: [
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -25,6 +24,7 @@ describe('CompetencyCardComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencyRingsComponent),
                 MockPipe(ArtemisTimeAgoPipe),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TranslateService)],
             schemas: [],

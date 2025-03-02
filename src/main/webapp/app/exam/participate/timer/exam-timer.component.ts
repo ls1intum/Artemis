@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -6,13 +6,18 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
+import { AsyncPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-timer',
     templateUrl: './exam-timer.component.html',
     styleUrls: ['./exam-timer.scss'],
+    imports: [AsyncPipe, ArtemisTranslatePipe],
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {
+    private serverDateService = inject(ArtemisServerDateService);
+
     @HostBinding('class.row') readonly row = true;
 
     @Input()
@@ -39,7 +44,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
-    constructor(private serverDateService: ArtemisServerDateService) {
+    constructor() {
         this.timer
             .pipe(
                 map((timeLeft: plugin.Duration) => timeLeft.asSeconds()),

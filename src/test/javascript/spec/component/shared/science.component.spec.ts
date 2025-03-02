@@ -1,16 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
-    constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN);
+    constructor() {
+        super(ScienceEventType.LECTURE__OPEN);
         super.logEvent();
     }
 }
@@ -23,9 +26,12 @@ describe('AbstractScienceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ScienceComponent],
-            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
+            providers: [
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

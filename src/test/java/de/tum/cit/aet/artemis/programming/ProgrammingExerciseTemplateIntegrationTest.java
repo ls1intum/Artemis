@@ -124,7 +124,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Use which to find all java installations on Linux
         var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
         for (String path : javaInstallations) {
-            File binFolder = new File(path).getParentFile();
+            File binFolder = Path.of(path).toFile().getParentFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -139,8 +139,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static void findAndSetJava17Mac() throws Exception {
         var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
         for (String path : alternativeInstallations) {
-            File binFolder = new File(path).getParentFile();
-            binFolder = new File(binFolder, "Home/bin");
+            File binFolder = Path.of(path).toFile().getParentFile();
+            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -190,7 +190,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -204,7 +204,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     @AfterEach
     void tearDown() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
         exerciseRepo.resetLocalRepo();
@@ -269,7 +269,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
-        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;

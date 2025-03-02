@@ -7,7 +7,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-grading-system-info-modal',
     templateUrl: './grading-system-info-modal.component.html',
-    standalone: true,
     imports: [TranslateDirective, FaIconComponent],
 })
 export class GradingSystemInfoModalComponent {

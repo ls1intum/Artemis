@@ -3,8 +3,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { MockComponent } from 'ng-mocks';
 import { DataExportConfirmationDialogData } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.model';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -17,7 +15,6 @@ describe('DataExportConfirmationDialogService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [DataExportConfirmationDialogService, { provide: TranslateService, useClass: MockTranslateService }],
-            declarations: [MockComponent(DeleteDialogComponent)],
         });
         service = TestBed.inject(DataExportConfirmationDialogService);
         modalService = TestBed.inject(NgbModal);

@@ -1,14 +1,18 @@
 import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffReportModalComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('GitDiffReportModalComponent', () => {
     let comp: GitDiffReportModalComponent;
@@ -19,25 +23,36 @@ describe('GitDiffReportModalComponent', () => {
     let loadTemplateFilesSpy: jest.SpyInstance;
     let loadParticipationFilesSpy: jest.SpyInstance;
     let loadSolutionFilesSpy: jest.SpyInstance;
-
-    const filesWithContentTemplate = new Map<string, string>();
-    filesWithContentTemplate.set('test', 'test');
-    const filesWithContentParticipation1 = new Map<string, string>();
-    filesWithContentParticipation1.set('test3', 'test3');
-    const filesWithContentParticipation2 = new Map<string, string>();
-    filesWithContentParticipation2.set('test4', 'test4');
-    const filesWithContentSolution = new Map<string, string>();
-    filesWithContentSolution.set('test2', 'test2');
+    let filesWithContentTemplate: Map<string, string>;
+    let filesWithContentParticipation1: Map<string, string>;
+    let filesWithContentParticipation2: Map<string, string>;
+    let filesWithContentSolution: Map<string, string>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffReportComponent)],
+            imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportModalComponent);
         comp = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+
+        modal = TestBed.inject(NgbActiveModal);
+
+        filesWithContentTemplate = new Map<string, string>();
+        filesWithContentTemplate.set('test', 'test');
+        filesWithContentParticipation1 = new Map<string, string>();
+        filesWithContentParticipation1.set('test3', 'test3');
+        filesWithContentParticipation2 = new Map<string, string>();
+        filesWithContentParticipation2.set('test4', 'test4');
+        filesWithContentSolution = new Map<string, string>();
+        filesWithContentSolution.set('test2', 'test2');
 
         loadSolutionFilesSpy = jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentSolution));
         loadTemplateFilesSpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentTemplate));
@@ -103,8 +118,28 @@ describe('GitDiffReportModalComponent', () => {
         expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
     });
 
+    /**
+     * For some reason, this test needs to be executed before the next one.
+     * Somehow, the mocked error-response leaks into this test, despite properly resetting the mocks.
+     * Also, other tests seem to not be affected by this.
+     */
+    it('should load files from cache if available for template and participation repo', async () => {
+        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
+        cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
+        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
+        fixture.componentRef.setInput('cachedRepositoryFiles', cachedRepositoryFiles);
+        fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport);
+        fixture.componentRef.setInput('diffForTemplateAndSolution', false);
+        fixture.detectChanges();
+        await finishEffects();
+        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
+        expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
+        expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
+        expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
+    });
+
     it('should set error flag if loading files fails', async () => {
-        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
+        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(throwError('error1'));
         jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommit').mockReturnValue(throwError('error'));
         fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport);
@@ -132,21 +167,6 @@ describe('GitDiffReportModalComponent', () => {
         const modalServiceSpy = jest.spyOn(modal, 'dismiss');
         comp.close();
         expect(modalServiceSpy).toHaveBeenCalled();
-    });
-
-    it('should load files from cache if available for template and participation repo', async () => {
-        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
-        cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
-        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
-        fixture.componentRef.setInput('cachedRepositoryFiles', cachedRepositoryFiles);
-        fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport);
-        fixture.componentRef.setInput('diffForTemplateAndSolution', false);
-        fixture.detectChanges();
-        await finishEffects();
-        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
-        expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
-        expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
-        expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
     });
 
     it('should load files from cache if available for participation repo at both commits', async () => {

@@ -1,22 +1,16 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
-import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDataExportRequestButton [adminDialog]="true" expectedLogin="login"></button>',
+    imports: [DataExportRequestButtonDirective],
 })
 class TestComponent {}
 
@@ -29,15 +23,18 @@ describe('DataExportRequestButtonDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), NgbModule],
-            declarations: [
-                TestComponent,
-                DataExportRequestButtonDirective,
-                MockComponent(DataExportConfirmationDialogComponent),
-                TranslatePipeMock,
-                MockDirective(TranslateDirective),
+            imports: [TestComponent],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
+                {
+                    provide: NgbModal,
+                    useValue: null,
+                },
             ],
-            providers: [JhiLanguageHelper, AlertService],
         })
             .compileComponents()
             .then(() => {

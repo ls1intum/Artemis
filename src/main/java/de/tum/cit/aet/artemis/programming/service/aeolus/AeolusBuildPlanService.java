@@ -59,9 +59,6 @@ public class AeolusBuildPlanService {
     @Value("${aeolus.token:#{null}}")
     private String token;
 
-    @Value("${artemis.continuous-integration.token:#{null}}")
-    private String ciToken;
-
     @Value("${artemis.continuous-integration.password:#{null}}")
     private String ciPassword;
 

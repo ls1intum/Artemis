@@ -6,7 +6,6 @@ import { round } from 'app/shared/util/utils';
 @Pipe({
     name: 'gradeStepBounds',
     pure: false,
-    standalone: true,
 })
 export class GradeStepBoundsPipe implements PipeTransform {
     /**

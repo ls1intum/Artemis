@@ -2,13 +2,13 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -58,11 +58,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 @Service
 public class LocalCIResultProcessingService {
 
-    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
-
-    private static final int BUILD_JOB_DURATION_UPDATE_LIMIT = 100;
-
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
+
+    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -143,12 +141,12 @@ public class LocalCIResultProcessingService {
         }
         log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
         log.debug("Build jobs waiting in queue: {}", resultQueue.size());
-        log.debug("Queued build jobs: {}", resultQueue.stream().map(i -> i.buildJobQueueItem().id()).toList());
+        log.debug("Queued build jobs: {}", getResultQueueBuildJobIds());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
-        Throwable ex = resultQueueItem.exception();
+        Throwable buildException = resultQueueItem.exception();
 
         BuildJob savedBuildJob;
 
@@ -181,19 +179,23 @@ public class LocalCIResultProcessingService {
                 }
 
                 // save build job to database
-                if (ex != null) {
-                    if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                if (buildException != null) {
+                    if (buildException.getCause() instanceof CancellationException
+                            && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                     }
+                    else if (buildException.getCause() instanceof TimeoutException) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
+                    }
                     else {
-                        log.error("Error while processing build job: {}", buildJob, ex);
+                        log.error("Error while processing build job: {}", buildJob, buildException);
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
                     }
                 }
                 else {
                     savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
                     if (programmingExerciseParticipation != null) {
-                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise());
+                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
                     }
                 }
 
@@ -275,6 +277,9 @@ public class LocalCIResultProcessingService {
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
+                buildJob.setId(existingBuildJob.getId());
+            });
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
@@ -283,36 +288,36 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    private void updateExerciseBuildDurationAsync(ProgrammingExercise exercise) {
-        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exercise));
+    private void updateExerciseBuildDurationAsync(long exerciseId) {
+        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exerciseId));
     }
 
-    private void updateExerciseBuildDuration(ProgrammingExercise exercise) {
+    private void updateExerciseBuildDuration(long exerciseId) {
         try {
-            ProgrammingExerciseBuildStatistics buildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
-            long successfulBuildJobCountByExerciseId = buildJobRepository.fetchSuccessfulBuildJobCountByExerciseId(exercise.getId());
-
-            boolean hasSuccessfulBuildJobs = successfulBuildJobCountByExerciseId > 0;
-            boolean exceedsUpdateThreshold = buildStatistics == null
-                    || successfulBuildJobCountByExerciseId - buildStatistics.getBuildCountWhenUpdated() >= BUILD_STATISTICS_UPDATE_THRESHOLD;
-
-            boolean shouldUpdate = hasSuccessfulBuildJobs && exceedsUpdateThreshold;
-            if (!shouldUpdate) {
+            var buildStatisticsDto = buildJobRepository.findBuildJobStatisticsByExerciseId(exerciseId);
+            if (buildStatisticsDto == null || buildStatisticsDto.buildCountWhenUpdated() == 0) {
                 return;
             }
 
-            OptionalDouble averageBuildDuration = buildJobRepository.fetchSuccessfulBuildJobsByExerciseIdWithLimit(exercise.getId(), BUILD_JOB_DURATION_UPDATE_LIMIT).stream()
-                    .mapToLong(buildJob -> Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate()).toSeconds()).average();
-            if (averageBuildDuration.isPresent()) {
-                if (buildStatistics == null) {
-                    buildStatistics = new ProgrammingExerciseBuildStatistics(exercise.getId(), Math.round(averageBuildDuration.getAsDouble()), successfulBuildJobCountByExerciseId);
-                }
-                else {
-                    buildStatistics.setBuildDurationSeconds((long) averageBuildDuration.getAsDouble());
-                    buildStatistics.setBuildCountWhenUpdated(successfulBuildJobCountByExerciseId);
-                }
-                programmingExerciseBuildStatisticsRepository.save(buildStatistics);
+            long averageDuration = Math.round(buildStatisticsDto.buildDurationSeconds());
+
+            var programmingExerciseBuildStatisticsOpt = programmingExerciseBuildStatisticsRepository.findByExerciseId(exerciseId);
+
+            if (programmingExerciseBuildStatisticsOpt.isEmpty()) {
+                // create the database row if it does not exist
+                var programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exerciseId, averageDuration, buildStatisticsDto.buildCountWhenUpdated());
+                programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
             }
+            else {
+                var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsOpt.get();
+                // only update the database row if the build duration has changed using a modifying query or when the build count is above a certain threshold
+                if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()
+                        && buildStatisticsDto.buildCountWhenUpdated() - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() < BUILD_STATISTICS_UPDATE_THRESHOLD) {
+                    return;
+                }
+                programmingExerciseBuildStatisticsRepository.updateStatistics(averageDuration, buildStatisticsDto.buildCountWhenUpdated(), exerciseId);
+            }
+
         }
         catch (Exception e) {
             log.error("Could not update exercise build duration", e);
@@ -342,5 +347,10 @@ public class LocalCIResultProcessingService {
     private boolean isSolutionBuildOfTestOrAuxPush(BuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
+    }
+
+    private List<String> getResultQueueBuildJobIds() {
+        List<ResultQueueItem> resultQueueList = new ArrayList<>(resultQueue);
+        return resultQueueList.stream().map(i -> i.buildJobQueueItem().id()).toList();
     }
 }

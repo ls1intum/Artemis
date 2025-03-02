@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
-    standalone: true,
     imports: [TranslateDirective],
 })
 export class VcsRepositoryAccessLogViewComponent {
@@ -22,7 +21,7 @@ export class VcsRepositoryAccessLogViewComponent {
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
     private readonly participationId = computed(() => {
-        const participationId = this.params().participationId;
+        const participationId = this.params().repositoryId;
         if (participationId) {
             return Number(participationId);
         }
@@ -32,16 +31,13 @@ export class VcsRepositoryAccessLogViewComponent {
     private readonly repositoryType = computed(() => String(this.params().repositoryType));
 
     constructor() {
-        effect(
-            async () => {
-                if (this.participationId()) {
-                    await this.loadVcsAccessLogForParticipation(this.participationId()!);
-                } else {
-                    await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
-                }
-            },
-            { allowSignalWrites: true },
-        );
+        effect(async () => {
+            if (this.participationId()) {
+                await this.loadVcsAccessLogForParticipation(this.participationId()!);
+            } else {
+                await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
+            }
+        });
     }
 
     public async loadVcsAccessLogForParticipation(participationId: number) {

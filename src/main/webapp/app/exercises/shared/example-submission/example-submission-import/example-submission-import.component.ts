@@ -1,32 +1,49 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ImportComponent } from 'app/shared/import/import.component';
-import { SortService } from 'app/shared/service/sort.service';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ResultComponent } from '../../result/result.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
 @Component({
     selector: 'jhi-example-submission-import',
     templateUrl: './example-submission-import.component.html',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        NgbTooltip,
+        ResultComponent,
+        ButtonComponent,
+        NgbPagination,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExampleSubmissionImportComponent extends ImportComponent<Submission> {
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+
     exercise: Exercise;
 
     readonly faQuestionCircle = faQuestionCircle;
     readonly ExerciseType = ExerciseType;
 
-    constructor(
-        router: Router,
-        sortService: SortService,
-        activeModal: NgbActiveModal,
-        pagingService: ExampleSubmissionImportPagingService,
-        private exampleSubmissionService: ExampleSubmissionService,
-    ) {
-        super(router, sortService, activeModal, pagingService);
+    constructor() {
+        const pagingService = inject(ExampleSubmissionImportPagingService);
+        super(pagingService);
     }
 
     get searchTermEntered() {

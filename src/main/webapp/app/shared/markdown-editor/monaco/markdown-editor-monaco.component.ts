@@ -16,7 +16,19 @@ import {
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
+import {
+    NgbDropdown,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavChangeEvent,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+    NgbTooltip,
+} from '@ng-bootstrap/ng-bootstrap';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -29,7 +41,7 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -38,12 +50,12 @@ import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.ac
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingEditType, ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -52,6 +64,16 @@ import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS 
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { facArtemisIntelligence } from 'app/icons/icons';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -71,6 +93,8 @@ interface MarkdownActionsByGroup {
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: LectureAttachmentReferenceAction;
+    // AI assistance in the editor
+    artemisIntelligence: TextEditorAction[];
     meta: TextEditorAction[];
 }
 
@@ -91,6 +115,31 @@ const BORDER_HEIGHT_OFFSET = 2;
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        NgbNav,
+        NgbNavItem,
+        NgbNavLink,
+        NgbNavLinkBase,
+        TranslateDirective,
+        NgbNavContent,
+        NgClass,
+        MonacoEditorComponent,
+        FaIconComponent,
+        NgbTooltip,
+        NgTemplateOutlet,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        ColorSelectorComponent,
+        PostingButtonComponent,
+        MatMenuTrigger,
+        MatMenu,
+        MatMenuItem,
+        NgbNavOutlet,
+        CdkDrag,
+        MatButton,
+        ArtemisTranslatePipe,
+    ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
@@ -98,6 +147,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -187,7 +237,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     domainActions: TextEditorDomainAction[] = [];
 
     @Input()
+    artemisIntelligenceActions: TextEditorAction[] = [];
+
+    @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
+
+    isButtonLoading = input<boolean>(false);
+    isFormGroupValid = input<boolean>(false);
+    editType = input<PostingEditType>();
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
@@ -229,6 +286,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         color: undefined,
         domain: { withoutOptions: [], withOptions: [] },
         lecture: undefined,
+        artemisIntelligence: [],
         meta: [],
     };
 
@@ -253,8 +311,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSpinner = faSpinner;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faPaperPlane = faPaperPlane;
     // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
@@ -262,6 +323,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_EDIT = MarkdownEditorMonacoComponent.TAB_EDIT;
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
+
+    readonly EditType = PostingEditType;
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
@@ -283,6 +346,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
             meta: this.filterDisplayedActions(this.metaActions),
         };
     }
@@ -326,6 +390,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.domainActions,
             ...(this.colorAction ? [this.colorAction] : []),
             ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
+            ...this.artemisIntelligenceActions,
             this.metaActions,
         ]
             .flat()

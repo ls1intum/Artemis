@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
+import { MockTranslateService } from '../../../../../../helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserBadgeComponent', () => {
     let component: CodeEditorFileBrowserBadgeComponent;
@@ -12,9 +11,7 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
-            declarations: [CodeEditorFileBrowserBadgeComponent],
-            providers: [TranslateService],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         translateService = TestBed.inject(TranslateService);

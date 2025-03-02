@@ -13,6 +13,8 @@ import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     template: '',
@@ -42,7 +44,7 @@ describe('CourseLectureRow', () => {
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTimeAgoPipe),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             schemas: [],
         })
             .compileComponents()

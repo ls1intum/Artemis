@@ -1,19 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { By } from '@angular/platform-browser';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
@@ -26,16 +19,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                CodeEditorTutorAssessmentInlineFeedbackComponent,
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockComponent(AssessmentCorrectionRoundBadgeComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(NgModel),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(QuotePipe),
-                MockPipe(FeedbackContentPipe),
-            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         })
             .compileComponents()

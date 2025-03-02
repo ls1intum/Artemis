@@ -1,9 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import isMobile from 'ismobilejs-es5';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
-import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -27,7 +26,15 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
-    public resourceUrl = 'api/guided-tour-settings';
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private participationService = inject(ParticipationService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private courseService = inject(CourseManagementService);
+
+    public resourceUrl = 'api/core/guided-tour-settings';
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour?: GuidedTour;
 
@@ -60,17 +67,6 @@ export class GuidedTourService {
     private isComponentPageLoaded = new Subject<boolean>();
 
     private isMobile = false;
-
-    constructor(
-        private http: HttpClient,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private router: Router,
-        private profileService: ProfileService,
-        private participationService: ParticipationService,
-        private tutorParticipationService: TutorParticipationService,
-        private courseService: CourseManagementService,
-    ) {}
 
     /**
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
@@ -243,7 +239,7 @@ export class GuidedTourService {
 
     /**
      * Check if the provided tour step is the currently active one
-     * @param tourStep: current tour step of the guided tour
+     * @param tourStep current tour step of the guided tour
      */
     public isCurrentStep(tourStep: TourStep): boolean {
         if (this.currentTour && this.currentTour.steps) {
