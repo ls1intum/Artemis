@@ -156,7 +156,7 @@ class Lti13ServiceTest {
         ObjectNode jsonObject = new ObjectMapper().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        prepareForPerformLaunch(result.courseId(), result.exerciseId());
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId());
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -167,7 +167,7 @@ class Lti13ServiceTest {
     @Test
     void performLaunch_invalidToken() {
         MockExercise exercise = this.getMockExercise(true);
-        prepareForPerformLaunch(exercise.courseId, exercise.exerciseId);
+        prepareForPerformExerciseLaunch(exercise.courseId, exercise.exerciseId);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -216,7 +216,7 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_courseNotFound() {
-        this.prepareForPerformLaunch(1000L, 123L);
+        this.prepareForPerformExerciseLaunch(1000L, 123L);
 
         doThrow(EntityNotFoundException.class).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(1000L);
         doThrow(EntityNotFoundException.class).when(courseRepository).findById(1000L);
@@ -231,6 +231,22 @@ class Lti13ServiceTest {
         doReturn("https://some-artemis-domain.org/courses/" + exercise.courseId + "/exercises/" + exercise.exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+    }
+
+    @Test
+    void performLaunch_hasTargetLinkWithoutExerciseCalled() {
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformCompetencyLaunch(1L);
+
+        lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
+
+        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("https://otherDomain.com", "1", "1", "resourceLinkUrl");
+        verify(launchRepository).save(any());
     }
 
     @Test
@@ -701,9 +717,18 @@ class Lti13ServiceTest {
     private record MockExercise(long exerciseId, long courseId) {
     }
 
-    private void prepareForPerformLaunch(long courseId, long exerciseId) {
+    private void prepareForPerformExerciseLaunch(long courseId, long exerciseId) {
+        this.prepareForPerformLaunch(courseId, "https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+    }
+
+    private void prepareForPerformCompetencyLaunch(long courseId) {
+        this.prepareForPerformLaunch(courseId, "https://some-artemis-domain.org/courses/" + courseId + "/competencies");
+    }
+
+    private void prepareForPerformLaunch(long courseId, String targetLinkUri) {
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn(targetLinkUri);
 
         Optional<User> user = Optional.of(new User());
         doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
