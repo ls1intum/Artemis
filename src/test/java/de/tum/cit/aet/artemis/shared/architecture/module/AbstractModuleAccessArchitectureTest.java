@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.shared.architecture.module;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
 import java.util.List;
@@ -35,35 +34,33 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
                 for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
 
-                    if (resideOutsideOfPackage(getModuleWithSubpackage()).test(origin)) { // ToDo: Remove?
-                        // target inside default-allowed packages (API, Domain, DTO)
-                        boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
-                        if (inDefaultAllowedPackage) {
-                            continue;
-                        }
+                    // target inside default-allowed packages (API, Domain, DTO)
+                    boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
+                    if (inDefaultAllowedPackage) {
+                        continue;
+                    }
 
-                        // target explicitly ignored
-                        boolean isIgnored = getIgnoredClasses().contains(target.reflect());
-                        if (!isIgnored) {
-                            String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
-                            events.add(SimpleConditionEvent.violated(origin, message));
-                        }
+                    // target explicitly ignored
+                    boolean isIgnored = getIgnoredClasses().contains(target.reflect());
+                    if (!isIgnored) {
+                        String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
+                        events.add(SimpleConditionEvent.violated(origin, message));
                     }
                 }
             }
         };
 
-        classes().that().resideOutsideOfPackage(getModuleWithSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
+        classes().that().resideOutsideOfPackages(getModuleWithSubpackage(), getModuleApiDtoSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
     }
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
+        classes().that().resideOutsideOfPackages(getModuleApiSubpackage(), getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
+        classes().that().resideOutsideOfPackages(getModuleApiSubpackage(), getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
     }
 
     protected Set<Class<?>> getIgnoredClasses() {
@@ -72,6 +69,10 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     protected String getModuleApiSubpackage() {
         return getModulePackage() + ".api..";
+    }
+
+    protected String getModuleApiDtoSubpackage() {
+        return getModulePackage() + ".api.dtos..";
     }
 
     protected String getModuleDomainSubpackage() {
