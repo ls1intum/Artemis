@@ -272,7 +272,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();
@@ -282,7 +282,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void deleteLectureShouldUpdateCompetency() throws Exception {
-        request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
+        request.delete("/api/lecture/lectures/" + lecture.getId(), HttpStatus.OK);
 
         CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         assertThat(result.getLectureUnitLinks()).isEmpty();
@@ -290,7 +290,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
-        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
+        request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
         CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         assertThat(result.getLectureUnitLinks()).map(CompetencyLectureUnitLink::getLectureUnit).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
     }

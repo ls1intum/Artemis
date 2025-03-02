@@ -28,7 +28,7 @@ describe('SubmissionVersion Service', () => {
         };
         const expected = [submissionVersion];
         service.findAllSubmissionVersionsOfSubmission(submissionId).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ url: `api/submissions/${submissionId}/versions`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/exercise/submissions/${submissionId}/versions`, method: 'GET' });
         req.flush(expected);
         tick();
     }));

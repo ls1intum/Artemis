@@ -39,7 +39,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
         Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
 
-        request.performMvcRequest(get("/api/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
     }
 
     @Test
@@ -51,7 +51,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, null);
         Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
 
-        request.performMvcRequest(get("/api/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
+        request.performMvcRequest(get("/api/core/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
     }
 
     @Test
@@ -63,7 +63,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
         Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
 
-        request.performMvcRequest(get("/api/test/testNoAllowedToolToken").cookie(cookie)).andExpect(status().isForbidden());
+        request.performMvcRequest(get("/api/core/test/testNoAllowedToolToken").cookie(cookie)).andExpect(status().isForbidden());
     }
 
 }

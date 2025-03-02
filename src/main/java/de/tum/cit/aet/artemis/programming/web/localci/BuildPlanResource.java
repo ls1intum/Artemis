@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile("gitlabci | jenkins")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class BuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPlanResource.class);

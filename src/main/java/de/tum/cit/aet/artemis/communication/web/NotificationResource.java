@@ -39,7 +39,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class NotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationResource.class);

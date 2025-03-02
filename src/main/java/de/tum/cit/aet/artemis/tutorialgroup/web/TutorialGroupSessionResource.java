@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";
@@ -226,7 +226,7 @@ public class TutorialGroupSessionResource {
         updateTutorialGroupSession(newSession, overlappingPeriodOptional);
         newSession = tutorialGroupSessionRepository.save(newSession);
 
-        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+        return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
                 .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
     }
 

@@ -84,7 +84,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradingScaleForCourseNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -96,7 +96,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(courseGradingScale);
 
-        GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
+        GradingScale foundGradingScale = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
 
         assertThat(foundGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").isEqualTo(courseGradingScale);
     }
@@ -107,7 +107,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradingScaleForExamNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -119,7 +119,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         examGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(examGradingScale);
 
-        GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
+        GradingScale foundGradingScale = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
 
         assertThat(foundGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").isEqualTo(examGradingScale);
     }
@@ -132,7 +132,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForCourseGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -143,7 +143,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
         courseGradingScale.setGradeSteps(Set.of());
 
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -154,7 +154,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForExamGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -165,7 +165,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
         examGradingScale.setGradeSteps(Set.of());
 
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -177,7 +177,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -193,13 +193,13 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setPresentationScore(2);
         courseGradingScale.setPresentationsNumber(1);
         courseGradingScale.setPresentationsWeight(20.0);
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
         courseGradingScale.setPresentationsNumber(null);
         courseGradingScale.setPresentationsWeight(null);
 
         // The presentationScore must be above 0.
         course.setPresentationScore(-1);
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -215,13 +215,13 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setPresentationScore(null);
         courseGradingScale.setPresentationsNumber(0);
         courseGradingScale.setPresentationsWeight(120.0);
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
 
         // The gradingScale must belong to a course.
         courseGradingScale.setPresentationsNumber(2);
         courseGradingScale.setPresentationsWeight(20.0);
         courseGradingScale.setCourse(null);
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -234,7 +234,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(gradeSteps);
         course.setPresentationScore(5);
 
-        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
                 HttpStatus.CREATED);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
@@ -252,7 +252,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
                 HttpStatus.CREATED);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
@@ -270,7 +270,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(gradeSteps);
         courseGradingScale.setPlagiarismGrade("Plagiarism");
         courseGradingScale.setNoParticipationGrade("NoParticipation");
-        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
                 HttpStatus.CREATED);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
@@ -289,7 +289,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -303,7 +303,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
 
-        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.CREATED);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
@@ -317,7 +317,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForCourseGradingScaleNotFound() throws Exception {
-        request.put("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -330,7 +330,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -343,7 +343,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class, HttpStatus.OK);
+        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+                HttpStatus.OK);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
@@ -356,7 +357,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForExamGradingScaleNotFound() throws Exception {
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -371,7 +372,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -386,7 +387,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
 
-        GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
+        GradingScale savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.OK);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
@@ -400,7 +401,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteGradingScaleForCourseNotFound() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
+        request.delete("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -411,7 +412,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteGradingScaleForCourse() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK);
+        request.delete("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK);
     }
 
     /**
@@ -420,7 +421,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteGradingScaleForExamNotFound() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
+        request.delete("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -431,7 +432,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteGradingScaleForExam() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK);
+        request.delete("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK);
     }
 
     /**
@@ -442,7 +443,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -456,7 +457,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteExamDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -470,7 +471,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exam.setTitle("abcdefghijklmnop");
         examRepository.save(exam);
 
-        String url = "/api/grading-scales";
+        String url = "/api/assessment/grading-scales";
         var search = pageableSearchUtilService.configureSearch("abcdefghijklmnop");
         search.setPageSize(100);
         var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
@@ -493,7 +494,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
 
-        String url = "/api/grading-scales";
+        String url = "/api/assessment/grading-scales";
         var search = pageableSearchUtilService.configureSearch("");
         search.setPageSize(100);
         search.setSortingOrder(SortingOrder.DESCENDING);

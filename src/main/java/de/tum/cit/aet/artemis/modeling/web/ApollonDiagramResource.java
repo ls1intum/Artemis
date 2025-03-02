@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/modeling/")
 public class ApollonDiagramResource {
 
     private static final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
@@ -81,7 +81,7 @@ public class ApollonDiagramResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(result);
     }
 
     /**

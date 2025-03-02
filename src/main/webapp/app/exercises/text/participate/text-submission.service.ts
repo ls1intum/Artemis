@@ -18,7 +18,7 @@ export class TextSubmissionService {
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(textSubmission);
         return this.http
-            .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+            .post<TextSubmission>(`api/text/exercises/${exerciseId}/text-submissions`, copy, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
@@ -27,7 +27,7 @@ export class TextSubmissionService {
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(textSubmission);
         return this.http
-            .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
+            .put<TextSubmission>(`api/text/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
@@ -36,14 +36,14 @@ export class TextSubmissionService {
 
     getTextSubmission(submissionId: number): Observable<TextSubmission> {
         return this.http
-            .get<TextSubmission>(`api/text-submissions/${submissionId}`, {
+            .get<TextSubmission>(`api/text/text-submissions/${submissionId}`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
     getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
-        const url = `api/exercises/${exerciseId}/text-submissions`;
+        const url = `api/text/exercises/${exerciseId}/text-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -61,7 +61,7 @@ export class TextSubmissionService {
      * @param correctionRound: The correction round for which we want to get a new assessment
      */
     getSubmissionWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission | undefined> {
-        const url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+        const url = `api/text/exercises/${exerciseId}/text-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
