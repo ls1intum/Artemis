@@ -28,5 +28,5 @@ public enum AuthenticationMechanism {
     /**
      * The authentication header was missing
      */
-    NONE
+    AUTH_HEADER_MISSING
 }

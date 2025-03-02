@@ -340,7 +340,7 @@ public class LocalVCServletService {
                     return resolveHTTPSAuthenticationMechanism(request.request().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
                 }
                 catch (LocalVCAuthException ignored) {
-                    return AuthenticationMechanism.NONE;
+                    return AuthenticationMechanism.AUTH_HEADER_MISSING;
                 }
             }
         }
