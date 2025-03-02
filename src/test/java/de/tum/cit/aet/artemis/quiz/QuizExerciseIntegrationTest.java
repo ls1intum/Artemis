@@ -1904,7 +1904,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private QuizExercise createMultipleChoiceQuizExercise() {
         Course course = courseUtilService.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED, course);
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
         question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));

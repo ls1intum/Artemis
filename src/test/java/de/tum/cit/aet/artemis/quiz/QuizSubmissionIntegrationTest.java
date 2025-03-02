@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.quiz;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
@@ -159,9 +161,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             log.debug(pointCounter.toString());
@@ -206,8 +208,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = setupQuizExerciseParameters();
         // force getting partial points
         quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
-        quizExercise.getQuizQuestions().get(1).score(1);
-        quizExercise.getQuizQuestions().get(2).score(1);
+        quizExercise.getQuizQuestions().get(1).score(1d);
+        quizExercise.getQuizQuestions().get(2).score(1d);
         quizExercise = quizExerciseService.save(quizExercise);
 
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -350,9 +352,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
@@ -526,9 +528,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             assertThat(pointCounter.getRatedCounter()).isZero();
             assertThat(pointCounter.getUnRatedCounter()).isZero();
