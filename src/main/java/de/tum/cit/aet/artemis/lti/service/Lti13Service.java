@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -303,118 +304,85 @@ public class Lti13Service {
     }
 
     /**
-     * Returns an Optional of an Exercise that was referenced by targetLinkUrl.
+     * Helper method to extract an entity (e.g., Exercise, Lecture, Course) from a target link URL.
+     * This method handles the common logic of parsing the URL, matching the path pattern, extracting variables,
+     * and fetching the entity from the repository.
      *
-     * @param targetLinkUrl to retrieve an Exercise
-     * @return the Exercise or nothing otherwise
+     * @param <T>              The type of entity to extract (e.g., Exercise, Lecture, Course).
+     * @param targetLinkUrl    The target link URL to parse.
+     * @param pathPattern      The path pattern to match against (e.g., EXERCISE_PATH_PATTERN).
+     * @param repositoryFinder A function that takes the entity ID and returns an Optional<T> from the repository.
+     * @param entityName       The name of the entity (e.g., "exercise", "lecture", "course") for logging purposes.
+     * @return An Optional containing the entity if found, or an empty Optional otherwise.
+     */
+    private <T> Optional<T> extractEntityFromTargetLink(String targetLinkUrl, String pathPattern, Function<String, Optional<T>> repositoryFinder, String entityName) {
+        AntPathMatcher matcher = new AntPathMatcher();
+        String targetLinkPath;
+
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        if (!matcher.match(pathPattern, targetLinkPath)) {
+            log.info("Could not extract {} from target link: {}", entityName, targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, targetLinkPath);
+        String entityId = pathVariables.get(entityName.toLowerCase() + "Id");
+
+        try {
+            return repositoryFinder.apply(entityId);
+        }
+        catch (NumberFormatException ex) {
+            log.info("Invalid {} ID in target link URL: {}", entityName, targetLinkUrl);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Retrieves an Optional of an Exercise referenced by the given target link URL.
+     * This method extracts the exercise ID from the URL using the pattern "/courses/{courseId}/exercises/{exerciseId}".
+     *
+     * @param targetLinkUrl The target link URL to retrieve an Exercise.
+     * @return An Optional containing the Exercise if found, or an empty Optional otherwise.
      */
     private Optional<Exercise> getExerciseFromTargetLink(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-
-        String targetLinkPath;
-        try {
-            targetLinkPath = new URI(targetLinkUrl).getPath();
-        }
-        catch (URISyntaxException ex) {
-            log.info("Malformed target link url: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        if (!matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract exerciseId and courseId from target link: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
-
-        String exerciseId = pathVariables.get("exerciseId");
-
-        Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
-
-        if (exerciseOpt.isEmpty()) {
-            log.info("Could not find exercise or course for target link url: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        return exerciseOpt;
+        return extractEntityFromTargetLink(targetLinkUrl, EXERCISE_PATH_PATTERN, exerciseId -> exerciseRepository.findById(Long.valueOf(exerciseId)), "exercise");
     }
 
     /**
-     * Returns an Optional of a Lecture that was referenced by targetLinkUrl.
+     * Retrieves an Optional of a Lecture referenced by the given target link URL.
+     * This method extracts the lecture ID from the URL using the pattern "/courses/{courseId}/lectures/{lectureId}".
      *
-     * @param targetLinkUrl to retrieve a Lecture
-     * @return the Lecture or nothing otherwise
+     * @param targetLinkUrl The target link URL to retrieve a Lecture.
+     * @return An Optional containing the Lecture if found, or an empty Optional otherwise.
      */
     public Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-
-        String targetLinkPath;
-        try {
-            targetLinkPath = new URI(targetLinkUrl).getPath();
-        }
-        catch (URISyntaxException ex) {
-            log.info("Malformed target link url: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        if (!matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract lecture from target link: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
-
-        String lectureId = pathVariables.get("lectureId");
-
-        Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
-
-        if (lectureOpt.isEmpty()) {
-            log.info("Could not find lecture for target link url: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        return lectureOpt;
+        return extractEntityFromTargetLink(targetLinkUrl, LECTURE_PATH_PATTERN, lectureId -> lectureRepository.findById(Long.valueOf(lectureId)), "lecture");
     }
 
     /**
-     * Retrieves an Optional of a Course referenced by the given targetLinkUrl.
-     * This method extracts the course ID from the URL using the pattern "courses/{courseId}/**".
+     * Retrieves an Optional of a Course referenced by the given target link URL.
+     * This method extracts the course ID from the URL using the pattern "/courses/{courseId}/**".
      *
-     * @param targetLinkUrl the target link URL to retrieve a Course
-     * @return an Optional containing the Course if found, or an empty Optional otherwise
+     * @param targetLinkUrl The target link URL to retrieve a Course.
+     * @return An Optional containing the Course if found, or an empty Optional otherwise.
      */
     public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-        String targetLinkPath;
-
-        try {
-            targetLinkPath = new URI(targetLinkUrl).getPath();
-        }
-        catch (URISyntaxException ex) {
-            log.debug("Malformed target link URL: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        if (!matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
-            log.debug("Target link URL does not match the expected pattern: {}", targetLinkUrl);
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath).get("courseId")).flatMap(courseId -> {
-            try {
-                return courseRepository.findById(Long.valueOf(courseId));
-            }
-            catch (NumberFormatException ex) {
-                log.debug("Invalid courseId in target link URL: {}", targetLinkUrl);
-                return Optional.empty();
-            }
-        });
+        return extractEntityFromTargetLink(targetLinkUrl, COURSE_PATH_PATTERN, courseId -> courseRepository.findById(Long.valueOf(courseId)), "course");
     }
 
     /**
      * Determines the type of content referenced by the target link URL.
+     * This method checks the URL path against predefined patterns to identify the type of content.
      *
-     * @param targetLinkUrl the target link URL to check
-     * @return the type of content referenced by the URL (e.g., COMPETENCY, LEARNING_PATH, IRIS, or UNKNOWN)
+     * @param targetLinkUrl The target link URL to check.
+     * @return The type of content referenced by the URL (e.g., COMPETENCY, LEARNING_PATH, IRIS, or UNKNOWN).
      */
     public DeepLinkingType getTargetLinkType(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
