@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExercisePlagiarismResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);

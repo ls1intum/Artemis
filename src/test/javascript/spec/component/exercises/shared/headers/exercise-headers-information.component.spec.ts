@@ -4,7 +4,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
@@ -18,6 +17,10 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
@@ -36,8 +39,14 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseHeadersInformationComponent, ArtemisTestModule, TranslateModule.forRoot(), NgbTooltipModule],
-            providers: [MockProvider(ExerciseService), MockProvider(ComplaintService)],
+            imports: [ExerciseHeadersInformationComponent, TranslateModule.forRoot(), NgbTooltipModule],
+            providers: [
+                MockProvider(ExerciseService),
+                MockProvider(ComplaintService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class GradeStepResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
@@ -138,6 +138,8 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -157,6 +159,8 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByExamIdOrElseThrow(examId);

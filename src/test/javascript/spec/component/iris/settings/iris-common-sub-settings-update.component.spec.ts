@@ -1,9 +1,8 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockVariants } from './mock-settings';
@@ -13,8 +12,14 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { of } from 'rxjs';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AlertService } from 'app/core/util/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 function baseSettings() {
     const irisSubSettings = new IrisChatSubSettings();
@@ -44,8 +49,15 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockJhiTranslateDirective],
+            imports: [FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockJhiTranslateDirective],
             declarations: [IrisCommonSubSettingsUpdateComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {

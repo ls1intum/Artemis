@@ -83,6 +83,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
@@ -115,9 +116,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupNotificationApi;
 
 /**
  * Service Implementation for managing Course.
@@ -131,7 +132,7 @@ public class CourseService {
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
-    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
@@ -195,7 +196,7 @@ public class CourseService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
-    private final TutorialGroupRepository tutorialGroupRepository;
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
@@ -207,7 +208,7 @@ public class CourseService {
 
     private final LectureRepository lectureRepository;
 
-    private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
+    private final Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi;
 
     private final PostRepository postRepository;
 
@@ -230,9 +231,9 @@ public class CourseService {
             ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            TutorialGroupRepository tutorialGroupRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
             Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
-            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
             AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
@@ -265,14 +266,14 @@ public class CourseService {
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
-        this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupApi = tutorialGroupApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
-        this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
-        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
+        this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.prerequisitesApi = prerequisitesApi;
         this.competencyRelationApi = competencyRelationApi;
         this.buildJobRepository = buildJobRepository;
@@ -373,7 +374,12 @@ public class CourseService {
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
         prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourse(course)));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
-        course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
+        if (tutorialGroupApi.isPresent()) {
+            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourse(course));
+        }
+        else {
+            course.setNumberOfTutorialGroups(0L);
+        }
         if (course.isFaqEnabled()) {
             course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
         }
@@ -543,12 +549,13 @@ public class CourseService {
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupApi.class, PROFILE_CORE));
+        var tutorialGroups = api.findAllByCourseId(course.getId());
         // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {
-            tutorialGroupNotificationRepository.deleteAllByTutorialGroupId(tutorialGroup.getId());
-            tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
-            tutorialGroupRepository.deleteById(tutorialGroup.getId());
+            tutorialGroupNotificationApi.ifPresent(notApi -> notApi.deleteAllByTutorialGroupId(tutorialGroup.getId()));
+            tutorialGroupChannelManagementApi.ifPresent(manApi -> manApi.deleteTutorialGroupChannel(tutorialGroup));
+            api.deleteById(tutorialGroup.getId());
         });
     }
 
@@ -1042,9 +1049,6 @@ public class CourseService {
             user.setActivationKey(null);
             user.setLangKey(null);
             user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
         removeUserVariables(usersInGroup);
@@ -1199,9 +1203,6 @@ public class CourseService {
             user.setActivationKey(null);
             user.setLangKey(null);
             user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
     }

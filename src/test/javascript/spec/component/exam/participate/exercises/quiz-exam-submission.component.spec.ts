@@ -12,7 +12,6 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -27,6 +26,8 @@ import { provideRouter } from '@angular/router';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
+import { QuizConfiguration } from '../../../../../../../main/webapp/app/entities/quiz/quiz-configuration.model';
+import { IncludedInScoreBadgeComponent } from '../../../../../../../main/webapp/app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -43,13 +44,14 @@ describe('QuizExamSubmissionComponent', () => {
         quizSubmission = new QuizSubmission();
         multipleChoiceQuestion = new MultipleChoiceQuestion();
         multipleChoiceQuestion.id = 1;
+        multipleChoiceQuestion.answerOptions = [];
         dragAndDropQuestion = new DragAndDropQuestion();
         dragAndDropQuestion.id = 2;
         shortAnswerQuestion = new ShortAnswerQuestion();
         shortAnswerQuestion.id = 3;
+        shortAnswerQuestion.text = 'Short answer question text';
 
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 QuizExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -76,7 +78,9 @@ describe('QuizExamSubmissionComponent', () => {
     it('should initialize', () => {
         const quizServiceSpy = jest.spyOn(quizService, 'randomizeOrder');
 
-        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
         fixture.detectChanges();
 
         expect(fixture).toBeDefined();
@@ -89,7 +93,8 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
-        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
         const multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
         const multipleChoiceSelectedOptions = new AnswerOption();
@@ -105,7 +110,7 @@ describe('QuizExamSubmissionComponent', () => {
         dragAndDropSubmittedAnswer.quizQuestion = dragAndDropQuestion;
         dragAndDropSubmittedAnswer.mappings = [dragAndDropMapping];
         quizSubmission.submittedAnswers = [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer];
-        component.studentSubmission = quizSubmission;
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
 
         component.updateViewFromSubmission();
         fixture.detectChanges();
@@ -123,7 +128,7 @@ describe('QuizExamSubmissionComponent', () => {
          * Change the isSynced value of studentSubmission to false when selection changed
          */
         component.onSelectionChanged();
-        expect(component.studentSubmission.isSynced).toBeFalse();
+        expect(component.studentSubmission().isSynced).toBeFalse();
         /**
          * Return the negated value of isSynced when there are unsaved changes
          */
@@ -131,7 +136,9 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should set answerOptions/mappings/submitted texts to empty array when not submitted answer', () => {
-        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
 
         component.updateViewFromSubmission();
         fixture.detectChanges();
@@ -153,7 +160,9 @@ describe('QuizExamSubmissionComponent', () => {
             scrollIntoView: scrollIntoViewSpy,
         } as unknown as HTMLElement);
 
-        component.quizConfiguration = {};
+        fixture.componentRef.setInput('quizConfiguration', {});
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+
         component.navigateToQuestion(1);
         fixture.detectChanges();
 
@@ -162,8 +171,9 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should create multiple choice submission from users selection', () => {
-        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
-        component.studentSubmission = new QuizSubmission();
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
+        fixture.componentRef.setInput('studentSubmission', new QuizSubmission());
 
         const multipleChoiceSelectedOptions = new AnswerOption();
         multipleChoiceSelectedOptions.id = 1;
@@ -193,8 +203,8 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateSubmissionFromView();
         fixture.detectChanges();
 
-        expect(component.studentSubmission.submittedAnswers?.length).toBe(3);
-        expect(JSON.stringify(component.studentSubmission.submittedAnswers)).toEqual(
+        expect(component.studentSubmission().submittedAnswers?.length).toBe(3);
+        expect(JSON.stringify(component.studentSubmission().submittedAnswers)).toEqual(
             JSON.stringify([multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer]),
         );
     });
@@ -202,12 +212,13 @@ describe('QuizExamSubmissionComponent', () => {
     it('should parse the answers from the submission version', () => {
         const submissionVersion = {
             content:
-                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
+                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/core/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
         } as unknown as SubmissionVersion;
-        component.studentSubmission = new ModelingSubmission();
-        component.exercise = new QuizExercise(new Course(), undefined);
-        component.exercise.quizQuestions = [dragAndDropQuestion];
-        component.quizConfiguration = { quizQuestions: [dragAndDropQuestion] };
+        const quizExercise = new QuizExercise(new Course(), undefined);
+        quizExercise.quizQuestions = [dragAndDropQuestion];
+        fixture.componentRef.setInput('studentSubmission', new ModelingSubmission());
+        fixture.componentRef.setInput('exercise', quizExercise);
+        fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [dragAndDropQuestion] });
         component.setSubmissionVersion(submissionVersion);
         fixture.detectChanges();
         expect(component.submissionVersion).toEqual(submissionVersion);
@@ -219,12 +230,13 @@ describe('QuizExamSubmissionComponent', () => {
     it('should call triggerSave if save exercise button is clicked', () => {
         const submissionVersion = {
             content:
-                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
+                '[ {\r\n  "quizQuestion" : {\r\n    "type" : "drag-and-drop",\r\n    "id" : 2,\r\n    "title" : "dnd image",\r\n    "text" : "Enter your long question if needed",\r\n    "hint" : "Add a hint here (visible during the quiz via ?-Button)",\r\n    "points" : 1,\r\n    "scoringType" : "PROPORTIONAL_WITH_PENALTY",\r\n    "randomizeOrder" : true,\r\n    "invalid" : false,\r\n    "backgroundFilePath" : "/api/core/files/drag-and-drop/backgrounds/14/DragAndDropBackground_2023-07-08T19-35-26-953_a3265da6.jpg",\r\n    "dropLocations" : [ {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    } ],\r\n    "dragItems" : [ {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    } ]\r\n  },\r\n  "mappings" : [ {\r\n    "invalid" : false,\r\n    "dragItem" : {\r\n      "id" : 11,\r\n      "pictureFilePath" : "/api/files/drag-and-drop/drag-items/11/DragItem_2023-07-08T19-35-26-956_2ffe94ba.jpg",\r\n      "invalid" : false\r\n    },\r\n    "dropLocation" : {\r\n      "id" : 12,\r\n      "posX" : 45.0,\r\n      "posY" : 120.0,\r\n      "width" : 62.0,\r\n      "height" : 52.0,\r\n      "invalid" : false\r\n    }\r\n  } ]\r\n} ]',
         } as unknown as SubmissionVersion;
-        component.studentSubmission = new ModelingSubmission();
-        component.exercise = new QuizExercise(new Course(), undefined);
-        component.exercise.quizQuestions = [dragAndDropQuestion];
-        component.quizConfiguration = { quizQuestions: [dragAndDropQuestion] };
+        const quizExercise = new QuizExercise(new Course(), undefined);
+        quizExercise.quizQuestions = [dragAndDropQuestion];
+        fixture.componentRef.setInput('studentSubmission', new ModelingSubmission());
+        fixture.componentRef.setInput('exercise', quizExercise);
+        fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [dragAndDropQuestion] });
         component.setSubmissionVersion(submissionVersion);
         fixture.detectChanges();
         const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');

@@ -21,7 +21,7 @@ export class QuizExerciseParticipationPage {
      * Starts the quiz batch.
      */
     async startQuizBatch() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz-exercises/*/join`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/quiz-exercises/*/join`);
         await this.page.locator('#start-batch').click();
         await responsePromise;
     }

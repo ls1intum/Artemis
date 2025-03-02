@@ -46,7 +46,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     private postsSubscription: Subscription;
 
     // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
-    private readonly ATTACHMENT_DIR = 'api/files/attachments/';
+    private readonly ATTACHMENT_DIR = 'api/core/files/attachments/';
 
     // Icons
     faAngleUp = faAngleUp;

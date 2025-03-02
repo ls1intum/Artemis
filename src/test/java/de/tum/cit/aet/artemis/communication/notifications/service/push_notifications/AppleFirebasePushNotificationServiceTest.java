@@ -70,9 +70,9 @@ class AppleFirebasePushNotificationServiceTest {
         String token = "test";
         byte[] payload = HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d");
         PushNotificationDeviceConfiguration applePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.APNS, new Date(),
-                payload, student, PushNotificationApiType.IOS_V2);
+                payload, student, PushNotificationApiType.IOS_V2, "1.0.0");
         PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
-                new Date(), payload, student, PushNotificationApiType.DEFAULT);
+                new Date(), payload, student, PushNotificationApiType.DEFAULT, "1.0.0");
 
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));

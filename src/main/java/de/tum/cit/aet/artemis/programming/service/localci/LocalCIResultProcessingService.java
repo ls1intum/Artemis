@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -140,7 +141,7 @@ public class LocalCIResultProcessingService {
         }
         log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
         log.debug("Build jobs waiting in queue: {}", resultQueue.size());
-        log.debug("Queued build jobs: {}", resultQueue.stream().map(i -> i.buildJobQueueItem().id()).toList());
+        log.debug("Queued build jobs: {}", getResultQueueBuildJobIds());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -346,5 +347,10 @@ public class LocalCIResultProcessingService {
     private boolean isSolutionBuildOfTestOrAuxPush(BuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
+    }
+
+    private List<String> getResultQueueBuildJobIds() {
+        List<ResultQueueItem> resultQueueList = new ArrayList<>(resultQueue);
+        return resultQueueList.stream().map(i -> i.buildJobQueueItem().id()).toList();
     }
 }

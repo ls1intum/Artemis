@@ -186,11 +186,12 @@ public class TutorialGroupScheduleService {
                 }
             }
         }
-        else if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
+        else // new schedule present but not old schedule -> create new schedule
+        if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
             tutorialGroupScheduleRepository.delete(oldSchedule.get());
         }
-        else if (newSchedule.isPresent()) { // new schedule present but not old schedule -> create new schedule
-            saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
+        else {
+            newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, tutorialGroupSchedule));
         }
     }
 

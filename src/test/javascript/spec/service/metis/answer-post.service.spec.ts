@@ -11,7 +11,6 @@ describe('AnswerPost Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(AnswerPostService);
@@ -60,6 +59,24 @@ describe('AnswerPost Service', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
+            tick();
+        }));
+
+        it('should get source answer posts by IDs', fakeAsync(() => {
+            const answerPostIds = [1, 2, 3];
+            const returnedFromService = [metisResolvingAnswerPostUser1, { ...metisResolvingAnswerPostUser1, id: 2 }, { ...metisResolvingAnswerPostUser1, id: 3 }];
+            const expected = returnedFromService;
+
+            service
+                .getSourceAnswerPostsByIds(1, answerPostIds)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toEqual(expected));
+
+            const req = httpMock.expectOne({
+                method: 'GET',
+                url: `api/communication/courses/1/answer-messages-source-posts?answerPostIds=${answerPostIds.join(',')}`,
+            });
+            req.flush(returnedFromService);
             tick();
         }));
     });

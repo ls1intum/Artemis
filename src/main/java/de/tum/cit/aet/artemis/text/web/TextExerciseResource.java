@@ -97,7 +97,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/text/")
 public class TextExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -237,7 +237,7 @@ public class TextExerciseResource {
 
         irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -424,7 +424,7 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             // We want to have the preliminary feedback before the assessment due date too
             Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
                     .collect(Collectors.toSet());
@@ -441,7 +441,7 @@ public class TextExerciseResource {
                 // set reference to participation to null, since we are already inside a participation
                 textSubmission.setParticipation(null);
 
-                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     // We want to have the preliminary feedback before the assessment due date too
                     List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                     textSubmission.setResults(athenaResults);
@@ -539,7 +539,7 @@ public class TextExerciseResource {
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
+        return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
     /**
