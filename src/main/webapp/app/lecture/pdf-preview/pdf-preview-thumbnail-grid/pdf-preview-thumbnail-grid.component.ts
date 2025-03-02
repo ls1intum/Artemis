@@ -34,7 +34,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
 
     // Outputs
-    isPdfLoading = output<boolean>();
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
     newHiddenPagesOutput = output<Set<number>>();
@@ -69,7 +68,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             .nativeElement.querySelectorAll('.pdf-canvas-container')
             .forEach((canvas) => canvas.remove());
         this.totalPagesArray.set(new Set());
-        this.isPdfLoading.emit(true);
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
@@ -96,7 +94,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             onError(this.alertService, error);
         } finally {
             this.totalPagesOutput.emit(this.totalPagesArray().size);
-            this.isPdfLoading.emit(false);
         }
     }
 

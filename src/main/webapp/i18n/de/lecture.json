@@ -97,6 +97,7 @@
                 "title": "Anhang",
                 "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
                 "attachmentUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID.",
+                "noPDFAvailable": "Kein PDF verfügbar",
                 "removePageButton": "Seiten entfernen",
                 "hidePageButton": "Seiten ausblenden",
                 "showPageButton": "Seiten anzeigen",

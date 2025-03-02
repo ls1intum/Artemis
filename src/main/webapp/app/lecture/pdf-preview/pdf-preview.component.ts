@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -23,6 +23,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { finalize } from 'rxjs/operators';
 
 type VisibilityAction = 'hide' | 'show';
 
@@ -66,6 +67,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly faFileImport = faFileImport;
     protected readonly faEye = faEye;
     protected readonly faEyeSlash = faEyeSlash;
@@ -74,30 +76,44 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
 
     ngOnInit() {
+        this.isPdfLoading.set(true);
         this.route.data.subscribe((data) => {
             this.course.set(data.course);
 
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
-                this.attachmentSub = this.attachmentService.getAttachmentFile(this.course()!.id!, this.attachment()!.id!).subscribe({
-                    next: (blob: Blob) => {
-                        this.currentPdfBlob.set(blob);
-                        this.currentPdfUrl.set(URL.createObjectURL(blob));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
+                this.attachmentSub = this.attachmentService
+                    .getAttachmentFile(this.course()!.id!, this.attachment()!.id!)
+                    .pipe(finalize(() => this.isPdfLoading.set(false)))
+                    .subscribe({
+                        next: (blob: Blob) => {
+                            this.currentPdfBlob.set(blob);
+                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                        },
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
+                    });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
                 const hiddenPages: Set<number> = new Set(data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => page.slideNumber));
                 this.initialHiddenPages.set(new Set(hiddenPages));
                 this.hiddenPages.set(new Set(hiddenPages));
-                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
-                    next: (blob: Blob) => {
-                        this.currentPdfBlob.set(blob);
-                        this.currentPdfUrl.set(URL.createObjectURL(blob));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
+
+                this.attachmentUnitSub = this.attachmentUnitService
+                    .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
+                    .pipe(finalize(() => this.isPdfLoading.set(false)))
+                    .subscribe({
+                        next: (blob: Blob) => {
+                            this.currentPdfBlob.set(blob);
+                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                        },
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
+                    });
+            } else {
+                this.isPdfLoading.set(false);
             }
         });
     }

@@ -10,11 +10,6 @@
                         {{ attachmentUnit()!.id! }}: {{ attachmentUnit()!.name! }}
                     }
                 </h4>
-                @if (isPdfLoading()) {
-                    <div class="spinner-border ms-2" role="status">
-                        <span class="sr-only" jhiTranslate="loading"></span>
-                    </div>
-                }
             </div>
             <div class="d-flex-end text-end">
                 @if (hiddenPages()!.size > 0) {
@@ -59,20 +54,31 @@
                 </button>
             </div>
         </div>
-        @if (currentPdfUrl()) {
+
+        @if (isPdfLoading()) {
+            <div class="empty-pdf-container">
+                <div class="loading-container">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only" jhiTranslate="loading"></span>
+                    </div>
+                </div>
+            </div>
+        } @else if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
                 [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
                 [updatedSelectedPages]="selectedPages()"
-                (isPdfLoading)="isPdfLoading.set($event)"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
                 (newHiddenPagesOutput)="hiddenPages.set($event)"
             />
         } @else {
-            <div class="empty-pdf-container"></div>
+            <div class="empty-pdf-container">
+                <fa-icon [icon]="faExclamationCircle" />
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.noPDFAvailable"></span>
+            </div>
         }
         <div class="d-flex justify-content-between">
             <div>
