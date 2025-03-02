@@ -35,7 +35,6 @@ public class LtiResourceLaunch extends DomainObject {
     @ManyToOne
     private User user;
 
-    @NotNull
     @ManyToOne
     private Exercise exercise;
 
