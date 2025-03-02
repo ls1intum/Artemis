@@ -98,6 +98,8 @@
                 "attachmentIDError": "Invalid Attachment or Attachment ID.",
                 "attachmentUnitIDError": "Invalid Attachment Unit or Attachment Unit ID.",
                 "removePageButton": "Remove Pages",
+                "hidePageButton": "Hide Pages",
+                "showPageButton": "Show Pages",
                 "appendPDFButton": "Append PDF",
                 "attachmentUpdateSuccess": "Attachment updated successfully.",
                 "attachmentUpdateError": "Failed to update attachment: {{error}}",

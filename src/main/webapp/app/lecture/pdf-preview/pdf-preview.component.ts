@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -23,6 +23,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+
+type VisibilityAction = 'hide' | 'show';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -65,6 +67,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     // Icons
     protected readonly faFileImport = faFileImport;
+    protected readonly faEye = faEye;
+    protected readonly faEyeSlash = faEyeSlash;
     protected readonly faSave = faSave;
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
@@ -336,5 +340,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isPdfLoading.set(false);
             this.fileInput()!.nativeElement.value = '';
         }
+    }
+
+    /**
+     * Toggles visibility of selected pages
+     */
+    toggleVisibility(action: VisibilityAction, selectedPages: Set<number>): void {
+        this.hiddenPages.update((currentSet) => {
+            const updatedSet = new Set(currentSet);
+
+            selectedPages.forEach((page) => {
+                if (action === 'hide') {
+                    updatedSet.add(page);
+                } else {
+                    updatedSet.delete(page);
+                }
+            });
+
+            return updatedSet;
+        });
+
+        this.selectedPages.set(new Set());
+        setTimeout(() => {
+            document.querySelectorAll('input[type="checkbox"]').forEach((checkbox: HTMLInputElement) => (checkbox.checked = false));
+        }, 0);
     }
 }
