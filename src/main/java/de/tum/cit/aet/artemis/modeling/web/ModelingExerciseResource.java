@@ -74,7 +74,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/modeling/")
 public class ModelingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);

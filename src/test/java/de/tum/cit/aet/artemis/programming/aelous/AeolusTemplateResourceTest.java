@@ -67,7 +67,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile(String templateKey, int expectedScriptActions) throws Exception {
-        String template = request.get("/api/aeolus/templates/" + templateKey, HttpStatus.OK, String.class);
+        String template = request.get("/api/programming/aeolus/templates/" + templateKey, HttpStatus.OK, String.class);
         assertThat(template).isNotEmpty();
         Windfile windfile = Windfile.deserialize(template);
         assertWindfileIsCorrect(windfile, expectedScriptActions);
@@ -167,7 +167,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingAeolusTemplateFile() throws Exception {
-        request.get("/api/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/programming/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, int expectedScriptActions) {

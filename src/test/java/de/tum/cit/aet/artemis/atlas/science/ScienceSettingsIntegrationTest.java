@@ -42,7 +42,7 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
         scienceSettingRepository.save(settingA);
         scienceSettingRepository.save(settingB);
 
-        List<ScienceSetting> scienceSettings = request.getList("/api/science-settings", HttpStatus.OK, ScienceSetting.class);
+        List<ScienceSetting> scienceSettings = request.getList("/api/atlas/science-settings", HttpStatus.OK, ScienceSetting.class);
 
         assertThat(scienceSettings).as("scienceSetting A with recipient equal to current user is returned").contains(settingA);
         assertThat(scienceSettings).as("scienceSetting B with recipient equal to current user is returned").contains(settingB);
@@ -53,7 +53,7 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
     void testSaveScienceSettingsForCurrentUser_OK() throws Exception {
         ScienceSetting[] newlyChangedSettingsToSave = { settingA, settingB };
 
-        ScienceSetting[] scienceSettingsResponse = request.putWithResponseBody("/api/science-settings", newlyChangedSettingsToSave, ScienceSetting[].class, HttpStatus.OK);
+        ScienceSetting[] scienceSettingsResponse = request.putWithResponseBody("/api/atlas/science-settings", newlyChangedSettingsToSave, ScienceSetting[].class, HttpStatus.OK);
 
         boolean foundA = false;
         boolean foundB = false;
@@ -72,6 +72,6 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveScienceSettingsForCurrentUser_BAD_REQUEST() throws Exception {
-        request.putWithResponseBody("/api/science-settings", null, ScienceSetting[].class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/atlas/science-settings", null, ScienceSetting[].class, HttpStatus.BAD_REQUEST);
     }
 }

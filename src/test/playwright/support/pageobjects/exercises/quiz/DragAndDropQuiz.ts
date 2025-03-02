@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
+import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { drag } from '../../../utils';
 import { Locator } from '@playwright/test';
 
@@ -88,7 +88,7 @@ export class DragAndDropQuiz {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/submissions/live?submit=true`);
+        const responsePromise = this.page.waitForResponse(`api/quiz/exercises/*/submissions/live?submit=true`);
         await this.page.locator('#submit-quiz').click();
         await responsePromise;
     }

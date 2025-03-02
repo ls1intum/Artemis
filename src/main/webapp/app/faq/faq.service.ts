@@ -10,7 +10,7 @@ type EntityArrayResponseType = HttpResponse<Faq[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FaqService {
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api/communication/courses';
 
     private http = inject(HttpClient);
 
@@ -165,7 +165,7 @@ export class FaqService {
      */
     ingestFaqsInPyris(courseId: number): Observable<HttpResponse<void>> {
         const params = new HttpParams();
-        return this.http.post<void>(`api/courses/${courseId}/faqs/ingest`, null, {
+        return this.http.post<void>(`api/communication/courses/${courseId}/faqs/ingest`, null, {
             params: params,
             observe: 'response',
         });
