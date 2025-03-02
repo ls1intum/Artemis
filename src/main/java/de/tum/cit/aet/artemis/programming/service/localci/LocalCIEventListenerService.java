@@ -4,16 +4,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.redisson.api.ObjectListener;
 import org.redisson.api.RMap;
 import org.redisson.api.RPriorityQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
 import org.redisson.api.listener.ListRemoveListener;
-import org.redisson.api.map.event.EntryCreatedListener;
-import org.redisson.api.map.event.EntryEvent;
-import org.redisson.api.map.event.EntryRemovedListener;
-import org.redisson.api.map.event.EntryUpdatedListener;
+import org.redisson.api.listener.MapPutListener;
+import org.redisson.api.listener.MapRemoveListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -149,45 +146,42 @@ public class LocalCIEventListenerService {
         }
     }
 
-    private class ProcessingBuildJobItemListener implements ObjectListener, EntryCreatedListener<Long, BuildJobQueueItem>, EntryRemovedListener<Long, BuildJobQueueItem> {
+    private class ProcessingBuildJobItemListener implements MapPutListener, MapRemoveListener {
 
         @Override
-        public void onCreated(EntryEvent<Long, BuildJobQueueItem> entryEvent) {
-            BuildJobQueueItem queueItem = entryEvent.getValue();
-            log.info("CIBuildJobQueueItem added to processing jobs: {}", queueItem);
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(queueItem.courseId());
-            buildJobRepository.updateBuildJobStatusWithBuildStartDate(queueItem.id(), BuildStatus.BUILDING, queueItem.jobTimingInfo().buildStartDate());
-            notifyUserAboutBuildProcessing(queueItem.exerciseId(), queueItem.participationId(), queueItem.buildConfig().assignmentCommitHash(),
-                    queueItem.jobTimingInfo().submissionDate(), queueItem.jobTimingInfo().buildStartDate(), queueItem.jobTimingInfo().estimatedCompletionDate());
+        public void onPut(String s) {
+            log.info("CIBuildJobQueueItem added to processing jobs: {}", s);
+            // TODO: how to retreive the actual element here properly? What ist the string?
+            // localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(queueItem.courseId());
+            // buildJobRepository.updateBuildJobStatusWithBuildStartDate(queueItem.id(), BuildStatus.BUILDING, queueItem.jobTimingInfo().buildStartDate());
+            // notifyUserAboutBuildProcessing(queueItem.exerciseId(), queueItem.participationId(), queueItem.buildConfig().assignmentCommitHash(),
+            // queueItem.jobTimingInfo().submissionDate(), queueItem.jobTimingInfo().buildStartDate(), queueItem.jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override
-        public void onRemoved(EntryEvent<Long, BuildJobQueueItem> entryEvent) {
-            log.info("CIBuildJobQueueItem removed from processing jobs: {}", entryEvent.getOldValue());
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(entryEvent.getOldValue().courseId());
+        public void onRemove(String s) {
+            log.info("CIBuildJobQueueItem removed from processing jobs: {}", s);
+            // TODO: how to retreive the actual element here properly? What ist the string?
+            // localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(entryEvent.getOldValue().courseId());
         }
     }
 
-    private class BuildAgentListener implements ObjectListener, EntryCreatedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>,
-            EntryUpdatedListener<String, BuildAgentInformation> {
+    private class BuildAgentListener implements MapPutListener, MapRemoveListener {
 
         @Override
-        public void onCreated(EntryEvent<String, BuildAgentInformation> entryEvent) {
-            log.debug("Build agent added: {}", entryEvent.getValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(entryEvent.getValue().buildAgent().name());
+        public void onPut(String s) {
+            log.info("Build agent added: {}", s);
+            // TODO: how to retreive the actual element here properly? What ist the string?
+            // localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(entryEvent.getValue().buildAgent().name());
         }
 
         @Override
-        public void onRemoved(EntryEvent<String, BuildAgentInformation> entryEvent) {
-            log.debug("Build agent removed: {}", entryEvent.getOldValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(entryEvent.getOldValue().buildAgent().name());
+        public void onRemove(String s) {
+            log.info("Build agent removed: {}", s);
+            // TODO: how to retreive the actual element here properly? What ist the string?
+            // localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(entryEvent.getOldValue().buildAgent().name());
         }
-
-        @Override
-        public void onUpdated(EntryEvent<String, BuildAgentInformation> entryEvent) {
-            log.debug("Build agent updated: {}", entryEvent.getValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(entryEvent.getValue().buildAgent().name());
-        }
+        // TODO: what about an update listener?
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
