@@ -5,6 +5,7 @@ import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 export class ProfileInfo {
     public activeProfiles: string[];
+    public activeModuleFeatures: string[];
     public ribbonEnv: string;
     public inProduction: boolean;
     public inDevelopment: boolean;

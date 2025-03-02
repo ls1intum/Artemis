@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,10 +12,11 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
@@ -65,7 +64,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class LearningPathService {
 

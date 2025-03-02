@@ -6,7 +6,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -235,7 +235,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
-                this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+                this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
                 this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
                 this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);

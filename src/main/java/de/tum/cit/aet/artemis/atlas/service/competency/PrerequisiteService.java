@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 /**
  * Service for managing prerequisites.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class PrerequisiteService extends CourseCompetencyService {
 

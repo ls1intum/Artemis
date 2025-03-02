@@ -90,7 +90,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
 Please read :ref:`Server Setup` for more details.
 

@@ -18,7 +18,7 @@ Enable the ``aeolus`` Spring profile
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local,aeolus
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,aeolus
 
 Configure the Aeolus Endpoint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
