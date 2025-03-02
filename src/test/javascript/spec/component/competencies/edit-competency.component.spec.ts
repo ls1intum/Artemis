@@ -16,6 +16,8 @@ import { CompetencyFormComponent } from 'app/course/competencies/forms/competenc
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
@@ -28,6 +30,7 @@ describe('EditCompetencyComponent', () => {
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

@@ -20,6 +20,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditTextUnitComponent', () => {
     let fixture: ComponentFixture<EditTextUnitComponent>;
@@ -56,6 +58,7 @@ describe('EditTextUnitComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
