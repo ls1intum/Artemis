@@ -27,6 +27,13 @@ public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdTo
         return new PlagiarismMapping(outerMap);
     }
 
+    /**
+     * Returns an empty PlagiarismMapping.
+     */
+    public static PlagiarismMapping empty() {
+        return new PlagiarismMapping(Collections.emptyMap());
+    }
+
     public PlagiarismCase getPlagiarismCase(Long studentId, Long exerciseId) {
         var innerMap = studentIdToExerciseIdToPlagiarismCaseMap.get(studentId);
         return innerMap != null ? innerMap.get(exerciseId) : null;

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
@@ -47,8 +48,9 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
         return plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exerciseId);
     }
 
-    public List<PlagiarismCase> findByExamId(Long examId) {
-        return plagiarismCaseRepository.findByExamId(examId);
+    public PlagiarismMapping getPlagiarismMappingForExam(Long examId) {
+        var plagiarismCasesForStudent = plagiarismCaseRepository.findByExamId(examId);
+        return PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
     }
 
     public List<PlagiarismCase> findByExamIdAndStudentId(Long examId, Long studentId) {

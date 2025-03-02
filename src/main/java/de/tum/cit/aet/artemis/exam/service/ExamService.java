@@ -271,8 +271,7 @@ public class ExamService {
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
                 .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
 
-        List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseApi.map(api -> api.findByExamId(exam.getId())).orElse(List.of());
-        var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
+        PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
 
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
