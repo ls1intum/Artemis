@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
@@ -604,6 +605,37 @@ class Lti13ServiceTest {
         assertThat(lecture).isPresent();
         assertThat(lecture.get().getId()).isEqualTo(456L);
         verify(lectureRepository).findById(456L);
+    }
+
+    @Test
+    void buildLtiEmailInUseResponse_emailInUse() {
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        OidcIdToken ltiIdToken = mock(OidcIdToken.class);
+        String email = "testuser@email.com";
+        String username = "testuser";
+
+        when(ltiIdToken.getEmail()).thenReturn(email);
+        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.of(username));
+
+        lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+
+        verify(response).addHeader("ltiSuccessLoginRequired", username);
+        verify(ltiService).prepareLogoutCookie(response);
+    }
+
+    @Test
+    void buildLtiEmailInUseResponse_emailNotInUse() {
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        OidcIdToken ltiIdToken = mock(OidcIdToken.class);
+        String email = "testuser@email.com";
+
+        when(ltiIdToken.getEmail()).thenReturn(email);
+        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.empty());
+
+        lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+
+        verify(response, never()).addHeader(eq("ltiSuccessLoginRequired"), anyString());
+        verify(ltiService).prepareLogoutCookie(response);
     }
 
     private State getValidStateForNewResult(Result result) {
