@@ -224,7 +224,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam.setStartDate(now().plusMinutes(10));
         testExam = examRepository.save(testExam);
         // the request fails because the exam start is 10 min in the future
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -259,7 +259,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(testExam1);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
     }
 
     @Test
@@ -268,6 +268,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examUtilService.addStudentExamForTestExam(testExam1, student1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.INTERNAL_SERVER_ERROR, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.INTERNAL_SERVER_ERROR, StudentExam.class);
     }
 }
